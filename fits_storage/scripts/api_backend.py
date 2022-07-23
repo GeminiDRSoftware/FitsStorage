@@ -86,40 +86,52 @@ def before_md5_check(path, before_md5):
 
 def fits_apply_changes(path, changes, reject_new, before_md5):
     print("api_backend.fits_apply_changes entered, calling before_md5_check")
+    logger.info("api_backend.fits_apply_changes entered, calling before_md5_check")
     if not before_md5_check(path, before_md5):
         # we don't have the file this update targets, no-op
         print("before_md5_check is False, noop")
+        logger.info("before_md5_check is False, noop")
         return
 
     print("Checking using s3")
+    logger.info("Checking using s3")
     if using_s3:
         print("Using S3, raising exception")
+        logger.info("Using S3, raising exception")
         raise Exception("Implement Me!")
 
     print("Checking fits_is_unchanged")
+    logger.info("Checking fits_is_unchanged")
     if fits_is_unchanged(path, changes):
         print("True, not modifying, returning False")
         logger.info("fits_apply_changes: %s [NOT MODIFIED]", path)
         return False
 
     print("Checking all cards exist or not reject new")
+    logger.info("Checking all cards exist or not reject new")
     if reject_new and not all_cards_exist(path, changes):
         print("Problem seen, raising error for unknown cards")
         raise WSGIError("Operational error", error_object=NewCardsIncluded())
 
     print("Calling modify_multiple_cards")
+    logger.info("Calling modify_multiple_cards")
     modify_multiple_cards(path, changes, ext=0)
     print("Done, returning True")
-    logger.info("fits_apply_changes: %s [%s]", path, str(changes))
+    logger.info("fits_apply_changes returning True: %s [%s]", path, str(changes))
     return True
 
 
 @json_api_call(logger)
 def set_image_metadata(path, changes, reject_new=False, before_md5=None):
     print("in api_backend.set_image_metadata")
+    logger.info("in api_backend.set_image_metadata")
     try:
+        print("calling fits_apply_changes")
+        logger.info("calling fits_apply_changes")
         return fits_apply_changes(path, changes, reject_new, before_md5)
     except (pf.VerifyError, IOError) as e:
+        print("Got error: %s" % str(e))
+        logger.info("Got error: %s" % str(e))
         logger.debug("Error: %s", str(e))
         raise WSGIError("There were problems when opening/modifying the file: {}".format(path))
 

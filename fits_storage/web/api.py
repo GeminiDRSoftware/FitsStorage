@@ -19,14 +19,14 @@ from ..orm.obslog_comment import ObslogComment
 from ..utils.ingestqueue import IngestQueueUtil, IngestError
 from ..utils.api import ApiProxy, ApiProxyError, NewCardsIncluded
 from ..utils.null_logger import EmptyLogger
-from ..utils.web import get_context
+from ..utils.web import get_context, Return
 
 from .user import needs_login
 
 from ..fits_storage_config import storage_root, magic_api_server_cookie
 from ..fits_storage_config import magic_api_cookie, api_backend_location
 
-from sqlalchemy import desc
+from sqlalchemy import desc, or_
 
 
 class RequestError(Exception):
@@ -76,10 +76,19 @@ def lookup_diskfile(session, query):
             df = session.query(DiskFile).join(Header).filter(DiskFile.present == True).filter(Header.data_label == label).order_by(desc(DiskFile.filename)).first()
         elif 'filename' in query:
             label = query['filename']
-            df = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.filename == label).one()
+            print(f"looking for file by name {label}")
+            if label is not None and not label.endswith('.bz2'):
+                label2 = f"{label}.bz2"
+                df = session.query(DiskFile).filter(DiskFile.present == True) \
+                    .filter(or_(DiskFile.filename == label,
+                                DiskFile.filename == label2)).one()
+            else:
+                df = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.filename == label).one()
         else:
+            print("no filename field in query to search on")
             raise ItemError("Expected 'data_label' or 'filename' to identify the item")
     except NoResultFound:
+        print(f"no diskfile found for {label}")
         raise ItemError("Could not find a file matching '{}'".format(label), label=label)
 
     return label, df
@@ -187,7 +196,10 @@ def process_update(session, proxy, query, iq):
     header_fields = None
     try:
         label, df = lookup_diskfile(session, query)
+        if df is None:
+            print("Got none diskfile from lookup")
         filename = df.filename
+        print(f"Saw filename from lookup of {filename}")
         if not isinstance(query['values'], dict):
             return error_response("This looks like a malformed request: 'values' should be a dictionary", id=label)
         new_values = map_changes(query['values'])
@@ -203,6 +215,7 @@ def process_update(session, proxy, query, iq):
         print("  path: %s" % path)
         print("  md5_before_header: %s" % md5_before_header)
         reingest = proxy.set_image_metadata(path=path, changes=new_values, reject_new=reject_new)
+        print("done calling proxy.set_image_metadata")
         if reingest:
             print("reingest was true...")
             header_fields = new_values
@@ -272,14 +285,19 @@ def update_headers():
             resp.append_json(list(process_all_updates(data)))
         else:
             with resp.streamed_json() as stream:
+                print("at process_all_updates")
                 for chunk in process_all_updates(data):
                     stream.write(chunk)
+                print("done process_all_updates")
     except RequestError as e:
         resp.append_json(error_response(e.message))
+        resp.status = Return.HTTP_INTERNAL_SERVER_ERROR
     except KeyError as e:
         resp.append_json(error_response("Malformed request. It lacks the '{}' argument".format(e.args[0])))
+        resp.status = Return.HTTP_BAD_REQUEST
     except TypeError:
         resp.append_json(error_response("This looks like a malformed request. Expected a dictionary or a list of queries. Instead I got {}".format(type(data))))
+        resp.status = Return.HTTP_BAD_REQUEST
 
 
 def ingest_files():

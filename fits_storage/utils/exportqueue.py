@@ -282,9 +282,18 @@ class ExportQueueUtil(object):
                       f"  response: {r.json}")
                 if r.status_code == apache.OK:
                     # it worked - otherwise, let's fall back to the file export
-                    return True
+                    result = r.json()
+                    if 'id' in result and 'md5' in result and \
+                            (result['id'] == filename or result['id'] == "%s.bz2" % filename) and \
+                            result['md5'] == md5_after_header:
+                        return True
+                    else:
+                        print("Result did not match expectation:")
+                        print(f"  result: {result}")
+                        print(f"  filename: {filename}  md5: {md5_after_header}")
+                        print("reverting to file export")
                 else:
-                    print("falling back to file export")
+                    print("Web request to update headers did not return OK, falling back to file export")
 
         # Read the file into the payload postdata buffer to HTTP POST
         data = None
