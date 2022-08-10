@@ -97,8 +97,19 @@ odb_data_to_archive
 
 - use new client-side api cookie setting to choose cookie to send in POST
 
+(various).service
+^^^^^^^^^^^^^^^^^
+
+- Set to multi-user runlevel for systemd support, services were not starting on boot even when enabled
+
+
 Other
 -----
+
+archive_install.yml
+^^^^^^^^^^^^^^^^^^^
+
+- Fixes for SELinux installs on fresh host for PostgreSQL support.
 
 admin_file_permissions
 ^^^^^^^^^^^^^^^^^^^^^^
