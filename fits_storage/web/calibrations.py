@@ -2,7 +2,7 @@
 This module contains the calibrations html generator function.
 """
 import datetime
-from .selection import sayselection, queryselection, openquery
+from .selection import sayselection, queryselection, openquery, selection_to_URL
 from gemini_calmgr.cal import get_cal_object
 from ..fits_storage_config import fits_servername, fits_system_status, use_as_archive
 
@@ -271,6 +271,32 @@ def calibrations(selection):
     selection['canonical'] = True
 
     query = queryselection(query, selection)
+
+    try:
+        if 'date' in selection:
+            dt = selection['date']
+            dt = datetime.datetime.strptime(dt, '%Y%m%d')
+            nextdt = dt + datetime.timedelta(days=1)
+            if nextdt > datetime.datetime.now():
+                nextdt = None
+            else:
+                nextdt = nextdt.strftime('%Y%m%d')
+            prevdt = dt - datetime.timedelta(days=1)
+            prevdt = prevdt.strftime('%Y%m%d')
+
+            if nextdt:
+                nextsel = selection.copy()
+                del nextsel['canonical']
+                nextsel['date'] = nextdt
+                template_args['next'] = f"&nbsp;|&nbsp;<a href=\"/calibrations{selection_to_URL(nextsel)}\">{nextdt}</a> &gt;&gt;"
+            if prevdt:
+                prevsel = selection.copy()
+                del prevsel['canonical']
+                prevsel['date'] = prevdt
+                template_args['prev'] = f"&lt;&lt; <a href=\"/calibrations{selection_to_URL(prevsel)}\">{prevdt}</a>"
+    except Exception as e:
+        # best effort, we'll just exclude the links for prev/next day
+        raise
 
     # If openquery, decline to do it
     if openquery(selection):
