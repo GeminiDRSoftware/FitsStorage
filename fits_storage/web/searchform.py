@@ -572,12 +572,14 @@ dropdown_options = {
          ("YPHOT", "YPHOT"),
          ("JPHOT", "JPHOT"),
          ("KPHOT", "KPHOT"),
-         ("X_(order_6)", "X_(order_6)"),
-         ("J_(order_5)", "J_(order_5)"),
-         ("H_(order_4)", "H_(order_4)"),
-         ("K_(order_3)", "K_(order_3)"),
-         ("L_(order_2)", "L_(order_2)"),
-         ("M_(order_1)", "M_(order_1)")],
+         # removing these as they are bogus and confusing, per phirst
+         # ("X_(order_6)", "X_(order_6)"),
+         # ("J_(order_5)", "J_(order_5)"),
+         # ("H_(order_4)", "H_(order_4)"),
+         # ("K_(order_3)", "K_(order_3)"),
+         # ("L_(order_2)", "L_(order_2)"),
+         # ("M_(order_1)", "M_(order_1)")
+         ],
     "niri_filter_options":
         [("Y", "Y"),
          ("J", "J"),
