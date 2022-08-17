@@ -9,6 +9,10 @@ searchform
 
 - Added previous/next day buttons where applicable when a date search has been done
 
+- Calibrations tab honors user column selections
+
+- binning column enabled by default in results tables
+
 fac-pdu.def
 ^^^^^^^^^^^
 
