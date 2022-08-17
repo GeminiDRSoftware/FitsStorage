@@ -11,7 +11,7 @@
 
 
 // Adding DRAGONS CI library to bring in some extra utilities such as slack notifications
-@Library('dragons_ci@master') _
+@Library "dragons_ci@master"
 
 pipeline {
     agent { label 'hawaii' }
