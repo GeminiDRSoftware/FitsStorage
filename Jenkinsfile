@@ -1,7 +1,5 @@
 #!/usr/bin/env groovy
 /*
- * Jenkins Pipeline for DRAGONS
- *
  * by Bruno C. Quint
  * adapted for FitsStorage by Oliver Oberdorf
  *
@@ -16,7 +14,7 @@
 @Library('dragons_ci@master') _
 
 pipeline {
-    agent any
+    agent { label 'hawaii' }
 
     options { skipDefaultCheckout() }
 
