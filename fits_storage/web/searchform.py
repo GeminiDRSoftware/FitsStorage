@@ -17,7 +17,7 @@ from xml.parsers.expat import ExpatError
 from . import templating
 
 from .calibrations import calibrations
-from gemini_obs_db.utils.gemini_metadata_utils import GeminiDataLabel, GeminiObservation
+from gemini_obs_db.utils.gemini_metadata_utils import GeminiDataLabel, GeminiObservation, gemini_date
 
 from .selection import getselection, selection_to_URL
 from .summary import summary_body
@@ -138,8 +138,9 @@ def searchform(things, orderby):
                 prevsearchdt = searchdt - timedelta(days=1)
                 selection_clone['date'] = prevsearchdt.strftime("%Y%m%d")
                 prevday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
-                if nextsearchdt <= datetime.now():
-                    selection_clone['date'] = nextsearchdt.strftime("%Y%m%d")
+                nextsearchstr = nextsearchdt.strftime('%Y%m%d')
+                if nextsearchstr <= gemini_date('today'):
+                    selection_clone['date'] = nextsearchstr
                     nextday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
             except:
                 # ok if we fail, this is a nice to have

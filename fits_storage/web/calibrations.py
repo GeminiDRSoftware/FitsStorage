@@ -2,6 +2,8 @@
 This module contains the calibrations html generator function.
 """
 import datetime
+
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_date
 from .selection import sayselection, queryselection, openquery, selection_to_URL
 from gemini_calmgr.cal import get_cal_object
 from ..fits_storage_config import fits_servername, fits_system_status, use_as_archive
@@ -277,10 +279,9 @@ def calibrations(selection):
             dt = selection['date']
             dt = datetime.datetime.strptime(dt, '%Y%m%d')
             nextdt = dt + datetime.timedelta(days=1)
-            if nextdt > datetime.datetime.now():
+            nextdt = nextdt.strftime('%Y%m%d')
+            if nextdt > gemini_date('today'):
                 nextdt = None
-            else:
-                nextdt = nextdt.strftime('%Y%m%d')
             prevdt = dt - datetime.timedelta(days=1)
             prevdt = prevdt.strftime('%Y%m%d')
 
