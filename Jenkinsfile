@@ -42,6 +42,10 @@ pipeline {
                 script {
                   sh 'ls -l /home/jenkins'
                 }
+                echo 'workspace folder'
+                script {
+                  sh 'ls -l /home/jenkins/workspace'
+                }
                 echo 'Checking Out FitsStorage'
                 dir('FitsStorage') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorage.git',
