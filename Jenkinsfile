@@ -34,7 +34,14 @@ pipeline {
                 echo 'STARTED'
 
 //                 checkout scm
-
+                echo 'root folder'
+                script {
+                  sh 'ls /'
+                }
+                echo 'home folder'
+                script {
+                  sh 'ls /home/jenkins'
+                }
                 echo 'Checking Out FitsStorage'
                 dir('FitsStorage') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorage.git',
