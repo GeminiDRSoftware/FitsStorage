@@ -49,11 +49,11 @@ pipeline {
                 echo 'cleanup'
                 script {
                   sh '''
-                  rm -rf /home/jenkins/workspace/FitsStorage
-                  rm -rf /home/jenkins/workspace/FitsStorageConfig
-                  rm -rf /home/jenkins/workspace/GeminiCalMgr
-                  rm -rf /home/jenkins/workspace/FitsStorageDB
-                  rm -rf /home/jenkins/workspace/DRAGONS
+                  rm -rf /home/jenkins/workspace/FitsServer/FitsStorage
+                  rm -rf /home/jenkins/workspace/FitsServer/FitsStorageConfig
+                  rm -rf /home/jenkins/workspace/FitsServer/GeminiCalMgr
+                  rm -rf /home/jenkins/workspace/FitsServer/FitsStorageDB
+                  rm -rf /home/jenkins/workspace/FitsServer/DRAGONS
                   '''
                 }
                 echo 'Checking Out FitsStorage'
