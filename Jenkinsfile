@@ -66,6 +66,8 @@ pipeline {
                   which git
 
                   git help
+
+                  which docker
                   '''
                 }
                 echo 'Checking Out FitsStorage'
