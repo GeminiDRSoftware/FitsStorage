@@ -34,13 +34,13 @@ pipeline {
                 echo 'STARTED'
 
 //                 checkout scm
-                echo 'root folder'
+                echo '/jenkins folder'
                 script {
-                  sh 'ls /'
+                  sh 'ls -l /jenkins'
                 }
                 echo 'home folder'
                 script {
-                  sh 'ls /home/jenkins'
+                  sh 'ls -l /home/jenkins'
                 }
                 echo 'Checking Out FitsStorage'
                 dir('FitsStorage') {
