@@ -62,6 +62,10 @@ pipeline {
                   mkdir -p /home/jenkins/workspace/FitsServer/DRAGONS
 
                   hostname
+
+                  which git
+
+                  git help
                   '''
                 }
                 echo 'Checking Out FitsStorage'
