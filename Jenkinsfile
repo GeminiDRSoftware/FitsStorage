@@ -64,6 +64,7 @@ pipeline {
                   hostname
 
                   which docker
+                  docker ps
                   '''
                 }
                 echo 'Checking Out FitsStorage'
