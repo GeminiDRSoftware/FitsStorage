@@ -46,6 +46,16 @@ pipeline {
                 script {
                   sh 'ls -l /home/jenkins/workspace'
                 }
+                echo 'cleanup'
+                script {
+                  sh '''
+                  rm -rf /home/jenkins/workspace/FitsStorage
+                  rm -rf /home/jenkins/workspace/FitsStorageConfig
+                  rm -rf /home/jenkins/workspace/GeminiCalMgr
+                  rm -rf /home/jenkins/workspace/FitsStorageDB
+                  rm -rf /home/jenkins/workspace/DRAGONS
+                  '''
+                }
                 echo 'Checking Out FitsStorage'
                 dir('FitsStorage') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorage.git',
