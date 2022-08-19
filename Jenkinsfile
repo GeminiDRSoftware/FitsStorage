@@ -63,10 +63,6 @@ pipeline {
 
                   hostname
 
-                  which git
-
-                  git help
-
                   which docker
                   '''
                 }
