@@ -60,6 +60,8 @@ pipeline {
                   mkdir -p /home/jenkins/workspace/FitsServer/GeminiCalMgr
                   mkdir -p /home/jenkins/workspace/FitsServer/FitsStorageDB
                   mkdir -p /home/jenkins/workspace/FitsServer/DRAGONS
+
+                  hostname
                   '''
                 }
                 echo 'Checking Out FitsStorage'
