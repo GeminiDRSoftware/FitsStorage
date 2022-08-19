@@ -54,6 +54,12 @@ pipeline {
                   rm -rf /home/jenkins/workspace/FitsServer/GeminiCalMgr
                   rm -rf /home/jenkins/workspace/FitsServer/FitsStorageDB
                   rm -rf /home/jenkins/workspace/FitsServer/DRAGONS
+
+                  mkdir -p /home/jenkins/workspace/FitsServer/FitsStorage
+                  mkdir -p /home/jenkins/workspace/FitsServer/FitsStorageConfig
+                  mkdir -p /home/jenkins/workspace/FitsServer/GeminiCalMgr
+                  mkdir -p /home/jenkins/workspace/FitsServer/FitsStorageDB
+                  mkdir -p /home/jenkins/workspace/FitsServer/DRAGONS
                   '''
                 }
                 echo 'Checking Out FitsStorage'
