@@ -34,44 +34,10 @@ pipeline {
                 echo 'STARTED'
 
 //                 checkout scm
-                echo '/jenkins folder'
-                script {
-                  sh 'ls -l /jenkins'
-                }
-                echo 'home folder'
-                script {
-                  sh 'ls -l /home/jenkins'
-                }
-                echo 'workspace folder'
-                script {
-                  sh 'ls -l /home/jenkins/workspace'
-                }
-                echo 'cleanup'
-                script {
-                  sh '''
-                  rm -rf /home/jenkins/workspace/FitsServer/FitsStorage
-                  rm -rf /home/jenkins/workspace/FitsServer/FitsStorageConfig
-                  rm -rf /home/jenkins/workspace/FitsServer/GeminiCalMgr
-                  rm -rf /home/jenkins/workspace/FitsServer/FitsStorageDB
-                  rm -rf /home/jenkins/workspace/FitsServer/DRAGONS
-
-                  mkdir -p /home/jenkins/workspace/FitsServer/FitsStorage
-                  mkdir -p /home/jenkins/workspace/FitsServer/FitsStorageConfig
-                  mkdir -p /home/jenkins/workspace/FitsServer/GeminiCalMgr
-                  mkdir -p /home/jenkins/workspace/FitsServer/FitsStorageDB
-                  mkdir -p /home/jenkins/workspace/FitsServer/DRAGONS
-
-                  hostname
-
-                  which docker
-                  docker ps
-                  '''
-                }
                 echo 'Checking Out FitsStorage'
                 dir('FitsStorage') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorage.git',
                     branch: '2022-1',
-                    //credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
                     credentialsId: 'ooberdorf_gitlab'
                 }
 
@@ -79,7 +45,6 @@ pipeline {
                 dir('FitsStorageConfig') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorageConfig.git',
                     branch: 'master',
-                    //credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
                     credentialsId: 'ooberdorf_gitlab'
                 }
 
@@ -87,7 +52,6 @@ pipeline {
                 dir('FitsStorageDB') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git',
                     branch: 'release/1.0.x',
-                    //credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
                     credentialsId: 'ooberdorf_gitlab'
                 }
 
@@ -95,7 +59,6 @@ pipeline {
                 dir('GeminiCalMgr') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git',
                     branch: 'release/1.1.x',
-                    //credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
                     credentialsId: 'ooberdorf_gitlab'
                 }
             }
