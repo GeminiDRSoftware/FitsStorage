@@ -1,6 +1,6 @@
 import sys
 import datetime
-import urllib.request, urllib.error
+import requests
 from xml.dom.minidom import parseString
 from sqlalchemy import join
 from fits_storage.logger import logger, setdebug, setdemon
@@ -66,7 +66,8 @@ if __name__ == "__main__":
             url = "http://%s/fileontape/%s" % (options.tapeserver, dbfilename)
             logger.debug("Querying tape server DB at %s" % url)
 
-            xml = urllib.request.urlopen(url).read()
+            r = requests.get(url)
+            xml = r.text
             dom = parseString(xml)
             fileelements = dom.getElementsByTagName("file")
 

@@ -1,7 +1,5 @@
-from urllib.error import HTTPError
 
-import urllib.request
-import urllib.parse
+import requests
 import sys
 import re
 import smtplib
@@ -108,10 +106,11 @@ if __name__ == "__main__":
 
                     @retry(tries=3)
                     def get_search_results():
-                        return str(urllib.request.urlopen(url).read(), 'utf-8')
+                        r = requests.get(url)
+                        return r.text
                     try:
                         html = get_search_results()
-                    except HTTPError as hex:
+                    except requests.RequestException as hex:
                         html = ''
                         logger.warn(f"Unable to get results from {url}")
                         errmsg = "Error getting results for notif: %d %s Exception: %s: %s" % (notif.id,

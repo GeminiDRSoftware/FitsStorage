@@ -1,13 +1,11 @@
-import urllib.request, urllib.error, urllib.parse
-import json
+import requests
 
 
 if __name__ == "__main__":
 
     url = "http://fits/qaforgui"
-    url_stream = urllib.request.urlopen(url)
-    data = json.load(url_stream)
-    url_stream.close()
+    r = requests.get(url)
+    data = r.json()
 
     for i in data:
         instrument = i['metadata']['instrument']

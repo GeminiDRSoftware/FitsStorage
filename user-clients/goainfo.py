@@ -22,9 +22,11 @@ from datetime import datetime
 import json
 import logging
 import sys
-import urllib.request, urllib.parse, urllib.error
+import requests
+from requests import RequestException
 
 STANDARD_SERVER='archive.gemini.edu'
+
 
 def grab_info_from_url(url):
     """
@@ -35,26 +37,20 @@ def grab_info_from_url(url):
     caller
     """
 
-    # Note to Python newbies: urllib.urlopen returns a "file-like" object, meaning that
-    # you can read from it like if it were a file, and you're expected to close it.
-    # We use here a 'with' block to do just that (stuff created in the 'with' sentence
-    # is cleaned up at the end of the block, no matter how we exit from it), but the
-    # object returned by urllib is not smart enough to be used straight here.
-    #
-    # But we can wrap the object with contextlib.closing to help with that
     try:
-        with closing(urllib.request.urlopen(url)) as response:
-            status = response.getcode()
-            if status == 200:
-                return json.loads(response.read())
-            else:
-                logging.error("Got some non-specific error when querying the server. Report this!")
+        r = requests.get(url)
+        status = r.status_code
+        if status == 200:
+            return r.json()
+        else:
+            logging.error("Got some non-specific error when querying the server. Report this!")
     # We get ValueError if the query returns a non-valid JSON object.
     # We get the other two errors if something went wrong with querying the web server
     except ValueError:
         logging.error("Could not get retrieve valid information from the server")
-    except IOError:
+    except (IOError, RequestException):
         logging.error("Could not contact the web server!")
+
 
 def strip_datetime_extras(datetimestring):
     """

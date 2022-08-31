@@ -1,4 +1,4 @@
-import urllib.request, urllib.parse, urllib.error
+import requests
 from xml.dom.minidom import parseString
 import os
 import re
@@ -91,7 +91,8 @@ if __name__ == "__main__":
         print("Considering %s - %s" % (thefile, filemd5))
 
         url = "http://%s/fileontape/%s" % (options.tapeserver, thefile)
-        xml = urllib.request.urlopen(url).read()
+        r = requests.open(url)
+        xml = r.text
 
         dom = parseString(xml)
 

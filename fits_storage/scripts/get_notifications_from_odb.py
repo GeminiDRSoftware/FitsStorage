@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import urllib.request, urllib.error, urllib.parse
+import requests
 from xml.dom.minidom import parseString
 from optparse import OptionParser
 from datetime import datetime
@@ -17,19 +17,19 @@ from gemini_obs_db.db import session_scope
 
 def download_and_ingest(url):
     logger.info("Fetching XML from ODB server: %s", url)
-    xml = urllib.request.urlopen(url).read()
+    r = requests.get(url)
+    xml = r.text
     logger.debug("Got %d bytes from server.", len(xml))
 
     # Upload to remote, or ingest locally?
     if options.to_remote_server:
+        cookies = dict(gemini_fits_authorization=magic_download_cookie)
+        r = requests.get(url, cookies=cookies)
         url = "%s/import_odb_notifications" % options.to_remote_server
-        opener = urllib.request.build_opener()
-        opener.addheaders.append(('Cookie', 'gemini_fits_authorization=%s' % magic_download_cookie))
-        u = opener.open(url, xml)
-        report = u.read()
-        u.close()
-        if u.getcode() != HTTP_OK:
-            logger.error("Got not-OK return code from remote server: %s", u.getcode())
+        r = requests.post(url, data=xml)
+        report = r.text
+        if r.status_code != HTTP_OK:
+            logger.error("Got not-OK return code from remote server: %s", r.status_code)
 
         # Make the report into a list of lines for the log
         try:

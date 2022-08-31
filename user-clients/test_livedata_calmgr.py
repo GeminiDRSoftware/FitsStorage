@@ -1,7 +1,8 @@
-import urllib.request, urllib.parse, urllib.error
-from urllib.error import HTTPError
+import urllib.parse
+import requests
 
 import datetime
+from requests import RequestException
 
 import astrodata
 import gemini_instruments
@@ -39,14 +40,13 @@ if __name__ == "__main__":
     #print desc_dict
     url = "http://localhost/calmgr/processed_flat/"
     try:
-        u = urllib.request.urlopen(url, postdata.encode('utf-8', errors='ignore'))
+        r = requests.get(url, data=postdata)
         end = datetime.datetime.now()
 
         interval = end - start
-        print(u.read())
-        u.close()
+        print(r.text)
 
         print("-----\n")
         print("query took %s" % interval)
-    except HTTPError as httpe:
+    except RequestException as httpe:
         print("Got HTTP Error message: {}".format(httpe.readlines()))

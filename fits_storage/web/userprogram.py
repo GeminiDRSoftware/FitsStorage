@@ -3,15 +3,12 @@ This module handles the web interface to the userprogram orm.
 This is how users register programs against their userids,
 find out what programs they have access to etc
 """
+import requests
 
 from ..orm.userprogram import UserProgram
 from ..utils.web import get_context
 
 from . import templating
-
-import urllib.request
-import urllib.parse
-import urllib.error
 
 
 @templating.templated("user_programs.html")
@@ -200,10 +197,8 @@ def validate_program_key(program_id, program_key):
     if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
             getattr(ssl, '_create_unverified_context', None)):
         ssl._create_default_https_context = ssl._create_unverified_context
-
-    ufd = urllib.request.urlopen(url)
-    reply = ufd.read().decode('utf-8')
-    ufd.close()
+    r = requests.get(url)
+    reply = r.text
 
     if reply[:3] == 'YES':
         return True

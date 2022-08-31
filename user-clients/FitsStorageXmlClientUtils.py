@@ -1,4 +1,4 @@
-import urllib.request, urllib.error, urllib.parse
+import requests
 from xml.dom.minidom import parseString
 import hashlib
 
@@ -17,9 +17,8 @@ def get_file_list(selection, canonical=True, present=True, server='fits'):
 
   url+="/"+selection
 
-  u = urllib.request.urlopen(url)
-  xml = u.read()
-  u.close()
+  r = requests.get(url)
+  xml = r.text
 
   dom = parseString(xml)
   files = []
@@ -43,12 +42,9 @@ def fetch_files(files, server='fits'):
   # Please do not distribute this code to non gemini staff
   for file in files:
     url = "http://%s/file/%s" % (server, file['filename'])
-    opener = urllib.request.build_opener()
-    opener.addheaders.append(('Cookie', 'gemini_fits_authorization=good_to_go'))
-    #print "Fetching: %s" % url
-    u = opener.open(url)
-    data = u.read()
-    u.close()
+    cookies = dict(gemini_fits_authorization='good_to_go')
+    r = requests.get(url, cookies=cookies)
+    data = r.text
 
     # Compute the md5
     m = hashlib.md5()
@@ -75,9 +71,8 @@ def get_cal_list(selection, caltype, server='fits'):
     url+="/"+selection
     url+="/"+caltype
 
-    u = urllib.request.urlopen(url)
-    xml = u.read()
-    u.close()
+    r = requests.get(url)
+    xml = r.text
 
     dom = parseString(xml)
     cals = []

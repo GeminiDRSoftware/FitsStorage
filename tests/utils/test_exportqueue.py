@@ -1,5 +1,6 @@
 import json
 
+import requests
 import ssl
 from http.client import IncompleteRead
 
@@ -20,6 +21,7 @@ from fits_storage.utils.null_logger import EmptyLogger
 from fits_storage.utils import queue
 
 from tests.log_helper import DummyLogger
+from tests.utils import MockRequest
 
 
 def test_export_queue_util_pop(monkeypatch):
@@ -224,10 +226,18 @@ def test_export_queue_util_export_file(monkeypatch):
         def close(self):
             pass
 
+
     mock_url = MockUrl()
+    mock_req = MockRequest()
 
     def mock_urlopen(request, timeout=None):
         return mock_url
+
+    def mock_request_get(url, timeout=None):
+        return mock_req
+
+    def mock_request_post(url, data=None, timeout=None):
+        return mock_req
 
     class MockS3Item:
         def get_contents_as_string(self):
@@ -245,6 +255,8 @@ def test_export_queue_util_export_file(monkeypatch):
 
     monkeypatch.setattr(fits_storage.utils.exportqueue, 'get_destination_data_md5', mock_get_destination_data_md5)
     monkeypatch.setattr(urllib.request, 'urlopen', mock_urlopen)
+    monkeypatch.setattr(requests, 'post', mock_request_post)
+    monkeypatch.setattr(requests, 'get', mock_request_get)
 
     # have to hack in s3 path because we don't want to monkeypatch the open builtin (can break pytest)
     monkeypatch.setattr(fits_storage.utils.exportqueue, 'using_s3', True)
@@ -357,11 +369,20 @@ def test_get_destination_data_md5(monkeypatch):
             pass
 
     mock_url = MockUrl()
+    mock_req = MockRequest()
 
     def mock_urlopen(request, timeout=None):
         return mock_url
 
+    def mock_request_get(url, timeout=None):
+        return mock_req
+
+    def mock_request_post(url, data=None, timeout=None):
+        return mock_req
+
     monkeypatch.setattr(urllib.request, 'urlopen', mock_urlopen)
+    monkeypatch.setattr(requests, 'post', mock_request_post)
+    monkeypatch.setattr(requests, 'get', mock_request_get)
 
     md5 = get_destination_data_md5('filename', DummyLogger(), 'destination')
     assert(md5 is None)

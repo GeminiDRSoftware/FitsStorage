@@ -1,4 +1,4 @@
-import urllib.request, urllib.error, urllib.parse
+import requests
 import json
 from functools import partial, wraps
 import inspect
@@ -6,6 +6,7 @@ from importlib import import_module
 
 import traceback
 import sys
+from requests import RequestException
 
 from .null_logger import EmptyLogger
 
@@ -36,7 +37,8 @@ class ApiProxy(object):
         non_empty = list(filter(bool, (resource, self.pref, action) + args))
         path = '/'.join(non_empty)
         try:
-            response = json.loads(urllib.request.urlopen(path, json.dumps(kw).encode('utf8')).read())
+            r = requests.post(path, data=kw)
+            response = r.json()
             if 'error' in response:
                 if 'error_object' in response:
                     eobj = response['error_object']
@@ -49,7 +51,7 @@ class ApiProxy(object):
             return response['result']
         except TypeError:
             raise ApiProxyError("The response message is not valid: {!r}".format(response))
-        except (urllib.error.HTTPError, urllib.error.URLError) as e:
+        except RequestException as e:
             raise ApiProxyError("HTTP error when connecting to {}".format(path))
 
 ##########################################################################################
