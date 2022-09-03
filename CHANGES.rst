@@ -13,6 +13,8 @@ searchform
 
 - binning column enabled by default in results tables
 
+- UTC support for datetimes with Z suffix
+
 fac-pdu.def
 ^^^^^^^^^^^
 
