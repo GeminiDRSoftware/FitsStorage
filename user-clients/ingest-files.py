@@ -23,15 +23,14 @@
 #    2015-10-16, rcardene : First release
 #
 
-import urllib.request, urllib.parse, urllib.error
-import json
-from contextlib import closing
+import requests
 import logging
 
 SERVER = 'fits'
 
 logger = logging.getLogger('Ingesting')
 logging.basicConfig(format='%(name)s... %(levelname)s: %(message)s')
+
 
 def post_query(url, query_data):
     """
@@ -42,14 +41,14 @@ def post_query(url, query_data):
     caller
     """
     try:
-        with closing(urllib.request.urlopen(url, data=json.dumps(query_data))) as response:
-            status = response.getcode()
-            if status == 200:
-                return json.loads(response.read())
-            if 400 <= status < 500:
-                logger.error("Could not access the web server. Maybe misconfigured script. Please, report the problem")
-            else:
-                logger.error("Got some non-specific error when querying the server. Report this!")
+        r = requests.post(url, data=query_data)
+        status = r.status_code
+        if status == 200:
+            return r.json()
+        if 400 <= status < 500:
+            logger.error("Could not access the web server. Maybe misconfigured script. Please, report the problem")
+        else:
+            logger.error("Got some non-specific error when querying the server. Report this!")
     # We get ValueError if the query returns a non-valid JSON object.
     # We get the other two errors if something went wrong with querying the web server
     except ValueError:

@@ -1,4 +1,4 @@
-import urllib.request, urllib.parse, urllib.error
+import requests
 from xml.dom.minidom import parseString
 
 
@@ -19,7 +19,8 @@ if __name__ == "__main__":
     selection = "today/GMOS/BIAS"
 
     url = "http://fits/xmlfilelist/" + selection
-    xml = urllib.request.urlopen(url).read()
+    r = requests.get(url)
+    xml = r.text
     dom = parseString(xml)
 
     files = [getFileDataFromXml(fe) for fe in dom.getElementsByTagName('file')]

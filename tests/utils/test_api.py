@@ -1,4 +1,4 @@
-import urllib
+import requests
 
 import pytest
 
@@ -21,6 +21,22 @@ class MockResponse():
         return self.data
 
 
+def mock_requestspost(path, data):
+    global _saw_path
+    global _saw_data
+    _saw_path = path
+    _saw_data = data
+    return _mock_response
+
+
+def mock_requestsget(path, cookies=None):
+    global _saw_path
+    global _saw_data
+    _saw_path = path
+    _saw_data = None
+    return _mock_response
+
+
 def mock_urlopen(path, data):
     global _saw_path
     global _saw_data
@@ -30,7 +46,8 @@ def mock_urlopen(path, data):
 
 
 def test_api_proxy(monkeypatch):
-    monkeypatch.setattr(urllib.request, 'urlopen', mock_urlopen)
+    monkeypatch.setattr(requests, 'get', mock_requestsget)
+    monkeypatch.setattr(requests, 'post', mock_requestspost)
 
     proxy = ApiProxy('host', 'prefix')
     global _mock_response

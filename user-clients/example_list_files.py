@@ -1,5 +1,4 @@
-import urllib.request, urllib.parse, urllib.error
-import json
+import requests
 
 
 if __name__ == "__main__":
@@ -11,12 +10,8 @@ if __name__ == "__main__":
     url += "canonical/GN-2010B-Q-22/GMOS-N/20101231"
 
     # Open the URL and fetch the JSON document text into a string
-    u = urllib.request.urlopen(url)
-    jsondoc = u.read()
-    u.close()
-
-    # Decode the JSON
-    files = json.loads(jsondoc)
+    r = requests.get(url)
+    files = r.json()
 
     # This is a list of dictionaries each containing info about a file
     for f in files:

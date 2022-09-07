@@ -1,4 +1,4 @@
-import urllib.request, urllib.error, urllib.parse
+import requests
 import re
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -29,7 +29,8 @@ if __name__ == "__main__":
 
     url = "http://%s/calibrations/GMOS/NotFail/%s/arc/warnings" % (options.httpserver, daterange)
 
-    html = urllib.request.urlopen(url).read()
+    r = requests.get(url)
+    html = r.text
 
     cremissing = re.compile('Counted (\d*) potential missing Calibrations')
     crewarning = re.compile('Query generated (\d*) warnings')

@@ -1,3 +1,4 @@
+import requests
 import urllib
 
 import pytest
@@ -184,11 +185,23 @@ def test_validate_program_key(session, monkeypatch):
         def close(self):
             pass
 
+    class ReqRet:
+        def __init__(self):
+            self.text = 'YES'
+            self.status_code=200
+
     def _mock_urlopen(url):
         nonlocal saved_url
         saved_url = url
         return Ret()
+
+    def _mock_requests_get(url):
+        nonlocal saved_url
+        saved_url = url
+        return ReqRet()
+
     monkeypatch.setattr(urllib.request, 'urlopen', _mock_urlopen)
+    monkeypatch.setattr(requests, 'get', _mock_requests_get)
 
     assert(validate_program_key('GN001', 'key'))
     assert(saved_url == 'https://gnodb.gemini.edu:8443/auth?id=GN001&password=key')

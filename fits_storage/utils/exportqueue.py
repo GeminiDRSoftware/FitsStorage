@@ -4,15 +4,13 @@ This module provides various utility function used to manage the export queue
 import os
 
 import requests
-import urllib.request
-import urllib.error
-import urllib.parse
 import json
 import datetime
 import hashlib
 import bz2
 import http.client
 import ssl
+from requests import RequestException
 
 from sqlalchemy import join
 from sqlalchemy.orm import make_transient
@@ -245,15 +243,10 @@ class ExportQueueUtil(object):
             data = None
 
             if len(postdata) < 2147483647:
-                request = urllib.request.Request(url, data=postdata)
-                request.add_header('Cache-Control', 'no-cache')
-                request.add_header('Content-Length', '%d' % len(postdata))
-                request.add_header('Content-Type', 'application/octet-stream')
-                request.add_header('Cookie', 'gemini_fits_upload_auth=%s' % export_upload_auth_cookie)
-                u = urllib.request.urlopen(request, timeout=600)
-                response = u.read()
-                u.close()
-                http_status = u.getcode()
+                cookies = {'gemini_fits_upload_auth': export_upload_auth_cookie}
+                r = requests.post(url, data=postdata, cookies=cookies, timeout=600)
+                response = r.text
+                http_status = r.status_code
             else:
                 tmpfilename = os.path.join(z_staging_area, filename)
 
@@ -299,7 +292,7 @@ class ExportQueueUtil(object):
                 self.l.debug("Transfer not successful")
                 return False
 
-        except (urllib.error.URLError, http.client.IncompleteRead, ssl.SSLError, request.exceptions.ConnectionError):
+        except (RequestException, http.client.IncompleteRead, ssl.SSLError):
             self.l.info("Error posting %d bytes of data to destination server at: %s" % (len(postdata), url))
             self.l.debug("Transfer Failed")
             return False
@@ -341,10 +334,10 @@ def get_destination_data_md5(filename, logger, destination):
     # Construct and retrieve the URL
     try:
         url = "%s/jsonfilelist/present/filename=%s" % (destination, filename)
-        u = urllib.request.urlopen(url)
-        json_data = u.read()
+        r = requests.get(url)
+        json_data = r.text
         u.close()
-    except (urllib.error.URLError, http.client.IncompleteRead):
+    except (RequestException, http.client.IncompleteRead):
         logger.debug("Failed to get json data from destination server at URL: %s" % url)
         return "ERROR"
 

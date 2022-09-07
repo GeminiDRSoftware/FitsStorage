@@ -27,7 +27,7 @@ from sqlalchemy import join, desc
 from psycopg2 import InternalError
 from sqlalchemy.exc import DataError
 
-import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 import re
 import os
 import datetime

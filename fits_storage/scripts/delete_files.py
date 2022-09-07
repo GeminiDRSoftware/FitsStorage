@@ -1,8 +1,7 @@
 
 import sys
 import datetime
-import urllib.request
-import urllib.error
+import requests
 from xml.dom.minidom import parseString
 import os
 import smtplib
@@ -257,7 +256,8 @@ if __name__ == "__main__":
                     logger.debug("Querying tape server DB at %s" % url)
 
                     try:
-                        xml = urllib.request.urlopen(url).read()
+                        r = requests.get(url)
+                        xml = r.text
                         dom = parseString(xml)
                         fileelements = dom.getElementsByTagName("file")
 

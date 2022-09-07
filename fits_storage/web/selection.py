@@ -5,7 +5,7 @@ Functions in this module are only used within FitsStorageWebSummary.
 """
 import re
 import math
-import urllib.request, urllib.parse, urllib.error
+import urllib.parse, urllib.error
 
 from sqlalchemy import or_, func
 

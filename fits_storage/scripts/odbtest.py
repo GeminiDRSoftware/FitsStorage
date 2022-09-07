@@ -1,5 +1,4 @@
-import urllib.request, urllib.parse, urllib.error
-import re
+import requests
 
 
 if __name__ == "__main__":
@@ -7,7 +6,6 @@ if __name__ == "__main__":
     password='xxxxx'
 
     url = "https://gnodb.gemini.edu:8443/auth?id=%s&password=%s" % (program_id, password)
-    u = urllib.request.urlopen(url)
-    html = u.read()
-    u.close
+    r = requests.get(url)
+    html = r.text
     print("reply: %s" % html)
