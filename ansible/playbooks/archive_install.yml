@@ -40,11 +40,11 @@
 #      - name: Fail while I iterate
 #        fail:
 #          msg: "Exiting early"
-#      - name: Setup EPEL
-#        yum:
-#          name:
-#            - epel-release
-#        when: install_epel
+      - name: Setup EPEL
+        yum:
+          name:
+            - epel-release
+        when: install_epel
       - name: install packages
         yum:
           name: 
@@ -123,6 +123,11 @@
             - postfix
         when: enable_postfix
         notify: restart postfix
+      - name: install SELinux tools
+        yum:
+          name:
+            - policycoreutils-python-utils
+        when: selinux_support
       - name: configure postfix inet protocols
         lineinfile:
           path: /etc/postfix/main.cf
@@ -207,7 +212,8 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git"
-          version: v1.0.13
+          #version: release/1.0.x
+          version: v1.0.24
           dest: /opt/FitsStorageDB
           accept_hostkey: yes
         when: not is_aws
@@ -217,7 +223,8 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git"
-          version: v1.1.7
+          #version: release/1.1.x
+          version: v1.1.17
           dest: /opt/GeminiCalMgr
           accept_hostkey: yes
         when: not is_aws
@@ -329,9 +336,8 @@
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
-          version: 0474bfe83d7ca7ad5b554630d19d247e97a469df
-#          version: e3076d985e41360903906b9f9efe795bacaa210b
-          #version: release/3.0.x
+          version: 2d50ce12fd11f75ceca31095a9dd0ec1e5b2efaf
+          #version: release/3.1.x
         register: dragonscheckout
       - name: Cythonize DRAGONS
         command: /usr/local/bin/cythonize -3 -i cyclip.pyx
@@ -403,6 +409,10 @@
           state: directory
           owner: postgres
           group: postgres
+        register: pgsql_data_created
+      - name: SELinux Perms for PGDATA folder
+        command: 'sudo semanage fcontext -a -t postgresql_db_t "/data/pgsql_data(/.*)?" && restorecon -Rv /data/pgsql_data'
+        when: pgsql_data_created.changed and selinux_support
       - name: Install PostgreSQL service script
         command: cp /lib/systemd/system/postgresql.service /etc/systemd/system/
         args:
@@ -490,12 +500,12 @@
           new_owner: fitsdata
         become: yes
         become_user: postgres
-      - name: If we have a fresh DB, set version to 26 since we are already up to date with the migrations
+      - name: If we have a fresh DB, set version to 30 since we are already up to date with the migrations
         postgresql_query:
           db: fitsdata
-          query: update migrate_version set version=26
+          query: update migrate_version set version=30
         become: yes
-        become_user: fitsdata
+        become_user: postgres
         when: fitsdata_db_created.changed
       - name: Apply Migrations (Idempotent, always apply)
         command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr python3 dbmigration/manage.py upgrade postgresql:///fitsdata dbmigration"
@@ -685,16 +695,35 @@
         when: is_ops and is_chile
       - name: Install fitsstorage config
         copy:
-          src: ../../../FitsStorageConfig/configs/{{ inventory_hostname_short }}_fitsstorage.conf
+          src: ../../../FitsStorageConfig/configs/{{ fitsstorage_configfile }}
           dest: /etc/fitsstorage.conf
         register: fitsstorageconf
         notify: restart services
-      - name: Register Ingest service 1
-        service: name=fits-service_ingest_queue1 state=started enabled=yes
+#      - name: Register Ingest service 1
+#        service: name=fits-service_ingest_queue1 state=started enabled=yes
+#        when: enable_ingest_services
+#      - name: Register Ingest service 2
+#        service: name=fits-service_ingest_queue2 state=started enabled=yes
+#        when: enable_ingest_services
+#      - name: Register Ingest service 1 1/2 (hack to make restarts work)
+#        shell: systemctl enable fits-service_ingest_queue1.service
+#        when: enable_ingest_services
+#      - name: Register Ingest service 1 1/2 (hack to make restarts work)
+#        shell: systemctl start fits-service_ingest_queue1.service
+#        when: enable_ingest_services
+#      - name: Register Ingest service 2 1/2 (hack to make restarts work)
+#        shell: systemctl enable fits-service_ingest_queue2.service
+#        when: enable_ingest_services
+#      - name: Register Ingest service 2 1/2 (hack to make restarts work)
+#        shell: systemctl start fits-service_ingest_queue2.service
+#        when: enable_ingest_services
+      - name: enable services on boot
+        ansible.builtin.service:
+          name: "{{ item }}"
+          enabled: true
+          state: started
         when: enable_ingest_services
-      - name: Register Ingest service 2
-        service: name=fits-service_ingest_queue2 state=started enabled=yes
-        when: enable_ingest_services
+        with_items: ["fits-service_ingest_queue1", "fits-service_ingest_queue2"]
       - name: Register Ingest service 3
         service: name=fits-service_ingest_queue3 state=started enabled=yes
         when: enable_all_ingest and enable_ingest_services

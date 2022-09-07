@@ -131,6 +131,7 @@ function CalsTab(selected) {
                     unmarkAll('associated_cals');
                     // TODO setCurrentTab should handle this, but fails silently for some reason
                     $("div#download_all_area").hide();
+                    setPreviewVisibility();
                 });
             } else {
                 $("#not_loading_cals").show();
@@ -161,6 +162,7 @@ function CalsTab(selected) {
                     // first call)
                     unmarkAll('associated_cals');
                     $('#calibration_results').html(data);
+                    setPreviewVisibility();
                     // TODO setCurrentTab should handle this, but fails silently for some reason
                     $("div#download_all_area").hide();
                     $("#caltab").html('Selected Calibrations');

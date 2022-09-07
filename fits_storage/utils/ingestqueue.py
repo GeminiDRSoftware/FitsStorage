@@ -336,6 +336,32 @@ class IngestQueueUtil(object):
                     self.s.add(cq)
                     self.s.flush()
 
+                    if 'BPM' in header.types:
+                        # need to requeue any matching instr/binned data through following BPM (if any)
+                        bpmh = self.s.query(Header).filter(Header.instrument == header.instrument,
+                                                           Header.detector_binning == header.detector_binning,
+                                                           Header.ut_datetime > header.ut_datetime,
+                                                           Header.types.like('%BPM%')).order_by(Header.ut_datetime)\
+                            .first()
+                        end_date = None
+                        if bpmh:
+                            end_date = bpmh.ut_datetime
+                        # now find headers to queue for calibrations
+                        requeuequery = self.s.query(Header, DiskFile) \
+                                           .filter(DiskFile.canonical,
+                                                   Header.diskfile_id == DiskFile.id,
+                                                   Header.instrument == header.instrument,
+                                                   Header.detector_binning == header.detector_binning,
+                                                   Header.ut_datetime > header.ut_datetime,
+                                                   Header.types.like('%BPM%'))
+                        if end_date:
+                            requeuequery = requeuequery.filter(Header.ut_datetime<end_date)
+                        for requeueh, requeuedf in requeuequery.all():
+                            rqcq = CalCacheQueue(requeueh.id, requeuedf.filename, sortkey=requeueh.ut_datetime)
+                            self.s.add(rqcq)
+                            self.s.flush()
+
+
         except:
             # For debug
             string = traceback.format_tb(sys.exc_info()[2])

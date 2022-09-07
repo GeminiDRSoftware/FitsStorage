@@ -2,6 +2,8 @@
 
 import re
 
+from sqlalchemy.orm.exc import NoResultFound
+
 from gemini_obs_db.utils.gemini_metadata_utils import gemini_fitsfilename
 
 from gemini_obs_db.orm.file import File
@@ -78,12 +80,15 @@ def report(thing):
             query = (session.query(Header, FullTextHeader)
                      .filter(FullTextHeader.diskfile_id == diskfile.id)
                      .filter(Header.diskfile_id == FullTextHeader.diskfile_id))  # explicit join to keep SQLA happy
-            header, ftheader = query.one()
-            if canhave_coords(session, ctx.user, header):
-                resp.append(ftheader.fulltext)
-            else:
-                resp.client_error(Return.HTTP_FORBIDDEN, "The data you're trying to access has "
-                                                         "proprietary rights and cannot be displayed")
+            try:
+                header, ftheader = query.one()
+                if canhave_coords(session, ctx.user, header):
+                    resp.append(ftheader.fulltext)
+                else:
+                    resp.client_error(Return.HTTP_FORBIDDEN, "The data you're trying to access has "
+                                                             "proprietary rights and cannot be displayed")
+            except NoResultFound:
+                resp.append("No stored header for file.\n")
 
             if diskfile.provenance:
                 resp.append("\n\n")

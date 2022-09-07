@@ -1,7 +1,5 @@
 #!/usr/bin/env groovy
 /*
- * Jenkins Pipeline for DRAGONS
- *
  * by Bruno C. Quint
  * adapted for FitsStorage by Oliver Oberdorf
  *
@@ -13,7 +11,7 @@
 
 
 // Adding DRAGONS CI library to bring in some extra utilities such as slack notifications
-@Library('dragons_ci@master') _
+//@Library('dragons_ci@master') _
 
 pipeline {
     agent{
@@ -38,33 +36,32 @@ pipeline {
                 echo 'STARTED'
 
 //                 checkout scm
-
                 echo 'Checking Out FitsStorage'
                 dir('FitsStorage') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorage.git',
                     branch: 'master',
-                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
+                    credentialsId: 'ooberdorf_gitlab'
                 }
 
                 echo 'Checking Out FitsStorageConfig'
                 dir('FitsStorageConfig') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorageConfig.git',
                     branch: 'master',
-                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
+                    credentialsId: 'ooberdorf_gitlab'
                 }
 
                 echo 'Checking Out FitsStorageDB'
                 dir('FitsStorageDB') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git',
                     branch: 'master',
-                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
+                    credentialsId: 'ooberdorf_gitlab'
                 }
 
                 echo 'Checking Out GeminiCalMgr'
                 dir('GeminiCalMgr') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git',
                     branch: 'master',
-                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
+                    credentialsId: 'ooberdorf_gitlab'
                 }
             }
 

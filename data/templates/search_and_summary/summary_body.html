@@ -13,6 +13,9 @@
 {% else %}
 <!-- BEGIN no results... -->
 <H2>Your search returned no results</H2>
+{% if calibrations -%}
+<P>Note that calibrations are not linked in GOA for visiting instruments such as IGRINS, 'Alopeke, and Zorro.</P>
+{%- endif %}
 <P>No data in the archive match your search criteria. Note that most searches (including program ID)
    are <b>exact match</b> searches, including only the first part of a program ID for example will
    not match any data. Also note that many combinations of search terms are in practice mutually

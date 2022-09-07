@@ -14,7 +14,7 @@ from ..orm.obslog_comment import ObslogComment
 from ..fits_storage_config import fits_open_result_limit, fits_closed_result_limit
 from .selection import queryselection, openquery
 from gemini_obs_db.utils.gemini_metadata_utils import gemini_date, gemini_time_period_from_range
-from sqlalchemy import asc, desc, func
+from sqlalchemy import asc, desc, func, nullslast
 
 from ..utils.web import get_context
 
@@ -37,12 +37,12 @@ def list_headers(selection, orderby, full_query=False, add_previews=False, sessi
     if full_query:
         if add_previews:
             # query = session.query(Header, DiskFile, File, ObslogComment, Preview).join(DiskFile).join(File, DiskFile.file_id == File.id).filter(Header.diskfile_id == DiskFile.id).outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label).outerjoin(Preview, Preview.diskfile_id == DiskFile.id)
-            query = session.query(Header, DiskFile, File, ObslogComment).join(DiskFile, Header.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id).filter(Header.diskfile_id == DiskFile.id).outerjoin(Provenance).outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label).outerjoin(Preview, Preview.diskfile_id == DiskFile.id)
+            query = session.query(Header, DiskFile, File, ObslogComment).join(DiskFile, Header.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id).filter(Header.diskfile_id == DiskFile.id).outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label).outerjoin(Preview, Preview.diskfile_id == DiskFile.id)
         else:
             # query = session.query(Header, DiskFile, File, ObslogComment).join(DiskFile).join(File).outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label)
-            query = session.query(Header, DiskFile, File, ObslogComment).join(DiskFile, Header.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id).filter(Header.diskfile_id == DiskFile.id).outerjoin(Provenance).outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label)
+            query = session.query(Header, DiskFile, File, ObslogComment).join(DiskFile, Header.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id).filter(Header.diskfile_id == DiskFile.id).outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label)
     else:
-        query = session.query(Header).join(DiskFile).join(File).outerjoin(Provenance)
+        query = session.query(Header).join(DiskFile).join(File)
     query = queryselection(query, selection)
 
 
@@ -78,9 +78,9 @@ def list_headers(selection, orderby, full_query=False, add_previews=False, sessi
 
     # Default sorting by ascending date if closed query, desc date if open query
     if is_openquery:
-        # This makes the query extremely slow on ops
-        # order_criteria.append(nullslast(desc(Header.ut_datetime)))
-        order_criteria.append(desc(Header.ut_datetime))
+        # This makes the query extremely slow on ops - I think we have the custom index needed for 2022-1
+        order_criteria.append(nullslast(desc(Header.ut_datetime)))
+        # order_criteria.append(desc(Header.ut_datetime))
     else:
         order_criteria.append(asc(Header.ut_datetime))
 

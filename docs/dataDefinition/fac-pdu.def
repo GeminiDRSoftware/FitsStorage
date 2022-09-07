@@ -21,7 +21,7 @@ keywords:
   - DATALAB
   - OBJECT
   - OBSTYPE:
-    - char:   [ DARK, ARC, FLAT, BIAS, OBJECT, PINHOLE, RONCHI, CAL, FRINGE, MASK ]
+    - char:   [ DARK, ARC, FLAT, BIAS, OBJECT, PINHOLE, RONCHI, CAL, FRINGE, MASK, BPM ]
   - RAWGEMQA:
     - char:   [ UNKNOWN, USABLE, BAD, CHECK ]
   - RAWPIREQ:
@@ -55,3 +55,4 @@ tests:
   - valid-observation-info
   # TODO: Check this one; may not be needed
   - wcs-after-pdu
+  - valid-filters

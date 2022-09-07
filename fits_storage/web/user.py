@@ -672,33 +672,37 @@ def admin_file_permissions():
 
     # If we got an action, do it
     if item:
-        if not item.endswith('.fits'):
-            try:
-                obscheck = GeminiObservation(item)
-                if not obscheck.valid:
-                    warnings.append(f'Observation ID <b>{item}</b> has invalid format, adding anyway')
-            except Exception as e:
-                warnings.append(f'Observation ID <b>{item}</b> has invalid format, adding anyway')
+        for itemx in item.split(','):
+            itemx = itemx.strip()
+            if not itemx.endswith('.fits'):
+                try:
+                    obscheck = GeminiObservation(itemx)
+                    if not obscheck.valid:
+                        warnings.append(f'Observation ID <b>{itemx}</b> has invalid format, adding anyway')
+                except Exception as e:
+                    warnings.append(f'Observation ID <b>{itemx}</b> has invalid format, adding anyway')
 
     if usernames and item:
         for username in usernames.split(','):
             username = username.strip()
             try:
                 user = ctx.session.query(User).filter(User.username == username).one()
-                if item.endswith('.fits'):
-                    up = ctx.session.query(UserProgram).filter(UserProgram.filename == item) \
-                        .filter(UserProgram.user_id == user.id).first()
-                    if up is None:
-                        up = UserProgram(user_id=user.id, filename=item)
-                        ctx.session.add(up)
-                        ctx.session.flush()
-                else:
-                    up = ctx.session.query(UserProgram).filter(UserProgram.observation_id == item) \
-                        .filter(UserProgram.user_id == user.id).first()
-                    if up is None:
-                        up = UserProgram(user_id=user.id, observation_id=item)
-                        ctx.session.add(up)
-                        ctx.session.flush()
+                for itemx in item.split(','):
+                    itemx = itemx.strip()
+                    if itemx.endswith('.fits'):
+                        up = ctx.session.query(UserProgram).filter(UserProgram.filename == itemx) \
+                            .filter(UserProgram.user_id == user.id).first()
+                        if up is None:
+                            up = UserProgram(user_id=user.id, filename=itemx)
+                            ctx.session.add(up)
+                            ctx.session.flush()
+                    else:
+                        up = ctx.session.query(UserProgram).filter(UserProgram.observation_id == itemx) \
+                            .filter(UserProgram.user_id == user.id).first()
+                        if up is None:
+                            up = UserProgram(user_id=user.id, observation_id=itemx)
+                            ctx.session.add(up)
+                            ctx.session.flush()
             except NoResultFound:
                 warnings.append(f'Username <b>{username}</b> not found in system, ignoring')
 
