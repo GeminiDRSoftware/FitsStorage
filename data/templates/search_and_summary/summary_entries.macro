@@ -11,7 +11,8 @@
 </tr>
 {%- endmacro %}
 
-{%- macro row(row) -%}
+{%- macro row(row, rowtype=None) -%}
+{%- if (rowtype == 'primary' and row.is_primary_cal == True) or (rowtype == 'secondary' and row.is_primary_cal == False) or (rowtype == None) -%}
 {%- if row.procmode == 'sq' -%}
 <tr class='sq-alternating'>
 {%- elif row.procmode == 'ql' %}
@@ -37,6 +38,7 @@
   {%- endif -%}
 {%- endfor %}
 </tr>
+{%- endif -%}
 {%- endmacro %}
 
 {%- macro maybe_link(text, uri, test, blank=False) -%}
