@@ -405,6 +405,8 @@ class SummaryGenerator(object):
                 c.text = "Error: Not Defined in SummaryGenerator!"
             row.add(c)
 
+        if hasattr(header, "is_primary_cal"):
+            row.is_primary_cal = header.is_primary_cal
         return row
 
     def filename(self, header, diskfile, file, **kw):

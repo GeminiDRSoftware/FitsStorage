@@ -262,6 +262,7 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
         deprogrammed_uri = sumgen.deprogrammed_uri,
         headers          = sumgen.table_header(),
         data_rows        = RowYielder(sumgen, headers, sumtype),
+        cal_rows         = RowYielder(sumgen, headers, sumtype) if sumtype == 'associated_cals' else None,
         down_all_link    = download_all_url,
         json_res_link    = json_results_url,
         sumtype          = sumtype,
