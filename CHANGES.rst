@@ -61,15 +61,27 @@ templating
 Scripts
 -------
 
+check_on_tape
+^^^^^^^^^^^^^
+
+- fixed pointing of default tape server
+
 copy_from_visiting_instrument
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Added date regex option for only adding files with a certain date prefix
+- Added interrupt handling to clean up any in progress file being copied
 
 delete_files
 ^^^^^^^^^^^^
 
 - skip files if we can't connect to the tape service to check, but don't abort the run
+- fixed pointing of default tape server
+
+local_delete_files
+^^^^^^^^^^^^^^^^^^
+
+- fixed pointing of default tape server
 
 read_from_tape
 ^^^^^^^^^^^^^^

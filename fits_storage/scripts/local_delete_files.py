@@ -40,7 +40,7 @@ if __name__ == "__main__":
     # Option Parsing
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape1", help="The Fits Storage Tape server to use to check the files are on tape")
+    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape-lp2", help="The Fits Storage Tape server to use to check the files are on tape")
     parser.add_option("--file-pre", action="store", type="string", dest="filepre", default='', help="File prefix to operate on, eg N20090130, N200812 etc")
     parser.add_option("--mintapes", action="store", type="int", dest="mintapes", default=2, help="Minimum number of tapes file must be on to be eligable for deletion")
     parser.add_option("--dir", action="store", type="string", dest="dir", help="Directory to operate in")
