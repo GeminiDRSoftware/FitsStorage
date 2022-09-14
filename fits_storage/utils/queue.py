@@ -96,7 +96,7 @@ def pop_queue(queue_class, session, logger, fast_rebuild=False):
                     # the ACCESS EXCLUSIVE lock in pop_exportqueue from being granted until the transfer completes.
                     make_transient(qelement)
                 except AttributeError: # Got a None
-                    logger.debug("No item to pop on %s", tname)
+                    logger.debug("No item to pop on %s" % tname)
                 break
         except OperationalError:
             sleep(0.05)

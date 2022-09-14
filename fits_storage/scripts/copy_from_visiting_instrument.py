@@ -24,6 +24,19 @@ Script to copy files from the various Visting Instrument staging areas into Data
 """
 
 
+global file_in_progress
+file_in_progress = None
+
+
+def cleanup_for_exit():
+    global file_in_progress
+    if file_in_progress is not None:
+        try:
+            os.unlink(file_in_progress)
+        except Exception as e:
+            pass
+
+
 # Utility functions
 def check_present(session, filename):
     """
@@ -221,6 +234,10 @@ class VisitingInstrumentABC(ABC):
         dst_path = self.get_dest_path(filename)
         logger.debug("Creating dst from %s %s %s" % (self.storage_root, dst_path, dst_filename))
         dst = os.path.join(self.storage_root, dst_path, dst_filename)
+
+        global file_in_progress
+        file_in_progress = dst
+
         # If the Destination file already exists, skip it
         if not force and self.target_found(dst):
             logger.info("%s already exists on storage_root - skipping", filename)
@@ -262,6 +279,7 @@ class VisitingInstrumentABC(ABC):
                     success = True
                 if success:
                     logger.info("Adding %s to IngestQueue", filename)
+                    file_in_progress = None  # reset file so we don't accidentally "clean" it up if we exit now
                     iq.add_to_queue(dst_filename, dst_path, force=False, force_md5=False, after=None)
         except:
             logger.error("Problem copying %s to %s", src, self.storage_root)
@@ -470,10 +488,12 @@ if __name__ == "__main__":
     # Define signal handlers. This allows us to bail out neatly if we get a signal
     def handler(signum, frame):
         logger.error("Received signal: %d. Crashing out. ", signum)
+        cleanup_for_exit()
         raise KeyboardInterrupt('Signal', signum)
 
     def nicehandler(signum, frame):
         logger.error("Received signal: %d. Attempting to stop nicely ", signum)
+        cleanup_for_exit()
         global loop
         loop = False
 

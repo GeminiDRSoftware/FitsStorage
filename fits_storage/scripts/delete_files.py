@@ -127,7 +127,7 @@ if __name__ == "__main__":
     logger.info("*********    delete_files.py - starting up at %s" % datetime.datetime.now())
 
     parser = OptionParser()
-    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape1",
+    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape-lp2",
                       help="The Fits Storage Tape server to use to check the files are on tape")
     parser.add_option("--path", action="store", type="string", dest="path", default="",
                       help="Path within the storage root")
