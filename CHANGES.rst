@@ -24,6 +24,7 @@ fits_validator
 ^^^^^^^^^^^^^^
 
 - support for reporting bad filter values sith custom exception
+- improved checking of RADECSYS/RADESYS keywords
 
 gemini-fits-validator
 ^^^^^^^^^^^^^^^^^^^^^
