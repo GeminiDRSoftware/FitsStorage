@@ -127,6 +127,12 @@ def check_valid_filters(header, env):
                 return False
     return True
 
+@RuleSetFactory.register_function("valid-radesys-radecsys")
+def check_valid_radesys_radecsys(header, env):
+    if 'RADECSYS' in header or 'RADESYS' in header:
+        return True
+    return False, "Expected RADECSYS or RADESYS keyword"
+
 @RuleSetFactory.register_function('set-date')
 def set_date(header, env):
     bogus = False
@@ -249,7 +255,8 @@ if __name__ == '__main__':
     else:
         if use_ad:
             evaluate = AstroDataEvaluator()
-            result = evaluate(astrodata.open(fits))
+            # result = evaluate(astrodata.open(fits))
+            result = evaluate(astrodata.open(argv[0]))
         else:
             evaluate = Evaluator()
             result = evaluate(fits)
