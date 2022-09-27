@@ -78,11 +78,13 @@ delete_files
 
 - skip files if we can't connect to the tape service to check, but don't abort the run
 - fixed pointing of default tape server
+- support for path or partial path selection
 
 local_delete_files
 ^^^^^^^^^^^^^^^^^^
 
 - fixed pointing of default tape server
+- fixed md5 checking logic for tape server
 
 read_from_tape
 ^^^^^^^^^^^^^^

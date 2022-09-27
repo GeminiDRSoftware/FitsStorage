@@ -101,12 +101,13 @@ if __name__ == "__main__":
         for fe in fileelements:
           filename = getXmlData(fe, "filename")
           md5 = getXmlData(fe, "md5")
+          datamd5 = getXmlData(fe, "data_md5")
           tapeid = int(getXmlData(fe, "tapeid"))
           if filename.endswith(".bz2"):
               filename = filename[:-4]
           if thefile.endswith(".bz2"):
               thefile = thefile[:-4]
-          if ((filename == thefile) or (filename == f"{thefile}.bz2")) and ((md5 == filemd5) or options.nomd5) and (tapeid not in tapeids):
+          if ((filename == thefile) or (filename == f"{thefile}.bz2")) and ((datamd5 == filemd5) or options.nomd5) and (tapeid not in tapeids):
             #print "Found it on tape id %d" % tapeid
             tapeids.append(tapeid)
 
