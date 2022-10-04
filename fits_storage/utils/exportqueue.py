@@ -16,7 +16,7 @@ import ssl
 
 from sqlalchemy import join
 from sqlalchemy.orm import make_transient
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from ..fits_storage_config import storage_root, using_s3, export_bzip, export_upload_auth_cookie, z_staging_area
 from . import queue
@@ -173,10 +173,14 @@ class ExportQueueUtil(object):
         filename_nobz2 = File.trim_name(filename)
 
         # Search Database
-        query = self.s.query(DiskFile).select_from(join(File, DiskFile))\
-                    .filter(DiskFile.present == True)\
-                    .filter(File.name == filename_nobz2)
-        diskfile = query.one()
+        try:
+            query = self.s.query(DiskFile).select_from(join(File, DiskFile))\
+                        .filter(DiskFile.present == True)\
+                        .filter(File.name == filename_nobz2)
+            diskfile = query.one()
+        except NoResultFound:
+            self.l.error("Could not find present diskfile for File entry with name %s", filename_nobz2)
+            return False
         our_md5 = diskfile.data_md5
 
         self.l.debug("Checking for remote file md5")
@@ -304,7 +308,7 @@ class ExportQueueUtil(object):
             self.l.debug("Transfer Failed")
             return False
         except:
-            self.l.error("Problem posting %d bytes of data to destination server at: %s" % (len(postdata), url))
+            self.l.error("Problem posting of data to destination server at: %s" % url)
             raise
 
     def retry_failures(self, interval):
@@ -341,7 +345,7 @@ def get_destination_data_md5(filename, logger, destination):
     # Construct and retrieve the URL
     try:
         url = "%s/jsonfilelist/present/filename=%s" % (destination, filename)
-        u = urllib.request.urlopen(url)
+        u = urllib.request.urlopen(url, timeout=10)
         json_data = u.read()
         u.close()
     except (urllib.error.URLError, http.client.IncompleteRead):
