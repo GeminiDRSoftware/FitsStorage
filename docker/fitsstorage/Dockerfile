@@ -18,25 +18,28 @@ RUN yum -y install openssl \
                    libjpeg-devel \
                    python3-pillow \
                    redhat-rpm-config \
-                   python3-devel \
+                   python38-devel \
                    bzip2 \
                    zlib \
                    zlib-devel
 
-RUN yum -y --nogpgcheck install python3-pip
+RUN yum -y --nogpgcheck install python38-pip
 
 # Fix Centos 8 broken Locale
 RUN yum -y --nogpgcheck install glibc-langpack-en glibc-common
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
 # DRAGONS now also needs specutils
-RUN pip3 install gwcs==0.16.1
-RUN pip3 install asdf==2.7.4
-RUN pip3 install specutils==1.2
+#RUN pip3 install gwcs==0.16.1
+RUN pip3 install gwcs
+#RUN pip3 install asdf==2.7.4
+RUN pip3 install asdf
+#RUN pip3 install specutils==1.2
+RUN pip3 install specutils
 RUN pip3 install psycopg2-binary && \
     pip3 install sqlalchemy && \
     pip3 install pyyaml && \
-    pip3 install jinja2 && \
+    pip3 install jinja2==3.0.2 && \
     pip3 install pyfits && \
     pip3 install dateutils && \
     pip3 install requests && \
@@ -58,7 +61,7 @@ RUN pip3 install photutils
 RUN yum -y install make
 
 # RUN pip3 install git+https://github.com/spacetelescope/imexam.git
-RUN pip3 install imexam
+#RUN pip3 install imexam
 
 # DRAGONS now also needs specutils
 #RUN pip3 install gwcs==0.16.1
