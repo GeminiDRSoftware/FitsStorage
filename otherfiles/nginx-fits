@@ -1,0 +1,17 @@
+# see https://www.nginx.com/resources/wiki/start/topics/examples/full/
+
+events {
+  worker_connections  4096;  ## Default: 1024
+}
+
+http {
+    server {
+        listen 80;
+        server_name fits;
+
+        location / {
+            include         uwsgi_params;
+            uwsgi_pass      unix:/opt/uwsgi/fits.sock;
+        }
+    }
+}
