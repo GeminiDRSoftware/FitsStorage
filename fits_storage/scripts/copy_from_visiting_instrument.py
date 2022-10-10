@@ -406,7 +406,25 @@ class IGRINS(VisitingInstrumentABC):
         if not os.path.exists(os.path.join(self.storage_root, 'igrins')):
             os.mkdir(os.path.join(self.storage_root, 'igrins'))
 
-    def get_files(self, date_pre=None):
+    def get_files(self):
+        """
+        Get the files within the staging area to ingest.
+
+        Returns
+        -------
+        list of str : list of files in the top level to be copied
+        """
+        print("In IGRINS.get_files")
+        fullpath = self.base_path
+        for datedir in os.listdir(fullpath):
+            fulldatepath = os.path.join(fullpath, datedir)
+            if os.path.isdir(fulldatepath) and re.search(r'^\d{8}$', datedir):
+                print(f"Scanning files in {datedir}")
+                for datafile in os.listdir(fulldatepath):
+                    if self.filename_re.search(datafile):
+                        yield os.path.join(fulldatepath, datafile)
+
+    def get_files_old(self, date_pre=None):
         """
         Get the files within the staging area to ingest.
 

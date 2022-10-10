@@ -119,6 +119,13 @@ if __name__ == "__main__":
                                                                                                sys.exc_info()[1])
                         logger.error(errmsg)
                         errors.append(errmsg)
+                    except ConnectionRefusedError:
+                        logger.error("Connection Refused on url %s" % url)
+                        errors.append("Connection Refused on url %s" % url)
+                    except:
+                        logger.error(
+                            "Unknown Error - Exception %s: %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+                        errors.append("Unknown Error - Exception %s: %s" % (sys.exc_info()[0], sys.exc_info()[1]))
                     if warning_cre.search(html):
                         logger.warn("Invalid selection seen when querying archive: %s" % notif.selection)
                         errors.append("Invalid selection seen when querying archive: %s" % notif.selection)
