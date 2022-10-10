@@ -40,5 +40,5 @@ nifs-pdu:
     - OBSMODE
     - UT
 
-    - since 2006-7-1:
-      - RADECSYS
+  - tests:
+    - valid-radesys-radecsys

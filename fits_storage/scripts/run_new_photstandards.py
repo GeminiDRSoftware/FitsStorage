@@ -9,9 +9,12 @@ therefore not be used against existing photometric standards.
 """
 from sqlalchemy import or_
 
-from fits_storage.orm import session_scope
-from fits_storage.orm.header import Header
-from fits_storage.orm.diskfile import DiskFile
+# pick up DB settings for FITS Storage
+import fits_storage
+
+from gemini_obs_db.db import session_scope
+from gemini_obs_db.orm.header import Header
+from gemini_obs_db.orm.diskfile import DiskFile
 from datetime import datetime
 
 

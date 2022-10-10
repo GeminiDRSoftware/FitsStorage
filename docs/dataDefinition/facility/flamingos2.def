@@ -29,5 +29,6 @@ f2-ext:
   - maybe-merge: wcs
   - keywords:
     - DATATYP
-    - RADECSYS
 
+  - tests:
+    - valid-radesys-radecsys

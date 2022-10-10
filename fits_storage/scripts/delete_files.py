@@ -130,6 +130,8 @@ if __name__ == "__main__":
                       help="The Fits Storage Tape server to use to check the files are on tape")
     parser.add_option("--path", action="store", type="string", dest="path", default="",
                       help="Path within the storage root")
+    parser.add_option("--pathcontains", action="store", type="string", dest="pathcontains", default="",
+                      help="Path within the storage root contains the string provided")
     parser.add_option("--file-pre", action="store", type="string", dest="filepre",
                       help="File prefix to operate on, eg N20090130, N200812 etc")
     parser.add_option("--maxnum", type="int", action="store", dest="maxnum", help="Delete at most X files.")
@@ -200,6 +202,12 @@ if __name__ == "__main__":
         if not options.notpresent:
             query = query.filter(DiskFile.present == True)
 
+        if options.path:
+            query = query.filter(DiskFile.path == options.path)
+
+        if options.pathcontains:
+            query = query.filter(DiskFile.path.contains(options.pathcontains))
+
         if options.olderthan and options.olderthan > 0:
             dt = datetime.datetime.now()
             dt = dt - datetime.timedelta(days=options.olderthan)
@@ -215,6 +223,7 @@ if __name__ == "__main__":
         if options.maxnum:
             query = query.limit(options.maxnum)
         cnt = query.count()
+
 
         if cnt == 0:
             logger.info("No Files found matching file-pre. Exiting")

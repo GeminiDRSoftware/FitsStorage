@@ -114,7 +114,7 @@ if(using_s3):
 defer_seconds = 4
 
 # Target free space and number of files on storage_root for delete script
-target_gb_free      = 250
+target_gb_free      = lookup_config_int('TARGET_GB_FREE', 250)
 target_max_files    = 8000000
 delete_min_days_age = 365
 
