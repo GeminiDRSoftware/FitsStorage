@@ -1,10 +1,11 @@
 [archive:vars]
-ansible_become_pass='{{ sudo_pass }}'
+#ansible_become_pass='{{ sudo_pass }}'
 enable_export=True
 enable_postfix=True
 is_chile=True
 is_onsite=True
 is_ops=True
+ansible_python_interpreter=/usr/bin/python3
 
 [archive]
 cpofits-lv3.cl.gemini.edu

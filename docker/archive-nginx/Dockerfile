@@ -26,7 +26,8 @@ COPY FitsStorage/otherfiles/etc_systemd_system_fits-uwsgi.service /etc/systemd/s
 # SETUP NGINX
 #COPY FitsStorage/otherfiles/nginx-fits /etc/nginx/sites-available/fits
 #RUN ln -s /etc/nginx/sites-evailable/fits /etc/nginx/sites-enabled
-COPY FitsStorage/otherfiles/nginx-fits /etc/nginx/nginx.conf
+COPY FitsStorage/otherfiles/nginx-fits-docker /etc/nginx/nginx.conf
+COPY FitsStorage/otherfiles/nginx-mime.types /etc/nginx/mime.types
 
 # PUT APACHE LOGS TO DOCKER OUTPUT
 # need the modwsgi-default folder here so we can link out the logs

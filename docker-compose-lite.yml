@@ -54,7 +54,7 @@ services:
       - "~/dataflow:/sci/dataflow"
     command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/api_backend.py"
   
-  fitsstore:
+  nginx:
     image: fitsimage:latest
     depends_on:
       - postgres-init
@@ -79,6 +79,33 @@ services:
       - "~/dataflow:/sci/dataflow"
     ports:
       - "80:80"
+  
+  fitsstore:
+    image: fitsimage:latest
+    depends_on:
+      - postgres-init
+      - postgres-init-views
+      - postgres-init-user
+      - postgres
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+      - USE_AS_ARCHIVE=False
+      - EXPORT_DESTINATIONS=
+      - BLOCKED_URLS=
+      - FITS_SERVERTITLE=Docker Compose Lite FitsStore
+      - FITS_SERVERNAME=localhost
+      - UPLOAD_AUTH_COOKIE=qap_upload_processed_cal_ok
+      - API_BACKEND_LOCATION=api:8000
+      - CAL_QUERY_DEBUG=1
+      - PGPASSWORD=fitsdata
+      - EXPORT_UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+      - UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+    volumes:
+      - "~/upload_staging:/data/upload_staging"
+      - "~/dataflow:/sci/dataflow"
+    ports:
+      - "8070:8070"
+    command: bash -c "uwsgi --http 0.0.0.0:8070 --module fits_storage.wsgihandler"
 
   add-to-ingest-queue:
     image: fitsstorageutils:latest
