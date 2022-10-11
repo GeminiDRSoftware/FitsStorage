@@ -28,5 +28,9 @@ http {
         location /robots.txt {
             alias             /opt/FitsStorage/htmldocroot/robots.txt;
         }
+
+        location /usage.html {
+            alias             /opt/FitsStorage/htmldocroot/usage.html;
+        }
     }
 }
