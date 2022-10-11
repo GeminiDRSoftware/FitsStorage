@@ -4,6 +4,7 @@ build_sphinx=True
 sphinx_opts=-Q
 is_hawaii=True
 is_onsite=True
+use_nginx=True
 
 [archive]
 hbffits-lv4.hi.gemini.edu

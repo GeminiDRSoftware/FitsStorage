@@ -22,3 +22,4 @@ install_epel: false
 selinux_support: false
 fitsstorage_configfile: "{{ inventory_hostname_short }}_fitsstorage.conf"
 ignore_dhs: false
+use_nginx: false

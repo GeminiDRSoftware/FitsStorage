@@ -4,14 +4,6 @@
       - archive
     become: true
     tasks:
-#      - name: (Scorpio Test) Ensure dataflow exists
-#        file:
-#          path: "{{ dataflow_path }}"
-#          state: directory
-#          mode: 'u+rwx,g+rwx,o+rx'
-#          owner: fitsdata
-#          group: fitsdata
-#        when: "'arcdev' in inventory_hostname"
       - name: Check for dataflow folder
         stat:
           path: "{{ dataflow_path }}"
@@ -30,16 +22,6 @@
         fail:
           msg: "DHS folder not found"
         when: "not dhs_folder and ('mko' in inventory_hostname or 'cpofits-lv3' in inventory_hostname)"
-# removing per Jose Varas, ITS should setup necessary packages/repos for us
-#      - name: install EPEL
-#        yum:
-#          name:
-#            - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-#          state: present
-#        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8' and install_epel
-#      - name: Fail while I iterate
-#        fail:
-#          msg: "Exiting early"
       - name: Setup EPEL
         yum:
           name:
@@ -65,6 +47,16 @@
             - redhat-rpm-config
             - make
           state: latest
+      - name: install apache packages
+        yum:
+          name:
+            - httpd
+            - httpd-devel
+        when: use_nginx
+      - name: install nginx packages
+        yum:
+          name:
+            - nginx
       - name: install Repos for Sphinx (dnf-plugins)
 #        # shell: "dnf config-manager --enable PowerTools AppStream BaseOS *epel"
 #        shell: "dnf config-manager --enable PowerTools AppStream BaseOS"
@@ -318,6 +310,9 @@
       - name: install imexam and specutils for DRAGONS (Centos 7)
         command: bash -c "python3 -m pip install imexam specutils"
         when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version < '8'
+      - name: install uwsgi (nginx)
+        command: bash -c "python3 -m pip install uwsgi"
+        when: use_nginx
       - name: Create folders for FitsStorage to work with files
         file:
           path: '{{ item.path }}'
@@ -332,6 +327,17 @@
           - { path: /data/z_staging, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
           - { path: /data/s3_staging, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
           - { path: /data/gemini_data, owner: fitsdata, group: fitsdata, mode: "u+rwx,g-w,o-w" }
+      - name: ensure nginx folders exist (nginx)
+        file:
+          path: '{{ item.path }}'
+          state: directory
+          mode: '{{ item.mode }}'
+          owner: '{{ item.owner }}'
+          group: '{{ item.group }}'
+        with_items:
+          - { path: /opt/uwsgi, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o+rx" }
+          - { path: /etc/nginx, owner: nginx, group: fitsdata, mode: "u+rwx,g+rwx,o-w" }
+        when: use_nginx
       - name: Checkout DRAGONS into /opt
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
@@ -540,24 +546,6 @@
           query: GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO apache
         become: yes
         become_user: postgres
-      # - name: Grant PostgreSQL table access to apache
-      #   postgresql_privs:
-      #     db: fitsdata
-      #     privs: ALL
-      #     type: table
-      #     objs: ALL_IN_SCHEMA
-      #     role: apache
-      #   become: yes
-      #   become_user: postgres
-      # - name: Grant PostgreSQL sequence access to apache
-      #   postgresql_privs:
-      #     db: fitsdata
-      #     privs: ALL
-      #     type: sequence
-      #     objs: ALL_IN_SCHEMA
-      #     role: apache
-      #   become: yes
-      #   become_user: postgres
       - name: Install ingest queue 1
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue1.service
@@ -700,24 +688,6 @@
           dest: /etc/fitsstorage.conf
         register: fitsstorageconf
         notify: restart services
-#      - name: Register Ingest service 1
-#        service: name=fits-service_ingest_queue1 state=started enabled=yes
-#        when: enable_ingest_services
-#      - name: Register Ingest service 2
-#        service: name=fits-service_ingest_queue2 state=started enabled=yes
-#        when: enable_ingest_services
-#      - name: Register Ingest service 1 1/2 (hack to make restarts work)
-#        shell: systemctl enable fits-service_ingest_queue1.service
-#        when: enable_ingest_services
-#      - name: Register Ingest service 1 1/2 (hack to make restarts work)
-#        shell: systemctl start fits-service_ingest_queue1.service
-#        when: enable_ingest_services
-#      - name: Register Ingest service 2 1/2 (hack to make restarts work)
-#        shell: systemctl enable fits-service_ingest_queue2.service
-#        when: enable_ingest_services
-#      - name: Register Ingest service 2 1/2 (hack to make restarts work)
-#        shell: systemctl start fits-service_ingest_queue2.service
-#        when: enable_ingest_services
       - name: enable services on boot
         ansible.builtin.service:
           name: "{{ item }}"
@@ -776,18 +746,22 @@
             - httpd-devel
             - mod_ssl
           state: latest
+        when: not use_nginx
       - name: Install mod_wsgi
         # built in pip seems to be busted for Ansible+CentOS8
         command: python3 -m pip install "mod_wsgi"
+        when: not use_nginx
       - name: Setup modwsgi directory
         file:
           path: /opt/modwsgi-default
           state: directory
+        when: not use_nginx
       - name: setup mod-wsgi
         command: /usr/local/bin/mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  --proxy-mount-point /rest http://127.0.0.1:8090/rest /opt/FitsStorage/fits_storage/wsgihandler.py
         args:
           creates: /opt/modwsgi-default/default.wsgi
         register: mod_wsgi_setup
+        when: not use_nginx
       - name: Update mod-wsgi folder permissions
         file:
           path: /opt/modwsgi-default
@@ -800,6 +774,17 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-httpd.service
           dest: /etc/systemd/system/fits-httpd.service
+        when: not use_nginx
+      - name: Copy UWSGI service script (nginx)
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-uwsgi.service
+          dest: /etc/systemd/system/fits-uwsgi.service
+        when: use_nginx
+      - name: Copy NGINX service script (nginx)
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-nginx.service
+          dest: /etc/systemd/system/fits-nginx.service
+        when: use_nginx
       - name: Copy API service script
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-api-backend.service
@@ -808,31 +793,33 @@
         copy:
           src: ../../otherfiles/etc-sysconfig-httpd
           dest: /etc/sysconfig/httpd
-      # TODO this is a complex XML patch if we try to apply it to the default file
+        when: not use_nginx
+        # TODO this is a complex XML patch if we try to apply it to the default file
       - name: Copy Mod-WSGI HTTPD config
         copy:
           src: ../../otherfiles/httpd-patched-centos8.conf
           dest: /opt/modwsgi-default/httpd.conf
         notify: restart services
-        when: not is_aws
+        when: not is_aws and not use_nginx
       - name: (ARCHIVE/ARCDEV) Copy Mod-WSGI HTTPD config
         copy:
           src: ../../otherfiles/archive-httpd.conf
           dest: /opt/modwsgi-default/httpd.conf
         notify: restart services
-        when: "'archive' in inventory_hostname"
+        when: "'archive' in inventory_hostname and not use_nginx"
       - name: (ARCDEV) Copy Mod-WSGI Pre-SSL HTTPD config
         copy:
           src: ../../otherfiles/pressl-arcdev-httpd.conf
           dest: /opt/modwsgi-default/httpd.conf
         notify: restart services
-        when: "'arcdev' in inventory_hostname"
+        when: "'arcdev' in inventory_hostname and not use_nginx"
       - name: Set WSGI entry point
         lineinfile:
           path: /opt/modwsgi-default/handler.wsgi
           line: entry_point = '/opt/FitsStorage/fits_storage/wsgihandler.py'
           regex: "^entry_point = "
         notify: restart services
+        when: not use_nginx
       - name: Update mod-wsgi folder permissions
         file:
           path: /opt/modwsgi-default
@@ -840,6 +827,7 @@
           recurse: yes
           owner: apache
           group: apache
+        when: not use_nginx
       - name: Install CertBot and associated
         yum:
           name: 
@@ -847,27 +835,46 @@
             - python3-certbot-apache
             - mod_ssl
           state: latest
-        when: enable_certbot
+        when: enable_certbot and not use_nginx
       - name: (ARCDEV) Setup Let's Encrypt
         command: certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d arcdev.gemini.edu
         args:
           creates: /etc/letsencrypt
         notify: restart fits-httpd
-        when: "'arcdev' in inventory_hostname"
+        when: "'arcdev' in inventory_hostname and not use_nginx"
       - name: (ARCDEV) Copy Mod-WSGI HTTPD config
         copy:
           src: ../../otherfiles/arcdev-httpd.conf
           dest: /opt/modwsgi-default/httpd.conf
         notify: restart services
-        when: "'arcdev' in inventory_hostname"
+        when: "'arcdev' in inventory_hostname and not use_nginx"
 #      - name: (ARCHIVE) Setup Let's Encrypt
 #        command: certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d archive.gemini.edu
 #        args:
 #          creates: /etc/letsencrypt
 #        notify: restart fits-httpd
 #        when: "'archive' in inventory_hostname"
-      - name: Start WSGI service on boot
+      - name: Configure UWSGI (nginx)
+        copy:
+          src: ../../otherfiles/uwsgi.ini
+          dest: /opt/uwsgi/fitsservice.ini
+        when: use_nginx
+      - name: Configure NGINX (nginx)
+        copy:
+          src: ../../otherfiles/nginx-fits
+          dest: /etc/nginx/nginx.conf
+        when: use_nginx
+      - name: Install MIME Config (nginx)
+        copy:
+          src: ../../otherfiles/nginx-mime.types
+          dest: /etc/nginx/mime.types
+        when: use_nginx
+      - name: Start Apache WSGI service on boot
         service: name=fits-httpd enabled=yes
+        when: not use_nginx
+      - name: Disable Apache WSGI service on boot (nginx)
+        service: name=fits-httpd enabled=no
+        when: use_nginx
       - name: Start API service on boot
         service: name=fits-api-backend enabled=yes
 # TODO diskspace script references mko folder, causing mount from Chile - fix then add this back in
@@ -915,6 +922,15 @@
       - name: restart fits-httpd
         service: name=fits-httpd state=restarted
         listen: "restart services"
+        when: not use_nginx
+      - name: restart fits-uwsgi
+        service: name=fits-uwsgi state=restarted
+        listen: "restart services"
+        when: use_nginx
+      - name: restart fits-nginx
+        service: name=fits-nginx state=restarted
+        listen: "restart services"
+        when: use_nginx
       - name: restart ingest1
         service: name=fits-service_ingest_queue1 state=restarted
         listen: "restart services"
