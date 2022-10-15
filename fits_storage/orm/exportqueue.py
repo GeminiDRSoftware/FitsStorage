@@ -55,6 +55,7 @@ class ExportQueue(Base):
     sortkey = Column(Text, index=True)
     added = Column(DateTime)
     lastfailed = Column(DateTime)
+    after = Column(DateTime)
 
     error_name = 'EXPORT'
 
@@ -76,6 +77,7 @@ class ExportQueue(Base):
         self.path = path
         self.destination = destination
         self.added = datetime.datetime.now()
+        self.after = datetime.datetime.now()
         self.inprogress = False
         self.failed = False
 
@@ -114,6 +116,7 @@ class ExportQueue(Base):
             session.query(ExportQueue)
                 .filter(ExportQueue.inprogress == False)
                 .filter(ExportQueue.failed == False)
+                .filter(ExportQueue.after <= datetime.datetime.now())
                 .filter(~ExportQueue.filename.in_(inprogress_filenames))
                 .order_by(desc(ExportQueue.sortkey), desc(ExportQueue.filename))
         )

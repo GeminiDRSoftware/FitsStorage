@@ -501,10 +501,10 @@
           new_owner: fitsdata
         become: yes
         become_user: postgres
-      - name: If we have a fresh DB, set version to 30 since we are already up to date with the migrations
+      - name: If we have a fresh DB, set version to 31 since we are already up to date with the migrations
         postgresql_query:
           db: fitsdata
-          query: update migrate_version set version=30
+          query: update migrate_version set version=31
         become: yes
         become_user: postgres
         when: fitsdata_db_created.changed
