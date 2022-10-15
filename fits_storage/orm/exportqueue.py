@@ -77,7 +77,7 @@ class ExportQueue(Base):
         self.path = path
         self.destination = destination
         self.added = datetime.datetime.now()
-        self.after = datetime.datetime.now()
+        self.after = datetime.datetime.min
         self.inprogress = False
         self.failed = False
 
@@ -101,9 +101,9 @@ class ExportQueue(Base):
         #                   WHERE failed = false AND inprogress = True
         # )
         # SELECT id FROM exportqueue
-        #          WHERE inprogress = false AND failed = false
+        #          WHERE inprogress = false AND failed = false and after <= NOW()
         #          AND filename not in inprogress_filenames
-        #          ORDER BY filename DESC
+        #          ORDER BY after, sortkey DESC, filename DESC
 
         inprogress_filenames = (
             session.query(ExportQueue.filename)
@@ -118,7 +118,7 @@ class ExportQueue(Base):
                 .filter(ExportQueue.failed == False)
                 .filter(ExportQueue.after <= datetime.datetime.now())
                 .filter(~ExportQueue.filename.in_(inprogress_filenames))
-                .order_by(desc(ExportQueue.sortkey), desc(ExportQueue.filename))
+                .order_by(ExportQueue.after, desc(ExportQueue.sortkey), desc(ExportQueue.filename))
         )
 
 # TODO seems to be out of use, removing for now
