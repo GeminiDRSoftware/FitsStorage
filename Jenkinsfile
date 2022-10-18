@@ -15,6 +15,7 @@
 
 pipeline {
     //agent { label 'hawaii' }
+    agent {}
 
     options { skipDefaultCheckout() }
 
