@@ -14,8 +14,7 @@
 //@Library('dragons_ci@master') _
 
 pipeline {
-    //agent { label 'hawaii' }
-    agent {}
+    agent { label 'hawaii' }
 
     options { skipDefaultCheckout() }
 
