@@ -16,7 +16,7 @@ import ssl
 
 from sqlalchemy import join
 from sqlalchemy.orm import make_transient
-from sqlalchemy.exc import IntegrityError, NoResultFound
+from sqlalchemy.exc import IntegrityError
 
 from ..fits_storage_config import storage_root, using_s3, export_bzip, export_upload_auth_cookie, z_staging_area
 from . import queue
@@ -195,7 +195,7 @@ class ExportQueueUtil(object):
                         .filter(DiskFile.present == True)\
                         .filter(File.name == filename_nobz2)
             diskfile = query.one()
-        except NoResultFound:
+        except:
             self.l.error("Could not find present diskfile for File entry with name %s", filename_nobz2)
             return False, "not found"
         our_md5 = diskfile.data_md5
