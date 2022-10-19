@@ -333,6 +333,8 @@
           - { path: /data/s3_staging, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
           - { path: /data/gemini_data, owner: fitsdata, group: fitsdata, mode: "u+rwx,g-w,o-w" }
       - name: Checkout DRAGONS into /opt
+        become: true
+        become_user: fitsdata
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
@@ -698,6 +700,8 @@
         copy:
           src: ../../../FitsStorageConfig/configs/{{ fitsstorage_configfile }}
           dest: /etc/fitsstorage.conf
+          owner: fitsdata
+          group: fitsdata
         register: fitsstorageconf
         notify: restart services
 #      - name: Register Ingest service 1
