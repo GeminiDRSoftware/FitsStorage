@@ -23,3 +23,8 @@
             - redhat-rpm-config
             - make
           state: latest
+      - name: install SELinux tools
+        yum:
+          name:
+            - policycoreutils-python-utils
+        when: selinux_support

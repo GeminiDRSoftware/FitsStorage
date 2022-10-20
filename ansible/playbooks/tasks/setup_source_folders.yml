@@ -1,0 +1,9 @@
+      - name: Ensure FitsStorage/DB/GCM repo folders are available and permissioned
+        file:
+          path: '{{item}}'
+          state: directory
+          mode: 'u+rwx,g+rwx,o+rx'
+          owner: fitsdata
+          group: fitsdata
+        with_items:
+          - ["/opt/FitsStorageDB", "/opt/GeminiCalMgr", "/opt/FitsStorage"]

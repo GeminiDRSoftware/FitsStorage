@@ -5,6 +5,7 @@ sphinx_opts=-Q
 is_hawaii=True
 is_onsite=True
 use_nginx=True
+#use_localhost=True
 
 [archive]
 hbffits-lv4.hi.gemini.edu
