@@ -1,0 +1,5 @@
+      - name: install apache packages
+        yum:
+          name:
+            - httpd
+            - httpd-devel
