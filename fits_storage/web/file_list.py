@@ -11,6 +11,7 @@ from gemini_obs_db.orm.file import File
 from .selection import queryselection, openquery
 from .summary import list_headers
 from .standards import get_standard_obs
+from ..orm.ingestqueue import IngestQueue
 
 from ..utils.userprogram import canhave_coords
 from ..utils.web import get_context, with_content_type
@@ -45,7 +46,7 @@ def xmlfilelist(selection):
         content   = generate_headers(selection),
         )
 
-def diskfile_dicts(headers, return_header=False):
+def diskfile_dicts(headers, return_header=False, check_ingest_queue=False):
     for header in headers:
         thedict = {}
         thedict['name'] = _for_json(header.diskfile.file.name)
@@ -53,6 +54,18 @@ def diskfile_dicts(headers, return_header=False):
             thedict[field] = _for_json(getattr(header.diskfile, field))
         thedict['size'] = thedict['file_size']
         thedict['md5'] = thedict['file_md5']
+        pending_ingest = False
+        if check_ingest_queue:
+            ctx = get_context()
+            fname = header.diskfile.file.name
+            if fname is not None:
+                if fname.endswith('.bz2'):
+                    fname = fname[:-4]
+                fname = f"{fname}%"
+                query = ctx.session.query(IngestQueue).filter(IngestQueue.filename.like(fname))
+                if query.count() > 0:
+                    pending_ingest = True
+        thedict['pending_ingest'] = pending_ingest
         if not return_header:
             yield thedict
         else:
@@ -63,9 +76,15 @@ def jsonfilelist(selection, fields=None):
     This generates a JSON list of the files that met the selection
     """
 
+    ctx = get_context()
+    req = ctx.req
+
     orderby = ['filename_asc']
     headers = list_headers(selection, orderby)
-    thelist = list(diskfile_dicts(headers))
+    check_ingest_queue = False
+    if 'pending_ingest' in req.env.qs:
+        check_ingest_queue = True
+    thelist = list(diskfile_dicts(headers, check_ingest_queue=check_ingest_queue))
 
     if fields is None:
         get_context().resp.send_json(thelist, indent=4)
