@@ -75,11 +75,12 @@ pipeline {
                     docker network create fitsstorage-jenkins || true
                     docker container rm fitsdata-jenkins || true
                     docker container rm archive-jenkins || true
+                    mkdir pytest_tmp
                     '''
                     def postgres = docker.image('postgres:12').withRun(" --network fitsstorage-jenkins --name fitsdata-jenkins -e POSTGRES_USER=fitsdata -e POSTGRES_PASSWORD=fitsdata -e POSTGRES_DB=fitsdata") { c ->
                         def archive = docker.image("gemini/archive:jenkins").withRun(" --network fitsstorage-jenkins --name archive-jenkins -e USE_AS_ARCHIVE=False -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e BLOCKED_URLS=\"\" -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr -e MAGIC_API_COOKIE=jenkins_api_cookie -p 8180:80") { a->
                             try {
-                                docker.image('gemini/fitsarchiveutils:jenkins').inside(" -v reports:/data/reports -v /data/pytest_tmp:/tmp  --network fitsstorage-jenkins -e USE_AS_ARCHIVE=False -e STORAGE_ROOT=/tmp/jenkins_pytest/dataflow -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e PYTEST_SERVER=http://archive-jenkins -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e BLOCKED_URLS=\"\" -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr") {
+                                docker.image('gemini/fitsarchiveutils:jenkins').inside(" -v reports:/data/reports -v `pwd`/pytest_tmp:/tmp  --network fitsstorage-jenkins -e USE_AS_ARCHIVE=False -e STORAGE_ROOT=/tmp/jenkins_pytest/dataflow -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e PYTEST_SERVER=http://archive-jenkins -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e BLOCKED_URLS=\"\" -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr") {
                                     sh 'python3 /opt/FitsStorage/fits_storage/scripts/create_tables.py'
                                     echo "Running tests against docker containers"
                                     sh  '''
@@ -168,6 +169,7 @@ pipeline {
              docker rmi gemini/fitsarchiveutils:jenkins || true
              docker rmi gemini/archive:jenkins || true
              docker network rm fitsstorage-jenkins || true
+             rm -rf pytest_tmp
           '''
           step(
                 [
