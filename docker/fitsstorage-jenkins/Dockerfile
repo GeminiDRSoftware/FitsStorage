@@ -20,6 +20,7 @@ RUN yum -y install openssl \
                    redhat-rpm-config \
                    python3-devel \
                    bzip2 \
+                   procps-ng \
                    wget
 
 # WOW, Docker sucks.  You can't modify the hosts file except like this, just in time to run a command.  Because magical.  Or, magically bad.
