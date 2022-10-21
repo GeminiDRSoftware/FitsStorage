@@ -171,19 +171,19 @@ pipeline {
              docker network rm fitsstorage-jenkins || true
              rm -rf pytest_tmp
           '''
-          step(
-                [
-                  $class              : 'RobotPublisher',
-                  outputPath          : 'reports',
-                  outputFileName      : '**/output.xml',
-                  reportFileName      : '**/report.html',
-                  logFileName         : '**/log.html',
-                  disableArchiveOutput: false,
-                  passThreshold       : 50,
-                  unstableThreshold   : 40,
-                  otherFiles          : "**/*.png,**/*.jpg",
-                ]
-            )
+//           step(
+//                 [
+//                   $class              : 'RobotPublisher',
+//                   outputPath          : 'reports',
+//                   outputFileName      : '**/output.xml',
+//                   reportFileName      : '**/report.html',
+//                   logFileName         : '**/log.html',
+//                   disableArchiveOutput: false,
+//                   passThreshold       : 50,
+//                   unstableThreshold   : 40,
+//                   otherFiles          : "**/*.png,**/*.jpg",
+//                 ]
+//             )
         }
         success {
             echo 'SUCCESSFUL'
