@@ -19,7 +19,7 @@ pipeline {
     options { skipDefaultCheckout() }
 
     environment {
-        PATH = "$JENKINS_HOME/anaconda3-dev-oly/bin:$PATH"
+        PATH = "$JENKINS_HOME/anaconda3-dev-oly/bin:/usr/bin:$PATH"
         CONDA_ENV_FILE = ".jenkins/conda_py3env_stable.yml"
         CONDA_ENV_NAME_DEPRECATED = "py3_stable"
         CONDA_ENV_NAME = "fitsstorage_pipeline_venv"
