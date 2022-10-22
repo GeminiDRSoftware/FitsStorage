@@ -138,9 +138,6 @@ RUN chmod a+x /wait-for-postgres.sh
 RUN pip3 install cython
 RUN cd /opt/DRAGONS/gempy/library/ && cythonize -i cyclip.pyx
 
-# Calibs code
-RUN cd /opt/FitsStorage/local_calibs && python3 setup.py install
-
 # For specutils, wow this is dumb
 RUN mkdir -p /.specutils && \
     chmod oug+rwx /.specutils
