@@ -113,22 +113,22 @@ pipeline {
                                 //    get it from https://www.google.com/chrome/?platform=linux
                                 //    use `yum` to install it to get the dependencies right
 
-                                sh '''
-                                   echo Setting up folder for robot reports
-                                   rm -rf reports/*
-                                   mkdir -p reports
-                                   cd FitsStorage/robot
-
-                                   echo Use as archive: $USE_AS_ARCHIVE
-                                   echo ============================================================
-                                   echo port 8180 date ONLY
-                                   # wget http://localhost:8180/searchform/AnyQA/cols=CTOWEQ/20130711/includeengineering/not_site_monitoring -O -
-                                   wget http://localhost:8180/jsonsummary/AnyQA/cols=CTOWEQ/20120711-20140711/includeengineering/not_site_monitoring -O -
-                                   echo Running robot checks
-                                   env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
-                                   cd ../..
-                                   echo Done with robot
-                                   '''
+//                                 sh '''
+//                                    echo Setting up folder for robot reports
+//                                    rm -rf reports/*
+//                                    mkdir -p reports
+//                                    cd FitsStorage/robot
+//
+//                                    echo Use as archive: $USE_AS_ARCHIVE
+//                                    echo ============================================================
+//                                    echo port 8180 date ONLY
+//                                    # wget http://localhost:8180/searchform/AnyQA/cols=CTOWEQ/20130711/includeengineering/not_site_monitoring -O -
+//                                    wget http://localhost:8180/jsonsummary/AnyQA/cols=CTOWEQ/20120711-20140711/includeengineering/not_site_monitoring -O -
+//                                    echo Running robot checks
+//                                    env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
+//                                    cd ../..
+//                                    echo Done with robot
+//                                    '''
                             } catch (exc) {
                                 sh "docker logs ${a.id}"
                                 sh "docker logs archive-jenkins"
