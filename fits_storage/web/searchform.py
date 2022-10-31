@@ -466,7 +466,9 @@ dropdown_options = {
          ("SmPinholesXD", "pinhole 0.1 XD"),
          ("LgPinholesXD", "pinhole 0.3 XD"),
          ("pupilview", "pupil viewer"),
-         ("IFU", "IFU")],
+         ("IFU", "IFU"),
+         ("LR-IFU", "LR-IFU"),
+         ("HR-IFU", "HR-IFU"), ],
     "niri_mask_options":
         [("f6-2pix", "f6-2pix"),
          ("f6-2pixBl", "f6-2pix Blue"),

@@ -15,6 +15,8 @@ searchform
 
 - UTC support for datetimes with Z suffix
 
+- LR-IFU and HR-IFU added for GNIRS
+
 fac-pdu.def
 ^^^^^^^^^^^
 
