@@ -1,0 +1,16 @@
+      - name: Copy fitsverify to server
+        copy:
+          src: ../../fitsverify/
+          dest: /opt/fitsverify/
+          mode: u+rwx,g+rx,o+rx
+        register: copiedfitsverify
+      - name: Compile fitsverify
+        command: gcc -L /lib64 -I /usr/include/cfitsio -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -lcfitsio -lm -lnsl-2.28
+        args:
+          chdir: /opt/fitsverify/
+        when: copiedfitsverify.changed and (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
+      - name: Compile fitsverify
+        command: gcc -L /lib64 -I /usr/include/cfitsio -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -lcfitsio -lm -lnsl
+        args:
+          chdir: /opt/fitsverify/
+        when: copiedfitsverify.changed and (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version < '8'

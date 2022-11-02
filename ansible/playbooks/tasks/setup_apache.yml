@@ -1,0 +1,101 @@
+      - name: install apache packages
+        yum:
+          name:
+            - httpd
+            - httpd-devel
+            - mod_ssl
+          state: latest
+      - name: Update user apache groups to add fitsdata
+        user:
+          name: apache
+          groups: fitsdata
+          append: yes
+      - name: Install mod_wsgi
+        # built in pip seems to be busted for Ansible+CentOS8
+        command: python3 -m pip install "mod_wsgi"
+      - name: Setup modwsgi directory
+        file:
+          path: /opt/modwsgi-default
+          state: directory
+      - name: setup mod-wsgi
+        command: /usr/local/bin/mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  --proxy-mount-point /rest http://127.0.0.1:8090/rest /opt/FitsStorage/fits_storage/wsgihandler.py
+        args:
+          creates: /opt/modwsgi-default/default.wsgi
+        register: mod_wsgi_setup
+      - name: Update mod-wsgi folder permissions
+        file:
+          path: /opt/modwsgi-default
+          state: directory
+          recurse: yes
+          owner: apache
+          group: apache
+      - name: Copy HTTPD service script
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-httpd.service
+          dest: /etc/systemd/system/fits-httpd.service
+      - name: Copy HTTPD config
+        copy:
+          src: ../../otherfiles/etc-sysconfig-httpd
+          dest: /etc/sysconfig/httpd
+        # TODO this is a complex XML patch if we try to apply it to the default file
+      - name: Copy Mod-WSGI HTTPD config
+        copy:
+          src: ../../otherfiles/httpd-patched-centos8.conf
+          dest: /opt/modwsgi-default/httpd.conf
+        notify: restart services
+        when: not is_aws
+      - name: (ARCHIVE/ARCDEV) Copy Mod-WSGI HTTPD config
+        copy:
+          src: ../../otherfiles/archive-httpd.conf
+          dest: /opt/modwsgi-default/httpd.conf
+        notify: restart services
+        when: "'archive' in inventory_hostname"
+      - name: (ARCDEV) Copy Mod-WSGI Pre-SSL HTTPD config
+        copy:
+          src: ../../otherfiles/pressl-arcdev-httpd.conf
+          dest: /opt/modwsgi-default/httpd.conf
+        notify: restart services
+        when: "'arcdev' in inventory_hostname"
+      - name: Set WSGI entry point
+        lineinfile:
+          path: /opt/modwsgi-default/handler.wsgi
+          line: entry_point = '/opt/FitsStorage/fits_storage/wsgihandler.py'
+          regex: "^entry_point = "
+        notify: restart services
+      - name: Update mod-wsgi folder permissions
+        file:
+          path: /opt/modwsgi-default
+          state: directory
+          recurse: yes
+          owner: apache
+          group: apache
+      - name: Install CertBot and associated
+        yum:
+          name:
+            - certbot
+            - python3-certbot-apache
+            - mod_ssl
+          state: latest
+        when: enable_certbot
+      - name: (ARCDEV) Setup Let's Encrypt
+        command: certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d arcdev.gemini.edu
+        args:
+          creates: /etc/letsencrypt
+        notify: restart fits-httpd
+        when: "'arcdev' in inventory_hostname"
+      - name: (ARCDEV) Copy Mod-WSGI HTTPD config
+        copy:
+          src: ../../otherfiles/arcdev-httpd.conf
+          dest: /opt/modwsgi-default/httpd.conf
+        notify: restart services
+        when: "'arcdev' in inventory_hostname"
+#      - name: (ARCHIVE) Setup Let's Encrypt
+#        command: certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d archive.gemini.edu
+#        args:
+#          creates: /etc/letsencrypt
+#        notify: restart fits-httpd
+#        when: "'archive' in inventory_hostname"
+      - name: Start Apache WSGI service on boot
+        service: name=fits-httpd enabled=yes
+#      - name: Disable Apache WSGI service on boot (nginx)
+#        service: name=fits-httpd enabled=no

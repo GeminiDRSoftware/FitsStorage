@@ -116,7 +116,7 @@ if __name__ == "__main__":
                         logger.info("Exporting %s, (%d in queue)", eq.filename, export_queue.length())
 
                         try:
-                            success = export_queue.export_file(eq.filename, eq.path, eq.destination)
+                            success, details = export_queue.export_file(eq.filename, eq.path, eq.destination)
                         except (RequestException, ssl.SSLError, ValueError):
                             logger.info("Problem Exporting File - Rolling back")
                             # Originally we set the inprogress flag back to False at the point that we abort.
@@ -131,9 +131,13 @@ if __name__ == "__main__":
                             logger.debug("Deleting exportqueue id %d", eq.id)
                             export_queue.delete(eq)
                         else:
-                            logger.info("Exportqueue id %d DID NOT TRANSFER", eq.id)
-                            # The eq instance we have is transient - get one connected to the session
-                            export_queue.set_last_failed(eq)
+                            if details == "pending ingest":
+                                # we just have to defer it
+                                export_queue.set_deferred(eq)
+                            else:
+                                logger.info(f"Exportqueue id %d DID NOT TRANSFER", eq.id)
+                                # The eq instance we have is transient - get one connected to the session
+                                export_queue.set_last_failed(eq)
                         session.commit()
 
                     throttle.reset()

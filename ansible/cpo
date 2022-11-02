@@ -6,6 +6,7 @@ is_chile=True
 is_onsite=True
 is_ops=True
 ansible_python_interpreter=/usr/bin/python3
+visiting_instrument_script=fits-copy_from_visiting_instruments_cpo.service
 
 [archive]
 cpofits-lv3.cl.gemini.edu
