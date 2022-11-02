@@ -13,3 +13,4 @@ enable_export=False
 enable_certbot=True
 install_epel=True
 dataflow_path=/data/dataflow
+use_nginx=True
