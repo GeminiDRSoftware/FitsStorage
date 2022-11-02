@@ -97,5 +97,5 @@
 #        when: "'archive' in inventory_hostname"
       - name: Start Apache WSGI service on boot
         service: name=fits-httpd enabled=yes
-      - name: Disable Apache WSGI service on boot (nginx)
-        service: name=fits-httpd enabled=no
+#      - name: Disable Apache WSGI service on boot (nginx)
+#        service: name=fits-httpd enabled=no

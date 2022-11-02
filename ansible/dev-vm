@@ -1,0 +1,14 @@
+[archive:vars]
+#ansible_become_pass='{{ sudo_pass }}'
+build_sphinx=False
+sphinx_opts=-Q
+is_hawaii=True
+is_onsite=True
+install_epel=True
+ansible_port=2022
+selinux_support=True
+fitsstorage_configfile=devvm_fitsstorage.conf
+enable_ingest_services=True
+
+[archive]
+localhost ansible_port=2022
