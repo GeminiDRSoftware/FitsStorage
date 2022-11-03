@@ -25,3 +25,4 @@ ignore_dhs: false
 use_nginx: false
 use_localstack: false
 visiting_instrument_script: None
+nginx_config: "nginx-fits"

@@ -35,7 +35,7 @@
     dest: /opt/uwsgi/fitsservice.ini
 - name: Configure NGINX (nginx)
   copy:
-    src: ../../otherfiles/nginx-fits
+    src: ../../otherfiles/{{ nginx_config }}
     dest: /etc/nginx/nginx.conf
 - name: Install MIME Config (nginx)
   copy:
