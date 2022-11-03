@@ -47,9 +47,14 @@
     creates: /etc/letsencrypt
   notify: restart fits-nginx
   when: "'arcdev' in inventory_hostname and enable_certbot"
+#- name: AWS Setup SELinux for UWSGI
+#  [ooberdorf@arcdev uwsgi]$ sudo semanage fcontext -a -t httpd_sys_content_rw_t 'fits.sock'
+#  [ooberdorf@arcdev uwsgi]$ sudo restorecon -v 'fits.sock'
 - name: (ARCHIVE) Setup Let's Encrypt (nginx)
   command: certbot certonly --nginx -d archive.gemini.edu
   args:
     creates: /etc/letsencrypt
   notify: restart fits-nginx
   when: "'archive' in inventory_hostname and enable_certbot"
+- name: SELinux configuration for nginx to talk to uwsgi via socket
+  command: semanage permissive -a httpd_t
