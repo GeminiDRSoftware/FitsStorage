@@ -57,7 +57,7 @@
   notify: restart fits-nginx
   when: "'archive' in inventory_hostname and enable_certbot"
 - name: Build SELinux definitions for nginx to talk to uwsgi socket
-  command: cat /opt/FitsStorage/otherfiles/nginx.te | audit2allow -M nginx
+  command: bash -c "cat /opt/FitsStorage/otherfiles/nginx.te | audit2allow -M nginx"
   when: "'archive' in inventory_hostname or 'arcdev' in inventory_hostname"
 - name: Load SELinux
   command: semodule -i nginx.pp
