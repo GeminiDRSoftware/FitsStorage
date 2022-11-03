@@ -1,0 +1,18 @@
+module nginx 1.0;
+
+require {
+	type httpd_sys_script_t;
+	type httpd_sys_content_t;
+	type httpd_t;
+	type init_t;
+	type usr_t;
+	class sock_file write;
+	class process transition;
+}
+
+#============= httpd_t ==============
+allow httpd_t httpd_sys_content_t:sock_file write;
+allow httpd_t usr_t:sock_file write;
+
+#============= init_t ==============
+allow init_t httpd_sys_script_t:process transition;
