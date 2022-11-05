@@ -798,7 +798,12 @@ class RuleSetFactory(object):
 
         source = self._cls.get_raw(sourcename)
 
-        data = yaml.load(source, yaml.FullLoader)
+        # yaml made breaking changes to their API and I'm tired of it
+        try:
+            data = yaml.load(source, yaml.FullLoader)
+        except Exception as yamle:
+            data = yaml.load(source)
+
         if not data:
             return self._cls.build_empty(sourcename, *args, **kw)
 
