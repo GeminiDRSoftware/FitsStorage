@@ -134,3 +134,16 @@
           query: GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO apache
         become: yes
         become_user: postgres
+      - name: Ensure miscfilesplus/ghost access for fitsdata (remove if no longer needed)
+        postgresql_query:
+          db: fitsdata
+          query: |
+            grant all on public.miscfile_collection_id_seq to fitsdata;
+            grant all on public.miscfile_folder_id_seq to fitsdata;
+            grant all on public.miscfile_plus_id_seq to fitsdata;
+            grant all on public.ghost to fitsdata;
+            grant all on public.ghost_id_seq to fitsdata;
+        become: yes
+        become_user: postgres
+
+
