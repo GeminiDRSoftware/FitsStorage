@@ -26,6 +26,13 @@ http {
             uwsgi_pass      unix:/opt/uwsgi/fits.sock;
         }
 
+# Use this instead for initial certbot run, and turn off firewall for HTTP/HTTPS in security group on AWS during initial certbot run
+# sudo certbot certonly  --nginx -d arcdev.gemini.edu
+#        location / {
+#            autoindex         on;
+#            alias             /opt/FitsStorage/certbotroot/;
+#        }
+
         location /static/ {
             autoindex         on;
             alias             /opt/FitsStorage/htmldocroot/;
