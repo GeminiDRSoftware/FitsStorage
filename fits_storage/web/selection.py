@@ -768,7 +768,7 @@ def openquery(selection):
     returns True if this selection will likely return a large number of results
     """
 
-    things = {'date', 'daterange', 'program_id', 'observation_id', 'data_label', 'filename', 'filepre'}
+    things = {'date', 'daterange', 'program_id', 'observation_id', 'data_label', 'filename', 'filepre', 'filelist'}
     selection_keys = set(selection) # Makes a set out of selection.keys()
 
     # Are the previous two sets disjoint?

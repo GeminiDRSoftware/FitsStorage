@@ -129,10 +129,16 @@ odb_data_to_archive
 Other
 -----
 
+selection
+^^^^^^^^^
+
+- Added filelist as a search term that is not open, allowing for larger count of results/downloads
+
 archive_install.yml
 ^^^^^^^^^^^^^^^^^^^
 
 - Fixes for SELinux installs on fresh host for PostgreSQL support.
+- using enh/ghost_bundle_cal_updates branch of DRAGONS to get GHOST support early
 
 admin_file_permissions
 ^^^^^^^^^^^^^^^^^^^^^^
