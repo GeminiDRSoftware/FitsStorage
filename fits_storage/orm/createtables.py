@@ -69,6 +69,7 @@ def create_tables(session):
     Header.metadata.create_all(bind=pg_db)
     Footprint.metadata.create_all(bind=pg_db)
     Gmos.metadata.create_all(bind=pg_db)
+    Ghost.metadata.create_all(bind=pg_db)
     Niri.metadata.create_all(bind=pg_db)
     Nifs.metadata.create_all(bind=pg_db)
     Gnirs.metadata.create_all(bind=pg_db)
