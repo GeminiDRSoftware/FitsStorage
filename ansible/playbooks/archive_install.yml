@@ -213,7 +213,7 @@
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git"
           #version: release/1.0.x
-          version: v1.0.24
+          version: v1.0.25
           dest: /opt/FitsStorageDB
           accept_hostkey: yes
         when: not is_aws
@@ -224,7 +224,7 @@
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git"
           #version: release/1.1.x
-          version: v1.1.18
+          version: v1.1.19
           dest: /opt/GeminiCalMgr
           accept_hostkey: yes
         when: not is_aws
@@ -504,10 +504,10 @@
           new_owner: fitsdata
         become: yes
         become_user: postgres
-      - name: If we have a fresh DB, set version to 31 since we are already up to date with the migrations
+      - name: If we have a fresh DB, set version to 32 since we are already up to date with the migrations
         postgresql_query:
           db: fitsdata
-          query: update migrate_version set version=31
+          query: update migrate_version set version=32
         become: yes
         become_user: postgres
         when: fitsdata_db_created.changed
