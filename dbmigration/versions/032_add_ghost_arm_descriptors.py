@@ -33,6 +33,7 @@ def upgrade(migrate_engine):
     amp_read_area_red = Column('amp_read_area_red', Text, index=True)
     amp_read_area_slitv = Column('amp_read_area_slitv', Text, index=True)
 
+    # not sure we need 'arm', remove here and above if not
     arm.create(ghost, index_name='idx_ghost_arm')
     want_before_arc.create(ghost)
     detector_name_blue.create(ghost, index_name="idx_ghost_detector_name_blue")
@@ -57,52 +58,54 @@ def upgrade(migrate_engine):
     amp_read_area_red.create(ghost, index_name="idx_ghost_amp_read_area_red")
     amp_read_area_slitv.create(ghost, index_name="idx_ghost_amp_read_area_slitv")
 
-    # connection.execute("ALTER TYPE ghost_read_speed_setting ADD VALUE 'medium'")
-    # connection.execute("ALTER TYPE ghost_read_speed_setting ADD VALUE 'standard'")
-    # connection.execute("ALTER TYPE ghost_read_speed_setting ADD VALUE 'unknown'")
-    # connection.execute("ALTER TYPE detector_readspeed_setting ADD VALUE 'medium'")
-    # connection.execute("ALTER TYPE detector_readspeed_setting ADD VALUE 'standard'")
-    # connection.execute("ALTER TYPE detector_readspeed_setting ADD VALUE 'unknown'")
-    # connection.execute("ALTER TYPE ghost_gain_setting ADD VALUE 'standard'")
-    # connection.execute("ALTER TYPE detector_gain_setting ADD VALUE 'standard'")
-    # connection.commit()
+    with migrate_engine.connect() as connection:
+        # connection.execute("ALTER TYPE ghost_read_speed_setting ADD VALUE 'medium'")
+        # connection.execute("ALTER TYPE ghost_read_speed_setting ADD VALUE 'standard'")
+        # connection.execute("ALTER TYPE ghost_read_speed_setting ADD VALUE 'unknown'")
+        # connection.execute("ALTER TYPE detector_readspeed_setting ADD VALUE 'medium'")
+        # connection.execute("ALTER TYPE detector_readspeed_setting ADD VALUE 'standard'")
+        # connection.execute("ALTER TYPE detector_readspeed_setting ADD VALUE 'unknown'")
+        # connection.execute("ALTER TYPE ghost_gain_setting ADD VALUE 'standard'")
+        # connection.execute("ALTER TYPE detector_gain_setting ADD VALUE 'standard'")
+        # connection.commit()
 
-    # HACK HACK HACK
-    # Can't use ALTER TYPE obstype ADD VALUE inside a transaction because postgres
-    # So, we do this
-    # see: https://stackoverflow.com/questions/1771543/adding-a-new-value-to-an-existing-enum-type/41696273#41696273
-    connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
-                       "SELECT 'ghost_read_speed_setting'::regtype::oid, 'medium', "
-                       "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
-                       "WHERE enumtypid = 'ghost_read_speed_setting'::regtype )")
-    connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
-                       "SELECT 'ghost_read_speed_setting'::regtype::oid, 'standard', "
-                       "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
-                       "WHERE enumtypid = 'ghost_read_speed_setting'::regtype )")
-    connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
-                       "SELECT 'ghost_read_speed_setting'::regtype::oid, 'unknown', "
-                       "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
-                       "WHERE enumtypid = 'ghost_read_speed_setting'::regtype )")
-    connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
-                       "SELECT 'detector_readspeed_setting'::regtype::oid, 'medium', "
-                       "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
-                       "WHERE enumtypid = 'detector_readspeed_setting'::regtype )")
-    connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
-                       "SELECT 'detector_readspeed_setting'::regtype::oid, 'standard', "
-                       "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
-                       "WHERE enumtypid = 'detector_readspeed_setting'::regtype )")
-    connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
-                       "SELECT 'detector_readspeed_setting'::regtype::oid, 'unknown', "
-                       "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
-                       "WHERE enumtypid = 'detector_readspeed_setting'::regtype )")
-    connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
-                       "SELECT 'ghost_gain_setting'::regtype::oid, 'standard', "
-                       "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
-                       "WHERE enumtypid = 'ghost_gain_setting'::regtype )")
-    connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
-                       "SELECT 'detector_gain_setting'::regtype::oid, 'standard', "
-                       "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
-                       "WHERE enumtypid = 'detector_gain_setting'::regtype )")
+        # HACK HACK HACK
+        # Can't use ALTER TYPE obstype ADD VALUE inside a transaction because postgres
+        # So, we do this
+        # see: https://stackoverflow.com/questions/1771543/adding-a-new-value-to-an-existing-enum-type/41696273#41696273
+
+        connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
+                           "SELECT 'ghost_read_speed_setting'::regtype::oid, 'medium', "
+                           "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
+                           "WHERE enumtypid = 'ghost_read_speed_setting'::regtype )")
+        connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
+                           "SELECT 'ghost_read_speed_setting'::regtype::oid, 'standard', "
+                           "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
+                           "WHERE enumtypid = 'ghost_read_speed_setting'::regtype )")
+        connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
+                           "SELECT 'ghost_read_speed_setting'::regtype::oid, 'unknown', "
+                           "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
+                           "WHERE enumtypid = 'ghost_read_speed_setting'::regtype )")
+        connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
+                           "SELECT 'detector_readspeed_setting'::regtype::oid, 'medium', "
+                           "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
+                           "WHERE enumtypid = 'detector_readspeed_setting'::regtype )")
+        connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
+                           "SELECT 'detector_readspeed_setting'::regtype::oid, 'standard', "
+                           "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
+                           "WHERE enumtypid = 'detector_readspeed_setting'::regtype )")
+        connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
+                           "SELECT 'detector_readspeed_setting'::regtype::oid, 'unknown', "
+                           "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
+                           "WHERE enumtypid = 'detector_readspeed_setting'::regtype )")
+        connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
+                           "SELECT 'ghost_gain_setting'::regtype::oid, 'standard', "
+                           "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
+                           "WHERE enumtypid = 'ghost_gain_setting'::regtype )")
+        connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
+                           "SELECT 'detector_gain_setting'::regtype::oid, 'standard', "
+                           "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
+                           "WHERE enumtypid = 'detector_gain_setting'::regtype )")
 
 
 def downgrade(migrate_engine):
