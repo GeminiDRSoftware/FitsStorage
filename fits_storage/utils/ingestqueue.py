@@ -13,6 +13,7 @@ import dateutil.parser
 import sys
 import traceback
 
+from gemini_obs_db.orm.ghost import Ghost
 from gemini_obs_db.orm.provenance import ingest_provenance
 from ..orm.geometryhacks import add_footprint, do_std_obs
 
@@ -56,6 +57,7 @@ instrument_table = {
     'F2':       ("F2", F2),
     'GMOS-N':   ("GMOS", Gmos),
     'GMOS-S':   ("GMOS", Gmos),
+    'GHOST':    ("GHOST", Ghost),
     'GNIRS':    ("GNIRS", Gnirs),
     'GPI':      ("GPI", Gpi),
     'GSAOI':    ("GSAOI", Gsaoi),

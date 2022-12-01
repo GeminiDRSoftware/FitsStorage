@@ -35,7 +35,7 @@ RUN pip3 install gwcs==0.16.1
 RUN pip3 install asdf==2.7.4
 RUN pip3 install specutils==1.2
 RUN pip3 install psycopg2-binary && \
-    pip3 install sqlalchemy && \
+    pip3 install SQLAlchemy==1.3.24 && \
     pip3 install pyyaml && \
     pip3 install jinja2 && \
     pip3 install pyfits && \

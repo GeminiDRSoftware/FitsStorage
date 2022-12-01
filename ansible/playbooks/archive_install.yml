@@ -224,7 +224,7 @@
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git"
           #version: release/1.1.x
-          version: v1.1.19
+          version: v1.1.20
           dest: /opt/GeminiCalMgr
           accept_hostkey: yes
         when: not is_aws

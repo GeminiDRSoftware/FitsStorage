@@ -330,6 +330,44 @@
 
 </div>
 <br>
+<div class="next" id="GHOST" style="display:none">
+    <br><label>GHOST</label><br>
+
+    <div class="left">
+    <label>Exposure Time:</label><input id="GHOSTexpT" class="inst_clearable" name="exposure_time" type="text" placeholder="(leave blank for Any)"{{ set_value_if(updated.exposure_time, 'GHOST' in updated.inst) }} />
+    <span class="help">(Exposure Time)
+        <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</span>
+    </span><br>
+
+    <label>Binning:</label><select id="ghost_binning" class="ddw inst_clearable" name="binning">
+        <option value="">Any</option>
+{{ generate_option_list(bin_options, updated.binning) }}
+    </select>
+    <span class="help">(CCD Binning)
+        <span class="helpleft">Select a CCD binning.</span>
+    </span><br>
+    </div>
+
+    <div class="right">
+    <label>Readout Speed:</label><select id="ghost_readspeed" class="ddw inst_clearable" name="ghost_speed">
+        <option value="">Any</option>
+{{ generate_option_list(ghost_speed_options, updated.ghost_speed) }}
+    </select>
+    <span class="help">(Readout Speed)
+        <span class="helpright">Select between read speeds. Leave at Any for all.</span>
+    </span><br>
+
+    <label>Readout Gain:</label><select id="ghost_gain" class="ddw inst_clearable" name="ghost_gain">
+        <option value="">Any</option>
+{{ generate_option_list(ghost_gain_options, updated.ghost_gain) }}
+    </select>
+    <span class="help">(Readout Gain)
+        <span class="helpright">Search for specific gain. Leave at Any for both</span>
+    </span><br>
+    </div>
+
+</div>
+<br>
 
 <div class="next" id="GNIRS" style="display:none">
     <br><label>GNIRS</label><br>

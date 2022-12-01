@@ -89,6 +89,8 @@ getselection_key_value = {
     'ephemeris_target': 'ephemeris_target',
     'lastmoddaterange': 'lastmoddaterange',
     'entrytimedaterange': 'entrytimedaterange',
+    'gain': 'gain',
+    'readspeed': 'readspeed',
     }
 
 # Also, some entries set themselves as the value for a certain selection
