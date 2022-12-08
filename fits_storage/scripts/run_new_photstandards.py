@@ -15,6 +15,7 @@ import fits_storage
 from gemini_obs_db.db import session_scope
 from gemini_obs_db.orm.header import Header
 from gemini_obs_db.orm.diskfile import DiskFile
+from fits_storage.orm.photstandard import PhotStandard
 from datetime import datetime
 
 
@@ -22,6 +23,20 @@ def do_std_obs_for_new(session, header_id, photstds):
     """
     This custom version  only looks vs the new footprints
     """
+    ids = set()
+    for name in photstds.split(","):
+        q = session.query(PhotStandard).filter(PhotStandard.name == name)
+        ps = q.first()
+        if ps is None:
+            raise(Exception("Phot. Standard not found for %s" % name))
+        print("Adding %d" % ps.id)
+        ids.add(ps.id)
+    ids = list(ids)
+    ids.sort()
+    ids = ",".join([str(id) for id in ids])
+    print(f"{ids}")
+    exit(0)
+
     sql = "insert into photstandardobs (select nextval('photstandardobs_id_seq') as id, " \
           "photstandard.id AS photstandard_id, footprint.id AS footprint_id from " \
           "photstandard, footprint where photstandard.id in (%s) and " \
@@ -50,7 +65,7 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
 
     if not options.photstds:
-        print("List of photometric standard ids (not names) required")
+        print("List of photometric standard names required")
         exit(1)
 
     if options.fromdt and options.todt:
