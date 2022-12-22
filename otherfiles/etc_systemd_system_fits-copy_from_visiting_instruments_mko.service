@@ -15,4 +15,4 @@ RestartSec=10
 UMask=0002
 
 [Install]
-WantedBy=runlevel5.target
+WantedBy=multi-user.target

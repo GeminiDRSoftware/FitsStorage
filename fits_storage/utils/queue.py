@@ -96,7 +96,7 @@ def pop_queue(queue_class, session, logger, fast_rebuild=False):
                     # the ACCESS EXCLUSIVE lock in pop_exportqueue from being granted until the transfer completes.
                     make_transient(qelement)
                 except AttributeError: # Got a None
-                    logger.debug("No item to pop on %s", tname)
+                    logger.debug("No item to pop on %s" % tname)
                 break
         except OperationalError:
             sleep(0.05)
@@ -176,7 +176,12 @@ def add_error(queue_class, obj, exc_type, exc_value, tb, session):
         text.extend(format_tb(tb))
     text.extend([x.rstrip() for x in  traceback.format_exception_only(exc_type, exc_value)])
 
-    error = QueueError(obj.filename, getattr(obj, 'path', ''), queue, '\n'.join(text))
+    if hasattr(obj, "filename"):
+        fn = obj.filename
+    else:
+        # Note the column is not nullable
+        fn = 'not available'
+    error = QueueError(fn, getattr(obj, 'path', ''), queue, '\n'.join(text))
     session.add(error)
     session.flush()
 

@@ -25,6 +25,7 @@ from ..fits_storage_config import using_s3
 from ..fits_storage_config import storage_root
 from ..fits_storage_config import preview_path
 from ..fits_storage_config import z_staging_area
+from ..fits_storage_config import max_spectra_preview_frames
 
 import bz2
 
@@ -222,7 +223,7 @@ class PreviewQueueUtil(object):
 
             # Now there should be a diskfile.ad_object, either way...
             if len(diskfile.ad_object) > 1 and len(diskfile.ad_object[0].shape) == 1:
-                for idx in range(len(diskfile.ad_object)):
+                for idx in range(min(len(diskfile.ad_object), max_spectra_preview_frames)):
                     filename = "%s_%03d.jpg" % (preview_fullpath[0:-4], idx)
                     with open(filename, 'wb') as fp:
                         try:
@@ -527,7 +528,10 @@ class PreviewQueueUtil(object):
                 full = stack
             else:
                 full[0:240, 180:500] = stack
+        elif str(ad.instrument()) == "GHOST" and 'BUNDLE' in ad.tags:
+            full = ad[1].data
 
+            full = norm(full)
         else:
             # Generic plot the first extention case
             full = ad[0].data
@@ -536,6 +540,10 @@ class PreviewQueueUtil(object):
             full = numpy.squeeze(full)
 
             full = norm(full)
+
+        if full.ndim > 1:
+            # flip the image - seems we need this for everything
+            full = numpy.flip(full, 0)
 
         # plot without axes or frame
         fig = plt.figure(frameon=False)
@@ -586,4 +594,4 @@ if __name__ == "__main__":
     # Example of one that had the black blotch
     # pqu.render_preview(astrodata.open("/Users/ooberdorf/Downloads/N20200730S0218.fits"), "/Users/ooberdorf/test.jpg")
     # Example of one that worked with the old way and failed after the fix
-    pqu.render_preview(astrodata.open("/Users/ooberdorf/Downloads/N20201208S0446.fits"), "/Users/ooberdorf/test.jpg")
+    pqu.render_preview(astrodata.open("/Users/ooberdorf/dataflow/S20221209S0016.fits"), "/Users/ooberdorf/test.jpg")

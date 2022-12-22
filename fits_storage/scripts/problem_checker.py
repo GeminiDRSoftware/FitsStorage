@@ -202,7 +202,7 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
 
     problem_checkers = [
-        AlopekeProblemChecker(),
+        # AlopekeProblemChecker(),  Always has problems, they dump the data in the late and it never ingests in time
         ZorroProblemChecker(),
         DHSProblemChecker(),
     ]

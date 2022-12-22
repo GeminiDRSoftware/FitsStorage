@@ -127,10 +127,12 @@ if __name__ == "__main__":
     logger.info("*********    delete_files.py - starting up at %s" % datetime.datetime.now())
 
     parser = OptionParser()
-    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape1",
+    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape-lp2",
                       help="The Fits Storage Tape server to use to check the files are on tape")
     parser.add_option("--path", action="store", type="string", dest="path", default="",
                       help="Path within the storage root")
+    parser.add_option("--pathcontains", action="store", type="string", dest="pathcontains", default="",
+                      help="Path within the storage root contains the string provided")
     parser.add_option("--file-pre", action="store", type="string", dest="filepre",
                       help="File prefix to operate on, eg N20090130, N200812 etc")
     parser.add_option("--maxnum", type="int", action="store", dest="maxnum", help="Delete at most X files.")
@@ -201,6 +203,12 @@ if __name__ == "__main__":
         if not options.notpresent:
             query = query.filter(DiskFile.present == True)
 
+        if options.path:
+            query = query.filter(DiskFile.path == options.path)
+
+        if options.pathcontains:
+            query = query.filter(DiskFile.path.contains(options.pathcontains))
+
         if options.olderthan and options.olderthan > 0:
             dt = datetime.datetime.now()
             dt = dt - datetime.timedelta(days=options.olderthan)
@@ -216,6 +224,7 @@ if __name__ == "__main__":
         if options.maxnum:
             query = query.limit(options.maxnum)
         cnt = query.count()
+
 
         if cnt == 0:
             logger.info("No Files found matching file-pre. Exiting")
@@ -256,65 +265,69 @@ if __name__ == "__main__":
                     url = "http://%s/fileontape/%s" % (options.tapeserver, dbfilename)
                     logger.debug("Querying tape server DB at %s" % url)
 
-                    xml = urllib.request.urlopen(url).read()
-                    dom = parseString(xml)
-                    fileelements = dom.getElementsByTagName("file")
+                    try:
+                        xml = urllib.request.urlopen(url).read()
+                        dom = parseString(xml)
+                        fileelements = dom.getElementsByTagName("file")
 
-                    tapeids = []
-                    for fe in fileelements:
-                        filename = fe.getElementsByTagName("filename")[0].childNodes[0].data
-                        datamd5 = fe.getElementsByTagName("data_md5")[0].childNodes[0].data
-                        tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
-                        logger.debug("Filename: %s; data_md5=%s, tapeid=%d" % (filename, datamd5, tapeid))
+                        tapeids = []
+                        for fe in fileelements:
+                            filename = fe.getElementsByTagName("filename")[0].childNodes[0].data
+                            datamd5 = fe.getElementsByTagName("data_md5")[0].childNodes[0].data
+                            tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
+                            logger.debug("Filename: %s; data_md5=%s, tapeid=%d" % (filename, datamd5, tapeid))
 
-                        filename_clean = filename
-                        if filename_clean.endswith(".bz2"):
-                            filename_clean = filename_clean[:-4]
-                        dbfilename_clean = dbfilename
-                        if dbfilename_clean.endswith(".bz2"):
-                            dbfilename_clean = dbfilename_clean[:-4]
+                            filename_clean = filename
+                            if filename_clean.endswith(".bz2"):
+                                filename_clean = filename_clean[:-4]
+                            dbfilename_clean = dbfilename
+                            if dbfilename_clean.endswith(".bz2"):
+                                dbfilename_clean = dbfilename_clean[:-4]
 
-                        found = (filename_clean == dbfilename_clean) and (tapeid not in tapeids)
-                        if not options.skipmd5:
-                            found = found and (datamd5 == dbdatamd5)
+                            found = (filename_clean == dbfilename_clean) and (tapeid not in tapeids)
+                            if not options.skipmd5:
+                                found = found and (datamd5 == dbdatamd5)
 
-                        if found:
-                            logger.debug("Found it on tape id %d" % tapeid)
-                            tapeids.append(tapeid)
+                            if found:
+                                logger.debug("Found it on tape id %d" % tapeid)
+                                tapeids.append(tapeid)
 
-                    if len(tapeids) >= options.mintapes:
-                        sumbytes += diskfile.file_size
-                        sumgb = sumbytes / 1.0E9
-                        sumfiles += 1
-                        if options.dryrun:
-                            add_to_msg(
-                                logger.info,
-                                "Dry run - not actually deleting File %s - %s which is on %d tapes: %s" % (fullpath, filemd5, len(tapeids), tapeids)
-                                )
+                        if len(tapeids) >= options.mintapes:
+                            sumbytes += diskfile.file_size
+                            sumgb = sumbytes / 1.0E9
+                            sumfiles += 1
+                            if options.dryrun:
+                                add_to_msg(
+                                    logger.info,
+                                    "Dry run - not actually deleting File %s - %s which is on %d tapes: %s" % (fullpath, filemd5, len(tapeids), tapeids)
+                                    )
+                            else:
+                                add_to_msg(
+                                    logger.info,
+                                    "Deleting File %s - %s which is on %d tapes: %s" % (fullpath, filemd5, len(tapeids), tapeids)
+                                    )
+                                try:
+                                    os.unlink(fullpath)
+                                    logger.debug("Marking diskfile id %d as not present" % diskfile.id)
+                                    diskfile.present = False
+                                    session.commit()
+                                except:
+                                    add_to_msg(
+                                        logger.error,
+                                        "Could not unlink file %s: %s - %s" % (fullpath, sys.exc_info()[0], sys.exc_info()[1])
+                                        )
+                                    add_to_errmsg(
+                                        None,
+                                        "Could not unlink file %s: %s - %s" % (fullpath, sys.exc_info()[0],
+                                                                               sys.exc_info()[1]))
                         else:
                             add_to_msg(
                                 logger.info,
-                                "Deleting File %s - %s which is on %d tapes: %s" % (fullpath, filemd5, len(tapeids), tapeids)
+                                "File %s is not on sufficient tapes to be elligable for deletion" % dbfilename
                                 )
-                            try:
-                                os.unlink(fullpath)
-                                logger.debug("Marking diskfile id %d as not present" % diskfile.id)
-                                diskfile.present = False
-                                session.commit()
-                            except:
-                                add_to_msg(
-                                    logger.error,
-                                    "Could not unlink file %s: %s - %s" % (fullpath, sys.exc_info()[0], sys.exc_info()[1])
-                                    )
-                                add_to_errmsg(
-                                    None,
-                                    "Could not unlink file %s: %s - %s" % (fullpath, sys.exc_info()[0],
-                                                                           sys.exc_info()[1]))
-                    else:
-                        add_to_msg(
-                            logger.info,
-                            "File %s is not on sufficient tapes to be elligable for deletion" % dbfilename
-                            )
+                    except (ConnectionError, ConnectionResetError, ConnectionAbortedError, ConnectionRefusedError):
+                        add_to_msg(logger.info, "Unable to check %s against tape server xml service, skipping"
+                                   % dbfilename)
                 if not check_old_enough_to_delete(dbfilename):
                     add_to_msg(logger.info, "File is too young to delete: %s" % dbfilename)
                     add_to_errmsg(None, "File is too young to delete: %s" % dbfilename)

@@ -4,6 +4,7 @@ in the Fits Storage System.
 """
 import sqlalchemy
 
+from gemini_obs_db.orm.ghost import Ghost
 from .miscfile_plus import MiscFileCollectionUsers, MiscFileCollection, MiscFileFolder, MiscFilePlus
 from ..fits_storage_config import using_apache, using_sqlite
 from gemini_obs_db.db import pg_db
@@ -69,6 +70,7 @@ def create_tables(session):
     Header.metadata.create_all(bind=pg_db)
     Footprint.metadata.create_all(bind=pg_db)
     Gmos.metadata.create_all(bind=pg_db)
+    Ghost.metadata.create_all(bind=pg_db)
     Niri.metadata.create_all(bind=pg_db)
     Nifs.metadata.create_all(bind=pg_db)
     Gnirs.metadata.create_all(bind=pg_db)

@@ -55,3 +55,4 @@ tests:
   - valid-observation-info
   # TODO: Check this one; may not be needed
   - wcs-after-pdu
+  - valid-filters

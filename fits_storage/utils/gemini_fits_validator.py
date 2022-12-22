@@ -3,7 +3,7 @@
 
 try:
     from .fits_validator import *
-    from .fits_validator import coerceValue, log
+    from .fits_validator import coerceValue, log, BadFilter
     from gemini_obs_db.utils.gemini_metadata_utils import gemini_instrument
     from gemini_obs_db.utils.gemini_metadata_utils import GeminiProgram, GeminiObservation, GeminiDataLabel
 except ValueError:
@@ -118,6 +118,21 @@ def check_observation_related_fields(header, env):
 
     return True
 
+@RuleSetFactory.register_function("valid-filters", excIfFalse = BadFilter)
+def check_valid_filters(header, env):
+    for kw in ['FILTER', 'FILTER1', 'FILTER2', 'FILTER3']:
+        if kw in header:
+            f = header[kw]
+            if f.upper() == 'UNDEFINED':
+                return False
+    return True
+
+@RuleSetFactory.register_function("valid-radesys-radecsys")
+def check_valid_radesys_radecsys(header, env):
+    if 'RADECSYS' in header or 'RADESYS' in header:
+        return True
+    return False, "Expected RADECSYS or RADESYS keyword"
+
 @RuleSetFactory.register_function('set-date')
 def set_date(header, env):
     bogus = False
@@ -167,6 +182,8 @@ class AstroDataEvaluator(Evaluator):
                     ad_object.tags)
         except NotGeminiData:
             return Result(False, 'NOTGEMINI', "This doesn't look at all like data produced at Gemini")
+        except BadFilter:
+            return Result(False, 'NOPASS', "Bad filter (one or more FILTER* keywords are bad)")
         except BadData:
             return Result(True,  'BAD', "Bad data (RAWGEMQA = BAD)")
 
@@ -238,7 +255,8 @@ if __name__ == '__main__':
     else:
         if use_ad:
             evaluate = AstroDataEvaluator()
-            result = evaluate(astrodata.open(fits))
+            # result = evaluate(astrodata.open(fits))
+            result = evaluate(astrodata.open(argv[0]))
         else:
             evaluate = Evaluator()
             result = evaluate(fits)

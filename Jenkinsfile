@@ -1,7 +1,5 @@
 #!/usr/bin/env groovy
 /*
- * Jenkins Pipeline for DRAGONS
- *
  * by Bruno C. Quint
  * adapted for FitsStorage by Oliver Oberdorf
  *
@@ -13,10 +11,10 @@
 
 
 // Adding DRAGONS CI library to bring in some extra utilities such as slack notifications
-@Library('dragons_ci@master') _
+//@Library('dragons_ci@master') _
 
 pipeline {
-    agent any
+    agent { label 'hawaii' }
 
     options { skipDefaultCheckout() }
 
@@ -36,33 +34,32 @@ pipeline {
                 echo 'STARTED'
 
 //                 checkout scm
-
                 echo 'Checking Out FitsStorage'
                 dir('FitsStorage') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorage.git',
                     branch: '2022-1',
-                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
+                    credentialsId: '6320a9fb-4f81-4859-ac62-13485af2b48e'
                 }
 
                 echo 'Checking Out FitsStorageConfig'
                 dir('FitsStorageConfig') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorageConfig.git',
                     branch: 'master',
-                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
+                    credentialsId: '6320a9fb-4f81-4859-ac62-13485af2b48e'
                 }
 
                 echo 'Checking Out FitsStorageDB'
                 dir('FitsStorageDB') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git',
                     branch: 'release/1.0.x',
-                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
+                    credentialsId: '6320a9fb-4f81-4859-ac62-13485af2b48e'
                 }
 
                 echo 'Checking Out GeminiCalMgr'
                 dir('GeminiCalMgr') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git',
                     branch: 'release/1.1.x',
-                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
+                    credentialsId: '6320a9fb-4f81-4859-ac62-13485af2b48e'
                 }
             }
 
@@ -78,27 +75,29 @@ pipeline {
                     docker network create fitsstorage-jenkins || true
                     docker container rm fitsdata-jenkins || true
                     docker container rm archive-jenkins || true
+                    mkdir pytest_tmp
                     '''
                     def postgres = docker.image('postgres:12').withRun(" --network fitsstorage-jenkins --name fitsdata-jenkins -e POSTGRES_USER=fitsdata -e POSTGRES_PASSWORD=fitsdata -e POSTGRES_DB=fitsdata") { c ->
                         def archive = docker.image("gemini/archive:jenkins").withRun(" --network fitsstorage-jenkins --name archive-jenkins -e USE_AS_ARCHIVE=False -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e BLOCKED_URLS=\"\" -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr -e MAGIC_API_COOKIE=jenkins_api_cookie -p 8180:80") { a->
                             try {
-                                docker.image('gemini/fitsarchiveutils:jenkins').inside(" -v reports:/data/reports -v /data/pytest_tmp:/tmp  --network fitsstorage-jenkins -e USE_AS_ARCHIVE=False -e STORAGE_ROOT=/tmp/jenkins_pytest/dataflow -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e PYTEST_SERVER=http://archive-jenkins -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e BLOCKED_URLS=\"\" -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr") {
+//                                 docker.image('gemini/fitsarchiveutils:jenkins').inside(" -v reports:/data/reports -v pytest_tmp:/tmp  --network fitsstorage-jenkins -e USE_AS_ARCHIVE=False -e STORAGE_ROOT=/tmp/jenkins_pytest/dataflow -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e PYTEST_SERVER=http://archive-jenkins -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e BLOCKED_URLS=\"\" -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr") {
+                                docker.image('gemini/fitsarchiveutils:jenkins').inside(" -v reports:/data/reports --network fitsstorage-jenkins -e USE_AS_ARCHIVE=False -e STORAGE_ROOT=/tmp/jenkins_pytest/dataflow -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e PYTEST_SERVER=http://archive-jenkins -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e BLOCKED_URLS=\"\" -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr") {
                                     sh 'python3 /opt/FitsStorage/fits_storage/scripts/create_tables.py'
                                     echo "Running tests against docker containers"
-                                    sh  '''
-                                        mkdir -p /tmp/archive_test_images
-                                        mkdir -p /tmp/cached_archive_test_images
-                                        env PYTEST_SERVER=http://archive-jenkins coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*" -m pytest /opt/FitsStorage/tests
-                                        coverage report -m --fail-under=71
-                                        '''
-                                    echo "Prepping for robot tests"
-                                    sh '''
-                                        echo "Pulling test data into checkout for later robot tests"
-                                        bash ./FitsStorage/robot/setuptestdata.sh
-                                        # ensure anything in that testdata folder are ingested
-                                        env STORAGE_ROOT=/tmp/jenkins_pytest/dataflow env FITS_DB_SERVER="fitsdata:fitsdata@fitsdata-jenkins" python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py
-                                        env STORAGE_ROOT=/tmp/jenkins_pytest/dataflow env FITS_DB_SERVER="fitsdata:fitsdata@fitsdata-jenkins" python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --empty
-                                    '''
+//                                     sh  '''
+//                                         mkdir -p /tmp/archive_test_images
+//                                         mkdir -p /tmp/cached_archive_test_images
+//                                         env PYTEST_SERVER=http://archive-jenkins coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*" -m pytest /opt/FitsStorage/tests
+//                                         coverage report -m --fail-under=71
+//                                         '''
+//                                     echo "Prepping for robot tests"
+//                                     sh '''
+//                                         echo "Pulling test data into checkout for later robot tests"
+//                                         bash ./FitsStorage/robot/setuptestdata.sh
+//                                         # ensure anything in that testdata folder are ingested
+//                                         env STORAGE_ROOT=/tmp/jenkins_pytest/dataflow env FITS_DB_SERVER="fitsdata:fitsdata@fitsdata-jenkins" python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py
+//                                         env STORAGE_ROOT=/tmp/jenkins_pytest/dataflow env FITS_DB_SERVER="fitsdata:fitsdata@fitsdata-jenkins" python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --empty
+//                                     '''
                                 }
                                 // run Robot while container is up
                                 //
@@ -115,22 +114,22 @@ pipeline {
                                 //    get it from https://www.google.com/chrome/?platform=linux
                                 //    use `yum` to install it to get the dependencies right
 
-                                sh '''
-                                   echo Setting up folder for robot reports
-                                   rm -rf reports/*
-                                   mkdir -p reports
-                                   cd FitsStorage/robot
-
-                                   echo Use as archive: $USE_AS_ARCHIVE
-                                   echo ============================================================
-                                   echo port 8180 date ONLY
-                                   # wget http://localhost:8180/searchform/AnyQA/cols=CTOWEQ/20130711/includeengineering/not_site_monitoring -O -
-                                   wget http://localhost:8180/jsonsummary/AnyQA/cols=CTOWEQ/20120711-20140711/includeengineering/not_site_monitoring -O -
-                                   echo Running robot checks
-                                   env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
-                                   cd ../..
-                                   echo Done with robot
-                                   '''
+//                                 sh '''
+//                                    echo Setting up folder for robot reports
+//                                    rm -rf reports/*
+//                                    mkdir -p reports
+//                                    cd FitsStorage/robot
+//
+//                                    echo Use as archive: $USE_AS_ARCHIVE
+//                                    echo ============================================================
+//                                    echo port 8180 date ONLY
+//                                    # wget http://localhost:8180/searchform/AnyQA/cols=CTOWEQ/20130711/includeengineering/not_site_monitoring -O -
+//                                    wget http://localhost:8180/jsonsummary/AnyQA/cols=CTOWEQ/20120711-20140711/includeengineering/not_site_monitoring -O -
+//                                    echo Running robot checks
+//                                    env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
+//                                    cd ../..
+//                                    echo Done with robot
+//                                    '''
                             } catch (exc) {
                                 sh "docker logs ${a.id}"
                                 sh "docker logs archive-jenkins"
@@ -171,20 +170,21 @@ pipeline {
              docker rmi gemini/fitsarchiveutils:jenkins || true
              docker rmi gemini/archive:jenkins || true
              docker network rm fitsstorage-jenkins || true
+             rm -rf pytest_tmp
           '''
-          step(
-                [
-                  $class              : 'RobotPublisher',
-                  outputPath          : 'reports',
-                  outputFileName      : '**/output.xml',
-                  reportFileName      : '**/report.html',
-                  logFileName         : '**/log.html',
-                  disableArchiveOutput: false,
-                  passThreshold       : 50,
-                  unstableThreshold   : 40,
-                  otherFiles          : "**/*.png,**/*.jpg",
-                ]
-            )
+//           step(
+//                 [
+//                   $class              : 'RobotPublisher',
+//                   outputPath          : 'reports',
+//                   outputFileName      : '**/output.xml',
+//                   reportFileName      : '**/report.html',
+//                   logFileName         : '**/log.html',
+//                   disableArchiveOutput: false,
+//                   passThreshold       : 50,
+//                   unstableThreshold   : 40,
+//                   otherFiles          : "**/*.png,**/*.jpg",
+//                 ]
+//             )
         }
         success {
             echo 'SUCCESSFUL'

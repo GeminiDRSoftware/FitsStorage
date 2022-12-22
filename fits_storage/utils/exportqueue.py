@@ -81,6 +81,23 @@ class ExportQueueUtil(object):
         """
         queue.delete_with_id(ExportQueue, trans.id, self.s)
 
+    def set_deferred(self, trans):
+        """
+        Set export to deferred.
+
+        This is used when an export is pending ingest on the target host.  In this case,
+        we use the `after` field to defer the ingest for 10 seconds.  We don't want to wait
+        the full failure timeout which defaults to 5 minutes.
+
+        Parameters
+        ----------
+        trans : :class:`~fits_storage.orm.exportqueue.ExportQueue`
+            queue item to set set `after` field for
+        """
+        self.s.query(ExportQueue).get(trans.id).after = datetime.datetime.now() + datetime.timedelta(seconds=10)
+        self.s.query(ExportQueue).get(trans.id).inprogress = False
+        self.s.commit()
+
     def set_last_failed(self, trans):
         """
         Set export to failed and update last failed timestamp.
@@ -157,7 +174,7 @@ class ExportQueueUtil(object):
 
         Returns
         -------
-        bool : True if sucessfull, False otherwise
+        bool, str : True if sucessful, False failed with a str reason
         """
         self.l.debug(f"export_file {filename} to {destination}")
 
@@ -173,21 +190,30 @@ class ExportQueueUtil(object):
         filename_nobz2 = File.trim_name(filename)
 
         # Search Database
-        query = self.s.query(DiskFile).select_from(join(File, DiskFile))\
-                    .filter(DiskFile.present == True)\
-                    .filter(File.name == filename_nobz2)
-        diskfile = query.one()
+        try:
+            query = self.s.query(DiskFile).select_from(join(File, DiskFile))\
+                        .filter(DiskFile.present == True)\
+                        .filter(File.name == filename_nobz2)
+            diskfile = query.one()
+        except:
+            self.l.error("Could not find present diskfile for File entry with name %s", filename_nobz2)
+            return False, "not found"
         our_md5 = diskfile.data_md5
 
         self.l.debug("Checking for remote file md5")
-        dest_md5 = get_destination_data_md5(filename_nobz2, self.l, destination)
+        dest_md5, pending_ingest = get_destination_data_md5(filename_nobz2, self.l, destination)
 
         if dest_md5 == 'ERROR':
-            return False
+            return False, "md5 error"
+
+        if pending_ingest:
+            # we need to wait, relies on failure requeue
+            self.l.warning(f"File {filename} queued for ingest on destination, failing export to requeue later")
+            return False, "pending ingest"
 
         if (dest_md5 is not None) and (dest_md5 == our_md5):
             self.l.info(f"Data {filename} is already at {destination} with md5 {dest_md5}")
-            return True
+            return True, ""
         self.l.debug(f"Data not present at destination: dest_md5: {dest_md5}, our_md5: {our_md5} - reading file")
 
         # Read the file into the payload postdata buffer to HTTP POST
@@ -294,17 +320,17 @@ class ExportQueueUtil(object):
 
             if ok:
                 self.l.debug("Transfer sucessfull")
-                return True
+                return True, ""
             else:
                 self.l.debug("Transfer not successful")
-                return False
+                return False, "transfer failed"
 
-        except (urllib.error.URLError, http.client.IncompleteRead, ssl.SSLError):
+        except (urllib.error.URLError, http.client.IncompleteRead, ssl.SSLError, request.exceptions.ConnectionError):
             self.l.info("Error posting %d bytes of data to destination server at: %s" % (len(postdata), url))
             self.l.debug("Transfer Failed")
-            return False
+            return False, "transfer connection error"
         except:
-            self.l.error("Problem posting %d bytes of data to destination server at: %s" % (len(postdata), url))
+            self.l.error("Problem posting of data to destination server at: %s" % url)
             raise
 
     def retry_failures(self, interval):
@@ -340,23 +366,23 @@ def get_destination_data_md5(filename, logger, destination):
 
     # Construct and retrieve the URL
     try:
-        url = "%s/jsonfilelist/present/filename=%s" % (destination, filename)
-        u = urllib.request.urlopen(url)
+        url = "%s/jsonfilelist/present/filename=%s?pending_ingest" % (destination, filename)
+        u = urllib.request.urlopen(url, timeout=10)
         json_data = u.read()
         u.close()
     except (urllib.error.URLError, http.client.IncompleteRead):
         logger.debug("Failed to get json data from destination server at URL: %s" % url)
-        return "ERROR"
+        return "ERROR", False
 
     try:
         thelist = json.loads(json_data)
     except ValueError:
         logger.debug("JSON decode failed. JSON data: %s" % json_data)
-        return "ERROR"
+        return "ERROR", False
 
     if len(thelist) == 0:
         logger.debug("Destination server does not have filename %s" % filename)
-        return None
+        return None, False
     if len(thelist) > 1:
         logger.debug("Got multiple results from destination server")
     else:
@@ -368,6 +394,6 @@ def get_destination_data_md5(filename, logger, destination):
         elif 'data_md5' not in list(thedict.keys()):
             logger.debug("No data_md5 in json data")
         else:
-            return thedict['data_md5']
+            return thedict['data_md5'], thedict.get("pending_ingest", False)
 
-    return "ERROR"
+    return "ERROR", False

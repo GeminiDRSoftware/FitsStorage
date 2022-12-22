@@ -93,6 +93,7 @@ input {
     border: 2px solid;
     border-radius: 5px;
     text-align: center;
+    z-index: 1;
 }
 
 #previewimage {

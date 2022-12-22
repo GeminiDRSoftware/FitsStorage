@@ -134,6 +134,6 @@ class DiskFileReport(Base):
                 self.mdstatus = result.code
                 if result.message is not None:
                     self.mdreport = result.message
-            except:
+            except Exception as e:
                 # don't want to fail the ingest over a metadata report
                 pass
