@@ -10,9 +10,12 @@ keywords:
   - CTYPE1
   - CTYPE2
   - DATATYP
-  - RADECSYS
   - CCDSEC
   - CCDSIZE
   - DETSEC
   - DATASEC
   - CCDSUM
+  - if not prepared:
+    - RADECSYS
+  - if prepared:
+    - RADESYS

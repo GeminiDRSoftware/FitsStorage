@@ -14,7 +14,7 @@ if __name__ == "__main__":
     # Option Parsing
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape1", help="The Fits Storage Tape server to use to check the files are on tape")
+    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape-lp2", help="The Fits Storage Tape server to use to check the files are on tape")
     parser.add_option("--file-pre", action="store", type="string", dest="filepre", help="File prefix to operate on, eg N20090130, N200812 etc")
     parser.add_option("--only", action="store_true", dest="only", help="Only list files that need to go to tape")
     parser.add_option("--notpresent", action="store_true", dest="notpresent", help="Include files that are marked as not present")

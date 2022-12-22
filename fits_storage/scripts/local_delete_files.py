@@ -40,7 +40,7 @@ if __name__ == "__main__":
     # Option Parsing
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape1", help="The Fits Storage Tape server to use to check the files are on tape")
+    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape-lp2", help="The Fits Storage Tape server to use to check the files are on tape")
     parser.add_option("--file-pre", action="store", type="string", dest="filepre", default='', help="File prefix to operate on, eg N20090130, N200812 etc")
     parser.add_option("--mintapes", action="store", type="int", dest="mintapes", default=2, help="Minimum number of tapes file must be on to be eligable for deletion")
     parser.add_option("--dir", action="store", type="string", dest="dir", help="Directory to operate in")
@@ -101,12 +101,13 @@ if __name__ == "__main__":
         for fe in fileelements:
           filename = getXmlData(fe, "filename")
           md5 = getXmlData(fe, "md5")
+          datamd5 = getXmlData(fe, "data_md5")
           tapeid = int(getXmlData(fe, "tapeid"))
           if filename.endswith(".bz2"):
               filename = filename[:-4]
           if thefile.endswith(".bz2"):
               thefile = thefile[:-4]
-          if ((filename == thefile) or (filename == f"{thefile}.bz2")) and ((md5 == filemd5) or options.nomd5) and (tapeid not in tapeids):
+          if ((filename == thefile) or (filename == f"{thefile}.bz2")) and ((datamd5 == filemd5) or options.nomd5) and (tapeid not in tapeids):
             #print "Found it on tape id %d" % tapeid
             tapeids.append(tapeid)
 

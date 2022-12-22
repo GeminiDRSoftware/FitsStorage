@@ -9,6 +9,14 @@ searchform
 
 - Added previous/next day buttons where applicable when a date search has been done
 
+- Calibrations tab honors user column selections
+
+- binning column enabled by default in results tables
+
+- UTC support for datetimes with Z suffix
+
+- LR-IFU and HR-IFU added for GNIRS
+
 fac-pdu.def
 ^^^^^^^^^^^
 
@@ -18,6 +26,7 @@ fits_validator
 ^^^^^^^^^^^^^^
 
 - support for reporting bad filter values sith custom exception
+- improved checking of RADECSYS/RADESYS keywords
 
 gemini-fits-validator
 ^^^^^^^^^^^^^^^^^^^^^
@@ -55,15 +64,29 @@ templating
 Scripts
 -------
 
+check_on_tape
+^^^^^^^^^^^^^
+
+- fixed pointing of default tape server
+
 copy_from_visiting_instrument
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Added date regex option for only adding files with a certain date prefix
+- Added interrupt handling to clean up any in progress file being copied
 
 delete_files
 ^^^^^^^^^^^^
 
 - skip files if we can't connect to the tape service to check, but don't abort the run
+- fixed pointing of default tape server
+- support for path or partial path selection
+
+local_delete_files
+^^^^^^^^^^^^^^^^^^
+
+- fixed pointing of default tape server
+- fixed md5 checking logic for tape server
 
 read_from_tape
 ^^^^^^^^^^^^^^
@@ -97,8 +120,25 @@ odb_data_to_archive
 
 - use new client-side api cookie setting to choose cookie to send in POST
 
+(various).service
+^^^^^^^^^^^^^^^^^
+
+- Set to multi-user runlevel for systemd support, services were not starting on boot even when enabled
+
+
 Other
 -----
+
+selection
+^^^^^^^^^
+
+- Added filelist as a search term that is not open, allowing for larger count of results/downloads
+
+archive_install.yml
+^^^^^^^^^^^^^^^^^^^
+
+- Fixes for SELinux installs on fresh host for PostgreSQL support.
+- using enh/ghost_bundle_cal_updates branch of DRAGONS to get GHOST support early
 
 admin_file_permissions
 ^^^^^^^^^^^^^^^^^^^^^^

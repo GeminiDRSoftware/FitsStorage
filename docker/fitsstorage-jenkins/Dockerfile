@@ -20,7 +20,13 @@ RUN yum -y install openssl \
                    redhat-rpm-config \
                    python3-devel \
                    bzip2 \
-                   wget
+                   procps-ng \
+                   wget \
+                   zlib \
+                   zlib-devel
+
+
+RUN yum -y --nogpgcheck install python3-pip
 
 # WOW, Docker sucks.  You can't modify the hosts file except like this, just in time to run a command.  Because magical.  Or, magically bad.
 # IT Workaround - we can't resolve this host within Gemini network
@@ -30,6 +36,12 @@ RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts && yum -y --n
 RUN yum -y --nogpgcheck install glibc-langpack-en glibc-common
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
+# DRAGONS now also needs specutils
+RUN pip3 install setuptools==39.2.0
+RUN pip3 install setuptools_scm==6.4.2
+RUN pip3 install gwcs==0.16.1
+RUN pip3 install asdf
+RUN pip3 install specutils==1.2
 RUN python3 -m pip install -U pip
 RUN pip3 install psycopg2-binary && \
     pip3 install sqlalchemy && \
@@ -86,7 +98,8 @@ RUN mkdir -p /data/logs && \
     chown fitsdata /data/z_staging && \
     mkdir -p /data/s3_staging && \
     chown fitsdata /data/s3_staging && \
-    chmod oug+rwx /data/s3_staging
+    chmod oug+rwx /data/s3_staging && \
+    chmod oug+rw /data/logs
 
 # BECAUSE SPECUTILS (SIGH)
 RUN mkdir -p /usr/share/httpd/.specutils && \
@@ -98,8 +111,8 @@ RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRA
 
 COPY FitsStorageDB /opt/FitsStorageDB
 COPY GeminiCalMgr /opt/GeminiCalMgr
-RUN cd /opt/FitsStorageDB && python3 setup.py install
-RUN cd /opt/GeminiCalMgr && python3 setup.py install
+#RUN cd /opt/FitsStorageDB && python3 setup.py install
+#RUN cd /opt/GeminiCalMgr && python3 setup.py install
 
 # Install the configuration file for the Jenkins FitsStore containers
 COPY FitsStorageConfig/configs/jenkins_fitsstorage.conf /etc/fitsstorage.conf
@@ -116,18 +129,14 @@ RUN cd /opt/fitsverify && gcc -o fitsverify ftverify.c fvrf_data.c fvrf_file.c f
 
 # Setup a Config
 COPY FitsStorageConfig/configs/jenkins_fitsstorage.conf /etc/fitsstorage.conf
-# Workaround for docker COPY bug
-RUN true
 
 # COPY FitsStorage/fitsverify /opt/fitsverify
 COPY FitsStorage/docker/wait-for-postgres.sh /
 RUN chmod a+x /wait-for-postgres.sh
 
 # CYTHON STEP FOR DRAGONS
+RUN pip3 install cython
 RUN cd /opt/DRAGONS/gempy/library/ && cythonize -i cyclip.pyx
-
-# Calibs code
-RUN cd /opt/FitsStorage/local_calibs && python3 setup.py install
 
 # For specutils, wow this is dumb
 RUN mkdir -p /.specutils && \
@@ -138,4 +147,4 @@ ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ENV PGPASSWORD fitsdata
 
-CMD ["bash"]
+CMD ["/bin/sh", "-c", "/bin/bash"]

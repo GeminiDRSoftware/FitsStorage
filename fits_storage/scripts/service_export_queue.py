@@ -115,7 +115,7 @@ if __name__ == "__main__":
                         logger.info("Exporting %s, (%d in queue)", eq.filename, export_queue.length())
 
                         try:
-                            success = export_queue.export_file(eq.filename, eq.path, eq.destination,
+                            success, details = export_queue.export_file(eq.filename, eq.path, eq.destination,
                                                                header_fields=eq.header_fields,
                                                                md5_before_header=eq.md5_before_header,
                                                                md5_after_header=eq.md5_after_header,
@@ -134,9 +134,13 @@ if __name__ == "__main__":
                             logger.debug("Deleting exportqueue id %d", eq.id)
                             export_queue.delete(eq)
                         else:
-                            logger.info("Exportqueue id %d DID NOT TRANSFER", eq.id)
-                            # The eq instance we have is transient - get one connected to the session
-                            export_queue.set_last_failed(eq)
+                            if details == "pending ingest":
+                                # we just have to defer it
+                                export_queue.set_deferred(eq)
+                            else:
+                                logger.info(f"Exportqueue id %d DID NOT TRANSFER", eq.id)
+                                # The eq instance we have is transient - get one connected to the session
+                                export_queue.set_last_failed(eq)
                         session.commit()
 
                     throttle.reset()

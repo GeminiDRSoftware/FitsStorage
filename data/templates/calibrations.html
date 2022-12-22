@@ -22,6 +22,11 @@
 {% if is_development %}
 <h1>This is the development system, please use {{ href("/", "fits") }} for operational use</h1>
 {% endif %}
+<p>Date: {{ prev }}
+    {% if next %}
+      {{ next }}
+    {% endif %}
+</p>
 <h1>Calibrations {{ say_selection }}</h1>
 {% if is_open %}
   <h2>Your search criteria are not sufficiently constrained to do a calibrations search.</h2>

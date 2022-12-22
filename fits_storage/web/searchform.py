@@ -17,7 +17,7 @@ from xml.parsers.expat import ExpatError
 from . import templating
 
 from .calibrations import calibrations
-from gemini_obs_db.utils.gemini_metadata_utils import GeminiDataLabel, GeminiObservation
+from gemini_obs_db.utils.gemini_metadata_utils import GeminiDataLabel, GeminiObservation, gemini_date
 
 from .selection import getselection, selection_to_URL
 from .summary import summary_body
@@ -138,8 +138,9 @@ def searchform(things, orderby):
                 prevsearchdt = searchdt - timedelta(days=1)
                 selection_clone['date'] = prevsearchdt.strftime("%Y%m%d")
                 prevday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
-                if nextsearchdt <= datetime.now():
-                    selection_clone['date'] = nextsearchdt.strftime("%Y%m%d")
+                nextsearchstr = nextsearchdt.strftime('%Y%m%d')
+                if nextsearchstr <= gemini_date('today'):
+                    selection_clone['date'] = nextsearchstr
                     nextday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
             except:
                 # ok if we fail, this is a nice to have
@@ -236,10 +237,15 @@ def updateform(selection):
             dct['procmode'] = value
         elif key == 'gain':
             # GMOSes are the only thing with a gain field currently
-            dct['gmos_gain'] = value
+            if selection.get('inst', '').startswith('GMOS'):
+                dct['gmos_gain'] = value
+            elif selection.get('inst', '') == 'GHOST':
+                dct['ghost_gain'] = value
         elif key == 'readspeed':
-            # GMOSes are the only thing with a read speed field currently
-            dct['gmos_speed'] = value
+            if selection.get('inst', '').startswith('GMOS'):
+                dct['gmos_speed'] = value
+            elif selection.get('inst', '') == 'GHOST':
+                dct['ghost_speed'] = value
         elif key == 'readmode':
             if value in ('NodAndShuffle', 'Classic'):
                 # For GMOS, this indicates nod and shuffle
@@ -356,6 +362,10 @@ def updateselection(formdata, selection):
             selection['cols'] = formdata_to_compressed(value)
         elif key == 'object':
             selection['object'] = value
+        elif key in ('gmos_speed', 'ghost_speed'):
+            selection['readspeed'] = value
+        elif key in ('gmos_gain', 'ghost_gain'):
+            selection['gain'] = value
         else:
             # This covers the generic case where the formdata key is also
             # the selection key, and the form value is the selection value
@@ -465,7 +475,9 @@ dropdown_options = {
          ("SmPinholesXD", "pinhole 0.1 XD"),
          ("LgPinholesXD", "pinhole 0.3 XD"),
          ("pupilview", "pupil viewer"),
-         ("IFU", "IFU")],
+         ("IFU", "IFU"),
+         ("LR-IFU", "LR-IFU"),
+         ("HR-IFU", "HR-IFU"), ],
     "niri_mask_options":
         [("f6-2pix", "f6-2pix"),
          ("f6-2pixBl", "f6-2pix Blue"),
@@ -517,6 +529,15 @@ dropdown_options = {
     "gmos_speed_options":
         [("fast", "Fast"),
          ("slow", "Slow")],
+    "ghost_gain_options":
+        [("low", "Low"),
+         ("high", "High"),
+         ("standard", "Standard")],
+    "ghost_speed_options":
+        [("fast", "Fast"),
+         ("medium", "Medium"),
+         ("slow", "Slow"),
+         ("standard", "Standard")],
     "gnirs_depth_options":
         [("Deep", "Deep"),
          ("Shallow", "Shallow")],
@@ -572,12 +593,14 @@ dropdown_options = {
          ("YPHOT", "YPHOT"),
          ("JPHOT", "JPHOT"),
          ("KPHOT", "KPHOT"),
-         ("X_(order_6)", "X_(order_6)"),
-         ("J_(order_5)", "J_(order_5)"),
-         ("H_(order_4)", "H_(order_4)"),
-         ("K_(order_3)", "K_(order_3)"),
-         ("L_(order_2)", "L_(order_2)"),
-         ("M_(order_1)", "M_(order_1)")],
+         # removing these as they are bogus and confusing, per phirst
+         # ("X_(order_6)", "X_(order_6)"),
+         # ("J_(order_5)", "J_(order_5)"),
+         # ("H_(order_4)", "H_(order_4)"),
+         # ("K_(order_3)", "K_(order_3)"),
+         # ("L_(order_2)", "L_(order_2)"),
+         # ("M_(order_1)", "M_(order_1)")
+         ],
     "niri_filter_options":
         [("Y", "Y"),
          ("J", "J"),
@@ -797,6 +820,7 @@ dropdown_options = {
          ("GMOS-S", "GMOS-S"),
          ("GNIRS", "GNIRS"),
          ("GRACES", "GRACES"),
+         ("GHOST", "GHOST"),
          ("NIRI", "NIRI"),
          ("NIFS", "NIFS"),
          ("GSAOI", "GSAOI"),

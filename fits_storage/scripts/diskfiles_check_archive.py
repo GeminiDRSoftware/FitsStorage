@@ -53,6 +53,8 @@ def get_archive_md5(filename):
         filepre = filename[:12]
     elif name.startswith('mrg'):
         filepre = filename[:10]
+    elif name.startswith('TX20'):
+        filepre = filename[:10]
     else:
         filepre = name
 

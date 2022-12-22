@@ -9,7 +9,7 @@ from ..fits_storage_config import fits_system_status, fits_open_result_limit, fi
 from .selection import sayselection, openquery, selection_to_URL
 from .list_headers import list_headers
 
-from .summary_generator import SummaryGenerator, NO_LINKS, FILENAME_LINKS, ALL_LINKS
+from .summary_generator import SummaryGenerator, NO_LINKS, FILENAME_LINKS, ALL_LINKS, selection_to_column_names
 import re
 
 from . import templating
@@ -54,7 +54,11 @@ def full_page_summary(sumtype, selection, orderby, links):
 
 @templating.templated("search_and_summary/summary_body.html", with_generator=True)
 def embeddable_summary(sumtype, selection, orderby, links):
-    return summary_body(sumtype, selection, orderby, links)
+    if selection:
+        additional_columns = selection_to_column_names(selection)
+    else:
+        additional_columns = ()
+    return summary_body(sumtype, selection, orderby, links, additional_columns=additional_columns)
 
 @templating.templated("search_and_summary/summary.json", content_type="text/json", with_generator=True)
 def json_summary(sumtype, selection, orderby, links):

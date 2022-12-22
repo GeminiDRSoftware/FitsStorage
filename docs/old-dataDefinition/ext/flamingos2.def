@@ -8,4 +8,7 @@ include files:    wcs
 
 keywords:
   - DATATYP
-  - RADECSYS
+  - if not prepared:
+    - RADECSYS
+  - if prepared:
+    - RADESYS

@@ -1,6 +1,7 @@
 function setInstVisibility() {
     var instPairs = {
     	"GMOS":     "#GMOS",
+    	"GHOST":    "#GHOST",
     	"GNIRS":    "#GNIRS",
     	"NIRI":     "#NIRI",
     	"NIFS":     "#NIFS",
