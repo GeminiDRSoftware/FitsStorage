@@ -102,7 +102,7 @@ if __name__ == "__main__":
         photstds = get_photstd_ids(session, options.photstds)
         # clear out existing std-obs links before rerunning
         clear_existing_stdobs(session, photstds)
-        looptodt = fromdt + timedelta(days=730)
+        looptodt = fromdt + timedelta(days=1)
         if looptodt > todt:
             looptodt = todt
         while fromdt < todt:
@@ -119,6 +119,6 @@ if __name__ == "__main__":
             for h, _ in q:
                 do_std_obs_for_new(session, h.id, photstds)
             fromdt = looptodt
-            looptodt = fromdt + timedelta(days=730)
+            looptodt = fromdt + timedelta(days=1)
             if looptodt > todt:
                 looptodt = todt
