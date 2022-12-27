@@ -212,8 +212,8 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git"
-          version: release/1.0.x
-          #version: v1.0.25
+          version: v1.0.26
+          #version: release/1.0.x
           dest: /opt/FitsStorageDB
           accept_hostkey: yes
         when: not is_aws
@@ -224,7 +224,7 @@
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git"
           #version: release/1.1.x
-          version: v1.1.20
+          version: v1.1.21
           dest: /opt/GeminiCalMgr
           accept_hostkey: yes
         when: not is_aws
@@ -234,7 +234,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: enh/33_2022-1_bpm_support
+          version: 2022-1
           dest: /opt/FitsStorage
           accept_hostkey: yes
         when: not is_aws
