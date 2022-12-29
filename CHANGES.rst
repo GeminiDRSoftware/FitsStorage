@@ -151,6 +151,7 @@ exportqueue
 - Added distinct sortkey column to allow for smarter ordering vs relying on the filename [GL#28]
 - Fixed logging messages to use % string format, the logger does not handle an args list approach [GL#30]
 - Fixed test to not check old logic of existing entries
+- Fixed improper exception import for requests library
 
 preview_queue
 ^^^^^^^^^^^^^
