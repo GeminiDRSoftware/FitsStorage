@@ -13,6 +13,7 @@ import dateutil.parser
 import sys
 import traceback
 
+from gemini_obs_db.orm.ghost import Ghost
 from gemini_obs_db.orm.provenance import ingest_provenance
 from ..orm.geometryhacks import add_footprint, do_std_obs
 
@@ -56,6 +57,7 @@ instrument_table = {
     'F2':       ("F2", F2),
     'GMOS-N':   ("GMOS", Gmos),
     'GMOS-S':   ("GMOS", Gmos),
+    'GHOST':    ("GHOST", Ghost),
     'GNIRS':    ("GNIRS", Gnirs),
     'GPI':      ("GPI", Gpi),
     'GSAOI':    ("GSAOI", Gsaoi),
@@ -336,12 +338,15 @@ class IngestQueueUtil(object):
                     self.s.add(cq)
                     self.s.flush()
 
-                    if 'BPM' in header.types:
+                    if 'BPM' in header.types and fsc.ccq_on_bpm:
                         # need to requeue any matching instr/binned data through following BPM (if any)
                         bpmh = self.s.query(Header).filter(Header.instrument == header.instrument,
                                                            Header.detector_binning == header.detector_binning,
                                                            Header.ut_datetime > header.ut_datetime,
-                                                           Header.types.like('%BPM%')).order_by(Header.ut_datetime)\
+                                                           Header.types.like('%BPM%'))
+                        if header.instrument == 'GMOS-S' or header.instrument == 'GMOS-N':
+                            bpmh = bpmh.filter(Header.detector_binning == header.detector_binning)
+                        bpmh = bpmh.order_by(Header.ut_datetime)\
                             .first()
                         end_date = None
                         if bpmh:
@@ -351,9 +356,10 @@ class IngestQueueUtil(object):
                                            .filter(DiskFile.canonical,
                                                    Header.diskfile_id == DiskFile.id,
                                                    Header.instrument == header.instrument,
-                                                   Header.detector_binning == header.detector_binning,
                                                    Header.ut_datetime > header.ut_datetime,
                                                    Header.types.like('%BPM%'))
+                        if header.instrument == 'GMOS-S' or header.instrument == 'GMOS-N':
+                            requeuequery = requeuequery.filter(Header.detector_binning == header.detector_binning)
                         if end_date:
                             requeuequery = requeuequery.filter(Header.ut_datetime<end_date)
                         for requeueh, requeuedf in requeuequery.all():

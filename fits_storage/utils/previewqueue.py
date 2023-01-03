@@ -528,7 +528,10 @@ class PreviewQueueUtil(object):
                 full = stack
             else:
                 full[0:240, 180:500] = stack
+        elif str(ad.instrument()) == "GHOST" and 'BUNDLE' in ad.tags:
+            full = ad[1].data
 
+            full = norm(full)
         else:
             # Generic plot the first extention case
             full = ad[0].data
@@ -591,4 +594,4 @@ if __name__ == "__main__":
     # Example of one that had the black blotch
     # pqu.render_preview(astrodata.open("/Users/ooberdorf/Downloads/N20200730S0218.fits"), "/Users/ooberdorf/test.jpg")
     # Example of one that worked with the old way and failed after the fix
-    pqu.render_preview(astrodata.open("/Users/ooberdorf/Downloads/N20201208S0446.fits"), "/Users/ooberdorf/test.jpg")
+    pqu.render_preview(astrodata.open("/Users/ooberdorf/dataflow/S20221209S0016.fits"), "/Users/ooberdorf/test.jpg")

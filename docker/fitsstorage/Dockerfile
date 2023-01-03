@@ -35,7 +35,7 @@ RUN pip3 install gwcs==0.16.1
 RUN pip3 install asdf==2.7.4
 RUN pip3 install specutils==1.2
 RUN pip3 install psycopg2-binary && \
-    pip3 install sqlalchemy && \
+    pip3 install SQLAlchemy==1.3.24 && \
     pip3 install pyyaml && \
     pip3 install jinja2==3.0.2 && \
     pip3 install pyfits && \
@@ -89,7 +89,7 @@ RUN mkdir -p /data/logs && \
 
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/FitsStorageDB
-RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
+RUN cd /opt && git clone --branch enh/bpm_support https://github.com/GeminiDRSoftware/DRAGONS.git
 
 # TODO This will require some sort of ssh key setup, maybe not worth it
 #RUN cd /opt && git clone --branch master git@gitlab.gemini.edu:DRSoftware/FitsStorageConfig.git

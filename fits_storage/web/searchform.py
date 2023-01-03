@@ -234,10 +234,15 @@ def updateform(selection):
             dct['procmode'] = value
         elif key == 'gain':
             # GMOSes are the only thing with a gain field currently
-            dct['gmos_gain'] = value
+            if selection.get('inst', '').startswith('GMOS'):
+                dct['gmos_gain'] = value
+            elif selection.get('inst', '') == 'GHOST':
+                dct['ghost_gain'] = value
         elif key == 'readspeed':
-            # GMOSes are the only thing with a read speed field currently
-            dct['gmos_speed'] = value
+            if selection.get('inst', '').startswith('GMOS'):
+                dct['gmos_speed'] = value
+            elif selection.get('inst', '') == 'GHOST':
+                dct['ghost_speed'] = value
         elif key == 'readmode':
             if value in ('NodAndShuffle', 'Classic'):
                 # For GMOS, this indicates nod and shuffle
@@ -354,6 +359,10 @@ def updateselection(formdata, selection):
             selection['cols'] = formdata_to_compressed(value)
         elif key == 'object':
             selection['object'] = value
+        elif key in ('gmos_speed', 'ghost_speed'):
+            selection['readspeed'] = value
+        elif key in ('gmos_gain', 'ghost_gain'):
+            selection['gain'] = value
         else:
             # This covers the generic case where the formdata key is also
             # the selection key, and the form value is the selection value
@@ -463,7 +472,9 @@ dropdown_options = {
          ("SmPinholesXD", "pinhole 0.1 XD"),
          ("LgPinholesXD", "pinhole 0.3 XD"),
          ("pupilview", "pupil viewer"),
-         ("IFU", "IFU")],
+         ("IFU", "IFU"),
+         ("LR-IFU", "LR-IFU"),
+         ("HR-IFU", "HR-IFU"), ],
     "niri_mask_options":
         [("f6-2pix", "f6-2pix"),
          ("f6-2pixBl", "f6-2pix Blue"),
@@ -515,6 +526,15 @@ dropdown_options = {
     "gmos_speed_options":
         [("fast", "Fast"),
          ("slow", "Slow")],
+    "ghost_gain_options":
+        [("low", "Low"),
+         ("high", "High"),
+         ("standard", "Standard")],
+    "ghost_speed_options":
+        [("fast", "Fast"),
+         ("medium", "Medium"),
+         ("slow", "Slow"),
+         ("standard", "Standard")],
     "gnirs_depth_options":
         [("Deep", "Deep"),
          ("Shallow", "Shallow")],
@@ -797,6 +817,7 @@ dropdown_options = {
          ("GMOS-S", "GMOS-S"),
          ("GNIRS", "GNIRS"),
          ("GRACES", "GRACES"),
+         ("GHOST", "GHOST"),
          ("NIRI", "NIRI"),
          ("NIFS", "NIFS"),
          ("GSAOI", "GSAOI"),

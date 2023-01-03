@@ -250,9 +250,12 @@ orcid_redirect_url  = lookup_config('ORCID_REDIRECT_URL', 'http://%s/orcid' % fi
 mfp_aws_region_name       = lookup_config('MFP_AWS_REGION_NAME', 'us-west-2')
 mfp_aws_access_key_id     = lookup_config('MFP_AWS_ACCESS_KEY_ID', aws_access_key)
 mfp_aws_secret_access_key = lookup_config('MFP_AWS_SECRET_ACCESS_KEY', aws_secret_key)
-mfp_aws_verify            = lookup_config('MFP_AWS_VERIFY', True)
+mfp_aws_verify            = lookup_config_bool('MFP_AWS_VERIFY', True)
 mfp_aws_endpoint_url      = lookup_config('MFP_AWS_ENDPOINT_URL', None)
 mfp_aws_profile_name      = lookup_config('MFP_AWS_PROFILE_NAME', None)
 #########################
 
 ingest_programs_url = lookup_config('INGEST_PROGRAMS_URL', None)
+
+# queue calcache for all relevant headers from bpm date to next available bpm when a bpm is ingested
+ccq_on_bpm = lookup_config_bool('CCQ_ON_BPM', False)

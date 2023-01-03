@@ -47,7 +47,7 @@ class IngestQueue(Base):
         """
         self.filename = filename
         self.path = path
-        self.added = datetime.datetime.utcnow()
+        self.added = datetime.datetime.now()
         self.inprogress = False
         self.force_md5 = False
         self.force = False
@@ -91,7 +91,7 @@ class IngestQueue(Base):
             session.query(IngestQueue)
                 .filter(IngestQueue.inprogress == False)
                 .filter(IngestQueue.failed == False)
-                .filter(IngestQueue.after < datetime.datetime.utcnow())
+                .filter(IngestQueue.after < datetime.datetime.now())
                 .filter(~IngestQueue.filename.in_(inprogress_filenames))
                 .order_by(desc(IngestQueue.sortkey))
         )

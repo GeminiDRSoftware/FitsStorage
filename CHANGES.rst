@@ -15,6 +15,8 @@ searchform
 
 - UTC support for datetimes with Z suffix
 
+- LR-IFU and HR-IFU added for GNIRS
+
 fac-pdu.def
 ^^^^^^^^^^^
 
@@ -127,10 +129,16 @@ odb_data_to_archive
 Other
 -----
 
+selection
+^^^^^^^^^
+
+- Added filelist as a search term that is not open, allowing for larger count of results/downloads
+
 archive_install.yml
 ^^^^^^^^^^^^^^^^^^^
 
 - Fixes for SELinux installs on fresh host for PostgreSQL support.
+- using enh/ghost_bundle_cal_updates branch of DRAGONS to get GHOST support early
 
 admin_file_permissions
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -143,6 +151,7 @@ exportqueue
 - Added distinct sortkey column to allow for smarter ordering vs relying on the filename [GL#28]
 - Fixed logging messages to use % string format, the logger does not handle an args list approach [GL#30]
 - Fixed test to not check old logic of existing entries
+- Fixed improper exception import for requests library
 
 preview_queue
 ^^^^^^^^^^^^^

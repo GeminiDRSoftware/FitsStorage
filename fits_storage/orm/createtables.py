@@ -4,6 +4,7 @@ in the Fits Storage System.
 """
 import sqlalchemy
 
+from gemini_obs_db.orm.ghost import Ghost
 from .miscfile_plus import MiscFileCollectionUsers, MiscFileCollection, MiscFileFolder, MiscFilePlus
 from ..fits_storage_config import using_apache, using_sqlite
 import gemini_obs_db

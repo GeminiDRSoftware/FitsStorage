@@ -89,7 +89,6 @@ if __name__ == "__main__":
 
     # The project / email list. Get from the database
     errors = list()
-    errors.append("dummy error: remove once I see this is working")
     with session_scope() as session:
         for notif in session.query(Notification):
             try:
