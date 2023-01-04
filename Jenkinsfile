@@ -77,7 +77,7 @@ pipeline {
                     def archiveimage = docker.build("gemini/archive:jenkins", " -f FitsStorage/docker/archive-jenkins/Dockerfile .")
                     sh '''
                     echo "Clear existing Docker infrastructure to start with a blank slate"
-                    docker system prune -a
+                    docker system prune -af
                     docker ps -a
                     docker network create fitsstorage-jenkins || true
                     docker container rm fitsdata-jenkins || true
