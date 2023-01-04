@@ -25,12 +25,11 @@ RUN yum -y install openssl \
                    zlib \
                    zlib-devel
 
-
 RUN yum -y --nogpgcheck install python3-pip
 
 # WOW, Docker sucks.  You can't modify the hosts file except like this, just in time to run a command.  Because magical.  Or, magically bad.
 # IT Workaround - we can't resolve this host within Gemini network
-RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts && yum -y --nogpgcheck install python3-pip
+# RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts && yum -y --nogpgcheck install python3-pip
 
 # Fix Centos 8 broken Locale
 RUN yum -y --nogpgcheck install glibc-langpack-en glibc-common
@@ -103,7 +102,8 @@ RUN mkdir -p /data/logs && \
 
 # BECAUSE SPECUTILS (SIGH)
 RUN mkdir -p /usr/share/httpd/.specutils && \
-    chmod oug+rwx /usr/share/httpd/.specutils
+    chmod oug+rwx /usr/share/httpd/.specutils && \
+    chown fitsdata /usr/share/httpd/.specutils
 
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/FitsStorageDB
