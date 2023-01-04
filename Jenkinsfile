@@ -37,13 +37,11 @@ pipeline {
 
 //                 checkout scm
                 echo 'Checking Out FitsStorage'
-                script {
-                    sh "rm -rf FitsStorage"
-                }
                 dir('FitsStorage') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorage.git',
                     branch: 'master',
-                    credentialsId: 'ooberdorf_gitlab'
+                    credentialsId: '6320a9fb-4f81-4859-ac62-13485af2b48e'
+//                     credentialsId: 'ooberdorf_gitlab'
                 }
 
                 echo 'Checking Out FitsStorageConfig'
@@ -57,14 +55,16 @@ pipeline {
                 dir('FitsStorageDB') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git',
                     branch: 'master',
-                    credentialsId: 'ooberdorf_gitlab'
+                    credentialsId: '6320a9fb-4f81-4859-ac62-13485af2b48e'
+//                     credentialsId: 'ooberdorf_gitlab'
                 }
 
                 echo 'Checking Out GeminiCalMgr'
                 dir('GeminiCalMgr') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git',
                     branch: 'master',
-                    credentialsId: 'ooberdorf_gitlab'
+                    credentialsId: '6320a9fb-4f81-4859-ac62-13485af2b48e'
+//                     credentialsId: 'ooberdorf_gitlab'
                 }
             }
 
