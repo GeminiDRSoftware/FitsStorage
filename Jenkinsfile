@@ -37,6 +37,9 @@ pipeline {
 
 //                 checkout scm
                 echo 'Checking Out FitsStorage'
+                script {
+                    sh "rm -rf FitsStorage"
+                }
                 dir('FitsStorage') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorage.git',
                     branch: 'master',
