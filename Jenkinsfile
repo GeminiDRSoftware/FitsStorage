@@ -74,6 +74,8 @@ pipeline {
                     def archiveimage = docker.build("gemini/archive:jenkins", " -f FitsStorage/docker/archive-jenkins/Dockerfile .")
                     sh '''
                     echo "Clear existing Docker infrastructure to start with a blank slate"
+                    docker system prune -a
+                    docker ps -a
                     docker network create fitsstorage-jenkins || true
                     docker container rm fitsdata-jenkins || true
                     docker container rm archive-jenkins || true
@@ -171,7 +173,8 @@ pipeline {
              if [ -f dragons-repo.txt ]; then rm -rf `cat dragons-repo.txt`; fi
              docker rmi gemini/fitsarchiveutils:jenkins || true
              docker rmi gemini/archive:jenkins || true
-             docker network rm fitsstorage-jenkins || true
+             docker network rm -f fitsstorage-jenkins || true
+             docker ps -a
              rm -rf pytest_tmp
           '''
 //           step(
