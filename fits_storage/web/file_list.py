@@ -18,8 +18,8 @@ from ..utils.web import get_context, with_content_type
 
 from . import templating
 
-from ..logger import logger
-from datetime import datetime
+# from ..logger import logger
+# from datetime import datetime
 
 
 diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
