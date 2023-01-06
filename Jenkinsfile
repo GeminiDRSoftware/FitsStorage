@@ -177,7 +177,7 @@ pipeline {
              docker rmi gemini/fitsarchiveutils:jenkins || true
              docker rmi gemini/archive:jenkins || true
              docker network rm -f fitsstorage-jenkins || true
-             docker ps -a
+             docker ps -a || true
           '''
 //           step(
 //                 [
