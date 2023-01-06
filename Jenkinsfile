@@ -168,17 +168,16 @@ pipeline {
     }
     post {
         always {
-          junit (
-            allowEmptyResults: true,
-            testResults: 'reports/*_results.xml'
-            )
+//           junit (
+//             allowEmptyResults: true,
+//             testResults: 'reports/*_results.xml'
+//             )
           sh '''
              if [ -f dragons-repo.txt ]; then rm -rf `cat dragons-repo.txt`; fi
              docker rmi gemini/fitsarchiveutils:jenkins || true
              docker rmi gemini/archive:jenkins || true
              docker network rm -f fitsstorage-jenkins || true
              docker ps -a
-             rm -rf pytest_tmp
           '''
 //           step(
 //                 [
