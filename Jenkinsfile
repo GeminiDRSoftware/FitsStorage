@@ -136,6 +136,7 @@ pipeline {
 //                                    echo Done with robot
 //                                    '''
                             } catch (exc) {
+                                echo 'Exception caught: ' + e.toString()
                                 sh "echo DOCKER PYTEST LOGS"
                                 sh "docker logs ${a.id}"
                                 sh "echo DOCKER ARCHIVE LOGS"
