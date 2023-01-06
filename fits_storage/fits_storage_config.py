@@ -187,6 +187,7 @@ fits_dbserver              = lookup_config('FITS_DB_SERVER', '')
 fits_database              = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
 fits_database_pool_size    = 30
 fits_database_max_overflow = 10
+fits_database_debug        = lookup_config_bool('FITS_DB_DEBUG', False)
 
 # Configure the auxillary data directory here
 fits_aux_datadir = lookup_config('FITS_AUX_DATADIR', "/opt/FitsStorage/data")

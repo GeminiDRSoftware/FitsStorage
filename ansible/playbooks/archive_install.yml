@@ -212,7 +212,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git"
-          version: v1.0.26
+          version: v1.0.27
           #version: release/1.0.x
           dest: /opt/FitsStorageDB
           accept_hostkey: yes
