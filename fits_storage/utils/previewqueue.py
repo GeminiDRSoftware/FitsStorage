@@ -38,7 +38,6 @@ import gemini_instruments
 from gemini_instruments.gmos.pixel_functions import get_bias_level
 from gempy.library.spectral import Spek1D
 
-from .. import logger
 
 
 def norm(data, percentile=0.3):
@@ -590,6 +589,8 @@ class PreviewQueueUtil(object):
 
 
 if __name__ == "__main__":
+    from .. import logger
+
     pqu = PreviewQueueUtil(None, logger.logger)
     # Example of one that had the black blotch
     # pqu.render_preview(astrodata.open("/Users/ooberdorf/Downloads/N20200730S0218.fits"), "/Users/ooberdorf/test.jpg")
