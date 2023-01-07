@@ -5,12 +5,12 @@ from migrate import *
 def upgrade(migrate_engine):
     meta = MetaData(bind = migrate_engine)
 
-#    gmos = Table('gmos', meta, autoload=True)
-#
-#    gmos_ara = Column('array_name', Text, index=True)
-#
-#    gmos_ara.create(gmos)
-#
+    gmos = Table('gmos', meta, autoload=True)
+
+    gmos_ara = Column('array_name', Text, index=True)
+
+    gmos_ara.create(gmos)
+
 #    with migrate_engine.connect() as connection:
 #        # breaking this up to not hammer the DB tlog too badly
 #        connection.execute("update gmos set array_name=REGEXP_REPLACE(REGEXP_REPLACE(amp_read_area, ':\\[.+?\\]', '', 'g'), '''', '', 'g') where array_name IS NULL and id<100000")
