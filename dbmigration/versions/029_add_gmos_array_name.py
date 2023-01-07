@@ -7,7 +7,7 @@ def upgrade(migrate_engine):
 
     gmos = Table('gmos', meta, autoload=True)
 
-    gmos_ara = Column('array_name', Text, index=True)
+    gmos_ara = Column('array_name', Text, index_name='idx_gmos_array_name')
 
     gmos_ara.create(gmos)
 
@@ -41,8 +41,8 @@ def upgrade(migrate_engine):
 
     array_name.create(gmos)
 
-    i = Index('idx_gmos_array_name', array_name)
-    i.create(migrate_engine)
+    #i = Index('idx_gmos_array_name', array_name)
+    #i.create(migrate_engine)
 
 
 def downgrade(migrate_engine):
