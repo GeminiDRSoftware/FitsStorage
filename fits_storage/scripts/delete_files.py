@@ -9,8 +9,8 @@ from sqlalchemy import join, desc
 import re
 
 from fits_storage.orm.exportqueue import ExportQueue
-from fits_storage.fits_storage_config import storage_root, target_max_files, target_gb_free, delete_min_days_age,\
-    smtp_server
+from fits_storage.fits_storage_config import storage_root, target_max_files, target_gb_free, delete_min_days_age, \
+    smtp_server, tape_server
 from fits_storage.logger import logger, setdebug, setdemon
 
 from gemini_obs_db.db import session_scope
@@ -126,7 +126,7 @@ if __name__ == "__main__":
     logger.info("*********    delete_files.py - starting up at %s" % datetime.datetime.now())
 
     parser = OptionParser()
-    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape-lp2",
+    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default=tape_server,
                       help="The Fits Storage Tape server to use to check the files are on tape")
     parser.add_option("--path", action="store", type="string", dest="path", default="",
                       help="Path within the storage root")

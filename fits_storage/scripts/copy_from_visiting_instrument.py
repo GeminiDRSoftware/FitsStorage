@@ -534,8 +534,6 @@ if __name__ == "__main__":
         logger.info("Force not not available when running as daemon")
         sys.exit(2)
 
-    logger.info("Doing Initial visiting instrument directory scan...")
-
     ingesters = list()
     if options.alopeke:
         ingesters.append(Alopeke())

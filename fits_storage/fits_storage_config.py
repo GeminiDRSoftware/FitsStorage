@@ -2,7 +2,7 @@
 These are config parameters that are imported into the FitsStorage namespace
 We put them in a separate file to ease install issues
 """
-
+import json
 import os
 import socket
 import configparser
@@ -26,7 +26,68 @@ def get_fits_db_backup_dir():
     if hostname is None or hostname == 'arcdev' or hostname == 'archive':
         return '/backup'
     return "/sci/dataflow/FitsStorage_Backups/%s" % hostname
-    
+
+
+def get_dictified_config(name, key, default_value=None):
+    """
+    This gets a possibly dict-based config entry with an extra key.
+
+    This is useful for instance to have per-destination export keys
+    configured.  There may be other scenarious were we want an optional
+    key-based lookup of a value.  It falls back to the default key entry
+    in the dict, or to the setting itself if not a string-encoded dict,
+    or to the passed in default_value
+
+    Parameters
+    ----------
+    name : str
+        The name of the config entry that may be a dictionary
+    key : str
+        The key within the dictionary to use, if it is a dictionary
+    default_value : Any
+        The value to use if no value is set, or the key is not present and no default key is present
+
+    Return
+    ------
+    Any : value found in dict, or configured value as-is if not a dict
+    """
+
+    value = lookup_config(name, default_value)
+    if value is None:
+        return default_value
+    if not isinstance(value, str):
+        return value
+    if value.startswith('{'):
+        valuedict = json.parse(value)
+        return valuedict.get(key, valuedict.get('default', default_value))
+    return value
+
+
+def get_export_upload_auth_cookie(destination):
+    """
+    Get the export auth cookie to send to the export destination server for the
+    given destination.
+
+    This takes the destination being exported to and determines what the auth
+    cookie to send should be.  If we only have a plain string value configured,
+    that will be returned for all hosts.  If the string is an encoded
+    dictionary, we try to lookup the target destination and fallback to the
+    default key in the dictionary.
+
+    Parameters
+    ----------
+    destination : str
+        Export server base URL being exported to
+
+    Return
+    ------
+    str : cookie to send
+    """
+    destination = destination.replace('http://', '')
+    destination = destination.replace('https://', '')
+    destination = destination.replace('/', '')
+    return get_dictified_config('export_upload_auth_cookie', destination, 'f3c6986fddfe42a8ce117203924c6983')
+
 
 _config = None
 
@@ -130,6 +191,8 @@ upload_auth_cookie = lookup_config('UPLOAD_AUTH_COOKIE', 'f3c6986fddfe42a8ce1172
 # This is the cookie supplied to servers we are exporting to.
 export_upload_auth_cookie = lookup_config('EXPORT_UPLOAD_AUTH_COOKIE', 'f3c6986fddfe42a8ce117203924c6983')
 
+# Default Remote Tapeserver - when a default tapeserver is needed, use this one
+tape_server = 'hbffitstape-lp2.hi.gemini.edu'
 
 # This is the magic cookie value needed to allow downloading any files
 # without any other form of authentication

@@ -16,7 +16,8 @@ from sqlalchemy import join
 from sqlalchemy.orm import make_transient
 from sqlalchemy.exc import IntegrityError
 
-from ..fits_storage_config import storage_root, using_s3, export_bzip, export_upload_auth_cookie, z_staging_area
+from ..fits_storage_config import storage_root, using_s3, export_bzip, export_upload_auth_cookie, z_staging_area, \
+    get_export_upload_auth_cookie
 from . import queue
 
 from gemini_obs_db.orm.file import File
@@ -269,7 +270,7 @@ class ExportQueueUtil(object):
             data = None
 
             if len(postdata) < 2147483647:
-                cookies = {'gemini_fits_upload_auth': export_upload_auth_cookie}
+                cookies = {'gemini_fits_upload_auth': get_export_upload_auth_cookie(destination)}
                 r = requests.post(url, data=postdata, cookies=cookies, timeout=600)
                 response = r.text
                 http_status = r.status_code
@@ -283,7 +284,7 @@ class ExportQueueUtil(object):
                 with open(tmpfilename, 'rb') as tmpfile:
                     self.l.info(f"Large file {filename} in export, using alternate method to send the data")
                     headers = {'Cache-Control': 'no-cache', 'Content-Length': '%d' % len(postdata)}
-                    cookies = {'gemini_fits_upload_auth': export_upload_auth_cookie}
+                    cookies = {'gemini_fits_upload_auth': get_export_upload_auth_cookie(destination)}
                     r = requests.post(url, headers=headers, cookies=cookies, data=tmpfile, timeout=600)
                     response = r.text
                     http_status = r.status_code
