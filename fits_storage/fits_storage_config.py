@@ -58,7 +58,7 @@ def get_dictified_config(name, key, default_value=None):
     if not isinstance(value, str):
         return value
     if value.startswith('{'):
-        valuedict = json.parse(value)
+        valuedict = json.loads(value)
         return valuedict.get(key, valuedict.get('default', default_value))
     return value
 
