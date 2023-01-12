@@ -20,7 +20,6 @@ then
 else
   LABEL="latest"
 fi
-LABEL="2022-1"
 
 docker image build -t fitsimage:$LABEL -f FitsStorage/docker/archive/Dockerfile .
 

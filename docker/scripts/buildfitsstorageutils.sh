@@ -20,7 +20,6 @@ then
 else
   LABEL="latest"
 fi
-LABEL="2022-1"
 
 echo `pwd`
 docker image build -t fitsstorageutils:$LABEL -f FitsStorage/docker/fitsstorage/Dockerfile .

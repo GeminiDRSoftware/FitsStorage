@@ -18,12 +18,12 @@ RUN yum -y install openssl \
                    libjpeg-devel \
                    python3-pillow \
                    redhat-rpm-config \
-                   python38-devel \
+                   python3-devel \
                    bzip2 \
                    zlib \
                    zlib-devel
 
-RUN yum -y --nogpgcheck install python38-pip
+RUN yum -y --nogpgcheck install python3-pip
 
 # Fix Centos 8 broken Locale
 RUN yum -y --nogpgcheck install glibc-langpack-en glibc-common
@@ -89,7 +89,7 @@ RUN mkdir -p /data/logs && \
 
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/FitsStorageDB
-RUN cd /opt && git clone --branch enh/bpm_support https://github.com/GeminiDRSoftware/DRAGONS.git
+RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
 
 # TODO This will require some sort of ssh key setup, maybe not worth it
 #RUN cd /opt && git clone --branch master git@gitlab.gemini.edu:DRSoftware/FitsStorageConfig.git
