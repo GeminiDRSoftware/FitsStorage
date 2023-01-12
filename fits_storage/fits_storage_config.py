@@ -86,7 +86,7 @@ def get_export_upload_auth_cookie(destination):
     destination = destination.replace('http://', '')
     destination = destination.replace('https://', '')
     destination = destination.replace('/', '')
-    return get_dictified_config('export_upload_auth_cookie', destination, 'f3c6986fddfe42a8ce117203924c6983')
+    return get_dictified_config('EXPORT_UPLOAD_AUTH_COOKIE', destination, 'f3c6986fddfe42a8ce117203924c6983')
 
 
 _config = None
