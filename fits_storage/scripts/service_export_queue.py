@@ -116,7 +116,11 @@ if __name__ == "__main__":
                         logger.info("Exporting %s, (%d in queue)", eq.filename, export_queue.length())
 
                         try:
-                            success, details = export_queue.export_file(eq.filename, eq.path, eq.destination)
+                            success, details = export_queue.export_file(eq.filename, eq.path, eq.destination,
+                                                               header_fields=eq.header_fields,
+                                                               md5_before_header=eq.md5_before_header,
+                                                               md5_after_header=eq.md5_after_header,
+                                                               reject_new=eq.reject_new)
                         except (RequestException, ssl.SSLError, ValueError):
                             logger.info("Problem Exporting File - Rolling back")
                             # Originally we set the inprogress flag back to False at the point that we abort.

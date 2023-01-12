@@ -75,7 +75,7 @@ services:
       - USE_AS_ARCHIVE=True
       - API_BACKEND_LOCATION=api:8000
       - USE_ELK_LOGGING=True
-      - BLOCKED_URLS=fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files
+      - BLOCKED_URLS=fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,ingest_files
       - EXPORT_UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
       - UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
     volumes:
@@ -111,6 +111,24 @@ services:
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
     command: bash -c "/wait-for-postgres.sh postgres-archive python3 fits_storage/scripts/service_ingest_queue.py"
 
+  onsite-api:
+    image: fitsimage:latest
+    depends_on:
+      - postgres-init-archive
+      - postgres-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+      - USE_AS_ARCHIVE=False
+      - API_BACKEND_LOCATION=:8000
+      - USE_ELK_LOGGING=False
+      - PGPASSWORD=fitsdata
+      - EXPORT_UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+      - UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+    volumes:
+      - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
+      - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
+    command: bash -c "/wait-for-postgres.sh postgres-archive python3 fits_storage/scripts/api_backend.py"
+
   onsite:
     image: fitsimage:latest
     depends_on:
@@ -121,9 +139,14 @@ services:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
       - USE_AS_ARCHIVE=False
       - EXPORT_DESTINATIONS=http://archive
-      - USE_ELK_LOGGING=True
+      - USE_ELK_LOGGING=False
       - BLOCKED_URLS=
       - PGPASSWORD=fitsdata
+      - UPLOAD_AUTH_COOKIE=onsite_docker_upload_auth
+      - MAGIC_API_SERVER_COOKIE=docker_magic_cookie
+      - MAGIC_API_CLIENT_COOKIE=docker_magic_cookie
+      - MAGIC_API_COOKIE=docker_magic_cookie
+      - API_BACKEND_LOCATION=onsite-api:8000
     volumes:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"

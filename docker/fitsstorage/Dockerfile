@@ -5,6 +5,9 @@ LABEL maintainer="oliver.oberdorf@noirlab.edu"
 RUN rm -r /var/cache/dnf
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
+# UPDATE REPOS
+RUN dnf -y update
+
 # INSTALL HTTPD AND POSTGRESQL
 RUN yum -y install openssl \
                    postgresql \
@@ -18,12 +21,13 @@ RUN yum -y install openssl \
                    libjpeg-devel \
                    python3-pillow \
                    redhat-rpm-config \
-                   python3-devel \
+                   python39-devel \
+                   python39 \
                    bzip2 \
                    zlib \
                    zlib-devel
 
-RUN yum -y --nogpgcheck install python3-pip
+RUN yum -y --nogpgcheck install python39-pip
 
 # Fix Centos 8 broken Locale
 RUN yum -y --nogpgcheck install glibc-langpack-en glibc-common

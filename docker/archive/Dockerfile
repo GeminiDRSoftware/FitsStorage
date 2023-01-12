@@ -12,7 +12,8 @@ RUN yum -y install --nogpgcheck httpd \
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
 RUN dnf -y install redhat-rpm-config
-RUN pip3 install mod_wsgi==4.6.5
+#RUN pip3 install mod_wsgi==4.6.5
+RUN pip3 install mod_wsgi
 
 # PUT APACHE LOGS TO DOCKER OUTPUT
 # need the modwsgi-default folder here so we can link out the logs

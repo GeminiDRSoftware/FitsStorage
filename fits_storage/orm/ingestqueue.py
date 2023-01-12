@@ -3,6 +3,8 @@ This is the ingesqueue ORM class.
 
 """
 import datetime
+import json
+
 from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Boolean, Text, DateTime
 from sqlalchemy import desc, func
@@ -24,6 +26,10 @@ class IngestQueue(Base):
     id = Column(Integer, primary_key=True)
     filename = Column(Text, nullable=False, unique=False, index=True)
     path = Column(Text)
+    header_fields = Column(Text)
+    md5_before_header = Column(Text)
+    md5_after_header = Column(Text)
+    reject_new = Column(Boolean)
     inprogress = Column(Boolean, index=True)
     failed = Column(Boolean)
     added = Column(DateTime)
@@ -34,9 +40,10 @@ class IngestQueue(Base):
 
     error_name = 'INGEST'
 
-    def __init__(self, filename, path):
+    def __init__(self, filename, path, header_fields=None, md5_before_header=None, md5_after_header=None,
+                 reject_new=True):
         """
-        Create an :class:`~IngestQueue` instance with the given filename and path
+        Create an :class:`~orm.ingestqueue.IngestQueue` instance with the given filename and path
 
         Parameters
         ----------
@@ -45,8 +52,24 @@ class IngestQueue(Base):
         path : str
             Path of the file within the `storage_root`
         """
+        if header_fields and (not md5_before_header or not md5_after_header):
+            print("IngestQueue constructor MD5(s) missing but header_fields seen, throwing ValueError")
+            raise ValueError("header_fields specified but missing before and after md5 checksums")
+        if header_fields:
+            try:
+                print("Loading header fields as json: %s" % header_fields)
+                json.loads(header_fields)
+            except:
+                print("Invalid JSON, raising error")
+                raise ValueError(f"Invalid json in passed header_fields: {header_fields}")
+
+        print("setting other IQ values")
         self.filename = filename
         self.path = path
+        self.header_fields = header_fields
+        self.md5_before_header = md5_before_header
+        self.md5_after_header = md5_after_header
+        self.reject_new = reject_new
         self.added = datetime.datetime.now()
         self.inprogress = False
         self.force_md5 = False
@@ -55,7 +78,9 @@ class IngestQueue(Base):
         self.failed = False
 
         # Sortkey is used to sort the order in which we de-spool the queue.
+        print("done setting other IQ values, setting sortkey")
         self.sortkey = sortkey_for_filename(filename)
+        print("done setting sortkey and done constructing IQ")
 
     @staticmethod
     def find_not_in_progress(session):

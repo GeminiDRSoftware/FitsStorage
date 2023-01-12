@@ -50,6 +50,10 @@ class ExportQueue(Base):
     filename = Column(Text, nullable=False, unique=False, index=True)
     path = Column(Text)
     destination = Column(Text, nullable=False, unique=False, index=True)
+    header_fields = Column(Text)
+    md5_before_header = Column(Text)
+    md5_after_header = Column(Text)
+    reject_new = Column(Boolean)
     inprogress = Column(Boolean, index=True)
     failed = Column(Boolean)
     sortkey = Column(Text, index=True)
@@ -59,7 +63,8 @@ class ExportQueue(Base):
 
     error_name = 'EXPORT'
 
-    def __init__(self, filename, path, destination):
+    def __init__(self, filename, path, destination, header_fields=None,
+                 md5_before_header=None, md5_after_header=None, reject_new=True):
         """
         Create an :class:`~ExportQueue` record
 
@@ -76,6 +81,10 @@ class ExportQueue(Base):
         self.sortkey = _sortkey(filename)
         self.path = path
         self.destination = destination
+        self.header_fields = header_fields
+        self.md5_before_header = md5_before_header
+        self.md5_after_header = md5_after_header
+        self.reject_new = reject_new
         self.added = datetime.datetime.now()
         self.after = datetime.datetime.min
         self.inprogress = False
