@@ -92,6 +92,11 @@ if __name__ == "__main__":
             interval = datetime.timedelta(minutes=options.retry_mins)
             eq = None
 
+            # Set a flag so that we can get exactly one "Nothing on queue" message in the info log
+            # This is really useful to see that the last transfer completed, without endlessly
+            # repeating the log message
+            nothing = False
+
             export_queue = ExportQueueUtil(session, logger)
             # Loop forever. loop is a global variable defined up top
             while loop:
@@ -105,13 +110,16 @@ if __name__ == "__main__":
                             logger.info("Nothing on queue and --empty flag set, exiting")
                             break
                         else:
-                            logger.debug("Nothing on Queue... Waiting")
+                            if not nothing:
+                                logger.info("Nothing on Queue... Waiting")
+                            nothing = True
                         time.sleep(2)
 
                         # Mark any old failures for retry
                         export_queue.retry_failures(interval)
 
                     else:
+                        nothing = False
                         logger.info("Exporting %s, (%d in queue)", eq.filename, export_queue.length())
 
                         try:
