@@ -84,7 +84,6 @@ class IngestQueue(Base):
         inprogress_filenames = (session.query(IngestQueue.filename)
                 .filter(IngestQueue.failed == False)
                 .filter(IngestQueue.inprogress == True)
-                .subquery()
         )
 
         return (
