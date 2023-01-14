@@ -530,13 +530,13 @@ class IngestQueueUtil(object):
         fullpath = os.path.join(fsc.storage_root, iq.path, iq.filename)
         if fsc.defer_seconds > 0:
             lastmod = datetime.datetime.fromtimestamp(os.path.getmtime(fullpath))
-            now = datetime.datetime.now()
-            age = now - lastmod
+            # lastmod is in local timezone.
+            age = datetime.datetime.now() - lastmod
             defer = datetime.timedelta(seconds=fsc.defer_seconds)
             if age < defer:
-                self.l.info("Deferring ingestion of recently modified file %s" % iq.filename)
-                # Defer ingestion of this file for defer_secs
-                after = now + defer
+                self.l.info("Deferring ingestion of recently modified file %s for %d seconds" % (iq.filename, fsc.defer_seconds))
+                # Defer ingestion of this file for defer_secs. 'after' is in UTC
+                after = datetime.datetime.utcnow() + defer
         else:
             # Check if it is locked
             try:
@@ -544,9 +544,9 @@ class IngestQueueUtil(object):
                     try:
                         fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     except IOError:
-                        self.l.info("Deferring ingestion of locked file %s" % iq.filename)
+                        self.l.info("Deferring ingestion of locked file %s for 15 seconds" % iq.filename)
                         # Defer ingestion of this file for 15 secs
-                        after = datetime.datetime.now() + datetime.timedelta(seconds=15)
+                        after = datetime.datetime.utcnow() + datetime.timedelta(seconds=15)
             except IOError:
                 # Probably don't have write permission to the file
                 self.l.warning("Could not open %s for update to test lock" % fullpath)
