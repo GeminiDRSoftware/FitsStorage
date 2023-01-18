@@ -1116,7 +1116,7 @@ def orcid(code):
             "redirect_uri": redirect_url
         }
         orcid_token_url = 'https://%s/oauth/token' % orcid_server
-        r = requests.post(orcid_token_url, data=data)
+        r = requests.post(orcid_token_url, json=data)
         if r.status_code == 200:
             response_data = r.json()
             orcid_id = response_data["orcid"]

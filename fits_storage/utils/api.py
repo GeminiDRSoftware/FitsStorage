@@ -37,7 +37,7 @@ class ApiProxy(object):
         non_empty = list(filter(bool, (resource, self.pref, action) + args))
         path = '/'.join(non_empty)
         try:
-            r = requests.post(path, data=kw)
+            r = requests.post(path, json=kw)
             response = r.json()
             if 'error' in response:
                 if 'error_object' in response:
@@ -107,12 +107,16 @@ def get_post_data(environ):
         return ''
 
 def get_arguments(environ):
+    data = "__unset__"
     try:
-        return json.loads(get_post_data(environ))
+        data = get_post_data(environ)
+        if not isinstance(data, str):
+            data = data.decode('utf-8')
+        return json.loads(data)
     except TypeError:
         raise WSGIError("The query is not a valid JSON method call")
     except ValueError:
-        raise WSGIError("The data for this query is not valid JSON")
+        raise WSGIError(f"The data for this query: {data} is not valid JSON")
 
 class ApiCall(object):
     def __init__(self, call, logger):

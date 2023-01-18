@@ -66,6 +66,6 @@ if __name__ == "__main__":
     ]
 
     url = "http://mkofits-lv1/qareport"
-    r = requests.post(url, data=json)
+    r = requests.post(url, json=json)
     print(r.text)
     print(r.status_code)

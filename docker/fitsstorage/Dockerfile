@@ -38,11 +38,11 @@ RUN pip3 install setuptools_scm==6.4.2
 RUN pip3 install gwcs==0.16.1
 RUN pip3 install asdf==2.7.4
 RUN pip3 install specutils==1.2
+#RUN pip3 install pyfits
 RUN pip3 install psycopg2-binary && \
     pip3 install SQLAlchemy==1.3.24 && \
     pip3 install pyyaml && \
     pip3 install jinja2==3.0.2 && \
-    pip3 install pyfits && \
     pip3 install dateutils && \
     pip3 install requests && \
     pip3 install matplotlib && \

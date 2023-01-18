@@ -371,8 +371,7 @@ class IngestQueueUtil(object):
                                            .filter(DiskFile.canonical,
                                                    Header.diskfile_id == DiskFile.id,
                                                    Header.instrument == header.instrument,
-                                                   Header.ut_datetime > header.ut_datetime,
-                                                   Header.types.like('%BPM%'))
+                                                   Header.ut_datetime > header.ut_datetime)
                         if header.instrument == 'GMOS-S' or header.instrument == 'GMOS-N':
                             requeuequery = requeuequery.filter(Header.detector_binning == header.detector_binning)
                         if end_date:

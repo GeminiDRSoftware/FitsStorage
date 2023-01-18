@@ -269,18 +269,12 @@ class ExportQueueUtil(object):
         if header_fields:
             print("In export_queue but header_fields were defined, activating header update logic")
             if not md5_before_header or not md5_after_header:
-                print("No md5s defined, unabe to use header update logic, revert to full export")
                 self.l.warning(f"Saw update header fields without md5s while in exportqueue, "
                                f"reverting to full file export for file {filename}")
             elif md5_after_header != diskfile.file_md5:
-                print("after MD5 does not match diskfile current MD5, reverting to full export")
                 self.l.info(f"File {filename} no longer resembles post-header-update md5, unable to send header "
                             f"update, reverting to full file upload")
             else:
-                print(f"At the update header call now\n"
-                      f"  filename: {filename}\n"
-                      f"  header_fields: {header_fields}")
-                print("unimplemented, reverting to full export")
                 # pack up an update request
                 # TODO update headers call goes here
                 self.l.info(f"*** would call to update headers here for file {filename} with fields {header_fields}")
@@ -298,26 +292,31 @@ class ExportQueueUtil(object):
                     'gemini_api_authorization': magic_api_client_cookie
                 }
 
-                print(f"posting json of {payload}")
                 r = requests.post("%s/%s" % (destination, 'update_headers'),
                                      json=payload,
                                      cookies=cookies)
-                print(f"post returned, status: {r.status_code}\n"
-                      f"  response: {r.json}")
                 if r.status_code == apache.OK:
                     # it worked - otherwise, let's fall back to the file export
                     result = r.json()
-                    if 'id' in result and 'md5' in result and \
-                            (result['id'] == filename or result['id'] == "%s.bz2" % filename) and \
-                            result['md5'] == md5_after_header:
-                        return True
+                    if len(result) == 1:
+                        result = result[0]
+                        if 'id' in result and 'md5' in result and \
+                                (result['id'] == filename or result['id'] == "%s.bz2" % filename) and \
+                                result['md5'] == md5_after_header:
+                            self.l.info("Header-update export succeeded, md5 matched, finished")
+                            return True, ""
+                        else:
+                            self.l.warning("Result did not match expectation:")
+                            self.l.warning(f"  result: {result}")
+                            self.l.warning(f"  filename: {filename}  md5: {md5_after_header}")
+                            self.l.warning("reverting to file export")
+                            self.l.warning("*** disabled for now, not reverting to file export so I can inspect")
+                            return False, "MD5 Mismatched"
                     else:
-                        print("Result did not match expectation:")
-                        print(f"  result: {result}")
-                        print(f"  filename: {filename}  md5: {md5_after_header}")
-                        print("reverting to file export")
+                        self.l.warning(f"Unexpected result, should be 1-element array, got: {result}")
+                        return False, "Unexpected internal API return"
                 else:
-                    print("Web request to update headers did not return OK, falling back to file export")
+                    self.l.warning("Web request to update headers did not return OK, falling back to file export")
 
         # Read the file into the payload postdata buffer to HTTP POST
         data = None
@@ -370,7 +369,12 @@ class ExportQueueUtil(object):
         # Otherwise get ascii encoding errors from httplib layer
         try:
             self.l.info(f"Transferring file {filename} to destination {destination}")
-            postdata = bytearray(data)
+            if isinstance(data, str):
+                self.l.warning("Unexpected datatype in export, saw str expected bytes - encoding for export")
+                postdata = data.encode('utf-8')
+            else:
+                postdata = data
+            # bytearray(data)  # <-- old logic
             data = None
 
             if len(postdata) < 2147483647:
@@ -488,9 +492,9 @@ def get_destination_data_md5(filename, logger, destination):
             logger.debug("No filename in json data")
         elif thedict['filename'] not in [filename, filename+'.bz2']:
             logger.debug("Wrong filename in json data")
-        elif 'data_md5' not in list(thedict.keys()):
-            logger.debug("No data_md5 in json data")
+        elif 'file_md5' not in list(thedict.keys()):
+            logger.debug("No file_md5 in json data")
         else:
-            return thedict['data_md5'], thedict.get("pending_ingest", False)
+            return thedict['file_md5'], thedict.get("pending_ingest", False)
 
     return "ERROR", False

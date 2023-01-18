@@ -214,12 +214,12 @@ def process_update(session, proxy, query, iq):
         print("  reject_new: %s" % reject_new)
         print("  path: %s" % path)
         print("  md5_before_header: %s" % md5_before_header)
-        reingest = proxy.set_image_metadata(path=path, changes=new_values, reject_new=reject_new)
+        reingest, md5_after_header = proxy.set_image_metadata(path=path, changes=new_values, reject_new=reject_new)
         print("done calling proxy.set_image_metadata")
         if reingest:
             print("reingest was true...")
             header_fields = new_values
-            md5_after_header = df.get_file_md5()
+            # md5_after_header = df.get_file_md5()
             print("header_fields: %s" % header_fields)
             print("md5_after_header: %s" % md5_after_header)
         else:

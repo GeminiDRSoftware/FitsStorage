@@ -91,7 +91,7 @@ def fits_apply_changes(path, changes, reject_new, before_md5):
         # we don't have the file this update targets, no-op
         print("before_md5_check is False, noop")
         logger.info("before_md5_check is False, noop")
-        return
+        return False, None
 
     print("Checking using s3")
     logger.info("Checking using s3")
@@ -105,7 +105,7 @@ def fits_apply_changes(path, changes, reject_new, before_md5):
     if fits_is_unchanged(path, changes):
         print("True, not modifying, returning False")
         logger.info("fits_apply_changes: %s [NOT MODIFIED]", path)
-        return False
+        return False, None
 
     print("Checking all cards exist or not reject new")
     logger.info("Checking all cards exist or not reject new")
@@ -115,10 +115,10 @@ def fits_apply_changes(path, changes, reject_new, before_md5):
 
     print("Calling modify_multiple_cards")
     logger.info("Calling modify_multiple_cards")
-    modify_multiple_cards(path, changes, ext=0)
+    md5_sum = modify_multiple_cards(path, changes, ext=0)
     print("Done, returning True")
     logger.info("fits_apply_changes returning True: %s [%s]", path, str(changes))
-    return True
+    return True, md5_sum
 
 
 @json_api_call(logger)
