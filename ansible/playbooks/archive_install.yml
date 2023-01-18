@@ -212,8 +212,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git"
-          version: v1.0.27
-          #version: release/1.0.x
+          version: release/1.0.x
           dest: /opt/FitsStorageDB
           accept_hostkey: yes
         when: not is_aws
@@ -223,8 +222,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git"
-          #version: release/1.1.x
-          version: v1.1.22
+          version: release/1.1.x
           dest: /opt/GeminiCalMgr
           accept_hostkey: yes
         when: not is_aws
