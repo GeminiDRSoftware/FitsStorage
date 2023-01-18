@@ -113,6 +113,11 @@ if __name__ == "__main__":
                                            make_previews=options.make_previews)
             export_queue = ExportQueueUtil(session, logger)
 
+            # Set a flag so that we can get exactly one "Nothing on queue" message in the info log
+            # This is really useful to see that the last transfer completed, without endlessly
+            # repeating the log message
+            nothing = False
+
             # Loop forever. loop is a global variable defined up top
             while loop:
                 try:
@@ -125,9 +130,12 @@ if __name__ == "__main__":
                             logger.info("Nothing on queue and --empty flag set, exiting")
                             break
                         else:
-                            logger.debug("Nothing on queue... Waiting")
+                            if not nothing:
+                                logger.info("Nothing on queue... Waiting")
+                            nothing = True
                         time.sleep(2)
                     else:
+                        nothing = False
                         # Don't query queue length in fast_rebuild mode
                         if options.fast_rebuild:
                             logger.info("Ingesting {} (id {})".format(iq.filename, iq.id))
