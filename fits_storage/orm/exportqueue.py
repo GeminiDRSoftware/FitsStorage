@@ -17,22 +17,43 @@ _regexes = [_standard_filename_re,
             _skycam_filename_re,
             _obslog_filename_re]
 
+# lower down regexes in this list get priority over earlier
+# destinations not in this list get the lowest priority
+_destination_priorities = [
+    re.compile('.*archive.*'),
+]
 
-def _sortkey(filename):
+def _sortkey(filename, destination):
     """
     Generate a sort key for the given filename.
 
     For recognized filename patterns, this will extract a datestring.  For
     other filenames, it will prepend a 0000 so that they will sort sensibly
     amongst their set but will come after the files we know about.
+
+    Additionally, a priority number is generated for any special export
+    destinations.  These destinations take priority over any lower ranked
+    destinations.  This way, all archive exports will be run before anything
+    else.  Currently, archive is the only prioritized destination.
     """
     if filename is None:
         return None
+
+    # default
+    sortkey = '0000%s' % filename  # push to back of the sort vs any reasonable year value
+
     for rex in _regexes:
         m = rex.match(filename)
         if m:
-            return m.group(1)
-    return '0000%s' % filename  # push to back of the sort vs any reasonable year value
+            sortkey = m.group(1)
+
+    priority = 0
+    for idx, rex in enumerate(_destination_priorities):
+        if rex.match(destination):
+            priority = 1+idx
+
+    sortkey = f'%03d%s' % (priority, sortkey)
+    return sortkey
 
 
 # ------------------------------------------------------------------------------
@@ -78,7 +99,7 @@ class ExportQueue(Base):
             URL of the server to export to
         """
         self.filename = filename
-        self.sortkey = _sortkey(filename)
+        self.sortkey = _sortkey(filename, destination)
         self.path = path
         self.destination = destination
         self.header_fields = header_fields
@@ -147,3 +168,9 @@ class ExportQueue(Base):
         """
         return "<ExportQueue('%s', '%s')>" % (self.id, self.filename)
 
+
+if __name__ == "__main__":
+    print(_sortkey("N20221201S0001.fits", "https://archive.gemini.edu"))
+    print(_sortkey("random.fits", "https://archive.gemini.edu"))
+    print(_sortkey("N20221201S0001.fits", "https://hbffitstape-lp2.hi.gemini.edu"))
+    print(_sortkey("random.fits", "https://hbffitstape-lp2.hi.gemini.edu"))

@@ -109,14 +109,10 @@ def lookup_config(name, default_value):
     if _config is None:
         config_path = os.getenv('FITSSTORAGE_CONFIG_FILE', None)
         if config_path is None:
-            hostname = socket.gethostname()
-            if hostname is not None and '.' in hostname:
-                hostname = hostname[:hostname.find('.')]
-            if hostname is not None:
-                if os.path.exists('/etc/fitsstorage.conf'):
-                    config_path = '/etc/fitsstorage.conf'
-                else:
-                    config_path = '~/fitsstorage.conf'
+            if os.path.exists('/etc/fitsstorage.conf'):
+                config_path = '/etc/fitsstorage.conf'
+            else:
+                config_path = os.path.expanduser("~/.fitsstorage.conf")
 
         _config = configparser.ConfigParser()
         if os.path.exists(config_path):
@@ -254,6 +250,7 @@ fits_dbserver              = lookup_config('FITS_DB_SERVER', '')
 fits_database              = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
 fits_database_pool_size    = 30
 fits_database_max_overflow = 10
+fits_database_debug        = lookup_config_bool('FITS_DB_DEBUG', False)
 
 # Configure the auxillary data directory here
 fits_aux_datadir = lookup_config('FITS_AUX_DATADIR', "/opt/FitsStorage/data")
