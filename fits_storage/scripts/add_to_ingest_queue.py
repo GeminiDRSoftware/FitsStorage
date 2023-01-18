@@ -50,7 +50,7 @@ if __name__ == "__main__":
                         default=False, help="Force md5 file check, not just lastmod date")
 
     parser.add_argument("--after", action="store", dest="after", default = None,
-                        help="Ingest only after this datetime")
+                        help="Ingest only after this UTC datetime")
 
     parser.add_argument("--newfiles", action="store", type=int, dest="newfiles",
                         default=None, help="Only queue files modified in the last N days")
@@ -180,9 +180,12 @@ if __name__ == "__main__":
                 if age > newfiles_seconds:
                     logger.debug("Skipping {}: older than {}s".format(filename, newfiles_seconds))
                     continue
-
+            if options.after:
+                after = datetime.datetime.fromisoformat(options.after)
+            else:
+                after = None
             logger.info("Queueing for Ingest: ({}/{}): {}".format(i, n, filename))
             iq.add_to_queue(filename, path, force=options.force,
-                            force_md5=options.force_md5, after=options.after)
+                            force_md5=options.force_md5, after=after)
 
     logger.info("*** add_to_ingestqueue.py exiting normally at {}".format(datetime.datetime.now()))

@@ -70,7 +70,7 @@ class IngestQueue(Base):
         self.md5_before_header = md5_before_header
         self.md5_after_header = md5_after_header
         self.reject_new = reject_new
-        self.added = datetime.datetime.now()
+        self.added = datetime.datetime.utcnow()
         self.inprogress = False
         self.force_md5 = False
         self.force = False
@@ -109,14 +109,13 @@ class IngestQueue(Base):
         inprogress_filenames = (session.query(IngestQueue.filename)
                 .filter(IngestQueue.failed == False)
                 .filter(IngestQueue.inprogress == True)
-                .subquery()
         )
 
         return (
             session.query(IngestQueue)
                 .filter(IngestQueue.inprogress == False)
                 .filter(IngestQueue.failed == False)
-                .filter(IngestQueue.after < datetime.datetime.now())
+                .filter(IngestQueue.after < datetime.datetime.utcnow())
                 .filter(~IngestQueue.filename.in_(inprogress_filenames))
                 .order_by(desc(IngestQueue.sortkey))
         )

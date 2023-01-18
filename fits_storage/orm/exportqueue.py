@@ -118,7 +118,6 @@ class ExportQueue(Base):
             session.query(ExportQueue.filename)
                 .filter(ExportQueue.failed == False)
                 .filter(ExportQueue.inprogress == True)
-                .subquery()
         )
 
         return (
