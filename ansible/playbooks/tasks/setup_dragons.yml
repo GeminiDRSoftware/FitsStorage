@@ -15,3 +15,19 @@
         become: true
         become_user: root
         when: dragonscheckout.changed
+      - name: Checkout GeminiCalMgr into /opt
+        become: true
+        become_user: fitsdata
+        git:
+          repo: https://github.com/GeminiDRSoftware/GeminiCalMgr.git
+          dest: /opt/GeminiCalMgr
+          version: main
+        register: checkedout_geminicalmgr
+      - name: Checkout GeminiObsDB into /opt
+        become: true
+        become_user: fitsdata
+        git:
+          repo: https://github.com/GeminidRSoftware/GeminiObsDB.git
+          dest: /opt/GeminiObsDB
+          version: main
+        register: checkedout_geminiobsdb

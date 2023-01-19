@@ -87,19 +87,11 @@ RUN mkdir -p /data/logs && \
     chmod oug+rw /data/logs
 
 # COPY STUFFS
-ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/FitsStorageDB
+ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/GeminiObsDB
 RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
+RUN cd /opt && git clone --branch main https://github.com/GeminiDRSoftware/GeminiCalMgr.git
+RUN cd /opt && git clone --branch main https://github.com/GeminiDRSoftware/GeminiObsDB.git
 
-# TODO This will require some sort of ssh key setup, maybe not worth it
-#RUN cd /opt && git clone --branch master git@gitlab.gemini.edu:DRSoftware/FitsStorageConfig.git
-#RUN cd /opt && git clone --branch master git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git
-#RUN cd /opt && git clone --branch master git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git
-
-COPY FitsStorageDB /opt/FitsStorageDB
-COPY GeminiCalMgr /opt/GeminiCalMgr
-
-RUN cd /opt/FitsStorageDB && python3 setup.py install
-RUN cd /opt/GeminiCalMgr && python3 setup.py install
 COPY FitsStorage /opt/FitsStorage
 WORKDIR /opt/FitsStorage
 

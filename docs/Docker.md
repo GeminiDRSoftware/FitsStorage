@@ -56,7 +56,7 @@ The docker compose does depend on the two docker images `fitsstorageutils:latest
 You can build these two images by running `FitsStorage/docker/scripts/buildfitsstorageutils.sh` and
 `FitsStorage/docker/scripts/buildarchive.sh` respectively.  The images are also available in the container
 registry in gitlab at `https://gitlab.gemini.edu/DRSoftware/FitsStorage/container_registry`.
-The scripts assume that `FitsStorageDB` and `GeminiCalMgr` are checked out alongside `FitsStorage`.
+The scripts assume that `GeminiObsDB` and `GeminiCalMgr` are checked out alongside `FitsStorage`.
 
 ### Scripts
 
@@ -80,7 +80,7 @@ name and a login.
 
 The docker support for running a cluster depends on some custom images.  There
 are helper build scripts to easily create these with the proper parameters and
-names.  These scripts assume `FitsStorageDB` and `GeminiCalMgr` are checked
+names.  These scripts assume `GeminiObsDB` and `GeminiCalMgr` are checked
 out alongside `FitsStorage`.
 
 If you are on the master branch and want to update the `:latest` images in the

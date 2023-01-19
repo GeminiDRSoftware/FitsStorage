@@ -11,7 +11,7 @@ are just a few steps.  I'll assume you installed docker and you have a fresh che
 1. Build the images
 
     ```
-    <cd to above FitsStorage, FitsStorageConfig, FitsStorageDB, GeminiCalMgr codebases>
+    <cd to above FitsStorage, FitsStorageConfig, GeminiObsDB, GeminiCalMgr codebases>
     bash ./FitsStorage/docker/scripts/buildfitsstorageutils.sh
     bash ./FitsStorage/docker/scripts/buildarchive.sh
     ```

@@ -3,7 +3,7 @@ Description=Fits Storage API Backend
 After=syslog.target network.target
 
 [Service]
-Environment=PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr
+Environment=PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/GeminiObsDB:/opt/GeminiCalMgr
 User=fitsdata
 ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/api_backend.py --demon
 Restart=always

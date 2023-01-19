@@ -21,7 +21,7 @@
 #
 #HTTPD_LANG=C
 
-PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/FitsStorageDB
+PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/GeminiObsDB
 
 PYTHON_EGG_CACHE=/var/www/python-egg-cache
 

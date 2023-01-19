@@ -1,7 +1,7 @@
 FROM fitsstorageutils:latest
 LABEL maintainer="oliver.oberdorf@noirlab.edu"
 
-ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/FitsStorageDB:/opt/FitsStorageServices
+ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/GeminiObsDB:/opt/FitsStorageServices
 
 # Setup static assets folder
 RUN mkdir /opt/FitsStorageServices_static

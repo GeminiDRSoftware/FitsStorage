@@ -6,4 +6,4 @@
           owner: fitsdata
           group: fitsdata
         with_items:
-          - ["/opt/FitsStorageDB", "/opt/GeminiCalMgr", "/opt/FitsStorage"]
+          - ["/opt/GeminiObsDB", "/opt/GeminiCalMgr", "/opt/FitsStorage"]

@@ -3,7 +3,7 @@ Description=Fits Service Preview Queue
 After=syslog.target network.target postgresql.service
 
 [Service]
-Environment=PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr
+Environment=PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/GeminiObsDB:/opt/GeminiCalMgr
 User=fitsdata
 ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --debug --lockfile --name=spq
 Restart=always

@@ -1,3 +1,18 @@
+2023-1
+======
+
+Other
+-----
+
+various
+^^^^^^^
+
+- Changed references to FitsStorageDB to GeminiObsDB
+- Changed default branch for GeminiObsDB and GeminiCalMgr to main per current github practice
+- Pushed GeminiObsDB and GeminiCalMgr to github
+- Updated ansible/docker/Jenkinsfile to use the github repos for GeminiObsDB and GeminiCalMgr
+
+
 2022-1
 ======
 

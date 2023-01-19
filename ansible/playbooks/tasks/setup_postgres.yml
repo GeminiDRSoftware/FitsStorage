@@ -70,7 +70,7 @@
       - name: Enable PostgreSQL on startup
         service: name=postgresql enabled=yes
       - name: Create tables in DB
-        command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/GeminiCalMgr:/opt/FitsStorageDB python3 ./fits_storage/scripts/create_tables.py"
+        command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/GeminiCalMgr:/opt/GeminiObsDB python3 ./fits_storage/scripts/create_tables.py"
         become: yes
         become_user: fitsdata
         when: fitsdata_db_created.changed
@@ -83,7 +83,7 @@
 #        become_user: fitsdata
 #        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
       - name: Setup Migrations
-        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
+        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/GeminiObsDB:/opt/GeminiCalMgr python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
         become: yes
         become_user: postgres
         when: fitsdata_db_created.changed
@@ -103,7 +103,7 @@
         become_user: postgres
         when: fitsdata_db_created.changed
       - name: Apply Migrations (Idempotent, always apply)
-        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr python3 dbmigration/manage.py upgrade postgresql:///fitsdata dbmigration"
+        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/GeminiObsDB:/opt/GeminiCalMgr python3 dbmigration/manage.py upgrade postgresql:///fitsdata dbmigration"
         become: yes
         become_user: fitsdata
         when: apply_migrations

@@ -1,18 +1,18 @@
       - name: Setup Source Folders
         import_tasks: tasks/setup_source_folders.yml
-      - name: Rsync FitsStorageDB into /opt (AWS)
-        become: false
-        local_action:
-          module: shell
-          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../FitsStorageDB/ "fitsdata@{{ inventory_hostname }}".gemini.edu:/opt/FitsStorageDB
-        notify: restart services
-        register: checkedout_fitsstoragedb
-      - name: Rsync GeminiCalMgr into /opt (AWS)
-        become: false
-        local_action:
-          module: shell
-          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../GeminiCalMgr/ fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/GeminiCalMgr
-        register: checkedout_geminicalmgr
+#      - name: Rsync FitsStorageDB into /opt (AWS)
+#        become: false
+#        local_action:
+#          module: shell
+#          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../FitsStorageDB/ "fitsdata@{{ inventory_hostname }}".gemini.edu:/opt/FitsStorageDB
+#        notify: restart services
+#        register: checkedout_fitsstoragedb
+#      - name: Rsync GeminiCalMgr into /opt (AWS)
+#        become: false
+#        local_action:
+#          module: shell
+#          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../GeminiCalMgr/ fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/GeminiCalMgr
+#        register: checkedout_geminicalmgr
       - name: Rsync FitsStorage into /opt (AWS)
         become: false
         local_action:

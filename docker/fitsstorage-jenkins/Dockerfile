@@ -106,13 +106,10 @@ RUN mkdir -p /usr/share/httpd/.specutils && \
     chown fitsdata /usr/share/httpd/.specutils
 
 # COPY STUFFS
-ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/FitsStorageDB
+ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/GeminiObsDB
 RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
-
-COPY FitsStorageDB /opt/FitsStorageDB
-COPY GeminiCalMgr /opt/GeminiCalMgr
-#RUN cd /opt/FitsStorageDB && python3 setup.py install
-#RUN cd /opt/GeminiCalMgr && python3 setup.py install
+RUN cd /opt && git clone --branch main https://github.com/GeminiDRSoftware/GeminiCalMgr.git
+RUN cd /opt && git clone --branch main https://github.com/GeminiDRSoftware/GeminiObsDB.git
 
 # Install the configuration file for the Jenkins FitsStore containers
 COPY FitsStorageConfig/configs/jenkins_fitsstorage.conf /etc/fitsstorage.conf
