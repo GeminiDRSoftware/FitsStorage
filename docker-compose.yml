@@ -78,6 +78,7 @@ services:
       - BLOCKED_URLS=fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,ingest_files
       - EXPORT_UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
       - UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+      - FITS_SERVERTITLE=Docker Public Archive Server
     volumes:
       - "~/testdata/archive-data-upload_staging:/data/upload_staging"
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
@@ -147,6 +148,7 @@ services:
       - MAGIC_API_CLIENT_COOKIE=docker_magic_cookie
       - MAGIC_API_COOKIE=docker_magic_cookie
       - API_BACKEND_LOCATION=onsite-api:8000
+      - FITS_SERVERTITLE=Docker Internal FITS Server
     volumes:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"

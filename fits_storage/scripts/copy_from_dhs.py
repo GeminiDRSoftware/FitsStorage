@@ -267,9 +267,14 @@ def copy_over(session, iq, logger, filename, dryrun):
                 if _today_str in filename or _yesterday_str in filename:
                     _md5_cache.set_md5(filename, md5)
     except:
+        global _pending_email
         logger.error("Problem copying %s to %s", src, storage_root)
         logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
                                                  traceback.format_tb(sys.exc_info()[2]))
+        _pending_email = '{}\nProblem copying {} to {}\n'.format(_pending_email, src, storage_root)
+        _pending_email = '{}\nException: {} :{}... {}\n'.format(_pending_email, sys.exc_info()[0], sys.exc_info()[1],
+                                                 traceback.format_tb(sys.exc_info()[2]))
+
         return False
     # Add it to the ingest queue here
     return True

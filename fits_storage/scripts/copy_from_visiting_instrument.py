@@ -338,9 +338,9 @@ class AlopekeZorroABC(VisitingInstrumentABC):
         -------
             list of str : paths relative to the staging area for the files to copy
         """
-        rex = None
+        dprex = None
         if date_pre:
-            rex = re.compile(date_pre)
+            dprex = re.compile(date_pre)
         for f in os.listdir(self.base_path):
             fullpath = os.path.join(self.base_path, f)
             if os.path.isdir(fullpath) and re.search(r'^\d{8}$', f):
@@ -349,7 +349,7 @@ class AlopekeZorroABC(VisitingInstrumentABC):
                     for rex in self._filename_res:
                         if rex.search(datafile):
                             matched = True
-                    if matched and (rex is None or rex.search(datafile)):
+                    if matched and (dprex is None or dprex.search(datafile)):
                         yield os.path.join(f, datafile)
 
     def get_dest_path(self, filename):
@@ -406,7 +406,7 @@ class IGRINS(VisitingInstrumentABC):
         if not os.path.exists(os.path.join(self.storage_root, 'igrins')):
             os.mkdir(os.path.join(self.storage_root, 'igrins'))
 
-    def get_files(self):
+    def get_files(self, date_pre=None):
         """
         Get the files within the staging area to ingest.
 
@@ -414,7 +414,9 @@ class IGRINS(VisitingInstrumentABC):
         -------
         list of str : list of files in the top level to be copied
         """
-        print("In IGRINS.get_files")
+        rex = None
+        if date_pre:
+            rex = re.compile(date_pre)
         fullpath = self.base_path
         for datedir in os.listdir(fullpath):
             fulldatepath = os.path.join(fullpath, datedir)
@@ -422,7 +424,8 @@ class IGRINS(VisitingInstrumentABC):
                 print(f"Scanning files in {datedir}")
                 for datafile in os.listdir(fulldatepath):
                     if self.filename_re.search(datafile):
-                        yield os.path.join(fulldatepath, datafile)
+                        if rex is None or rex.search(datafile):
+                            yield os.path.join(fulldatepath, datafile)
 
     def get_files_old(self, date_pre=None):
         """
@@ -477,7 +480,7 @@ if __name__ == "__main__":
                       help="Copy Old Zorro data (from /sci/dataflow/zorro-old)")
     parser.add_option("--igrins", action="store_true", dest="igrins", default=False, help="Copy IGRINS data")
     parser.add_option("--emailto", action="store", dest="emailto", default=None, help="Where to send error emails")
-    parser.add_option("--date-pre", action="store", dest="datepre", default=None,
+    parser.add_option("--date-pre", action="store", dest="datepre", default="20",
                       help="Date prefix to filter for (to narrow scope of the copy)")
 
     (options, args) = parser.parse_args()
