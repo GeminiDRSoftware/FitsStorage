@@ -341,7 +341,7 @@
 
     <label>Binning:</label><select id="ghost_binning" class="ddw inst_clearable" name="binning">
         <option value="">Any</option>
-{{ generate_option_list(bin_options, updated.binning, 'GHOST' in updated.inst) }}
+{{ generate_option_list(ghost_bin_options, updated.binning, 'GHOST' in updated.inst) }}
     </select>
     <span class="help">(CCD Binning)
         <span class="helpleft">Select a CCD binning.</span>
