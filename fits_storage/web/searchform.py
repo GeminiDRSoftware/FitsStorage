@@ -879,6 +879,15 @@ dropdown_options = {
          ("4x1", "4x1"),
          ("4x2", "4x2"),
          ("4x4", "4x4")],
+    "ghost_bin_options":
+        [("1x1", "1x1"),
+         ("1x2", "1x2"),
+         ("1x4", "1x4"),
+         ("1x8", "1x8"),
+         ("2x2", "2x2"),
+         ("2x4", "2x4"),
+         ("2x8", "2x8"),
+         ("4x4", "4x4")],
     "gmos_droi_options":
         [("Full Frame", "Full Frame"),
          ("Central Spectrum", "Central Spectrum"),
