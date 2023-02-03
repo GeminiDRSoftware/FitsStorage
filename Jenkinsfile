@@ -1,9 +1,11 @@
 #!/usr/bin/env groovy
 /*
- * Jenkins Pipeline for GeminiObsDB
+
+ * Jenkins Pipeline for FitsStorageCore
  *
- * by Bruno C. Quint
- * adapted for GeminiObsDB by Oliver Oberdorf
+ * from original by Bruno C. Quint
+ * adapted for GeminiCalMgr by Oliver Oberdorf
+ * almost certainly broken by Paul Hirst when I merged the GeminiObsDB and GeminiCalMgr repos into this one
  *
  * Required Plug-ins:
  * - CloudBees File Leak Detector
@@ -20,7 +22,8 @@ pipeline {
         PATH = "$JENKINS_HOME/anaconda3-dev-oly/bin:$PATH"
         CONDA_ENV_FILE = ".jenkins/conda_py3env_stable.yml"
         CONDA_ENV_NAME_DEPRECATED = "py3_stable"
-        CONDA_ENV_NAME = "gemini_obs_db_pipeline_venv"
+
+        CONDA_ENV_NAME = "fitsstoragecore_pipeline_venv"
         TEST_IMAGE_PATH = "/tmp/archive_test_images"
         TEST_IMAGE_CACHE = "/tmp/cached_archive_test_images"
     }
@@ -32,13 +35,19 @@ pipeline {
                 echo 'STARTED'
 
                 checkout scm
+//                 echo 'Checking Out FitsStorageCore'
+//                 dir('FitsStorageCore') {
+//                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorageCore.git',
+//                     branch: 'main',
+//                     credentialsId: 'insert actual id here'
+//                 }
             }
-
         }
 
         stage('Building Docker Containers') {
             steps {
                 script {
+                    // This is certainly broken. Need to setup all the docker stuff for FitsStorageCore then put here.
                     def geminiobsdbimage = docker.build("gemini/geminiobsdb:jenkins", " -f docker/geminiobsdb-jenkins/Dockerfile .")
                     sh '''
                     echo "Clear existing Docker infrastructure to start with a blank slate"
@@ -64,6 +73,7 @@ pipeline {
                                     '''
                             }
                         } catch (exc) {
+
                             throw exc
                         }
                     }

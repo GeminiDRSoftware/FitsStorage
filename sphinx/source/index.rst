@@ -1,4 +1,3 @@
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -6,7 +5,9 @@
    changelog.rst
    about
    usage
-   gemini_obs_db
+   fits_storage_core
+   fits_storage_cal
+
 
 Indices and tables
 ==================
