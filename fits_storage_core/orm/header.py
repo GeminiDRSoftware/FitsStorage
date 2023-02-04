@@ -7,16 +7,15 @@ from sqlalchemy.orm import relation
 
 import datetime
 
-from gemini_obs_db.orm import Base
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.utils.file_parser import build_parser
+from . import Base
+from .diskfile import DiskFile
 
-from gemini_obs_db.utils.gemini_metadata_utils import GeminiProgram, procmode_codes
-
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_gain_settings
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_readspeed_settings
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_welldepth_settings
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_readmode_settings
+from fits_storage_core.utils.file_parser import build_parser
+from fits_storage_core.utils.gemini_metadata_utils import GeminiProgram, procmode_codes
+from fits_storage_core.utils.gemini_metadata_utils import gemini_gain_settings
+from fits_storage_core.utils.gemini_metadata_utils import gemini_readspeed_settings
+from fits_storage_core.utils.gemini_metadata_utils import gemini_welldepth_settings
+from fits_storage_core.utils.gemini_metadata_utils import gemini_readmode_settings
 
 from astropy import wcs as pywcs
 from astropy.wcs import SingularMatrixError
@@ -39,7 +38,7 @@ try:
 except:
     pass
 
-from gemini_obs_db.utils.gemini_metadata_utils import obs_types, obs_classes, reduction_states
+from fits_storage_core.utils.gemini_metadata_utils import obs_types, obs_classes, reduction_states
 
 
 # ------------------------------------------------------------------------------
@@ -66,7 +65,7 @@ class Header(Base):
 
     Parameters
     ----------
-    diskfile : :class:`~gemini_obs_db.orm.diskfile.DiskFile`
+    diskfile : :class:`~fits_storage_core.orm.diskfile.DiskFile`
         The file this header is taken from
     """
     __tablename__ = 'header'
@@ -148,7 +147,7 @@ class Header(Base):
 
         Parameters
         ----------
-        diskfile : :class:`~gemini_obs_db.orm.diskfile.DiskFile`
+        diskfile : :class:`~fits_storage_core.orm.diskfile.DiskFile`
             DiskFile record to read to populate :class:`~Header` record
         log : :class:`logging.Logger`
             Logger to log messages to

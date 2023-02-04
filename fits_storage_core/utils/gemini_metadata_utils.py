@@ -12,9 +12,6 @@ import datetime
 from datetime import date, timedelta
 import dateutil.parser
 
-# from . import fits_storage_config
-from gemini_obs_db import db_config
-
 
 __all__ = [
     "gemini_gain_settings",
@@ -949,7 +946,7 @@ class GeminiDataLabel:
 
         self.datalabel = dl              #: datalabel as a string
         self.projectid = ''              #: project id portion
-        self.project = None              #: :class:`~gemini_obs_db.utils.gemini_metadata_utils.GeminiProgram` for the given project id
+        self.project = None              #: :class:`~fits_storage_core.utils.gemini_metadata_utils.GeminiProgram` for the given project id
         self.observation_id = ''         #: observaiton id portion
         self.obsnum = ''                 #: observation number
         self.dlnum = ''                  #: datalabel number

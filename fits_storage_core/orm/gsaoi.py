@@ -2,7 +2,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 from sqlalchemy.orm import relation
 
-from gemini_obs_db.orm import Base
+from . import Base
 from .header import Header
 
 
@@ -15,7 +15,7 @@ class Gsaoi(Base):
 
     Parameters
     ----------
-    header : :class:`~gemini_obs_db.orm.header.Header`
+    header : :class:`~fits_storage_core.orm.header.Header`
         Header record connected to this information
     ad : :class:`~astrodata.core.AstroData`
         AstroData to parse for GSAOI information
@@ -34,7 +34,7 @@ class Gsaoi(Base):
 
         Parameters
         ----------
-        header : :class:`~gemini_obs_db.orm.header.Header`
+        header : :class:`~fits_storage_core.orm.header.Header`
             Header record connected to this information
         ad : :class:`~astrodata.core.AstroData`
             AstroData to parse for GSAOI information

@@ -3,49 +3,43 @@ from datetime import date, datetime
 
 from sqlalchemy import create_engine, String, Date, DateTime
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.sqltypes import NullType
 
-# from gemini_obs_db.db_config import database_url, postgres_database_pool_size, postgres_database_max_overflow
-from gemini_obs_db import db_config as dbc
+from FitsStorageCore.fits_storage_config import FitsStorageConfig
 
-if dbc.database_url.startswith('postgresql://'):
-    args = {'pool_size': dbc.postgres_database_pool_size, 'max_overflow': dbc.postgres_database_max_overflow,
-            'echo': dbc.database_debug, 'pool_pre_ping': True}
-else:
-    args = {'echo': dbc.database_debug}
-pg_db = create_engine(dbc.database_url, **args)
-sessionfactory = sessionmaker(pg_db)
+fsc = FitsStorageConfig()
 
-
+_saved_engine = None
 _saved_database_url = None
 _saved_sessionfactory = None
-
 
 def sessionfactory():
     """
     Retrieves a singleton session factory.
 
     This call grants access to a singleton SQLAlchemy session factory.  If the factory
-    does not exist yet, it is created from :field:`~gemini_obs_db.db_config.database_url`.
+    does not exist yet, it is created from the 'database_url' fits storage config value
 
     Returns
     -------
     :class:`~sqlalchemy.orm.sessionmaker` SQLAlchemy session factory
     """
-    global pg_db
+    global _saved_engine
     global _saved_database_url
     global _saved_sessionfactory
-    if _saved_database_url != dbc.database_url:
-        _saved_database_url = dbc.database_url
-        if dbc.database_url.startswith('postgresql://'):
-            args = {'pool_size': dbc.postgres_database_pool_size, 'max_overflow': dbc.postgres_database_max_overflow,
-                    'echo': dbc.database_debug}
+
+    if _saved_database_url is None:
+        _saved_database_url = fsc.database_url
+        if _saved_database_url.startswith('postgresql://'):
+            args = {'pool_size': fsc.postgres_database_pool_size,
+                    'max_overflow': fsc.postgres_database_max_overflow,
+                    'echo': fsc.database_debug}
         else:
-            args = {'echo': dbc.database_debug}
-        pg_db = create_engine(dbc.database_url, **args)
-        _saved_sessionfactory = sessionmaker(pg_db)
+            args = {'echo': fsc.database_debug}
+        _saved_engine = create_engine(fsc.database_url, **args)
+        _saved_sessionfactory = sessionmaker(_saved_engine)
     return _saved_sessionfactory()
 
 

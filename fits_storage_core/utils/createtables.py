@@ -4,22 +4,21 @@ in the Fits Storage System.
 """
 from sqlalchemy.orm import Session
 
-import gemini_obs_db.db as db
-# from gemini_obs_db.db import pg_db
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.gmos import Gmos
-from gemini_obs_db.orm.niri import Niri
-from gemini_obs_db.orm.gnirs import Gnirs
-from gemini_obs_db.orm.nifs import Nifs
-from gemini_obs_db.orm.f2 import F2
-from gemini_obs_db.orm.ghost import Ghost
-from gemini_obs_db.orm.gpi import Gpi
-from gemini_obs_db.orm.gsaoi import Gsaoi
-from gemini_obs_db.orm.nici import Nici
-from gemini_obs_db.orm.michelle import Michelle
-from gemini_obs_db.orm.calcache import CalCache
+import fits_storage_core.db as db
+from fits_storage_core.orm.file import File
+from fits_storage_core.orm.diskfile import DiskFile
+from fits_storage_core.orm.header import Header
+from fits_storage_core.orm.gmos import Gmos
+from fits_storage_core.orm.niri import Niri
+from fits_storage_core.orm.gnirs import Gnirs
+from fits_storage_core.orm.nifs import Nifs
+from fits_storage_core.orm.f2 import F2
+from fits_storage_core.orm.ghost import Ghost
+from fits_storage_core.orm.gpi import Gpi
+from fits_storage_core.orm.gsaoi import Gsaoi
+from fits_storage_core.orm.nici import Nici
+from fits_storage_core.orm.michelle import Michelle
+from fits_storage_core.orm.calcache import CalCache
 
 
 def create_tables(session: Session):
@@ -32,21 +31,22 @@ def create_tables(session: Session):
     session : :class:`Session`
         Session to create tables in
     """
+
     # Create the tables
-    File.metadata.create_all(bind=db.pg_db)
-    DiskFile.metadata.create_all(bind=db.pg_db)
-    Header.metadata.create_all(bind=db.pg_db)
-    Gmos.metadata.create_all(bind=db.pg_db)
-    Niri.metadata.create_all(bind=db.pg_db)
-    Nifs.metadata.create_all(bind=db.pg_db)
-    Gnirs.metadata.create_all(bind=db.pg_db)
-    F2.metadata.create_all(bind=db.pg_db)
-    Ghost.metadata.create_all(bind=db.pg_db)
-    Gpi.metadata.create_all(bind=db.pg_db)
-    Gsaoi.metadata.create_all(bind=db.pg_db)
-    Michelle.metadata.create_all(bind=db.pg_db)
-    Nici.metadata.create_all(bind=db.pg_db)
-    CalCache.metadata.create_all(bind=db.pg_db)
+    File.metadata.create_all(bind=db._saved_engine)
+    DiskFile.metadata.create_all(bind=db._saved_engine)
+    Header.metadata.create_all(bind=db._saved_engine)
+    Gmos.metadata.create_all(bind=db._saved_engine)
+    Niri.metadata.create_all(bind=db._saved_engine)
+    Nifs.metadata.create_all(bind=db._saved_engine)
+    Gnirs.metadata.create_all(bind=db._saved_engine)
+    F2.metadata.create_all(bind=db._saved_engine)
+    Ghost.metadata.create_all(bind=db._saved_engine)
+    Gpi.metadata.create_all(bind=db._saved_engine)
+    Gsaoi.metadata.create_all(bind=db._saved_engine)
+    Michelle.metadata.create_all(bind=db._saved_engine)
+    Nici.metadata.create_all(bind=db._saved_engine)
+    CalCache.metadata.create_all(bind=db._saved_engine)
 
 
 def drop_tables(session: Session):
@@ -58,4 +58,4 @@ def drop_tables(session: Session):
     session : :class:`Session`
         Session to create tables in
     """
-    File.metadata.drop_all(bind=db.pg_db)
+    File.metadata.drop_all(bind=db._saved_engine)

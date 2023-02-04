@@ -9,7 +9,7 @@ from typing import Any, Union, Callable, List
 import dateutil
 import numpy as np
 
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_procmode, gemini_telescope, gemini_instrument, \
+from fits_storage_core.utils.gemini_metadata_utils import gemini_procmode, gemini_telescope, gemini_instrument, \
     gemini_observation_type, gemini_observation_class, ratodeg, dectodeg, dmstodeg, gemini_readspeed_settings, \
     gemini_welldepth_settings, UT_DATETIME_SECS_EPOCH
 

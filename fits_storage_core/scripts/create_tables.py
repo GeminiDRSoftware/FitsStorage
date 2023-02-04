@@ -2,10 +2,12 @@
 
 from argparse import ArgumentParser
 
-from gemini_obs_db.utils.createtables import create_tables, drop_tables
+from fits_storage_core.utils.createtables import create_tables, drop_tables
 
-from gemini_obs_db.db import session_scope
-from gemini_obs_db import db_config as dbc
+from fits_storage_core.db import session_scope
+
+from fits_storage_config import FitsStorageConfig
+fsc = FitsStorageConfig()
 
 """
 Helper script for generating the initial database.
@@ -20,11 +22,8 @@ if __name__ == "__main__":
                         help="Drop the tables first")
     parser.add_argument("--nocreate", action="store_true", dest="nocreate",
                         help="Do not actually create the tables")
-    parser.add_argument("--url", action="store", dest="url",
-                        help="Database URL for SqlAlchemy", default=dbc.database_url)
 
     args = parser.parse_args()
-    dbc.database_url = args.url  # set this before we get the session
 
     # ------------------------------------------------------------------------------
     with session_scope() as session:

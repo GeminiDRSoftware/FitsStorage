@@ -2,7 +2,7 @@ from sqlalchemy import Column
 from sqlalchemy import Integer, Text
 from sqlalchemy.orm import relationship
 
-from gemini_obs_db.orm import Base
+from . import Base
 
 
 __all__ = ["File"]
@@ -41,11 +41,11 @@ class File(Base):
 
     def __repr__(self):
         """
-        Get a string representation of the :class:`~gemini_obs_db.orm.file.File` object
+        Get a string representation of the :class:`~fits_storage_core.orm.file.File` object
 
         Returns
         -------
-        str : string representation of the :class:`~gemini_obs_db.orm.file.File`
+        str : string representation of the :class:`~fits_storage_core.orm.file.File`
         """
         return "<File('%s', '%s')>" % (self.id, self.name)
 

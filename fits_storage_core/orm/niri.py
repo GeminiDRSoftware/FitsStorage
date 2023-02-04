@@ -4,7 +4,7 @@ from sqlalchemy.orm import relation
 
 from .header import Header
 
-from gemini_obs_db.orm import Base
+from . import Base
 
 
 __all__ = ["Niri"]
@@ -45,7 +45,7 @@ class Niri(Base):
 
     Parameters
     ----------
-    header : :class:`~gemini_obs_db.orm.header.Header`
+    header : :class:`~fits_storage_core.orm.header.Header`
         Header record linked to this one
     ad : :class:`~astrodata.core.AstroData`
         AstroData object to read NIRI data from
@@ -70,7 +70,7 @@ class Niri(Base):
 
         Parameters
         ----------
-        header : :class:`~gemini_obs_db.orm.header.Header`
+        header : :class:`~fits_storage_core.orm.header.Header`
             Header record linked to this one
         ad : :class:`~astrodata.core.AstroData`
             AstroData object to read NIRI data from

@@ -4,7 +4,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, String
 from sqlalchemy.orm import relationship
 
-from gemini_obs_db.orm import Base
+from . import Base
 
 
 __all__ = ["Provenance", "ProvenanceHistory", "ingest_provenance"]
@@ -108,7 +108,7 @@ def ingest_provenance(diskfile):
 
     Parameters
     ----------
-    diskfile : :class:`~gemini_obs_db.orm.diskfile.Diskfile`
+    diskfile : :class:`~fits_storage_core.orm.diskfile.Diskfile`
         diskfile to read provenance data out of
 
     Returns

@@ -2,7 +2,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 from sqlalchemy.orm import relationship
 
-from gemini_obs_db.orm import Base
+from . import Base
 
 
 __all__ = ["Preview"]
@@ -15,7 +15,7 @@ class Preview(Base):
 
     Parameters
     ----------
-    diskfile : :class:`~gemini_obs_db.orm.diskfile.DiskFile`
+    diskfile : :class:`~fits_storage_core.orm.diskfile.DiskFile`
         DiskFile record to store preview for
     preview_filename : str
         Filename of the preview file
@@ -34,7 +34,7 @@ class Preview(Base):
 
         Parameters
         ----------
-        diskfile : :class:`~gemini_obs_db.orm.diskfile.DiskFile`
+        diskfile : :class:`~fits_storage_core.orm.diskfile.DiskFile`
             DiskFile record to store preview for
         preview_filename : str
             Filename of the preview file
