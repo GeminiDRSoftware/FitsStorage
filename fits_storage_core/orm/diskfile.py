@@ -12,8 +12,10 @@ from . import Base
 from .file import File
 
 # from fits_storage_core.db_config import storage_root, z_staging_area
-from fits_storage_core import db_config
+# from fits_storage_core import db_config
+from fits_storage_core.config import FitsStorageConfig
 
+fsc = FitsStorageConfig()
 
 __all__ = ["DiskFile"]
 
@@ -164,7 +166,7 @@ class DiskFile(Base):
                     nonzfilename = given_filename[:-4]
                 else:
                     nonzfilename = given_filename + "_bz2unzipped"
-                self.uncompressed_cache_file = os.path.join(db_config.z_staging_area, nonzfilename)
+                self.uncompressed_cache_file = os.path.join(fsc.z_staging_area, nonzfilename)
                 if os.path.exists(self.uncompressed_cache_file):
                     os.unlink(self.uncompressed_cache_file)
 

@@ -7,7 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.sqltypes import NullType
 
-from FitsStorageCore.fits_storage_config import FitsStorageConfig
+from fits_storage_core.config import FitsStorageConfig
 
 fsc = FitsStorageConfig()
 

@@ -77,10 +77,10 @@ class FitsStorageConfig(dict):
         envs = {'storage_root': 'FITS_STORAGE_ROOT',
                 'database_url': 'FITS_STORAGE_DB_URL'}
 
-        for key in envs:
-            ev = os.getenv(envs[key])
-            if ev is not None:
-                self.config[key] = ev
+        for key, envvar in envs.items():
+            value = os.getenv(envvar)
+            if value is not None:
+                self.config[key] = value
 
     def _calculate_values(self):
         self._calculate_database_url()
@@ -94,10 +94,9 @@ class FitsStorageConfig(dict):
     def __getitem__(self, key):
         if key in self._bools:
             return self.config.getboolean(key)
-        elif key in self._ints:
+        if key in self._ints:
             return self.config.getint(key)
-        else:
-            return self.config[key]
+        return self.config[key]
 
     def __setitem__(self, key, value):
         self.config[key] = value

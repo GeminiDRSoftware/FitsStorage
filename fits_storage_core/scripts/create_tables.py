@@ -6,7 +6,7 @@ from fits_storage_core.utils.createtables import create_tables, drop_tables
 
 from fits_storage_core.db import session_scope
 
-from fits_storage_config import FitsStorageConfig
+from fits_storage_core.config import FitsStorageConfig
 fsc = FitsStorageConfig()
 
 """
