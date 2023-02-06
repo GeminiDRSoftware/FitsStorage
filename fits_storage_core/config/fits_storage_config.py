@@ -84,12 +84,16 @@ class FitsStorageConfig(dict):
 
     def _calculate_values(self):
         self._calculate_database_url()
+        self._calculate_using_sqlite()
 
     def _calculate_database_url(self):
         if self.config.get('database_url', None) is None:
-            if self.config.get('using_sqlite', False):
-                sqlite_path = os.path.join(self.config['storage_root'], 'fits_storage.db')
-                self.config['database_url'] = f"sqlite:///{sqlite_path}"
+            sqlite_path = os.path.join(self.config['storage_root'], 'fits_storage.db')
+            self.config['database_url'] = f"sqlite:///{sqlite_path}"
+
+    def _calculate_using_sqlite(self):
+        # Config values have to be strings. It will get converted back to a bool when read
+        self.config['using_sqlite'] = 'True' if self.config['database_url'].startswith('sqlite:/') else 'False'
 
     def __getitem__(self, key):
         if key in self._bools:
