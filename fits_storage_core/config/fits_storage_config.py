@@ -24,7 +24,7 @@ class FitsStorageConfig(dict):
     * ~/.fits_storage.conf
     """
 
-    def __init__(self, configfile=None):
+    def __init__(self, configfile=None, configstring=None):
         super().__init__()
 
         # By default, ConfigParser treats everything as a string.
@@ -33,15 +33,15 @@ class FitsStorageConfig(dict):
         self._bools = ['using_sqlite', 'database_debug', 'use_utc']
         self._ints = ['postgres_database_pool_size', 'postgres_database_max_overflow']
 
-        self._readfiles(configfile=configfile)
+        self._readfiles(configfile=configfile, configstring=configstring)
 
         # Some parameters can be over-ridden by environment variables
         self._env_overrides()
 
-        # Some of the values the caller is interested in are calculated from config file values
+        # Some values are calculated from config file values
         self._calculate_values()
 
-    def _readfiles(self, configfile=None):
+    def _readfiles(self, configfile=None, configstring=None):
         # builtin is the module's internal built-in config file. It provides the default values
         _builtin = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fits_storage.conf')
 
@@ -58,7 +58,9 @@ class FitsStorageConfig(dict):
         self._config = configparser.ConfigParser()
 
         # Read the config files.
-        if configfile:
+        if configstring:
+            self._config.read_string(configstring)
+        elif configfile:
             self._config.read(configfile)
             self.configfiles_used = [configfile]
         else:
