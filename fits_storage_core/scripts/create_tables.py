@@ -6,8 +6,8 @@ from fits_storage_core.utils.createtables import create_tables, drop_tables
 
 from fits_storage_core.db import session_scope
 
-from fits_storage_core.config import FitsStorageConfig
-fsc = FitsStorageConfig()
+from fits_storage_core.config import get_config
+fsc = get_config()
 
 """
 Helper script for generating the initial database.

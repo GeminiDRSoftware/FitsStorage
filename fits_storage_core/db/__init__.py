@@ -7,9 +7,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.sqltypes import NullType
 
-from fits_storage_core.config import FitsStorageConfig
+from fits_storage_core.config import get_config
 
-fsc = FitsStorageConfig()
+fsc = get_config()
 
 _saved_engine = None
 _saved_database_url = None

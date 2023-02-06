@@ -13,9 +13,9 @@ from .file import File
 
 # from fits_storage_core.db_config import storage_root, z_staging_area
 # from fits_storage_core import db_config
-from fits_storage_core.config import FitsStorageConfig
+from fits_storage_core.config import get_config
 
-fsc = FitsStorageConfig()
+fsc = get_config()
 
 __all__ = ["DiskFile"]
 
