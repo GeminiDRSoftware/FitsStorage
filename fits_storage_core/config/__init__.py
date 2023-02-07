@@ -1,5 +1,5 @@
 from .fits_storage_config import FitsStorageConfig
-__all__ = ['get_config']
+__all__ = ['get_config', 'FitsStorageConfig']
 
 _config = None
 
