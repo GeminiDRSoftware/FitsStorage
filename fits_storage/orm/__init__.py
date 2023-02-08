@@ -14,6 +14,7 @@ from contextlib import contextmanager
 
 from ..fits_storage_config import fits_database
 
+Base = declarative_base()
 
 class StringLiteral(String):
     def literal_processor(self, dialect):
