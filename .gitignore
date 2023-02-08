@@ -10,6 +10,7 @@ sphinx/build
 build
 dist
 .DS_Store
+.pytest_cache
 
 # Robot output
 robot/*.png
