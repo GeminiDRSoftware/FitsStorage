@@ -1,0 +1,44 @@
+---
+  - hosts: all
+    vars_files:
+      - secret
+    become: true
+    tasks:
+      - name: Stop Ingest service 1
+        service: name=fits-service_ingest_queue1 state=stopped enabled=yes
+      - name: Stop Ingest service 2
+        service: name=fits-service_ingest_queue2 state=stopped enabled=yes
+      - name: Stop Ingest service 3
+        service: name=fits-service_ingest_queue3 state=stopped enabled=yes
+        when: "'arc' in inventory_hostname"
+      - name: Stop Ingest service 4
+        service: name=fits-service_ingest_queue4 state=stopped enabled=yes
+        when: "'arc' in inventory_hostname"
+
+      - name: Remove logs
+        command: rm -rf /data/logs/service_ingest_*
+      - name: Delete duplicatd Ingest Queue Jobs (jobs which are both failed and passed)
+        postgresql_query:
+          login_user: fitsdata
+          db: fitsdata
+          query: delete from ingestqueue i where i.failed='t' and i.filename in (select filename from ingestqueue where failed='f')
+        become: yes
+        become_user: fitsdata
+      - name: Reset failed Ingest Queue Jobs
+        postgresql_query:
+          login_user: fitsdata
+          db: fitsdata
+          query: update ingestqueue set failed='f'
+        become: yes
+        become_user: fitsdata
+
+      - name: Start Ingest service 1
+        service: name=fits-service_ingest_queue1 state=started enabled=yes
+      - name: Start Ingest service 2
+        service: name=fits-service_ingest_queue2 state=started enabled=yes
+      - name: Start Ingest service 3
+        service: name=fits-service_ingest_queue3 state=started enabled=yes
+        when: "'arc' in inventory_hostname"
+      - name: Start Ingest service 4
+        service: name=fits-service_ingest_queue4 state=started enabled=yes
+        when: "'arc' in inventory_hostname"

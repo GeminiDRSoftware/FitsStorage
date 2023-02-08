@@ -1,0 +1,14 @@
+DETBIAS - present in PHU, floating point value in range -5 < x < 0
+GRATWAVE - present in PHU, floating point value in range 0.5 < x < 6.0
+FILTER1 - preent in PHU with string value 'Open' or '.*_G\d\d\d\d'
+FILTER2 - preent in PHU with string value 'Open' or '.*_G\d\d\d\d'
+LNRS - present in PHU, integer value in range 0 < x < 100
+NDAVGS - present in PHU, integer value in range 0 < x < 100
+COADDS - present in PHU, integer value in range 0 < x < 1000
+GRATING - present in PHU with string value like '.*_G\d\d\d\d'
+PRISM - present in PHU with string value like '.*_G\d\d\d\d'
+SLIT - present in PHU with string value like '.*_G\d\d\d\d'
+DECKER - present in PHU with string value like '.*_G\d\d\d\d'
+CAMERA - present in PHU with string value like '.*_G\d\d\d\d'
+EXPTIME - present in PHU with floating point value in range 0<x<1000
+ACQMIR - present in PHU with string value in ['In', 'Out']

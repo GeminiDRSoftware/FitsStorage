@@ -1,0 +1,22 @@
+#whoami {
+  padding:10px;
+}
+
+ul.whoami {
+  display:none;
+  list-style:none;
+  padding:0;
+  background-color:#D0D0D0;
+  color:#0033CC;
+  position:absolute;
+  left:0;
+  z-index:5;
+}
+
+li.whoami {
+  padding:5px;
+}
+
+#whoami:hover ul {
+  display:inline-block;
+}

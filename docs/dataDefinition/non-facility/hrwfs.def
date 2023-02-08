@@ -1,0 +1,26 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME:    hrwfs
+
+import:   [ vis-pdu, ext, radec, wcs ]
+
+validation(final):
+  - primary-hdu: hrwfs-pdu
+  - extension:   hrwfs-ext
+
+hrwfs-pdu:
+  - merge: vis-pdu
+  - maybe-merge: radec
+  - keywords:
+    - UTSTART
+    - UTEND
+    - TIME-OBS
+    - FILTER1
+    - FILTER2
+    - OBSTYPE
+    - CCDSIZE
+    - CCDSEC
+
+hrwfs-ext:
+  - merge: ext.image
+  - maybe-merge: wcs

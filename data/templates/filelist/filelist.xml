@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<file_list><selection>{{ selection }}</selection>
+{%- for header, diskfile, file, stds in content -%}
+<file><name>{{ file.name }}</name><filename>{{ diskfile.filename }}</filename><path>{{ diskfile.path }}</path><compressed>{{ diskfile.compressed }}</compressed><size>{{ diskfile.file_size }}</size><file_size>{{ diskfile.file_size }}</file_size><data_size>{{ diskfile.data_size }}</data_size><md5>{{ diskfile.file_md5 }}</md5><file_md5>{{ diskfile.file_md5 }}</file_md5><data_md5>{{ diskfile.data_md5 }}</data_md5><lastmod>{{ diskfile.lastmod }}</lastmod><mdready>{{ diskfile.mdready }}</mdready>
+ {%- if stds != None -%}
+   {%- set bands = stds.bands -%}
+   {%- set phot_std_obs = stds.phot_std_obs -%}
+   {%- include "standards/standardobs.xml" -%}
+ {%- endif -%}</file>
+{%- endfor %}</file_list>

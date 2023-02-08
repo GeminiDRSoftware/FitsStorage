@@ -1,0 +1,21 @@
+provides:         valid
+conditions:
+  - is gsaoi
+  - matching:
+    - XTENSION:   IMAGE
+
+include files:    wcs
+
+keywords:
+  - CTYPE1
+  - CTYPE2
+  - DATATYP
+  - CCDSEC
+  - CCDSIZE
+  - DETSEC
+  - DATASEC
+  - CCDSUM
+  - if not prepared:
+    - RADECSYS
+  - if prepared:
+    - RADESYS

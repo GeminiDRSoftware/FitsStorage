@@ -1,0 +1,10 @@
+provides:          valid
+conditions:
+  - is trecs
+  - exists: NAXIS3
+  - matching:
+    - XTENSION:    IMAGE
+
+keywords:
+  - AXISLAB3
+  - AXISLAB4

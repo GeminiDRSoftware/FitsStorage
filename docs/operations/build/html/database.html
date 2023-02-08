@@ -1,0 +1,152 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Database integrity &mdash; FitsStorage_operations_guide 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="FitsStorage_operations_guide 0.1 documentation" href="index.html" />
+    <link rel="next" title="Software Upgrades" href="upgrades.html" />
+    <link rel="prev" title="Basic System Functionality (aka HELP, it’s dead!)" href="itsdead.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="database-integrity">
+<h1>Database integrity<a class="headerlink" href="#database-integrity" title="Permalink to this headline">¶</a></h1>
+<p>If you&#8217;re seeing problems that seem related to one or a few files only, it&#8217;s possible that somehow the entries for those files
+in the database have got messed up somehow. In order to fix this, you&#8217;ll have to manipulate the database directly by issuing
+SQL commands from the psql interface while logged in as fitsdata. You should be an expert on the database layout and how
+files are ingested if you&#8217;re going to do this.</p>
+<p>Given that the database can only get messed up like this by a software bug, and we fix the bugs when we find them, it&#8217;s difficult
+to predict here what might have happened. One example that we have seen in the past is where somehow two ingest threads attempt to
+ingest the same file simultaneously. The Queue system should not allow this to ahppen, but if it does, then you will get two
+entries in the diskfile table that both refer to the same file_id, yet both have canonical=True and present=True, which should
+never occur. Attempts to download this file would fail with an exception raised by a call to query.one() where only one result was
+expected. The solution in this case is to simply update one of the datafile rows to set the present and canonical columns to False.</p>
+<p>In general, the database schema prevents a lot of issues like this from ever happening by enforcing constraints in the database
+itself - so you&#8217;ll get an exception when the buggy code tries to do something it shouldn&#8217;t. There are some cases where this is not
+the case though. However, there is a web interface that will do some basic database curation checks. You&#8217;ll need to be logged in with
+staff access to get access to it, and it can be found at the /curation URL.</p>
+<div class="section" id="database-backups">
+<h2>Database Backups<a class="headerlink" href="#database-backups" title="Permalink to this headline">¶</a></h2>
+<p>There is a cron job that runs pg_dump on the database daily, to a directory specified in the fits_storage_config.py file.
+If the database gets really corrupted somehow, then you may have to restore it from the previous good backup. The backup script
+includes a datestamp in the names of the dumped files so you can easily tell when a backup is from. In addition, by default it deletes old
+backup dumps according to an algorithm that preserves daily dumps for the last 10 days, weekly dumps for a few months, and monthly dumps further
+back than that. This prevents the dumps directory from getting excessive in size too quickly.</p>
+<div class="section" id="manual-backup-restore-operations">
+<h3>Manual backup / restore operations<a class="headerlink" href="#manual-backup-restore-operations" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>Backup manually with:</dt>
+<dd>/usr/bin/pg_dump &#8211;format=c &#8211;file=fitsdata.DATE.pg_dump_c fitsdata</dd>
+<dt>Restore manually with:</dt>
+<dd>/usr/bin/pg_restore &#8211;dbname=fitsdata &#8211;format=c /data/backups/fitsdata.DATE.pg_dump_c</dd>
+</dl>
+<p>Note that restore will be faster if you use the &#8211;jobs argument appropriately for the machine you&#8217;re on. Also you can restore a
+subset of the tables using the &#8211;table argument. See the man page for pg_restore for details.</p>
+<p>Note: &#8211;format=c is best, but won&#8217;t work across postgres versions. format=p (plain) outputs a plain text SQL script which should
+work accross versions.  But these can be very large and you probably want to compress it, so something like:</p>
+<blockquote>
+<div>/usr/bin/pg_dump &#8211;format=p fitsdata | gzip -7 &gt; fitsdata.DATE.pg_dump_p.gz</div></blockquote>
+<dl class="docutils">
+<dt>This restores with:</dt>
+<dd>gzcat fitsdata.DATE.pg_dump_p.gz | /usr/bin/psql -d fitsdata -f -</dd>
+</dl>
+<p>this will likely generate some permissions errors which can be ignored.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Database integrity</a><ul>
+<li><a class="reference internal" href="#database-backups">Database Backups</a><ul>
+<li><a class="reference internal" href="#manual-backup-restore-operations">Manual backup / restore operations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="itsdead.html" title="previous chapter">Basic System Functionality (aka HELP, it’s dead!)</a></li>
+      <li>Next: <a href="upgrades.html" title="next chapter">Software Upgrades</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/database.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Paul Hirst.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/database.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,80 @@
+{% import "search_and_summary/summary_entries.macro" as generate %}
+
+{% if open_query and hit_open_limit %}
+<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date,
+   date range, program ID etc. Searches like this are limited to {{ open_limit }} results, and
+   this search hit that limit. Calibration association will not be available. You may want to
+   constrain your search. Constrained searches have a higher result limit.
+{% elif hit_closed_limit %}
+<P>WARNING: Your search generated more than the limit of {{ closed_limit }} results. Not all
+   results have been shown, and calibration association will not be available. You might want
+   to constrain your search more.
+{% else %}
+<input type="hidden" id="allow_cals" value="yes">
+{% endif %}
+{% if clickable %}
+<div id="reduction_legend">
+   <div>
+   <b>Reduction:</b>
+   <div id="reduction_legend_ql">Quick-Look</div>
+   <!-- <div id="reduction_legend_sq">Auto Unverified</div> -->
+   </div>
+</div>
+<P>Key: [P] to preview an image of the data in your browser. [D] to download that
+   one file. [A] to see program Abstract and PI / Co-I details. [L] to see observing Log entries.
+   Use the check boxes to select a subset of the results to download, or if available
+   a download all link is at <a href="#tableend"> the end of the table</a>. Click the filename
+   to see the full header in a new tab. Click anything else to add that to your search criteria.
+   You can also <a href="{{ json_res_link}}" download target="_blank">save these results as JSON</a>.
+</p>
+<FORM action='/download' method='POST'>
+{%- endif %}
+<TABLE class="fullwidth nowrap">
+{{ generate.head(headers) }}
+{% if not cal_rows %}
+{% for row in data_rows %}
+{{ generate.row(row) }}
+{% endfor %}
+{% else %}
+{% for row in data_rows %}
+{{ generate.row(row, 'primary') }}
+{% endfor %}
+</TABLE>
+<h2>Secondary Calibrations</h2>
+<TABLE class="fullwidth nowrap">
+{{ generate.head(headers) }}
+{% for row in cal_rows %}
+{{ generate.row(row, 'secondary') }}
+{% endfor %}
+{% endif %}
+</TABLE>
+{# Only show download button if we are allowed to download anything #}
+{% if clickable == True and data_rows.downloadable == True %}
+<INPUT id='markall_{{ sumtype }}' type='button' value='Mark All Files'>
+<INPUT type='submit' value='Download Marked Files'>
+</FORM>
+{% endif %}
+<span id="tableend"></span>
+{% if open_query == True and hit_open_limit == True %}
+<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date,
+   date range, program ID etc. Searches like this are limited to {{ open_limit }} results, and this
+   search hit that limit. You may want to constrain your search. Constrained searches have a higher
+   result limit.
+{% elif hit_closed_limit %}
+<P>WARNING: Your search generated more than the limit of {{ closed_limit }} results. You might want
+   to constrain your search more.
+{% elif data_rows.downloadable == True %}
+<div id="download_all_area">
+<FORM method='GET' action='{{ down_all_link }}'>
+{% if data_rows.all_downloadable == True %}
+<INPUT type='submit' value='Download all {{ data_rows.down }} files totalling {{ data_rows.size_in_gb }} GB'>
+{% else %}
+<INPUT type='submit' value='Download the {{ data_rows.down }} files totalling {{ data_rows.size_in_gb }} GB that you have access to'>
+{% endif %}
+- this is always available at <a href="{{ down_all_link }}">this link</a>
+</FORM>
+</div>
+{% endif %}
+{% if clickable == True and data_rows.downloadable == True %}
+<INPUT id='load_cals_for_marked' type='button' value='Load Cals for Marked' onclick='CalsTab(true)'>
+{% endif %}

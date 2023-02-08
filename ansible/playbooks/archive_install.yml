@@ -1,0 +1,154 @@
+---
+  - hosts: archive
+    roles:
+      - archive
+    become: true
+    tasks:
+      - name: Setup folders
+        import_tasks: tasks/setup_folders.yml
+      - name: Setup archive package dependencies
+        import_tasks: tasks/archive_package_dependencies.yml
+      - name: Setup apache
+        import_tasks: tasks/setup_apache.yml
+        when: not use_nginx
+      - name: Setup nginx
+        import_tasks: tasks/setup_nginx.yml
+        when: use_nginx
+      - name: Setup postfix
+        import_tasks: tasks/setup_postfix.yml
+        when: enable_postfix
+      - name: Setup python packages
+        import_tasks: tasks/archive_python_dependencies.yml
+      - name: Setup users and groups
+        import_tasks: tasks/setup_users_and_groups.yml
+      - name: GIT Install Sources
+        import_tasks: tasks/git_install_sources.yml
+        when: not is_aws
+      - name: Rsync Install Sources
+        import_tasks: tasks/rsync_install_sources.yml
+        when: is_aws
+      - name: Setup LocalStack
+        import_tasks: tasks/setup_localstack.yml
+        when: use_localstack
+      - name: Setup DRAGONS
+        import_tasks: tasks/setup_dragons.yml
+      - name: Setup FITSVerify
+        import_tasks: tasks/setup_fitsverify.yml
+      - name: Setup Sphinx
+        import_tasks: tasks/setup_sphinx.yml
+        when: build_sphinx
+      - name: Setup PostgreSQL
+        import_tasks: tasks/setup_postgres.yml
+      - name: Install fitsstorage config
+        copy:
+          src: ../../../FitsStorageConfig/configs/{{ fitsstorage_configfile }}
+          dest: /etc/fitsstorage.conf
+          owner: fitsdata
+          group: fitsdata
+        register: fitsstorageconf
+        notify: restart services
+      - name: Setup Archive Services
+        import_tasks: tasks/setup_archive_services.yml
+        when: not use_nginx
+# TODO diskspace script references mko folder, causing mount from Chile - fix then add this back in
+#      - name: Copy diskspace script
+#        copy:
+#          src: ../../otherfiles/diskspace.py
+#          dest: /home/fitsdata/diskspace.py
+#          owner: fitsdata
+#          group: fitsdata
+#          mode: u+rwx,g-rwx,o-rwx
+# removing for now, we had to revert to user cron
+# Chile setup fitsdata user cron support for me
+#      - name: Copy Crontab
+#        copy:
+#          src: ../../otherfiles/system_crontab
+#          dest: /etc/cron.d/fitsstorage
+#          owner: root
+#          group: root
+#          mode: 0644
+#        register: cron_installed
+#        notify: restart cron
+#        when: "'arc' not in inventory_hostname"
+#      - name: Copy Crontab
+#        copy:
+#          src: ../../otherfiles/system_crontab
+#          dest: /var/spool/cron/fitsdata
+#          force: no
+#          owner: fitsdata
+#          group: fitsdata
+#          mode: 0600
+#        register: cron_installed
+#        notify: restart cron
+#        when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
+#      - name: Update cron for cpo
+#        lineinfile:
+#          path: /etc/cron.d/fitsstorage
+#          line: 50 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=auto
+#          regex: "^50 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py"
+#        notify: restart cron
+#        when: cron_installed.changed and 'cpofits-lv3' in inventory_hostname
+    handlers:
+      - name: restart fits-api-backend
+        service: name=fits-api-backend state=restarted
+        listen: "restart services"
+      - name: stop fits-httpd
+        service: name=fits-httpd state=stopped
+        listen: "restart services"
+        when: use_nginx
+      - name: stop fits-uwsgi
+        service: name=fits-uwsgi state=stopped
+        listen: "restart services"
+        when: not use_nginx
+      - name: stop fits-nginx
+        service: name=fits-nginx state=stopped
+        listen: "restart services"
+        when: not use_nginx
+      - name: restart fits-httpd
+        service: name=fits-httpd state=restarted
+        listen: "restart services"
+        when: not use_nginx
+      - name: restart fits-uwsgi
+        service: name=fits-uwsgi state=restarted
+        listen: "restart services"
+        when: use_nginx
+      - name: restart fits-nginx
+        service: name=fits-nginx state=restarted
+        listen: "restart services"
+        when: use_nginx
+      - name: restart ingest1
+        service: name=fits-service_ingest_queue1 state=restarted
+        listen: "restart services"
+        when: enable_ingest_services
+      - name: restart ingest2
+        service: name=fits-service_ingest_queue2 state=restarted
+        listen: "restart services"
+        when: enable_ingest_services
+      - name: restart ingest3
+        service: name=fits-service_ingest_queue3 state=restarted
+        listen: "restart services"
+        when: enable_all_ingest
+      - name: restart ingest4
+        service: name=fits-service_ingest_queue4 state=restarted
+        listen: "restart services"
+        when: enable_all_ingest
+      - name: restart preview1
+        service: name=fits-service_preview_queue1 state=restarted
+        listen: "restart services"
+        when: enable_preview
+      - name: restart preview2
+        service: name=fits-service_preview_queue2 state=restarted
+        listen: "restart services"
+        when: enable_preview
+      - name: restart preview3
+        service: name=fits-service_preview_queue3 state=restarted
+        listen: "restart services"
+        when: enable_preview and enable_all_preview
+      - name: restart preview4
+        service: name=fits-service_preview_queue4 state=restarted
+        listen: "restart services"
+        when: enable_preview and enable_all_preview
+      - name: restart cron
+        service: name=crond state=restarted
+      - name: restart postfix
+        service: name=postfix state=restarted

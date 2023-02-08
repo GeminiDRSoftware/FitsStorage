@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+
+{% block extra_header %}
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+{% block title %}Gemini Archive Who Am I{% endblock %}
+{% block body %}
+<span id="whoami">
+{% if username or orcid %}
+{# Unicode &#x1f464 is preferable to the user icon, if only browsers supported it (mid 2014) #}
+  <img src="/static/user1-64x64.png" height="18px">
+  {% if username %}{{ username }}{% else %}{{ orcid }}{% endif %} &#9662;
+  <ul class="whoami">
+  <li class="whoami">{{ fullname }}</li>
+  <li class="whoami"><a href="/logout">Log Out</a></li>
+  {% if username %}
+  <li class="whoami"><a href="/change_password/{{ thing_string }}">Change Password</a></li>
+  {% endif %}
+  <li class="whoami"><a href="/change_email/{{ thing_string }}">Change Email</a></li>
+  {% if not orcid and orcid_enabled %}
+  <li class="whoami"><a href="/orcid">Associate ORCID Login</a></li>
+  {% endif %}
+  <li class="whoami"><a href="/my_programs/{{ thing_string }}">My Programs</a></li>
+  {%  if is_superuser %}
+      <li class="whoami"><i>Admin:</i></li>
+      <li class="whoami"><a href="/admin_change_email/">Change User's Email</a></li>
+      <li class="whoami"><a href="/admin_change_password/">Change User's Password</a></li>
+      <li class="whoami"><a href="/admin_file_permissions/">Set Obs/File Permissions</a></li>
+      <li class="whoami"><a href="/staff_access/">Edit Staff Access</a></li>
+  {% elif user_admin %}
+      <li class="whoami"><i>User Admin:</i></li>
+      <li class="whoami"><a href="/admin_change_email/">Change User's Email</a></li>
+      <li class="whoami"><a href="/admin_file_permissions/">Set Obs/File Permissions</a></li>
+  {% elif file_permission_admin %}
+      <li class="whoami"><i>Permission Admin:</i></li>
+      <li class="whoami"><a href="/admin_file_permissions/">Set Obs/File Permissions</a></li>
+  {% endif %}
+  </ul>
+{% else %}
+  <img src="/static/user1-64x64.png" height="18px"> Not logged in &#9662;
+  <ul class="whoami">
+  <li class="whoami"><a href="/request_account/{{ thing_string }}">Request Account</a></li>
+  <li class="whoami"><a href="/login/{{ thing_string }}">Login</a></li>
+  {% if orcid_enabled %}
+  <li class="whoami"><a href="/orcid">ORCID Login</a></li>
+  {% endif %}
+  </ul>
+{% endif %}
+</span>
+{% endblock %}

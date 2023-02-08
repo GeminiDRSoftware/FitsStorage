@@ -1,0 +1,16 @@
+<p>Click the program ID link to search the archive for data from that program. <br>
+Click the Program Title text to see the program and publication details for that program.</p>
+<table class='fullwidth'>
+  <tr class='tr_head'>
+    <th style="width:16ch">Program ID
+    <th style="width:40%">PI / Co-I Names
+    <th>Program Title
+  </tr>
+  {%- for program in programs %}
+  <tr class='alternating'>
+    <td><a target="_blank" href="/searchform/{{ program.program_id }}">{{ program.program_id }}</a>
+    <td>{{ program.pi_coi_names|e }}
+    <td><a target="_blank" href="/programinfo/{{ program.program_id }}">{{ program.title|e }}</a>
+  </tr>
+  {%- endfor %}
+</table>

@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Basic System Functionality (aka HELP, it’s dead!) &mdash; FitsStorage_operations_guide 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="FitsStorage_operations_guide 0.1 documentation" href="index.html" />
+    <link rel="next" title="Database integrity" href="database.html" />
+    <link rel="prev" title="Dataflow through the system" href="dataflow.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="basic-system-functionality-aka-help-its-dead">
+<h1>Basic System Functionality (aka HELP, it’s dead!)<a class="headerlink" href="#basic-system-functionality-aka-help-its-dead" title="Permalink to this headline">¶</a></h1>
+<p>First up, the machine obviously has to be up at the Linus OS level. If you can’t even ssh in, then you’ll need
+assistance from ISG for the summit servers, or you’ll need to get on to the AWS web site EC2 management
+console for the GOA.</p>
+<p>GOA: Go to <a class="reference external" href="https://aws.amazon.com">https://aws.amazon.com</a> and login as fitsadmin. Go into EC2. There may be a few instances there if
+there’s any testing or development work going on at the moment, some may be stopped. The main archive instance should
+have a name like ‘archive_2016-1 for the 2016-1 version production server) Is the archive instance up and running?
+If it claims to be OK at AWS but you can’t log in, maybe the server is actually fine and there’s issue with internet
+connectivity from Gemini? If you’re sure that’s not the problem, you can reboot the EC2 instance from there,
+though that is not something you should do lightly. If the instance is showing as Stopped, then go ahead and start it.
+Under no circumstances should you terminate the EC2 instance. See AWS disaster recovery later in this document if the
+EC2 instance is missing or dead. The archive instance should have the Elastic IP address 52.24.55.47 bound to it, which
+is in the Gemini DNS as archive.gemini.edu</p>
+<p>OK, assuming that the linux host is up and that you can ssh in, but the web service is non functional or having severe issues.
+If the service seems to be working OK, but it’s something like you’re missing new files or calibration associations or something,
+then go ahead and sanity check, but probably you don’t need to restart the services or anything.</p>
+<p>First up so a sanity check on the system - none of the filesystems should be full, and CPU load should generally be low.
+If this is not the case, or something else is messed up, it may be a good idea to shut down the http service while you troubleshoot -
+this prevents external users from hitting the system which may be compounding the issue. To shutdown the http service: sudo systemctl stop httpd.
+Remember to start it back up when you’re done!</p>
+<p>If things are really messed up, or the /data filesystem is full, you can also shut down the postgres database service at this time
+with sudo systemctl stop postgres. The postgres data directory is on /data, so if that’s full, chances are the database is unhappy.
+Again, remember to restart it (before httpd) later.</p>
+<p>With these services down, you should be able to free up disk space as required, or kill (possibly sudo kill -9) any process that is
+bogging down the CPU. Once things appear sane, first up restart postgres with sudo systemctl start postgres. The database should come up
+OK (sudo systemctl status postgres should show it running).</p>
+<p>If the postgres service is up, then you can do a quick sanity check on the database by logging in to the machine as fitsdata and starting
+the psql postgres interactive SQL prompt. See Database Sanity Checks later</p>
+<p>Once the database seems OK, restart the http service with sudo systemctl restart httpd.</p>
+<p>If you’re seeing CPU load issues, then if the problem process is a python process owned by fitsdata then almost certainly it’s
+being started by cron from the fitsdata account or it&#8217;s a task being started by systemd. You could comment it out in the crontab
+or stop it at the systemd level while you troubleshoot.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="dataflow.html" title="previous chapter">Dataflow through the system</a></li>
+      <li>Next: <a href="database.html" title="next chapter">Database integrity</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/itsdead.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Paul Hirst.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/itsdead.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

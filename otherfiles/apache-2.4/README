@@ -1,0 +1,4 @@
+Centos Apache 2.4 install differs from 2.2 in that the setup files are split
+in smaller, independent ones. The idea would be to keep the original httpd.conf
+untouched (in principle) and, instead, introduce changes further down in the
+config

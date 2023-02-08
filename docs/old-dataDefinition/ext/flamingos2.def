@@ -1,0 +1,14 @@
+provides:         valid
+conditions:
+  - is f2
+  - matching:
+    - XTENSION:   IMAGE
+
+include files:    wcs
+
+keywords:
+  - DATATYP
+  - if not prepared:
+    - RADECSYS
+  - if prepared:
+    - RADESYS

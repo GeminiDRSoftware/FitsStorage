@@ -1,0 +1,205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Software Upgrades &mdash; FitsStorage_operations_guide 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="FitsStorage_operations_guide 0.1 documentation" href="index.html" />
+    <link rel="prev" title="Database integrity" href="database.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="software-upgrades">
+<h1>Software Upgrades<a class="headerlink" href="#software-upgrades" title="Permalink to this headline">¶</a></h1>
+<p>Software upgrades have become a bit more complex than they once were, as there is now information in the database that needs to be transferred to the
+new installation, so we can&#8217;t just re-start from an empty database each time. Of course, the database schema may have changed slightly in the upgrade,
+in which case we can&#8217;t just keep using the existing database.</p>
+<p>So in practice you will need to create a new empty database using the new software version, and then use a database backup dump from the previous
+deployed server to restore certain tables into the new database. If the schema for any of those tables has changed you&#8217;ll need to figure out a way
+to handle this.</p>
+<p>More than liklely you are going to rebuild the main data file tables (ie file, diskfile, header, the instrument specific tables) from scratch using
+the new software version, as that&#8217;s likely where the schema updates have been. However, some of the other tables will need to be transfered from the
+previous version. In general (think about specific cases each time you do an upgrade), the following will need transferring:</p>
+<p>On the archive server:</p>
+<ul class="simple">
+<li>archiveuser</li>
+<li>userprogram</li>
+<li>notification</li>
+<li>glacier</li>
+<li>usagelog</li>
+<li>querylog</li>
+<li>downloadlog</li>
+<li>filedownloadlog</li>
+<li>fileuploadlog</li>
+<li>(and possibly some or all from the summit fits server list below)</li>
+</ul>
+<p>On the summit fits servers:</p>
+<ul class="simple">
+<li>qametriciq</li>
+<li>qametricpe</li>
+<li>qametricsb</li>
+<li>qametriczp</li>
+<li>qareport</li>
+<li>(and possibly some or all from the archive server list above)</li>
+</ul>
+<p>Note that it&#8217;s also best to restore the corresponding _id_seq sequence with each table, otherwise you&#8217;ll need to manually update the fresh
+id sequence to start from where the restored table leaves off.</p>
+<div class="section" id="database-rebuilds">
+<h2>Database Rebuilds<a class="headerlink" href="#database-rebuilds" title="Permalink to this headline">¶</a></h2>
+<p>Generally, it&#8217;s a case of an unconstrained add_to_ingestqueue.py followed by several long running service_ingest_queue.py threads. You will
+want to run all these with &#8211;demon so that if you loose network to the machine it will keep going.</p>
+<p>The service_ingest_queue jobs will likely want some or all of the following options: &#8211;fast-rebuild &#8211;make-previews &#8211;name=NAME &#8211;lockfile &#8211;empty</p>
+<p>In the archive case I normally run a cloud of say 200 machines all running service_ingest_queue jobs to rebuild the database. See notes on this later.</p>
+<p>On the archive, you will also need to rebuild the calcache table after the ingest completes. Run as many jobs as you have CPUs on the machine - since
+most of the CPU load for this on on the database server itself, a cloud of clients doesn&#8217;t help with this. If you&#8217;re in a hurry, one option is to
+create an AWS host with lots of CPUs (say 32 cores) and run this there - you&#8217;ll need to transfer the database over and back afterwards.
+service_calcache_queue.py &#8211;demon &#8211;fast-rebuild &#8211;name=NAME &#8211;lockfile &#8211;empty</p>
+<div class="section" id="historic-data-on-the-summit-machines">
+<h3>Historic data on the summit machines<a class="headerlink" href="#historic-data-on-the-summit-machines" title="Permalink to this headline">¶</a></h3>
+<p>A use case that we didn&#8217;t really envision that has arrisen is people wanting to search qametrics for data that is no longer on the summit dataflow
+volumes. For the qametric search to work, the data has to be in the database. So the simplest solution to this is that when you do a new summit
+release, start with the database backup from the same release on the archvie server. After you restore it to the summit server database do a
+large rollcall.py run (or alternatively just update diskfile to set present = Flase on everything) followed by the usual add_to_ingestqueue and
+service_ingest_queue runs.</p>
+</div>
+<div class="section" id="aws-spot-instance-notes">
+<h3>AWS spot instance notes<a class="headerlink" href="#aws-spot-instance-notes" title="Permalink to this headline">¶</a></h3>
+<p>Spot instances are were you bid on unused CPU resources in the AWS cloud. It&#8217;s a cheap way to get hundreds of CPUs to speed up large rebuilds on
+the archive. Some notes:</p>
+<ul class="simple">
+<li>Simplest approach is m3.medium hosts (1 CPU, 3.75GB, 4GB SSD). Configure the SSD as swap as a few of the preview builds require large amounts of ram.</li>
+<li>8GB root filesystem is adequate. Configure it to delete the root fs on termination.</li>
+<li>Bid just below the on-demand price to ensure they run.</li>
+<li>Instantiate one on demand, do the install, configure it to access the database and test that it runs properly.</li>
+<li>Note, will need to configure the main database server to accept remote connections. Note, use the AWS internal IP addresses.</li>
+<li>Set it up so that it starts processing on boot</li>
+<li>Shut it down and make an AMI of it - select instance, create image.</li>
+<li>Put in spot instance bids to use the new AMI.</li>
+<li>Don&#8217;t forget to go in and terminate them when it&#8217;s done.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="aws-server-configuration">
+<h2>AWS server configuration<a class="headerlink" href="#aws-server-configuration" title="Permalink to this headline">¶</a></h2>
+<p>We have an M3.xlarge (4 CPU, 16GB ram, 2x40GB SSD) 3-year all-paid-upfront reserved instance started 4-May-2015, that expires 4-May-2018.
+Normally we wouldn&#8217;t do a 3 year instance reservation, as you&#8217;re tied to that server generation for the duration - however the financial
+situation at the time meant that paying up front for a 3 year term was advantageous. Of course AWS released the M4 generation systems shortly
+after that, but the reserved instance we have is M3 and can&#8217;t be converted to M4. This isn&#8217;t really a big deal, but the storage setup to
+use the high performance storage on the M3 instance is a little quirky.</p>
+</div>
+<div class="section" id="m3-class-server-storage">
+<h2>M3 class server storage<a class="headerlink" href="#m3-class-server-storage" title="Permalink to this headline">¶</a></h2>
+<p>The M3.xlarge server comes with 2 high performance 40GB SSDs. The M3 servers are not (currently) optimized for high performance access to
+EBS, so the SSDs are the fastest storage available, which makes them a good option for the database backend storage. But they&#8217;re so called
+instance stores - these will survive a server reboot intact but if your VM is moved to different physical hardware, or the instance is terminated
+rather than stopped then their contents will be lost, which makes them unattractive as the database backend store. Also for our database we need
+about 60 GB, which is bigger than either drive.</p>
+<p>To deal with all this, we have the following setup. Alongside the two 40GB SSDs are two corresponding EBS volumes. Each SSD is raid mirrores with
+an EBS volume using the linux software raid system. The raid is configured with the EBS volume in write-behind and write-mostly modes. This means
+that we get the performance of the SSD but we are constantly mirroring the data to EBS. These two raid mirrors are then combined into one logical
+volume using lvm2. If we loose the &#8220;ephemeral&#8221; SSD contents, then when the machine is back up the database should work fine using the EBS volumnes.
+We simply add the new SSD volumes to their respecive raid mirrirs and the raid system will copy the data from EBS to the SSD while the system is live,
+and we&#8217;ll have the SSD performance for data once it&#8217;s copied to the SSD.</p>
+<p>While this is a good solution for now, it&#8217;s added risk for disaster recovery due to the complexity of the arrangement. If the M3 servers ever
+get the high performance access to EBS we should probably convert to that. M4 just uses EBS and does away with the SSDs anyway. Also at some
+point (not far away actually), the database will outgrow the space available on the SSDs, so we&#8217;ll be forced to EBS at that point anyway.
+raid mirrors and the raid system will re-populate them from EBS</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Software Upgrades</a><ul>
+<li><a class="reference internal" href="#database-rebuilds">Database Rebuilds</a><ul>
+<li><a class="reference internal" href="#historic-data-on-the-summit-machines">Historic data on the summit machines</a></li>
+<li><a class="reference internal" href="#aws-spot-instance-notes">AWS spot instance notes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#aws-server-configuration">AWS server configuration</a></li>
+<li><a class="reference internal" href="#m3-class-server-storage">M3 class server storage</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="database.html" title="previous chapter">Database integrity</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/upgrades.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Paul Hirst.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/upgrades.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

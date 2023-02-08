@@ -1,0 +1,19 @@
+      - name: Ensure group "fitsdata" exists
+        group:
+          name: fitsdata
+          gid: 5179
+          state: present
+      - name: Ensure group "geminidata" exists
+        group:
+          name: geminidata
+          gid: 502
+          state: present
+      - name: Add the user 'fitsdata' with a specific uid and a primary group of 'fitsdata'
+        user:
+          name: fitsdata
+          uid: 5179
+      - name: Update user fitsdata groups to add fitsdata and geminidata
+        user:
+          name: fitsdata
+          groups: fitsdata,geminidata
+          append: yes

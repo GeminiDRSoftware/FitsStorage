@@ -1,0 +1,9 @@
+image:
+  keywords:
+    - XTENSION:
+      - char:   IMAGE
+
+bintable:
+  keywords:
+    - XTENSION:
+      - char:   BINTABLE

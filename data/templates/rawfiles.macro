@@ -1,0 +1,20 @@
+{%- macro row(row) -%}
+<tr class='alternating'>
+<td>{{ generate_download(row.filename, row.has_raw) }}</td>
+<td>{{ row.timestamp }}</td>
+<td>{{ row.filename }}</td>
+<td>{{ row.md5 }}</td>
+<td>{{ row.primitive }}</td>
+</tr>
+{%- endmacro %}
+
+{%- macro generate_download(filename, has_raw) -%}
+<div class='center'>
+{%- if has_raw -%}
+<a href="/rawfiles/{{ filename }}">[R]</a>
+{%- endif -%}
+<a href="/file/{{ filename }}">[D]</a>
+<input type='checkbox' class='mark mark_raw' name='files' value='{{ filename }}'>
+</div>
+{%- endmacro -%}
+

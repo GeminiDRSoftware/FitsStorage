@@ -1,0 +1,66 @@
+# see https://www.nginx.com/resources/wiki/start/topics/examples/full/
+
+events {
+    worker_connections  4096;  ## Default: 1024
+}
+
+http {
+    include    /etc/nginx/mime.types;
+
+    server {
+        listen 80;
+
+        listen       443 ssl http2 default_server;
+        listen       [::]:443 ssl http2 default_server;
+        server_name  arcdev.gemini.edu;
+
+        ssl_certificate "/etc/letsencrypt/live/arcdev.gemini.edu/fullchain.pem";
+        ssl_certificate_key "/etc/letsencrypt/live/arcdev.gemini.edu/privkey.pem";
+        ssl_session_cache shared:SSL:1m;
+        ssl_session_timeout  10m;
+        ssl_ciphers PROFILE=SYSTEM;
+        ssl_prefer_server_ciphers on;
+
+        location / {
+            include         uwsgi_params;
+            uwsgi_pass      unix:/opt/uwsgi/fits.sock;
+        }
+
+# Use this instead for initial certbot run, and turn off firewall for HTTP/HTTPS in security group on AWS during initial certbot run
+# sudo certbot certonly  --nginx -d arcdev.gemini.edu
+#        location / {
+#            autoindex         on;
+#            alias             /opt/FitsStorage/certbotroot/;
+#        }
+
+        location /static/ {
+            autoindex         on;
+            alias             /opt/FitsStorage/htmldocroot/;
+        }
+
+        location /help/ {
+            autoindex         on;
+            alias             /opt/FitsStorage/htmldocroot/help/;
+        }
+
+        location /favicon.ico {
+            alias             /opt/FitsStorage/htmldocroot/favicon.ico;
+        }
+
+        location /robots.txt {
+            alias             /opt/FitsStorage/htmldocroot/robots.txt;
+        }
+
+        location /usage.html {
+            alias             /opt/FitsStorage/htmldocroot/usage.html;
+        }
+
+        location /services {
+            proxy_pass http://localhost:8090/services;
+            proxy_buffering off;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-Host $host;
+            proxy_set_header X-Forwarded-Port $server_port;
+        }
+    }
+}

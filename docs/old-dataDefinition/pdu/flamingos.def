@@ -1,0 +1,8 @@
+provides:       [ valid, flamingos ]
+conditions:
+  - matching:
+    - INSTRUME:   FLAMINGOS
+
+keywords:
+  - DECKER
+  - UTC

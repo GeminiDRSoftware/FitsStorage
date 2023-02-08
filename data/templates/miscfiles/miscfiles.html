@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block title %}Generic Files Management{% endblock %}
+
+{% block extra_header %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="/static/misc.js"></script>
+{%- if can_add %}
+<script type="text/javascript">
+  var updating = false;
+</script>
+<script src="/static/misc_valid.js"></script>
+{%- endif %}
+<link rel="stylesheet" type="text/css" href="/static/form.css" />
+<style type="text/css">
+ body {
+   margin: 0;
+ }
+</style>
+{%- if actionMessage or errorMessage %}
+
+<link rel="stylesheet" type="text/css" href="/static/messages.css" />
+<script type='text/javascript'>
+    setTimeout(function() {
+      $('#message').fadeOut();
+    }, 3000);
+</script>
+{%- endif %}
+{% endblock %}
+
+{% block body %}
+<h1>Generic Files Management</h1>
+{% if can_manage == True %}
+ <!-- Here, code to add new files -->
+{% endif %}
+{%- if actionMessage %}
+<div id='message' class='action_message'>{{ actionMessage }}</div>
+{%- endif %}
+{%- if errorMessage %}
+ <div id='message' class='error_message'>{{ errorMessage }}</div>
+{%- endif %}
+{%- if can_add %}
+<div id='tabsdiv'>
+ <ul class='tabs'>
+   <li><a href="#" id="search_tab" class="current">Search</a>
+   <li><a href="#" id="add_tab">Add New</a>
+ </ul>
+</div>
+&nbsp;
+<div id='frames' style='padding-left: 2em; padding-right: 2em'>
+ <div id='search_frame'>
+{%- endif %}
+{% include "miscfiles/miscfile_search.html" %}
+{%- if can_add %}
+ </div><!-- search div -->
+ <div id='add_frame' hidden='true'>
+{% include "miscfiles/miscfile_add.html" %}
+ </div>
+</div>
+{%- endif %}
+{% endblock %}

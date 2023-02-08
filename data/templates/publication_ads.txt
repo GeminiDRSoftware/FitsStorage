@@ -1,0 +1,5 @@
+%R {{ bibcode }}
+%A {{ author }}
+%J {{ journal }}
+%D {{ year }}
+%T {{ title }}

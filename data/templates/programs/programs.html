@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}Programs table {{ title_suffix }}{% endblock %}
+{% block body %}
+<h1>Program Search Results - {{ title_suffix }}</h1>
+{%- if 'warning' in selection %}
+<h3>WARNING: {{ selection.warning }}</h3>
+{% endif %}
+{%- if no_programs == True %}
+<h2>No Programs found</h2>
+{%- else %}
+{% include "programs/programs_table.html" %}
+{%- endif %}
+{% endblock %}

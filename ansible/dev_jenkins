@@ -1,0 +1,9 @@
+[archive:vars]
+ansible_become_pass='{{ sudo_pass }}'
+build_sphinx=True
+sphinx_opts=-Q
+is_hawaii=True
+is_onsite=True
+
+[archive]
+hbffits-lv4.hi.gemini.edu

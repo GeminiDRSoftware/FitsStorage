@@ -1,0 +1,9 @@
+[archive:vars]
+#ansible_become_pass='{{ sudo_pass }}'
+is_hawaii=True
+is_onsite=True
+enable_preview=True
+enable_all_preview=False
+
+[archive]
+hbfqapdev-lv1

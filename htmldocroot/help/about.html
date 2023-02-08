@@ -1,0 +1,123 @@
+<!DOCTYPE html><html>
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="/help/help.css">
+<title>About the Gemini Observatory Archive</title>
+</head>
+<body>
+<h1>About the Gemini Observatory Archive</h1>
+
+<p>The Gemini Observatory Archive was built at Gemini Observatory in 2014 and 2015 
+as a lower cost replacement for the Gemini Science Archive which was operated under contract.</p>
+
+<p>The software was developed in house based on the FitsStorage software which had been developed
+previously as an internal data management tool. It makes heavy use of the AstroData module from the
+DRAGONS software written by the Gemini Science User Support Department.</p>
+
+<p>Paul Hirst is the project manager and primary developer and developed the original FitsStorage
+software. Ricardo Cardenes was a software developer on the project. University of Victoria students
+Adam Paul and Petra Clementson worked on the project during their internships at Gemini.
+Maintenance and development are now handled by Oliver Oberdorf.</p>
+
+<h1>Current Status</h1>
+
+<p>This system is fully operational.</p>
+<p>Raw data is being automatically ingested in near-real-time from both telescopes.</p>
+<p> We are not aware of any major issues with the system, if you find a problem that is not
+    listed below, please do report it in the
+    <a href="https://www.gemini.edu/sciops/helpdesk/submit-general-helpdesk-request">Helpdesk</a>
+    under the topic "Gemini Observatory Archive".</p>
+
+<h1>Privacy Policy</h1>
+<h2>Information We Collect</h2>
+<p>We collect basic information on web requests made to the GOA.  This includes the active user, time, IP address, browser type, referrer, the URL accessed and the status and size of the response.  This information helps us to maintain and improve the service for our users.  This information is also shared in aggregated reports with NSF.  Non-aggregated data is only shared within NOIRLab and our contractors.</p>
+<p>We do not sell, rent or exchange this information to anyone outside of NOIRLab. We use this information only for the purpose of understanding how our resources are used and how they may be improved.</p>
+<h2>Cookies</h2>
+<p>Cookies are used to track your session with the GOA.  This is how you are able to login and have the website recognize you and grant access to your data.</p>
+<ul>
+<li><b>csrftoken</b> - This cookie is used to validate interactions with the website and block malicious 3rd party scripts.  This cookie is not tied to your identity.</li>
+<li><b>gemini_archive_session</b> - This cookie is only present when you are logged in and is used to identify you and grant you full access to your data.  This cookie is tied to your identity.</li>
+</ul>
+<h2>Personal Information Stored</h2>
+<p>The GOA stores your full name and email address with your account information.  Your email is used for interactions such as resetting forgotten passwords.  Email addresses are also stored for any subscribed email notifications such as new data for a particular program ID.</p>
+<h2>Questions</h2>
+<p>If you have questions about this policy, or you have a privacy concern, please contact us at <a href="mailto:fitsdata@gemini.edu">fitsdata@gemini.edu</a>.</p>
+
+<h1>Known issues</h1>
+<ul>
+<li>None at this time</li>
+</ul>
+
+<h1>Version</h1>
+<p>2022-2.x</p>
+
+<h1>Change Log (User Facing)</h1>
+
+<ul>
+    <li><b>May 4, 2022 (v2022-1)</b><br/>
+      <ul>
+        <li>
+          <b>associated_cals_json</b> JSON webpage for associated calibrations (just replace searchform with
+            associated_cals_json in the URL)
+        </li>
+        <li>
+          <b>MiscFiles Plus</b> Enhanced MiscFiles handling
+        </li>
+        <li>
+          <b>REST Interface</b> RESTful json web API
+        </li>
+        <li>
+          <b>Bzip2 Compression</b> Downloads are Bzip2-compressed by default
+        </li>
+          <li>
+              <b>Quicklook Data Search</b> Support for searching quicklook data, in preparation for it being in GOA
+          </li>
+          <li>
+              <b>Date and Time Searches</b> Date range support also handles YYYYMMDDTHHMMSS for time of day
+          </li>
+      </ul>
+    </li>
+    <li><b>June 18, 2021 (v2020-2.19)</b><br/>
+      <ul>
+        <li>
+          <b>Standard Search</b> Added <pre>standard</pre> URL search term
+        </li>
+      </ul>
+    </li>
+    <li><b>May 3, 2021 (v2020-2.18)</b><br/>
+      <ul>
+        <li>
+            <b>Prog Cal URL Search</b> Added <pre>progcal</pre> and <pre>notprogcal</pre> URL search terms to search only program calibrations, or to exclude them
+        </li>
+      </ul>
+    </li>
+    <li><b>March 17, 2021 (v2020-2.15)</b><br/>
+      <ul>
+        <li>
+            <b>NIRI f32 Disperser Search</b> NIRI disperser search options now include f32 options
+        </li>
+      </ul>
+    </li>
+    <li><b>March 9, 2021 (v2020-2.14)</b><br/>
+      <ul>
+        <li>
+            <b>Publication Search</b> search for related data by bibliography code. This is available on the
+            main search page in the lower right area of the form.
+        </li>
+        <li>
+            <b>B480 Grating Search</b> new search option for GMOS grating
+        </li>
+        <li>
+            <b>GPI Astrometric Standards</b> search for GPI Astrometric Standards when GPI Instrument is selected
+        </li>
+        <li>
+            <b>Search for Calibrations On Selected Files</b> Ability to select specific files to search for related calibrations
+        </li>
+        <li>
+            <b>Fix for 'Alopeke and Zorro data RA/DEC search</b> Problems with 'Alopeke and Zorro coordinates in the archive were resolved and they should be searchable by coordinates now
+        </li>
+      </ul></li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,57 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME:   GPI
+
+import:  [ fac-pdu, ext, provenance ]
+
+validation(final):
+  - primary-hdu:   gpi-pdu
+  - extension:   [ sci-ext, gpi-ext, provenance.provenance ]
+
+gpi-pdu:
+  - merge: fac-pdu
+  - keywords:
+    - UTSTART
+    - UTEND
+    - AOFILTER
+    - ADC
+    - APODIZER
+    - CALEXSH
+    - CALREFSH
+    - CALSCISH
+    - CALENSH
+    - IFSFILT
+    - GPIHEALT
+    - LYOTMASK
+    - LYOTHLTH
+    - OCCULTER
+    - OCCHLTH
+    - OMSSENT
+    - ARRAYID
+    - CCDNAME
+    - CCDSIZE
+    - AOFLHLTH
+    - ADCHLTH
+    - APODHLTH
+    - DISPHLTH
+    - DISPERSR
+    - OBSMODE
+    - PUPVIEWR
+    - WPANGHLT
+    - WPSTATE
+    - SIMLEVEL
+
+# Dummy. It is here just so that the system finds a match for the SCI extensions
+sci-ext:
+  - merge: ext.image
+  - conditions:
+    - matching:
+      - EXTNAME: SCI
+
+gpi-ext:
+  - merge: ext.image
+  - conditions:
+    - not matching:
+      - EXTNAME: SCI
+  - keywords:
+    - DATASEC

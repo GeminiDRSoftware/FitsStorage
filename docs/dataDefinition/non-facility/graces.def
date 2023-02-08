@@ -1,0 +1,29 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME:  GRACES
+
+validation(final):
+  - primary-hdu: gra-pdu
+
+gra-pdu:
+  - keywords:
+    - DATE
+    - OBSID
+    - DATALAB
+    - OBJECT
+    - RELEASE:
+      - date:     2000-1-1 .. *
+
+    - optional:
+      - RAWGEMQA:
+        - char:   [ UNKNOWN, USABLE, BAD, CHECK ]
+      - RAWPIREQ:
+        - char:   [ UNKNOWN, 'YES', 'NO', CHECK ]   # Using quotes to prevent YAML to turn these into booleans
+      - RAWBG,RAWCC,RAWIQ,RAWWV:
+        - char:     Any
+        - upper:    UNKNOWN
+        - pattern:  '\d{2}-percentile'
+    - OBJECT
+    - DATE
+    - RA:
+    - DEC:

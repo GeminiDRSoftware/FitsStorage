@@ -1,0 +1,15 @@
+provides:         valid
+conditions:
+  - is bhros
+  - matching:
+    - XTENSION:   IMAGE
+
+include files:    wcs
+
+keywords:
+  - CCDSUM
+  - CCDSIZE
+  - DETSEC
+  - DATASEC
+  - BIASSEC
+  - CCDSEC

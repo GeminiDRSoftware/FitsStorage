@@ -1,0 +1,15 @@
+provides:        [ valid, gsaoi ]
+conditions:
+  - matching:
+    - INSTRUME:    GSAOI
+
+keywords:
+  - OBJECT
+  - OBSTYPE
+  - UT
+  - UTSTART
+  - UTEND
+  - TIME-OBS
+  - FILTER1
+  - FILTER2
+  - UTLWHEEL

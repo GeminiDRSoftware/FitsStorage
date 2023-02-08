@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+
+{%- block extra_header %}
+<!-- Additional scripts for the search form -->
+<meta name="robots" content="nofollow">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="/static/titlebar.js"></script>
+<script src="/static/form.js"></script>
+<!-- Additional style for the search form -->
+<link rel="stylesheet" type="text/css" href="/static/whoami.css" />
+<link rel="stylesheet" type="text/css" href="/static/titlebar.css" />
+<link rel="stylesheet" type="text/css" href="/static/form.css" />
+{%- endblock %}
+
+{% block title %}{{ server_title }} Search {{ title_suffix }}{% endblock %}
+{% block description %}{{ server_title }} Data {{ title_suffix }}{% endblock %}
+
+{% block body %}
+<div>
+{{ formdata }}
+</div>
+<div class="titlebar">
+ <!-- Uncomment this to display an announcement line at the top of the searchform page
+ <div class="titlebar">
+  <center>
+  <font color="red">
+  {{ server_title }} will be down for maintainance Wednesday 10-Aug-2016 10:00-12:00 HST (20:00-22:00 UTC)
+  </font>
+  </center>
+ </div>
+ -->
+ <div class="titlebar_left">
+{{ server_title }}
+ </div>
+ <div class="titlebar_help" id="help_about">
+  <a href="/help/index.html" target="_blank">Help</a> - 
+  <a href="/help/about.html" target="_blank">About</a> -
+  <a href="/miscfiles"><abbr title="Miscellaneous Files containing data that can't be searched via the regular archive interface">Misc Files</abbr></a>
+ </div>
+ <div class="titlebar_right" id="div_whoami">
+  Loading...
+ </div>
+</div>
+
+<input type="hidden" id="things" name="things" value="{{ thing_string }}">
+<input type="hidden" id="args" name="args" value="{{ args_string }}">
+<div class="page">
+<form id="searchform" class="searchform" action="/searchform" method="POST">
+{% include "search_and_summary/searchform_detail.html" %}
+</form>
+{% if debugging -%}
+ <p>selection: {{ selection }}</p>
+{%- endif %}
+{% if selection %}
+{% if insert_prev %}
+<span id="previewbox">
+   <span id="previewboxmain">Click this box to close it. Click [P] or [#] links to switch image.<br>
+<img id="previewimage" src="/static/ajax-loading.gif" alt="">
+</span>
+</span>
+<span id="infobox"><p>Click this box to close it. <a id="infolink" target='_blank' href="">
+Click Here to open in a new tab</a></p><br>
+<span id="infopayload"></span></span>
+{%- endif %}
+ <ul class="tabs">
+  <li><a href="#" id="resultstab" class="current">Search Results</a></li>
+  <li><a href="#" id="caltab">Load Associated Calibrations</a></li>
+  <li><a href="#" id="obslogstab">Load Associated Observation Logs</a></li>
+ </ul>
+ <div class="frames">
+ <div id="searchresults" class="searchresults">
+ <span id="loading"><img src="/static/ajax-loading.gif" alt="">  Loading...<br></span>
+{% include "search_and_summary/summary_body.html" %}
+ </div><div id="calibration_results" class="searchresults">
+ <span id="loading_cals"><br><img src="/static/ajax-loading.gif" alt="">  Finding Associated Calibrations... This can take several seconds depending on the size of your calibration association search...</span>
+ <span id="not_loading_cals"><br>You cannot do calibration association on an unconstrained search, or one that hits the search limit. Please revise your original search so that this is not the case.</span>
+ </div><div id="obslog_results" class="searchresults">
+<span id="loading_obslogs"><img src="/static/ajax-loading.gif" alt="">  Finding Associated Obslogs...<br></span>
+ </div></div>
+{% else %}
+ <P>Set at least one of the search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P>
+{% endif %}
+</div>
+{% endblock %}

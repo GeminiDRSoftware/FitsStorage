@@ -1,0 +1,38 @@
+# see https://www.nginx.com/resources/wiki/start/topics/examples/full/
+
+events {
+  worker_connections  4096;  ## Default: 1024
+}
+
+http {
+    include    /etc/nginx/mime.types;
+
+    server {
+        listen 80;
+        server_name fits;
+
+        location / {
+            proxy_set_header   X-Forwarded-For $remote_addr;
+            proxy_set_header   Host $http_host;
+            proxy_pass         "http://archive-uwsgi:8070";
+            client_max_body_size 10G;
+        }
+
+        location /static/ {
+            autoindex         on;
+            alias             /opt/FitsStorage/htmldocroot/;
+        }
+
+        location /favicon.ico {
+            alias             /opt/FitsStorage/htmldocroot/favicon.ico;
+        }
+
+        location /robots.txt {
+            alias             /opt/FitsStorage/htmldocroot/robots.txt;
+        }
+
+        location /usage.html {
+            alias             /opt/FitsStorage/htmldocroot/usage.html;
+        }
+    }
+}

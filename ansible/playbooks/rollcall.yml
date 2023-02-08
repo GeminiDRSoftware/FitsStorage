@@ -1,0 +1,165 @@
+---
+  - hosts: all
+    become: true
+    tasks:
+
+      # delete from calcache
+      # delete all previews, no preview job for mko cpo
+      # where telescope is Gem-S set to false
+      # also need to set compressed=false
+      # file_md5 and file_size set from data_md5 and data_size
+      # instead of filename use  ut_datetime < 2017-01 and no path
+      # include option to specify path to rollcall.py?
+      # - name: Remove N200x previews (NORTH only)
+      #   postgresql_query:
+      #     db: fitsdata
+      #     query: DELETE from preview WHERE filename like 'N200%'
+      #   become: yes
+      #   become_user: postgres
+      #   when: "'mko' in inventory_hostname"
+      # - name: Remove N2010 previews (NORTH only)
+      #   postgresql_query:
+      #     db: fitsdata
+      #     query: DELETE from preview WHERE filename like 'N2010%'
+      #   become: yes
+      #   become_user: postgres
+      #   when: "'mko' in inventory_hostname"
+      # - name: Remove S previews (NORTH only)
+      #   postgresql_query:
+      #     db: fitsdata
+      #     query: DELETE from preview WHERE filename like 'N%'
+      #   become: yes
+      #   become_user: postgres
+      #   when: "'mko' in inventory_hostname"
+      - name: Remove previews (non AWS only)
+        postgresql_query:
+          db: fitsdata
+          query: truncate table preview
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+      - name: Remove calcache (non AWS only)
+        postgresql_query:
+          db: fitsdata
+          query: truncate table calcache
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+      
+      - name: Convert out .bz2 extensions in diskfiles
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET filename=REGEXP_REPLACE(filename, '(.*).bz2', '\1') where filename like '%bz2'
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+      - name: update compressed in diskfiles
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET compressed=FALSE
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+      - name: mirror md5 in diskfiles
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET file_md5=data_md5
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+      - name: mirror size in diskfiles
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET file_size=data_size
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+
+      - name: Remove N200x files (NORTH only)
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET present=FALSE WHERE filename like 'N200%'
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname"
+      - name: Remove N2010 files (NORTH only)
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET present=FALSE WHERE filename like 'N2010%'
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname"
+      - name: Remove N2011 files (NORTH only)
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET present=FALSE WHERE filename like 'N2011%'
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname"
+      - name: Remove N2012 files (NORTH only)
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET present=FALSE WHERE filename like 'N2012%'
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname"
+      - name: Remove N2013 files (NORTH only)
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET present=FALSE WHERE filename like 'N2013%'
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname"
+      - name: Remove S200x files (SOUTH only)
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET present=FALSE WHERE filename like 'S200%'
+        become: yes
+        become_user: postgres
+        when: "'cpo' in inventory_hostname"
+      - name: Remove S2010 files (SOUTH only)
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET present=FALSE WHERE filename like 'S2010%'
+        become: yes
+        become_user: postgres
+        when: "'cpo' in inventory_hostname"
+      - name: Remove S2011 files (SOUTH only)
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET present=FALSE WHERE filename like 'S2011%'
+        become: yes
+        become_user: postgres
+        when: "'cpo' in inventory_hostname"
+      - name: Remove S2012 files (SOUTH only)
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET present=FALSE WHERE filename like 'S2012%'
+        become: yes
+        become_user: postgres
+        when: "'cpo' in inventory_hostname"
+      - name: Remove S2013 files (SOUTH only)
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET present=FALSE WHERE filename like 'S2013%'
+        become: yes
+        become_user: postgres
+        when: "'cpo' in inventory_hostname"
+      - name: Remove SOUTH files if we are NORTH
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET present=FALSE WHERE filename like 'S%'
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname"
+      - name: Remove NORTH files if we are SOUTH
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET present=FALSE WHERE filename like 'N%'
+        become: yes
+        become_user: postgres
+        when: "'cpo' in inventory_hostname"
+      # - name: Run rollcall
+      #   command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 ./fits_storage/scripts/rollcall.py"
+      #   become: yes
+      #   become_user: fitsdata

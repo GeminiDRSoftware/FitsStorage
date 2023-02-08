@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block title %}FITS Storage tapefile information{% endblock %}
+{% block body %}
+<h1>FITS Storage tapefile information</h1>
+{% if message %}
+<p>{{ message }}</p>
+{% else %}
+<table border='0'>
+  <tr class='tr_head'>
+    <th>TapeFile ID
+    <th>TapeWrite ID
+    <th>TapeWrite Start Date
+    <th>Tape ID
+    <th>Tape Label
+    <th>File Num on Tape
+    <th>Filename
+    <th>Last Modified
+    <th>Size
+    <th>MD5
+    <th>Compressed
+    <th>Data_Size
+    <th>Data_MD5
+  </tr>
+  {%- for tf in tapefiles %}
+  <tr class="alternating">
+    <td>{{ tf.id }}
+    <td>{{ tf.tapewrite_id }}
+    <td>{{ tf.tapewrite.startdate }} UTC
+    <td>{{ tf.tapewrite.tape.id }}
+    <td>{{ tf.tapewrite.tape.label }}
+    <td>{{ tf.tapewrite.filenum }}
+    <td>{{ tf.filename }}
+    <td>{{ tf.lastmod }}
+    <td>{{ tf.size }}
+    <td>{{ tf.md5 }}
+    <td>{{ tf.compressed }}
+    <td>{{ tf.data_size }}
+    <td>{{ tf.data_md5 }}
+  </tr>
+  {%- endfor %}
+</table>
+{% endif %}
+{% endblock %}

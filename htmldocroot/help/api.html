@@ -1,0 +1,744 @@
+<!DOCTYPE html><html>
+<head>
+<meta charset="UTF-8">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="toc.js"></script>
+<link rel="stylesheet" href="/help/help.css">
+<title>Gemini Observatory Archive APIs</title>
+<style>
+table, th, td {
+  border: 1px solid black;
+}
+</style>
+</head>
+<body>
+<span id="toc"></span>
+<h1>Gemini Observatory Archive APIs</h1>
+
+<h2 id="intro">Introduction</h2>
+<p>This page gives information on accessing the Gemini Observatory Archive programmatically - for example through
+scripts or on the command line. There are two main aspects to this. Firstly, it is easy to construct (either 
+manually or programmatically) URLs that lead to useful searches or features within the archive system. These
+could return HTML that you might want to load directly into a browser for example. Secondly, you can construct
+URLs that return information in JSON that you can then easily process within your own software. We discourage
+processing HTML from the archive in your own software (i.e. <i>scraping</i> the HTML) - we offer no guarantee
+that we will maintain the format of the HTML so your software may stop working if we change it, and generally
+it's easier, more robust, and faster to use one of the JSON APIs to obtain that information.</p>
+
+<h2 id="concepts">Basic Concepts</h2>
+<p>URLs on the archive are of the form <code>https://archive.gemini.edu/<i>FEATURE</i>/<i>SELECTION</i></code> where
+<i>FEATURE</i> and <i>SELECTION</i> are the archive feature you want to access, and the data selection criteria
+respecively, as explained below. This applies to the human-oriented features of the archive as well as the APIs.</p>
+
+<p>Generally you should fetch these URLs with an HTTP GET. A small number of API functions can accept an HTTP POST with
+additional information for the query, this will be described for those individual cases. The archive uses 
+<code>https://</code> URLS. If you try to access the archive with a <code>http://</code> URL you will receive an 
+HTTP REDIRECT to the <code>https://</code> URL. It is more efficient to use <code>https://</code> directly.</p>
+
+<h3>Archive Features</h3>
+<p>You have probbaly used the regular search form for the archive, and noticed that the URL for that is
+<code>https://archive.gemini.edu/<i>searchform</i></code>. "searchform" is a good example of an archive feature 
+in this context, and we'll use it with a lot of our examples below. We'll discuss a complete list of features
+later.<p>
+
+<h3>Selection Criteria</h3>
+<p>This is a key concept of the archive system. Search terms used to select data in the archive are placed
+<i>directly in the URL</i> separated by slashes, just like directories in a normal URL. Many things that you will want
+to search by in the archive, such as Gemini Program IDs or UT dates have a prescribed standard format, and the
+archive will recognise these automatically for what they are. For example 8 digit numbers that refer to valid
+dates such as <code>20140410</code> will be recognised automatically as a UT date, and strings such as GN-2010B-Q-123 will
+be recognized automatically as Gemini Program IDs.</p>
+<p>So, using these examples, using <code>GN-2010B-Q-123</code> as the selection would select data from that program ID, and
+using <code>GN-2010B-Q-123/20140410</code> would select data from that program ID that was taken on that UT date.
+It does not matter what order you specify these in.</p>
+<p>In this way, we can build up URLs that refer to the search or search results of various searches on the archive. All
+these should be accessed with regular HTTP GET, there's no need to HTTP POST search parameters to the system, we provide 
+a <a href="http://en.wikipedia.org/wiki/Representational_state_transfer">RESTful</a> interface to the data.</p>
+
+<p>If you add /object=foobar to the URL (it's a selection criteria just like the others) then it will only return files with 
+that object name. The problem is that the object name in that sense is whatever they called it in the OT, and it's free 
+form, so if they want to call it pauls_kewl_galaxy or candidate_12 they can do, and they do... So if you did the phase 2 and 
+you know what you called it, then it works great, or if you're lucky and your object only has one name that can be spelled 
+one way...</p>
+
+<p>But what you almost certainly really want to do is to resolve the name and search by ra and dec. The API doesn't do that 
+directly. When you do this in the web searchform, it's basically the searchform that's doing that for you, not the backend 
+search engine. So if you resolve the name yourself (or call some service to do that), you can then search by ra and dec in 
+decimal degrees as simply as,</p>
+
+<pre>
+/ra=40.6698792/dec=-0.0132889.
+</pre>
+
+<p>This will default to a 3 arcmin radius cone search. You can specify the cone search radius by adding /sr=10 (units are 
+arcsec)</p>
+
+<h2 id="features">Features</h2>
+<p>Here is a list of the available features on the system:</p>
+
+<h3>searchform</h3>
+<p>The regular search form for the archive. When you pass a selection criteria to the search form it will pre-populate
+the fields of the form with the selection criteria you have passed, and will execute that search. This is how it works
+when you do a search and then bookmark the resulting web page or copy the URL for future use etc - when you do the search, 
+it simply places the search terms from the form into the URL and redirects your browser to that URL. If you re-visit this
+URL later, it will re-do the search and return you the filled out search form with the results. You can then of course 
+modify the fields in the form and search again if you wish.</p>
+
+<h3>summary</h3>
+<p>This works a lot like searchform, except it just sends you the simple results table. You don't get the search form itself,
+nor do you get the tabs to see associated calibrations or observation logs, you simply get the main search results table showing
+the results of the search as specified by the selection criteria you specified in the URL. You can also use <kbd>ssummary</kbd> 
+(short summary) and <kbd>lsummary</kbd> (long summary) to get versions with fewer and more columns respectively.</p>
+
+<h3>jsonfilelist</h3>
+<p>This returns you a <a href="http://en.wikipedia.org/wiki/JSON">JSON</a> representation of the files in the archive that
+match your selection criteria. You should almost always include /canonical as one of your selection criteria (see note below). 
+The JSON returned contains a list of dictionaries, where each dictionary describes a file
+in the archive. The keys in the dictionary and their meanings are as follows:</p>
+<table>
+<tr><th>Key</th><th>Description</th></tr>
+<tr>
+<td>name</td>
+<td>The name of the dataset. This does not include the .bz2 if the file is compressed.</td>
+</tr><tr>
+<td>filename</td>
+<td>the filename of the file. Most of the files in the archive are bzip2 compressed, so this will likely end in .bz2</td>
+</tr><tr>
+<td>compressed</td>
+<td>Boolean value saying if the file is compressed or not</td>
+</tr><tr>
+<td>lastmod</td>
+<td>last modification timestamp of the file that was ingested</td>
+</tr><tr>
+<td>path</td>
+<td>path to the file within the data store. This is normally empty on the archive</td>
+</tr><tr>
+<td>mdready</td>
+<td>Boolean value that says if the metadata of the file passes validation</td>
+</tr><tr>
+<td>file_size</td>
+<td>the size of the file as stored in the archive in bytes</td>
+</tr><tr>
+<td>data_size</td>
+<td>the size of the FITS data in the file. If the file is compressed, this represents the size of the uncompressed data. 
+If the file is not compressed this will be the same as file_size</td>
+</tr><tr>
+<td>size</td>
+<td>the same as file_size. Deprecated</td>
+</tr><tr>
+<td>file_md5</td>
+<td>the MD5 hash of the file as stored in the archive, in hexdigest format</td>
+</tr><tr>
+<td>data_md5</td>
+<td>the MD5 hash of the FITS data in the file. If the file is compressed, this represents the MD5 hash of the uncompressed data. 
+If the file is not compressed this will be the same as file_md5</td>
+</tr><tr>
+<td>md5</td>
+<td>the same as file_md5. Deprecated</td>
+</tr>
+</table>
+
+<h3>jsonsummary</h3>
+<p>This returns you a JSON representation of your search results that includes all the information (and more) that you get on the summary and 
+searchform results tables. You should almost always include /canonical as one of your selection criteria (see note below). 
+As with jsonfilelist, you get a list of dictionaries, one dictionary per file. You get all the keys from jsonfilelist
+plus a lot more that contain details of the data, as follows:</p>
+<table>
+<tr><th>Key</th><th>Description</th></tr>
+<tr>
+<td>telescope</td>
+<td>The telescope where the data were taken</td>
+</tr><tr>
+<td>instrument</td>
+<td>The name of the instrument that took the data</td>
+</tr><tr>
+<td>observation_class</td>
+<td>Gemini Observation Class</td>
+</tr><tr>
+<td>observation_type</td>
+<td>Gemini Observation Type</td>
+</tr><tr>
+<td>program_id</td>
+<td>Gemini Program ID</td>
+</tr><tr>
+<td>observation_id</td>
+<td>Gemini Observation ID</td>
+</tr><tr>
+<td>data_label</td>
+<td>Gemini Data Label</td>
+</tr><tr>
+<td>engineering</td>
+<td>Boolean that says if this is engineering data</td>
+</tr><tr>
+<td>science_verification</td>
+<td>Boolean that says if this is science verification data</td>
+</tr><tr>
+<td>procmode</td>
+<td>Type of data for processed science/calibrations.  This is one of 'sq' for science quality, 'ql' for quick look, or '' for raw.</td>
+</tr><tr>
+<td>calibration_program</td>>
+<td>Boolean that says if this is calibration program data</td>
+</tr><tr>
+<td>requested_iq<br/>requested_cc<br/>requested_bg<br/>requested_wv</td>
+<td>The requested site quality percentiles - IQ = Image Quality, CC = Cloud Cover, BG = Sky Background, WV = Water Vapor. 
+The value is the integer percentile, 100 implies "Any"</td>
+</tr><tr>
+<td>raw_iq<br/>raw_cc<br/>raw_bg<br/>raw_wv</td>
+<td>The measured or estimated delivered site quality percentiles - IQ = Image Quality, CC = Cloud Cover, BG = Sky Background, WV = Water Vapor. 
+The value is the integer percentile, 100 implies "Any"</td>
+</tr><tr>
+<td>ut_datetime</td>
+<td>UT Date and Time of the observation. ISO 8601 format</td>
+</tr><tr>
+<td>local_time</td>
+<td>Local Date and Time of the observation. ISO 8601 format</td>
+</tr><tr>
+<td>ra<br/>dec</td>
+<td>RA and Dec in decimal degrees</td>
+</tr><tr>
+<td>object</td>
+<td>Object name as specified in the OT</td>
+</tr><tr>
+<td>azimuth<br/>elevation</td>
+<td>Azimuth and Elevation in decimal degrees</td>
+</tr><tr>
+<td>cass_rotator_pa</td>
+<td>Position Angle of the Cassegrain Rotator, in decimal degrees</td>
+</tr><tr>
+<td>airmass</td>
+<td>Airmass of the observation</td>
+</tr><tr>
+<td>adaptive_optics</td>
+<td>Boolean to say if adaptive optics was in use</td>
+</tr><tr>
+<td>laser_guide_star</td>
+<td>Boolean to say if the laser guide star was in use</td>
+</tr><tr>
+<td>wavefront_sensor</td>
+<td>Says which wavefront sensor was in use</td>
+</tr><tr>
+<td>qa_state</td>
+<td>Quality State of the file - Pass, Usable, Fail, Undefined, CHECK</td>
+</tr><tr>
+<td>mode</td>
+<td>imaging, spectroscopy, LS (Longslit Spectroscopy), MOS (Multi Object Spectroscopy) or IFS (Integral Field Spectroscopy)</td>
+</tr><tr>
+<td>spectroscopy</td>
+<td>Boolean to say if this is spectrally dispersed data</td>
+</tr><tr>
+<td>types</td>
+<td>The AstroData types of this file. This is basically a tag list.</td>
+</tr><tr>
+<td>release</td>
+<td>The date on which the proprietary period of this data expires or expired</td>
+</tr><tr>
+<td>reduction</td>
+<td>The reduction state of the data. "RAW" for raw data.</td>
+</tr><tr>
+<td>phot_standard</td>
+<td>Boolean to say if a Gemini Standard star is in the field.</td>
+</tr><tr>
+<td>gcal_lamp</td>
+<td>Which GCAL lamp was being observed, if any</td>
+</tr><tr>
+<td>exposure_time</td>
+<td>Exposure Time in seconds. If the data are co-added, this is the total of all the coadds.</td>
+</tr><tr>
+<td>detector_roi_setting</td>
+<td>The requested Detector Region of Interest (subarray) name</td>
+</tr><tr>
+<td>detector_config</td>
+<td>A string summarizing the detector configuration</td>
+</tr><tr>
+<td>camera</td>
+<td>The camera in use</td>
+</tr><tr>
+<td>detector_binning</td>
+<td>A string representation of the detector binning in use</td>
+</tr><tr>
+<td>wavelength_band</td>
+<td>The wavelength band</td>
+</tr><tr>
+<td>central_wavelength</td>
+<td>Central Wavelength of spectroscopy data</td>
+</tr><tr>
+<td>filter_name</td>
+<td>Name of the Filter in use</td>
+</tr><tr>
+<td>focal_plane_mask</td>
+<td>Name of the focal plane mask (typically a slit mask for spectroscopy) in use</td>
+</tr><tr>
+<td>pupil_mask</td>
+<td>Name of the pupil plane mask (aka Apodizer for GPI) in use. Few instruments have these.</td>
+</tr><tr>
+<td>disperser</td>
+<td>Name of the disperser (usually a diffraction grating or grism) in use</td>
+</tr>
+</table>
+
+<h2 id="downloading">Downloading Data</h2>
+<p>Two URLs are available to download data from the archive.</p>
+
+<p>Firstly, the <code>/download</code> URL uses the same selection criteria as detailed above, and will return a tar 
+archive containing the data that match the selection. The files inside the tar archive will be compressed with bzip2. 
+Also inside the tar archive is a <code>README.txt</code> file with some details of the download, and an 
+<code>md5sums.txt</code> file that contains the MD5 hash of each file in the download, so that file integrity can 
+easily be checked using the <code>md5sum</code> program installed on most UNIX-like systems.</p>
+
+<p>Secondly, the <code>/file</code> URL accepts a single filename and will return you just that file, uncompressed
+and ready to use.</p>
+
+<h3>Authentication</h3>
+
+<p>Note that these URLs will provide public data without any need to authenticate. However, they do require
+authentication in order to download proprietary data. In the case where you do not authenticate, the 
+<code>/download</code> URL will send you any public files that match your selection criteria, and will include
+in the README.txt file a list of files to which you were denied access.</p>
+
+<p>To authenticate to these services, you need to supply your archive session cookie.
+a <a href="http://en.wikipedia.org/wiki/HTTP_cookie">web cookie</a> is a small piece of data sent from a web
+server to your browser that your browser stores and presents back to the web server. 
+When you log in to your account on the archive, the server sends you a cookie called
+<code>gemini_archive_session</code>. The value of this cookie identifies you to the system and verifies that
+you have sucessfully logged in. In order to authenticate yourself to the download service, you need to send the
+same cookie to the server with your request. If you want to do this from a script or the command line you will
+first have to find the value of that cookie from your browser, and then include it in your download request headers.</p>
+
+<p>Finding the value of the cookie depends on your browser. In Firefox, navigate to any archive page, then go to 
+Tools - Page Info, then inside Security there is a View Cookies button. In Safari first go to Preferences - Advanced
+and turn on "Show Develop menu" then navigate to an archive page and in the Develop menu click "Show Web Inspector" then
+select Cookies in the Resources tab. The cookie you need is called <code>gemini_archive_session</code>.</p>
+
+<p>The value of the cookie you need will be a long apparently random string of characters. You should be able to copy
+/ paste it into to your script. Be sure to keep that cookie value confidential, anyone who has it can access your archive account. If
+you need to reset it (for example because it became known to someone else), then simply use a web browser to
+<strong>Log Out</strong> of the archive and the old value will no longer be accepted by the server. When you log back
+in to the archive, a new value will be sent to the browser where you logged in.</p>
+
+<p>An example of how you might use this cookie in python would be the following (thx Erik Dennihy):</p>
+
+<pre>
+import requests
+
+cookies = dict(gemini_archive_session='my_archive_cookie')
+r = requests.get('https://archive.gemini.edu/download/my_archive_search....',cookies=cookies,stream=True)
+handle = open('data.tar','wb')
+for chunk in r.iter_content(chunk_size=256):
+     handle.write(chunk)
+</pre>
+
+<h2 id="selection">Selection Criteria</h2>
+
+<p>Here are details of the selection criteria you can use. Multiple ones are separated by /s in the URL just like directories would be.</p>
+
+<p>The <code>present</code> and <code>canonical</code> selection criteria are worth of special explanation. When the archive ingests
+a new data file, that file is marked as both present (physically present in the file store) and canonical (it is the canonical version
+of that file). If the file is modified at Gemini (for example the QA state is updated) and it is re-ingested into the archive, the archive
+adds a new database record for the updated file but the entry for the old file is not deleted, it is simply marked as not present and 
+not canonical. This means that the archive has some history information of previous file versions. We use two separate flags for these
+because we use the same software for internal data management, where old files may be scrubbed off disk to free up space for new ones - in
+which case the database record will reflect that file version can be canonical but no longer present on disk.</p>
+
+<p>The search form and data summaries assume <strong>canonical</strong> as one of the search criteria as you are almost always looking
+for the most recent (canonical) version of the file. The JSON APIs do not do this so as to allow you to deliberately look for information on 
+previous versions of the file. Assuming you don't want to do that, <strong>you should always have /canonical as one your selection
+criteria with the JSON APIs</strong>.</p>
+
+<table>
+<tr><th>Property</th><th>Format</th><th>Example</th><th>Notes</th></tr>
+
+<tr>
+<td>Single UT Date</td>
+<td>YYYYMMDD</td>
+<td>20100401</td>
+<td>Note that Chilean observing nights span multiple UT dates.</td>
+</tr>
+
+<tr>
+<td>UT Date Range</td>
+<td>yyyymmdd-YYYYMMDD</td>
+<td>20100401-20100420</td>
+<td>Inclusive</td>
+</tr>
+
+<tr>
+<td>Telescope</td>
+<td></td>
+<td>Gemini-South</td>
+<td>or Gemini-North</td>
+</tr>
+
+<tr>
+<td>Instrument</td>
+<td></td>
+<td>GNIRS</td>
+<td>to get both GMOS-N and GMOS-S just use GMOS</td>
+</tr>
+
+<tr>
+<td>Program ID</td>
+<td>(GN|GS)-(Semester)-(Program Type)-(Program Number)</td>
+<td>GN-2009B-Q-51</td>
+<td>If the program ID is non-standard, you can use e.g. progid=GN-GNIRS-Engineering</td>
+</tr>
+
+<tr>
+<td>Observation ID</td>
+<td>(Program ID)-(Observation Number)</td>
+<td>GN-2009B-Q-51-9</td>
+<td>If the observation ID is non-standard, you can use e.g. obsid=GN-GNIRS-Engineering-003</td>
+</tr>
+
+<tr>
+<td>Data Label</td>
+<td>(Observation ID)-(Dataset number)</td>
+<td>GN-2009B-Q-51-28-001</td>
+<td></td>
+</tr>
+
+<tr>
+<td>Observation Type</td>
+<td></td>
+<td>OBJECT</td>
+<td></td>
+</tr>
+
+<tr>
+<td>Observation Class</td>
+<td></td>
+<td>science</td>
+<td></td>
+</tr>
+
+<tr>
+<td>Filename</td>
+<td></td>
+<td>S20091028S0097.fits</td>
+<td>Works with or without the .fits. For non-standard filenames, use filename=some_odd_filename.fits</td>
+</tr>
+
+<tr>
+<td>Filename prefix</td>
+<td></td>
+<td>N201203</td>
+<td>Selects all files that have names beginning with... For non-standard filenames, use e.g. filepre=00AUG</td>
+</tr>
+
+<tr>
+<td>QA state</td>
+<td></td>
+<td>Pass</td>
+<td>Pass, Usable, Fail, NotFail, Win or Lucky - Win means Pass or Usable (ie not Fail or Undefined), NotFail is literally every state other than Fail, Lucky means Pass or Undefined.</td>
+</tr>
+
+<tr>
+<td>Mode</td>
+<td>imaging</td>
+<td></td>
+<td>imaging or spectroscopy.</td>
+</tr>
+
+<tr>
+<td>Adaptive Optics</td>
+<td></td>
+<td>AO</td>
+<td>AO means any adaptive optics in use. NOTAO means not AO. NGS means NGS AO, LGS means LGS AO</td>
+</tr>
+
+<tr>
+  <td>Science Quality</td>
+  <td></td>
+  <td>sq</td>
+  <td>Can be 'sq' for science quality or 'ql' for quick look</td>
+</tr>
+
+<tr>
+<td>File curation</td>
+<td>canonical</td>
+<td></td>
+<td>present, canonical, notpresent, notcanonical. See note above.</td>
+</tr>
+
+<tr>
+<td>GMOS grating name</td>
+<td></td>
+<td>B600</td>
+<td>Selects only files using that GMOS grating</td>
+</tr>
+
+<tr>
+<td>GMOS mask name</td>
+<td></td>
+<td>GN2009BC009-04</td>
+<td>Selects only files using that GMOS mask name</td>
+</tr>
+
+<tr>
+<td>Binning</td>
+<td>NxM</td>
+<td>2x2</td>
+<td>Pixel binning. Unbinned data shows as 1x1</td>
+</tr>
+
+<tr>
+<td>Detector config</td>
+<td></td>
+<td>high</td>
+<td>The words low, high, slow, fast will be interpreted as detector configurations - ie read gain setting or read speed setting</td>
+</tr>
+
+<tr>
+<td>Detector ROI</td>
+<td></td>
+<td>FullFrame</td>
+<td>The words FullFrame, CentralSpectrum, CentralStamp are interpreted as detector Region of Interest (ROI). FullFrame will include instruments that do not have configurable ROIs.</td>
+</tr>
+
+<tr>
+<td>Calibration Type</td>
+<td></td>
+<td>ARC</td>
+<td>This is only useful with the calibration systems</td>
+</tr>
+
+<tr>
+<td>Reduction State</td>
+<td></td>
+<td>RAW</td>
+<td>e.g. RAW, PREPARED, PROCESSED_BIAS, PROCESSED_FLAT. Most data in the archive is RAW data, but this is how you specify if you are looking for a certain type or reduced data.</td>
+</tr>
+
+<tr>
+<td>Photometric Standard</td>
+<td>photstandard</td>
+<td>photstandard</td>
+<td>Selects only data that have a Gemini photometric standard in the field of view.</td>
+</tr>
+
+<tr>
+<td>Filter</td>
+<td>filter=(filtername)</td>
+<td>filter=g</td>
+<td>Select by filter name. Don't include any _G1234 type suffix.</td>
+</tr>
+
+<tr>
+<td>Twilight observation</td>
+<td></td>
+<td>Twilight</td>
+<td>Use Twilight or NotTwilight to select or exclude twilight sky observations (eg twilight flat fields)</td>
+</tr>
+
+<tr>
+<td>exposure time</td>
+<td>exposure_time=(number or range)</td>
+<td>exposure_time=59-61</td>
+<td>Select by exposure time. Due to floating point ambiguity with some of the instruments, it's best to use a range.</td>
+</tr>
+
+<tr>
+<td>coadds</td>
+<td>coadds=(integer)</td>
+<td>coadds=10</td>
+<td>Select by number of coadds. Integer exact match</td>
+</tr>
+
+<tr>
+<td>Telescope sky position</td>
+<td>ra=(min-max)/dec=(min-max)</td>
+<td>ra=123.5-123.6/dec=21.1-22.2. For negative Dec, dec=-22.3--24.5.</td>
+<td>ICRS RA and Dec, decimal degrees, or HH:MM:SS.sss / [-]DD:MM:SS.sss</td>
+</tr>
+
+<tr>
+<td>Telescope position</td>
+<td>az=(min-max)/el=(min-max)/crpa=(min-max)</td>
+<td>az=155.0-155.5/el=88.0-89.0</td>
+<td>Telescope Azimuth, Elevation and Cassegrain Rotator Position Angle. Decimal degrees. You must supply two numbers (decimal point optional and negative sign) separated by a hyphen. Note that it does not do intelligent range wrapping, the smaller number must be first and there's currently no way to select everything in the 20 degree range between 350 and 10 degrees. Also it takes the numbers from the header literally, in the az and crpa systems these may not be limited to 0:360 or -180:180 due to the 540 degree range of these systems.</td>
+</tr>
+</table>
+
+
+<h2 id="sample_code">Sample python code</h2>
+<h3>Simple file list using jsonfilelist</h3>
+<p>This is a simple example in python that constructs a jsonfilelist URL, fetches the JSON document text into a string,
+parses that into a list of dictionaries, and then loops through showing some details of the files we found.</p>
+<div class="sample"><pre><code>
+import urllib
+import json
+
+# Construct the URL. We'll use the jsonfilelist service
+url = "https://archive.gemini.edu/jsonfilelist/"
+
+# List the files for GN-2010B-Q-22 taken with GMOS-N on 2010-12-31
+url += "canonical/GN-2010B-Q-22/GMOS-N/20101231"
+
+# Open the URL and fetch the JSON document text into a string
+u = urllib.urlopen(url)
+jsondoc = u.read()
+u.close()
+
+# Decode the JSON
+files = json.loads(jsondoc)
+
+# This is a list of dictionaries each containing info about a file
+for f in files:
+    print "Filename: %s" % f['filename']
+    print "-- file size: %d, data size: %d" % (f['file_size'], f['data_size'])
+
+</code></pre></div>
+
+<p>Gives the following output:</p>
+<div class="sample"><pre><code>
+Filename: N20101231S0338.fits.bz2
+-- file size: 21314852, data size: 57548160
+Filename: N20101231S0339.fits.bz2
+-- file size: 21130627, data size: 57548160
+Filename: N20101231S0340.fits.bz2
+-- file size: 21022898, data size: 57548160
+Filename: N20101231S0341.fits.bz2
+-- file size: 21154419, data size: 57548160
+Filename: N20101231S0342.fits.bz2
+-- file size: 21086479, data size: 57548160
+Filename: N20101231S0343.fits.bz2
+-- file size: 21018470, data size: 57548160
+</code></pre></div>
+
+
+<h3>More details of the files using jsonsummary</h3>
+<p>Similar to the example above, but getting more details about the observations using the jsonsummary API</p>
+<div class="sample"><pre><code>
+import urllib
+import json
+
+# Construct the URL. We'll use the jsonsummary service
+url = "https://archive.gemini.edu/jsonsummary/"
+
+# List the OBJECT files taken with GMOS-N on 2010-12-31
+url += "canonical/OBJECT/GMOS-N/20101231"
+
+# Open the URL and fetch the JSON document text into a string
+u = urllib.urlopen(url)
+jsondoc = u.read()
+u.close()
+
+# Decode the JSON
+files = json.loads(jsondoc)
+
+# This is a list of dictionaries each containing info about a file
+total_data_size = 0
+print "%20s %22s %10s %8s %s" % ("Filename", "Data Label", "ObsClass",
+                                 "QA state", "Object Name")
+for f in files:
+    total_data_size += f['data_size']
+    print "%20s %22s %10s %8s %s" % (f['name'], f['data_label'],
+                                     f['observation_class'], f['qa_state'],
+                                     f['object'])
+
+print "Total data size: %d" % total_data_size
+
+</code></pre></div>
+
+<p>Gives the following output:</p>
+<div class="sample"><pre><code>
+            Filename             Data Label   ObsClass QA state Object Name
+ N20101231S0222.fits  GN-2010B-Q-51-196-001        acq   Usable CDFS
+ N20101231S0223.fits  GN-2010B-Q-51-196-002        acq   Usable CDFS
+ N20101231S0224.fits  GN-2010B-Q-51-196-003        acq   Usable CDFS
+ N20101231S0274.fits  GN-2010B-Q-51-196-004        acq     Pass CDFS
+ N20101231S0275.fits  GN-2010B-Q-51-196-005        acq     Pass CDFS
+ N20101231S0276.fits  GN-2010B-Q-51-196-006        acq     Pass CDFS
+ N20101231S0278.fits  GN-2010B-Q-51-169-006    science     Pass CDFS
+ N20101231S0333.fits  GN-2010B-C-10-103-001        acq     Pass SDSSJ0841+2042
+ N20101231S0334.fits  GN-2010B-C-10-103-002        acq     Pass SDSSJ0841+2042
+ N20101231S0335.fits  GN-2010B-C-10-103-003        acq     Pass SDSSJ0841+2042
+ N20101231S0337.fits   GN-2010B-C-10-82-004    science     Pass SDSSJ0841+2042
+ N20101231S0338.fits    GN-2010B-Q-22-4-001    science     Pass L5c02
+ N20101231S0339.fits    GN-2010B-Q-22-4-002    science     Pass L5c02
+ N20101231S0340.fits    GN-2010B-Q-22-4-003    science     Pass L5c02
+ N20101231S0341.fits    GN-2010B-Q-22-4-004    science     Pass L5c02
+ N20101231S0342.fits    GN-2010B-Q-22-4-005    science     Pass L5c02
+ N20101231S0343.fits    GN-2010B-Q-22-4-006    science     Pass L5c02
+ N20101231S0369.fits   GN-2010B-Q-37-56-001        acq     Pass Cluster F - East
+ N20101231S0370.fits   GN-2010B-Q-37-56-002        acq     Pass Cluster F - East
+ N20101231S0371.fits   GN-2010B-Q-37-56-003        acq     Pass Cluster F - East
+ N20101231S0373.fits   GN-2010B-Q-37-17-008    science     Pass Cluster F - East
+ N20101231S0374.fits   GN-2010B-Q-37-17-009    science     Pass Cluster F - East
+ N20101231S0377.fits   GN-2010B-Q-37-17-012    science     Pass Cluster F - East
+ N20101231S0378.fits    GN-2010B-Q-64-1-001    science     Pass PTF10cwr
+ N20101231S0379.fits    GN-2010B-Q-64-1-002    science     Pass PTF10cwr
+ N20101231S0380.fits    GN-2010B-Q-64-1-003    science     Pass PTF10cwr
+ N20101231S0381.fits    GN-2010B-Q-64-1-004    science     Pass PTF10cwr
+ N20101231S0382.fits    GN-2010B-Q-64-1-005    science     Pass PTF10cwr
+ N20101231S0383.fits    GN-2010B-Q-64-1-006    science     Pass PTF10cwr
+ N20101231S0397.fits  GN-CAL20101231-11-001 partnerCal     Pass PG1323-086
+ N20101231S0398.fits  GN-CAL20101231-11-002 partnerCal     Pass PG1323-086
+ N20101231S0399.fits  GN-CAL20101231-11-003 partnerCal     Pass PG1323-086
+ N20101231S0400.fits  GN-CAL20101231-11-004 partnerCal     Pass PG1323-086
+ N20101231S0401.fits  GN-CAL20101231-11-005 partnerCal     Pass PG1323-086
+ N20101231S0402.fits  GN-CAL20101231-11-006 partnerCal     Pass PG1323-086
+ N20101231S0403.fits  GN-CAL20101231-11-007 partnerCal     Pass PG1323-086
+ N20101231S0404.fits  GN-CAL20101231-11-008 partnerCal     Pass PG1323-086
+ N20101231S0405.fits  GN-CAL20101231-11-009 partnerCal     Pass PG1323-086
+ N20101231S0406.fits  GN-CAL20101231-11-010 partnerCal     Pass PG1323-086
+ N20101231S0407.fits  GN-CAL20101231-11-011 partnerCal     Pass PG1323-086
+ N20101231S0408.fits  GN-CAL20101231-11-012 partnerCal     Pass PG1323-086
+ N20101231S0409.fits  GN-CAL20101231-11-013 partnerCal     Pass PG1323-086
+ N20101231S0410.fits  GN-CAL20101231-11-014 partnerCal     Pass PG1323-086
+ N20101231S0411.fits  GN-CAL20101231-11-015 partnerCal     Pass PG1323-086
+ N20101231S0412.fits  GN-CAL20101231-11-016 partnerCal     Pass PG1323-086
+ N20101231S0413.fits  GN-CAL20101231-12-001     dayCal     Pass Twilight
+ N20101231S0414.fits  GN-CAL20101231-12-008     dayCal     Pass Twilight
+ N20101231S0415.fits  GN-CAL20101231-12-009     dayCal     Pass Twilight
+ N20101231S0416.fits  GN-CAL20101231-12-010     dayCal     Pass Twilight
+ N20101231S0417.fits  GN-CAL20101231-12-011     dayCal     Pass Twilight
+ N20101231S0418.fits  GN-CAL20101231-12-012     dayCal     Pass Twilight
+ N20101231S0419.fits  GN-CAL20101231-12-013     dayCal     Pass Twilight
+ N20101231S0420.fits  GN-CAL20101231-12-014     dayCal     Pass Twilight
+ N20101231S0421.fits  GN-CAL20101231-12-015     dayCal     Pass Twilight
+ N20101231S0422.fits  GN-CAL20101231-12-016     dayCal     Pass Twilight
+ N20101231S0423.fits  GN-CAL20101231-12-017     dayCal     Pass Twilight
+ N20101231S0424.fits  GN-CAL20101231-12-018     dayCal     Pass Twilight
+ N20101231S0425.fits  GN-CAL20101231-12-019     dayCal     Pass Twilight
+ N20101231S0426.fits  GN-CAL20101231-12-020     dayCal     Pass Twilight
+ N20101231S0427.fits  GN-CAL20101231-12-021     dayCal     Pass Twilight
+ N20101231S0428.fits  GN-CAL20101231-12-022     dayCal     Pass Twilight
+Total data size: 1856059200
+</code></pre></div>
+
+<h2 id="rest">REST</h2>
+
+<p>We have also added a REST interface for accessing data.  Currently, this is available
+for basic header, file and program information and for GMOS-specific information.  The
+top-level for the API is at:
+</p>
+
+<a href="https://archive.gemini.edu/services/rest/">https://archive.gemini.edu/services/rest/</a>
+
+<p>It uses the URL query parameters to do searches, and results are paginated.  You can
+search for matches against the various fields you see in the output.  You can also search
+nested objects, such as a header’s program information, for instance <b>program__abstract</b>.
+You can use wildcards with <b>*</b> for text matches.  You can search for greater-than or
+less-than by adding <b>__gt</b> or <b>__lt</b> to the field name.  You can add
+<b>__ne</b> to a field name to  query for not-equals.
+</p>
+
+<p>Some example searches:</p>
+
+<h3>Find all Programs that mention Jupiter in the title:</h3>
+
+<a href="https://archive.gemini.edu/services/rest/programs/?title=*Jupiter*">https://archive.gemini.edu/services/rest/programs/?title=*Jupiter*</a>
+
+<p>Note the “next” field in the result that can take you to page 2.</p>
+
+<h3>Search for ‘Alopeke data from 2022 onward that were done for any program
+mentioning TESS in it’s abstract.</h3>
+
+<a href="https://archive.gemini.edu/services/rest/headers/?instrument=ALOPEKE&ut_datetime__gt=2022-01-01&program__abstract=*TESS*">https://archive.gemini.edu/services/rest/headers/?instrument=ALOPEKE&ut_datetime__gt=2022-01-01&program__abstract=*TESS*</a>
+
+<h3>Here are GMOS observations from 2022 onward using the G5323 component</h3>
+
+<a href="https://archive.gemini.edu/services/rest/gmos/?header__ut_datetime__gt=2022&disperser=*G5323">https://archive.gemini.edu/services/rest/gmos/?header__ut_datetime__gt=2022&disperser=*G5323</a>
+
+</body>
+</html>

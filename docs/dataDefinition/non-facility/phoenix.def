@@ -1,0 +1,21 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME:  PHOENIX
+
+import:   [ vis-pdu ]
+
+validation(final):
+  - primary-hdu: pho-pdu
+
+pho-pdu:
+  - merge: vis-pdu
+  - keywords:
+    - OBJECT
+    - IMAGETYP
+    - FILT_POS
+    - UT
+    - UTDATE
+    - RA:
+      - sexagesimal
+    - DEC:
+      - sexagesimal

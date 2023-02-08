@@ -1,0 +1,11 @@
+[archive:vars]
+#ansible_become_pass='{{ sudo_pass }}'
+enable_export=True
+enable_postfix=True
+is_hawaii=True
+is_onsite=True
+is_ops=True
+visiting_instrument_script=fits-copy_from_visiting_instruments_mko.service
+
+[archive]
+mkofits-lv3.hi.gemini.edu

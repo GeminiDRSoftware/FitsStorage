@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block title %}Comments for Observations{% endblock %}
+{% block body %}
+<table cellspacing = "5">
+<tr class="tr_head">
+  <th>DataLabel
+  <th>Date Time
+  <th>Log Entry
+</tr>
+{%- for row in rows %}
+<tr class="alternating">
+  <td class="nowrap"> {{ row.datalabel|e }}
+  <td class="nowrap"> {{ row.ut_datetime.strftime('%Y-%m-%d %H:%M:%S')|e }}
+  <td> {{ row.comment|e }}
+</tr>
+{%- endfor %}
+</table>
+{% endblock %}

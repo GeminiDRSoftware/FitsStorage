@@ -1,0 +1,15 @@
+# Restrictions for Category PHOENIX
+provides:        [ valid, phoenix ]
+
+conditions:
+  - matching:
+    - INSTRUME:    PHOENIX
+
+include files:   [ radec ]
+
+keywords:
+  - OBJECT
+  - IMAGETYP
+  - FILT_POS
+  - UT
+  - UTDATE

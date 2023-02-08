@@ -1,0 +1,48 @@
+{% macro radio_buttons(name, state) %}
+<input type="radio" name="{{ name }}" value="Yes"{% if state %} checked{% endif %} />Yes
+<input type="radio" name="{{ name }}" value="No"{% if not state %} checked{% endif %} />No
+{% endmacro %}
+
+{% extends "layout_just_title.html" %}
+{% block title %}FITS Storage new data email notification list{% endblock %}
+{% block body %}
+<h1>FITS Storage new data email notification list</h1>
+
+<p>There is a <a href='/notificationhelp.html'>help page</a> if you're unsure how to use this.
+<hr />
+
+{%- for notif in notifications %}
+<h2>Notification ID: {{ notif.id }} - {{ notif.label }}</h2>
+<ul>
+  <li>Data Selection: {{ notif.selection }}
+  <li>Email To: {{ notif.to }}
+  <li>Email CC: {{ notif.cc }}
+  <li>Gemini Internal: {{ notif.internal }}
+</ul>
+
+<form action='/notification' method='post'>
+  <table>
+  {%- for input, label in mod_list %}{% set name = '%s-%s' % (input, notif.id) %}
+    <tr>
+      <td><label for='{{ name }}'>{{ label }}:</label>
+      {%- if input == 'internal' %}
+      <td>{{ radio_buttons(name, notif.internal) }}
+      {%- elif input == 'delete' %}
+      <td>{{ radio_buttons(name, False) }}
+      {%- else %}
+      <td><input type="text" size=32 name='{{ name }}' />
+      {%- endif %}
+    </tr>
+  {%- endfor %}
+  </table>
+  <input type="submit" value="Save" /> <input type="reset" />
+</form>
+{%- endfor %}
+
+<hr />
+<h2>Add a New Notification</h2>
+<form action="/notification" method="post">
+<label for=newone-0>Label</label> <input type="text" size=32 name=newone-0 />
+<input type="submit" value="Save" /> <input type="reset" />
+</form>
+{% endblock %}

@@ -4,3 +4,20 @@ build
 dist
 sphinx/build
 .pylintrc
+*.swp
+*.pyc
+*.egg-info
+build
+dist
+.DS_Store
+
+# Robot output
+robot/*.png
+robot/*.html
+robot/*.xml
+
+# Ansible
+ansible/playbooks/secret
+ansible/playbooks/id_rsa
+ansible/vault.txt
+ansible/aws_vars.yml

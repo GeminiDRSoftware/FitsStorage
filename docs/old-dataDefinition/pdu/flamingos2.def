@@ -1,0 +1,20 @@
+provides:       [ valid, f2 ]
+conditions:
+  - matching:
+    - INSTRUME:   F2
+
+include files:    radec
+
+keywords:
+  - DECKER
+  - FILTER1
+  - FILTER2
+  - FRAME
+  - GRISM
+  - LYOT
+  - MASKNAME
+  - MOSPOS
+  - TIME-OBS
+  - UT
+  - UTSTART
+  - UTEND

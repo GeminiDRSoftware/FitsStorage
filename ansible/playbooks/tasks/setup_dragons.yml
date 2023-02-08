@@ -1,0 +1,33 @@
+      - name: Checkout DRAGONS into /opt
+        become: true
+        become_user: fitsdata
+        git:
+          repo: https://github.com/GeminiDRSoftware/DRAGONS.git
+          dest: /opt/DRAGONS
+          version: d19a306059c5891e168e4c80689370415c3b0806
+          #version: 28017baee75101afd840f5d4255ddabfcfc32092
+          #version: release/3.1.x
+        register: dragonscheckout
+      - name: Cythonize DRAGONS
+        command: /usr/local/bin/cythonize -3 -i cyclip.pyx
+        args:
+          chdir: /opt/DRAGONS/gempy/library/
+        become: true
+        become_user: root
+        when: dragonscheckout.changed
+      - name: Checkout GeminiCalMgr into /opt
+        become: true
+        become_user: fitsdata
+        git:
+          repo: https://github.com/GeminiDRSoftware/GeminiCalMgr.git
+          dest: /opt/GeminiCalMgr
+          version: main
+        register: checkedout_geminicalmgr
+      - name: Checkout GeminiObsDB into /opt
+        become: true
+        become_user: fitsdata
+        git:
+          repo: https://github.com/GeminidRSoftware/GeminiObsDB.git
+          dest: /opt/GeminiObsDB
+          version: main
+        register: checkedout_geminiobsdb

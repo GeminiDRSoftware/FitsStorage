@@ -1,0 +1,93 @@
+body {
+  font-family: "Arial", "sans-serif";
+}
+
+div#reduction_legend {
+    float: right;
+    margin-left: 4px;
+    border: solid black 1px;
+}
+
+div#reduction_legend div {
+    margin: 4px;
+}
+
+#reduction_legend_ql {
+    background-color:  #f2d21c;
+    font-size: small;
+}
+
+#reduction_legend_sq {
+    background-color: #a7ed9c;
+    font-size: small;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.fullwidth {
+  width: 100%;
+  border: 0;
+}
+
+.tr_head {
+  background-color: #A0A0FF;
+  font-size: small
+}
+
+tr.alternating:nth-child(odd) {
+  background-color: #F0F0FF;
+  font-size: small
+}
+
+tr.alternating:nth-child(even) {
+  background-color: #E0E0FF;
+  font-size: small
+}
+
+tr.warn-alternating:nth-child(odd) {
+  background-color: #FFF0F0;
+  font-size: small
+}
+
+tr.warn-alternating:nth-child(even) {
+  background-color: #FFE0E0;
+  font-size: small
+}
+
+tr.sq-alternating:nth-child(odd) {
+  background-color: #a7ed9c;
+  font-size: small
+}
+
+tr.sq-alternating:nth-child(even) {
+  background-color: #88e679;
+  font-size: small
+}
+
+tr.ql-alternating:nth-child(odd) {
+  background-color: #f2d21c;
+  font-size: small
+}
+
+tr.ql-alternating:nth-child(even) {
+  background-color: #e7c70d;
+  font-size: small
+}
+
+tr.alternating:hover {
+  background-color: #C0C0FF;
+}
+
+tr.warn-alternating:hover {
+  background-color: #C0C0FF;
+}
+
+tr.sq-alternating:hover {
+  background-color: #c5f3be;
+}
+
+tr.ql-alternating:hover {
+  background-color: #f3d735;
+}

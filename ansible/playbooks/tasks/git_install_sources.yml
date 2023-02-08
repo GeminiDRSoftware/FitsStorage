@@ -1,0 +1,11 @@
+      - name: Setup Source Folders
+        import_tasks: tasks/setup_source_folders.yml
+      - name: Checkout FitsStorage into /opt
+        become: true
+        become_user: fitsdata
+        git:
+          repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
+          version: refac/52_modularize_ansible
+          dest: /opt/FitsStorage
+          accept_hostkey: yes
+        notify: restart services

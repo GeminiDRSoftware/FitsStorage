@@ -1,0 +1,15 @@
+provides:         valid
+conditions:
+  - is gpi
+  - matching:
+    - EXTNAME:    SCI
+
+include files:    wcs
+
+keywords:
+  - DATASEC
+  - CTYPE1
+  - CTYPE2
+  - CUNIT1
+  - CUNIT2
+  - RADESYS

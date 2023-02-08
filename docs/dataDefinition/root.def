@@ -1,0 +1,23 @@
+conditions:
+  - ?gemini-data
+  - not failed-data
+  - not engineering
+
+one of:
+  - facility/bhros
+  - facility/flamingos2
+  - facility/gmos
+  - facility/gnirs
+  - facility/gpi
+  - facility/gsaoi
+  - facility/nici
+  - facility/nifs
+  - facility/niri
+  - non-facility/flamingos
+  - non-facility/hokupaa
+  - non-facility/hrwfs
+  - non-facility/michelle
+  - non-facility/oscir
+  - non-facility/phoenix
+  - non-facility/trecs
+  - non-facility/graces

@@ -1,0 +1,235 @@
+version: "3"
+
+services:
+  postgres-onsite:
+    image: postgres:12
+    environment:
+      - POSTGRES_USER=fitsdata
+      - POSTGRES_PASSWORD=fitsdata
+      - POSTGRES_DB=fitsdata
+
+  postgres-archive:
+    image: postgres:12
+    environment:
+      - POSTGRES_USER=fitsdata
+      - POSTGRES_PASSWORD=fitsdata
+      - POSTGRES_DB=fitsdata
+
+  postgres-init-onsite:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-onsite
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+    command: python3 ./fits_storage/scripts/create_tables.py
+
+  postgres-init-onsite-views:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-onsite
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+    command: psql fitsdata < ./sql/views.sql
+
+  postgres-init-archive:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+    command: python3 ./fits_storage/scripts/create_tables.py
+
+  postgres-init-archive-views:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+    command: psql fitsdata < ./sql/views.sql
+
+  api:
+    image: fitsimage:latest
+    depends_on:
+      - postgres-init-archive
+      - postgres-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+      - USE_AS_ARCHIVE=True
+      - API_BACKEND_LOCATION=:8000
+      - USE_ELK_LOGGING=True
+      - PGPASSWORD=fitsdata
+      - EXPORT_UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+      - UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+    volumes:
+      - "~/testdata/archive-data-upload_staging:/data/upload_staging"
+      - "~/testdata/archive-sci-dataflow:/sci/dataflow"
+    command: bash -c "/wait-for-postgres.sh postgres-archive python3 fits_storage/scripts/api_backend.py"
+
+  archive:
+    image: fitsimage:latest
+    depends_on:
+      - postgres-init-archive
+      - postgres-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+      - USE_AS_ARCHIVE=True
+      - API_BACKEND_LOCATION=api:8000
+      - USE_ELK_LOGGING=True
+      - BLOCKED_URLS=fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,ingest_files
+      - EXPORT_UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+      - UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+      - FITS_SERVERTITLE=Docker Public Archive Server
+    volumes:
+      - "~/testdata/archive-data-upload_staging:/data/upload_staging"
+      - "~/testdata/archive-sci-dataflow:/sci/dataflow"
+    ports:
+      - "80:80"
+      - "443:443"
+
+  fitsservices:
+    image: fitsservices:latest
+    depends_on:
+      - postgres-init-archive
+      - postgres-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+      - USE_ELK_LOGGING=True
+    ports:
+      - "8090:8090"
+
+  archive-ingest-service:
+    image: fitsstorageutils:latest
+    depends_on:
+      - api
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+      - USE_AS_ARCHIVE=True
+      - API_BACKEND_LOCATION=api:8000
+      - USE_ELK_LOGGING=True
+      - PGPASSWORD=fitsdata
+    volumes:
+      - "~/testdata/archive-data-upload_staging:/data/upload_staging"
+      - "~/testdata/archive-sci-dataflow:/sci/dataflow"
+    command: bash -c "/wait-for-postgres.sh postgres-archive python3 fits_storage/scripts/service_ingest_queue.py"
+
+  onsite-api:
+    image: fitsimage:latest
+    depends_on:
+      - postgres-init-archive
+      - postgres-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+      - USE_AS_ARCHIVE=False
+      - API_BACKEND_LOCATION=:8000
+      - USE_ELK_LOGGING=False
+      - PGPASSWORD=fitsdata
+      - EXPORT_UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+      - UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+    volumes:
+      - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
+      - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
+    command: bash -c "/wait-for-postgres.sh postgres-archive python3 fits_storage/scripts/api_backend.py"
+
+  onsite:
+    image: fitsimage:latest
+    depends_on:
+      - postgres-init-onsite
+      - postgres-onsite
+    # command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+      - USE_AS_ARCHIVE=False
+      - EXPORT_DESTINATIONS=http://archive
+      - USE_ELK_LOGGING=False
+      - BLOCKED_URLS=
+      - PGPASSWORD=fitsdata
+      - UPLOAD_AUTH_COOKIE=onsite_docker_upload_auth
+      - MAGIC_API_SERVER_COOKIE=docker_magic_cookie
+      - MAGIC_API_CLIENT_COOKIE=docker_magic_cookie
+      - MAGIC_API_COOKIE=docker_magic_cookie
+      - API_BACKEND_LOCATION=onsite-api:8000
+      - FITS_SERVERTITLE=Docker Internal FITS Server
+    volumes:
+      - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
+      - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
+    ports:
+      - "8088:80"
+      - "8443:443"
+
+  add-to-ingest-queue:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-onsite
+      - postgres-onsite
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+      - EXPORT_DESTINATIONS=http://archive
+      - PGPASSWORD=fitsdata
+    volumes:
+      - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
+      - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
+    command: bash -c "/wait-for-postgres.sh postgres-onsite python3 fits_storage/scripts/add_to_ingest_queue.py"
+
+  onsite-ingest-service:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-onsite
+      - postgres-onsite
+      - add-to-ingest-queue
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+      - EXPORT_DESTINATIONS=http://archive
+      - USE_ELK_LOGGING=True
+      - PGPASSWORD=fitsdata
+    volumes:
+      - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
+      - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
+    command: bash -c "/wait-for-postgres.sh postgres-onsite python3 fits_storage/scripts/service_ingest_queue.py"
+
+  onsite-export-service:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-onsite
+      - postgres-onsite
+      - add-to-ingest-queue
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+      - EXPORT_DESTINATIONS=http://archive
+      - USE_ELK_LOGGING=True
+      - PGPASSWORD=fitsdata
+      - EXPORT_UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+      - UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+    volumes:
+      - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
+      - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
+    command: bash -c "/wait-for-postgres.sh postgres-onsite python3 fits_storage/scripts/service_export_queue.py"
+
+
+  archive-calcache-service:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-archive
+      - postgres-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+      - USE_ELK_LOGGING=True
+      - PGPASSWORD=fitsdata
+    volumes:
+      - "~/testdata/archive-data-upload_staging:/data/upload_staging"
+      - "~/testdata/archive-sci-dataflow:/sci/dataflow"
+    command: bash -c "/wait-for-postgres.sh postgres-archive python3 fits_storage/scripts/service_calcache_queue.py"
+
+
+  archive-preview-service:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-archive
+      - postgres-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+      - USE_ELK_LOGGING=True
+      - PGPASSWORD=fitsdata
+    volumes:
+      - "~/testdata/archive-data-upload_staging:/data/upload_staging"
+      - "~/testdata/archive-sci-dataflow:/sci/dataflow"
+    command: bash -c "/wait-for-postgres.sh postgres-archive python3 fits_storage/scripts/service_preview_queue.py"

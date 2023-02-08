@@ -1,0 +1,12 @@
+provides:       [ valid, bhros ]
+conditions:
+  - matching:
+    - INSTRUME:   bHROS
+
+keywords:
+  - IMG_SLCR
+  - FILTER
+  - TIME-OBS
+  - UTSTART
+  - UTEND
+

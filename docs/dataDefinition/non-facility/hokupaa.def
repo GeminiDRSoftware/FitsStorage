@@ -1,0 +1,19 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME:  Hokupaa+QUIRC
+
+import:   [ vis-pdu, radec ]
+
+validation(final):
+  - primary-hdu: hok-pdu
+
+hok-pdu:
+  - merge: vis-pdu
+  - maybe-merge: radec
+  - keywords:
+    - OBJECT
+    - IMAGETYP
+    - TIME-OBS
+    - UT
+    - FILTER
+    - DATASEC
