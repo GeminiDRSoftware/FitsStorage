@@ -12,8 +12,6 @@ from sqlalchemy.sql.sqltypes import String, Date, DateTime, NullType
 from datetime import datetime, date
 from contextlib import contextmanager
 
-from ..fits_storage_config import fits_database
-
 Base = declarative_base()
 
 class StringLiteral(String):
