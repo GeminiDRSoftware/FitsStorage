@@ -2,7 +2,7 @@
 
 from argparse import ArgumentParser
 
-from fits_storage.utils.createtables import create_tables, drop_tables
+from fits_storage.db.createtables import create_tables, drop_tables
 
 from fits_storage.db import session_scope
 
