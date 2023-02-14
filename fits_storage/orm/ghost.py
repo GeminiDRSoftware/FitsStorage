@@ -19,10 +19,10 @@ RESOLUTIONS = ['std', 'high']
 RESOLUTION_ENUM = Enum(*RESOLUTIONS, name='ghost_resolution')
 
 
-def _exptfix(val) -> int:
+def _exptfix(val) -> float:
     if isinstance(val, str):
         try:
-            val = int(str)
+            val = float(str)
         except:
             val = None
     if val is not None and (10000 < val or val < 0):
@@ -48,8 +48,10 @@ def _parse_amp_read_area(ara):
 def _exptime_bundle(val):
     expt = 0
     if isinstance(val, dict):
-        for arm, arm_expt in val.items():
-            expt += _exptfix(arm_expt)
+        # TODO: this should multiply by the corresponding
+        # ad.number_of_exposures() values
+        values = [val['red'], val['blue']]
+        expt = max(x for x in values if x is not None)
     else:
         expt = val
     return expt
