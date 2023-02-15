@@ -31,7 +31,9 @@ from collections import namedtuple, defaultdict
 from datetime import datetime
 from time import strptime
 
-from ..fits_storage_config import validation_def_path
+from ..config import fits_storage_config as fsc
+# validation_def_path = fsc.validation_def_path
+validation_def_path = None
 
 import yaml
 import astropy.io.fits as pf

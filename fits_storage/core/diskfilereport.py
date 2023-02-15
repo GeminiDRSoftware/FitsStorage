@@ -3,10 +3,10 @@ from sqlalchemy import Integer, Text, Enum
 
 import os
 
-from gemini_obs_db.orm.diskfile import DiskFile
+from .diskfile import DiskFile
 from ..fits_verify import fitsverify
 
-from gemini_obs_db.db import Base
+from . import Base
 
 from ..utils.gemini_fits_validator import AstroDataEvaluator, STATUSES
 

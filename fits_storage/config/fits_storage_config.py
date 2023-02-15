@@ -30,8 +30,10 @@ class FitsStorageConfig(dict):
         # By default, ConfigParser treats everything as a string.
         # These lists define configuration keywords that will be converted
         # to another type automatically as they are requested
-        self._bools = ['using_sqlite', 'database_debug', 'use_utc']
-        self._ints = ['postgres_database_pool_size', 'postgres_database_max_overflow']
+        self._bools = ['using_sqlite', 'database_debug', 'use_utc',
+                       'is_server']
+        self._ints = ['postgres_database_pool_size',
+                      'postgres_database_max_overflow']
 
         self._readfiles(configfile=configfile, configstring=configstring)
 

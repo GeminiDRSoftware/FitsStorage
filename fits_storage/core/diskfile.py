@@ -6,21 +6,20 @@ import os
 import datetime
 import re
 
-from fits_storage_core.utils.hashes import md5sum, md5sum_size_bz2
+from fits_storage.utils.hashes import md5sum, md5sum_size_bz2
 
 from . import Base
 from .file import File
 
-# from fits_storage_core.db_config import storage_root, z_staging_area
-# from fits_storage_core import db_config
-from fits_storage_core.config import get_config
 
+from fits_storage.config import get_config
 fsc = get_config()
 
 __all__ = ["DiskFile"]
 
-from .preview import Preview
 from .provenance import Provenance, ProvenanceHistory
+# if fsc.is_server:
+#     from ..server.preview import Preview
 
 _standard_filename_timestamp_re = re.compile(r'[NS](\d{4})(\d{2})(\d{2})[A-Z].*')
 _igrins_filename_timestamp_re = re.compile(r'[A-Z]{4}_(\d{4})(\d{2})(\d{2})_.*')
@@ -89,7 +88,8 @@ class DiskFile(Base):
     id = Column(Integer, primary_key=True)
     file_id = Column(Integer, ForeignKey('file.id'), nullable=False, index=True)
     file = relation(File, order_by=id, back_populates='diskfiles')
-    previews = relationship(Preview, back_populates="diskfile", order_by=Preview.filename)
+    # if fsc.is_server
+        #previews = relationship(Preview, back_populates="diskfile", order_by=Preview.filename)
 
     filename = Column(Text, index=True)
     path = Column(Text)

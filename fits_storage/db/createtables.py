@@ -5,21 +5,19 @@ in the Fits Storage System.
 from sqlalchemy.orm import Session
 
 import fits_storage.db as db
-from fits_storage.orm.file import File
-# from fits_storage.orm.diskfile import DiskFile
-# from fits_storage.orm.header import Header
-# from fits_storage.orm.gmos import Gmos
-# from fits_storage.orm.niri import Niri
-# from fits_storage.orm.gnirs import Gnirs
-# from fits_storage.orm.nifs import Nifs
-# from fits_storage.orm.f2 import F2
-# from fits_storage.orm.ghost import Ghost
-# from fits_storage.orm.gpi import Gpi
-# from fits_storage.orm.gsaoi import Gsaoi
-# from fits_storage.orm.nici import Nici
-# from fits_storage.orm.michelle import Michelle
-# from fits_storage.orm.calcache import CalCache
 
+# Importing orm classes here (or even within imports that get called from
+# here) will cause those tables to be created even though there is no
+# reference to the orm class and it looks like the import is unused. When the
+# orm class imports, it registers itself with the sqlalchemy engine, and that
+# is enough to cause any metadata.create_all() call to create that table.
+
+# Core ORM classes
+from fits_storage.core.header import Header
+from fits_storage.core.diskfilereport import DiskFileReport
+from fits_storage.core.footprint import Footprint
+from fits_storage.core.fulltextheader import FullTextHeader
+from fits_storage.core.photstandard import PhotStandard
 
 def create_tables(session: Session):
     """
@@ -33,9 +31,7 @@ def create_tables(session: Session):
     """
 
     # Create the tables
-    File.metadata.create_all(bind=db._saved_engine)
-    # DiskFile.metadata.create_all(bind=db._saved_engine)
-    # Header.metadata.create_all(bind=db._saved_engine)
+    Header.metadata.create_all(bind=db._saved_engine)
     # Gmos.metadata.create_all(bind=db._saved_engine)
     # Niri.metadata.create_all(bind=db._saved_engine)
     # Nifs.metadata.create_all(bind=db._saved_engine)
