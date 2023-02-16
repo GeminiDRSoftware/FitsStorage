@@ -22,30 +22,32 @@ from .web import get_context
 def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None, user_obsid_list=None,
                    user_file_list=None):
     """
-    Returns a boolean saying whether or not the given user can have
-    access to the given header coordinates.
-    You can optionally pass in the users program list directly. If you
-    don't, then this function will look it up, which requires the session
-    to be valid. If you pass in the user program list, you don't actually
-    need to pass a valid session - it can be None.
+    Returns a boolean saying whether the given user can have access to the
+    given header coordinates.
+
+    You can optionally pass in the users program list directly; ff you don't,
+    this function will look it up, which requires the session to be valid.
+
+    If you do pass in the user program list, you can pass None for the session
     """
 
     # Is not even proprietary coordinate data
     if not header.proprietary_coordinates:
         return True
 
-    # If it is proprietary coordinate data
+    # If it is proprietary coordinate data,
     # the rules are exactly the same as for the data
-    return canhave_header(session, user, header, gotmagic=gotmagic, user_progid_list=user_progid_list,
-                          user_obsid_list=user_obsid_list, user_file_list=user_file_list)
+    return canhave_header(session, user, header, gotmagic=gotmagic,
+                          user_progid_list=user_progid_list,
+                          user_obsid_list=user_obsid_list,
+                          user_file_list=user_file_list)
 
 
 def is_staff(user, filedownloadlog):
     """
     Is the current user a staff member?
     """
-    # Is the user gemini staff?
-    if user is not None and user.gemini_staff is True:
+    if user is not None and user.staff is True:
         if filedownloadlog:
             filedownloadlog.staff_access = True
         return True
@@ -115,14 +117,15 @@ def is_user_obsid(session, user, user_obsid_list, obsid, filedownloadlog):
     return False
 
 
-def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, user_progid_list=None,
-                   user_obsid_list=None, user_file_list=None, path=None, filename=None):
+def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False,
+                   user_progid_list=None, user_obsid_list=None,
+                   user_file_list=None, path=None, filename=None):
     """
-    Returns a boolean saying whether or not the given user can have
-    access to the given header.
-    You can optionally pass in the users program list directly. If you
-    don't, then this function will look it up, which requires the session
-    to be valid. If you pass in the user program list, you don't actually
+    Returns a boolean saying whether the given user can have access to the
+    given header.
+    You can optionally pass in the users program list directly; if you
+    don't, this function will look it up, which requires the session
+    to be valid. If you do pass in the user program list, you don't actually
     need to pass a valid session - it can be None.
     If you pass in a FileDownloadLog object, we will update it to note
     the file access rules that were used.

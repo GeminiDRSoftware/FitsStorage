@@ -1,5 +1,5 @@
-from sqlalchemy import Column, String
-from sqlalchemy import Integer, Text, Boolean, DateTime
+from sqlalchemy import Column
+from sqlalchemy import String, Integer, Text, Boolean, DateTime
 
 from fits_storage.core import Base
 
@@ -17,9 +17,9 @@ class User(Base):
     This is the ORM class for the user table.
 
     """
-    # Calling the table user makes it awkward in raw sql as that's a reserved name
-    # and you have to quote it.
-    __tablename__ = 'archiveuser'
+    # Calling the table user would make it awkward in raw sql as that's a
+    # reserved name, and thus you'd have to quote it each time.
+    __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True)
     orcid_id = Column(String(20), index=True)
@@ -28,7 +28,7 @@ class User(Base):
     password = Column(Text)
     salt = Column(Text)
     email = Column(Text)
-    gemini_staff = Column(Boolean)
+    staff = Column(Boolean)
     misc_upload = Column(Boolean)
     user_admin = Column(Boolean)
     file_permission_admin = Column(Boolean)
@@ -51,7 +51,7 @@ class User(Base):
         self.account_type = None
         self.username = username
         self.password = None
-        self.gemini_staff = False
+        self.staff = False
         self.misc_upload = False
         self.user_admin = False
         self.superuser = False
@@ -81,8 +81,8 @@ class User(Base):
     def change_password(self, password):
         """
         Takes an actual password string, generates a random salt, hashes the 
-        password with the salt, updates the ORM with the new hash and the new salt.
-        Calling code needs to call a session.commit() after calling this.
+        password with the salt, updates the ORM with the new hash and the new
+        salt. Calling code needs to call a session.commit() after calling this.
 
         Parameters
         ----------
@@ -101,7 +101,7 @@ class User(Base):
 
     def validate_password(self, candidate):
         """
-        Takes a candidate password string and checks if it's correct for this user.
+        Checks if a candidate password string is correct for this user.
 
         Parameters
         ----------
@@ -128,7 +128,7 @@ class User(Base):
 
     def generate_reset_token(self):
         """
-        Generates a random password reset token, and sets an exiry date on it.
+        Generates a random password reset token, and sets an expiry date on it.
         The token can be emailed to the user in a password reset link,
         and then checked for validity when they click the link.
         Don't forget to commit the session after calling this.
@@ -154,12 +154,15 @@ class User(Base):
         -------
         bool : True if candidate successfully passed in a matching reset token
         """
-        try:
-            if (candidate is not None) and (datetime.utcnow() < self.reset_token_expires) and (candidate == self.reset_token):
-                self._clear_reset_token()
-                return True
-        except TypeError: # If this happens, selt.reset_token_expires was None
-            pass
+        # Is a reset token even defined for this user?
+        if self.reset_token is None or self.reset_token_expires is None:
+            return False
+
+        if (candidate is not None) and \
+                (datetime.utcnow() < self.reset_token_expires) and \
+                (candidate == self.reset_token):
+            self._clear_reset_token()
+            return True
 
         return False
 
@@ -173,7 +176,7 @@ class User(Base):
 
     def log_in(self):
         """
-        Call this when a user sucesfully logs in.
+        Call this when a user successfully logs in.
         Returns the session cookie.
         Don't forget to commit the session afterwards.
 
@@ -184,8 +187,8 @@ class User(Base):
         # Void any outstanding password reset tokens
         self._clear_reset_token()
         # Generate a new session cookie only if one doesn't exist
-        # (don't want to expire existing sessions just becaue we logged in from a
-        # new machine)
+        # (don't want to expire existing sessions just becaue we logged in from
+        # a new machine)
         if self.cookie is None:
             self.generate_cookie()
         return self.cookie
@@ -232,14 +235,3 @@ class User(Base):
         bool : True if a password has been set
         """
         return self.password is not None
-
-    @property
-    def is_staffer(self):
-        """
-        Check if the user is a staff member
-
-        Returns
-        -------
-        bool : True if the Gemini staff flag is set
-        """
-        return self.gemini_staff
