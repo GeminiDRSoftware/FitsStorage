@@ -40,7 +40,7 @@ def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None,
                           user_obsid_list=user_obsid_list, user_file_list=user_file_list)
 
 
-def is_staffer(user, filedownloadlog):
+def is_staff(user, filedownloadlog):
     """
     Is the current user a staff member?
     """
@@ -137,7 +137,7 @@ def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, 
         return False
 
     clear = any([is_eng(),
-                 is_staffer(user, filedownloadlog),
+                 is_staff(user, filedownloadlog),
                  is_released(header.release, filedownloadlog)])
 
     if clear:
@@ -171,7 +171,7 @@ def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, 
     the file access rules that were used.
     """
 
-    clear = any([is_staffer(user, filedownloadlog),
+    clear = any([is_staff(user, filedownloadlog),
                  is_users_program(session, user, user_progid_list, obslog.program_id, filedownloadlog),
                  is_user_file_permission(session,user, user_file_list, obslog.diskfile.path,
                                          obslog.diskfile.filename, filedownloadlog)])
@@ -229,7 +229,7 @@ def canhave_miscfile(session, user, misc, filedownloadlog=None, gotmagic=False, 
     the file access rules that were used.
     """
 
-    clear = any([is_staffer(user, filedownloadlog),
+    clear = any([is_staff(user, filedownloadlog),
                  is_released(misc.release, filedownloadlog)])
 
     if clear:
