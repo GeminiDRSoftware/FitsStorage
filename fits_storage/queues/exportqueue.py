@@ -5,7 +5,7 @@ from sqlalchemy import desc, func
 from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Boolean, Text, DateTime
 
-from gemini_obs_db.db import Base
+from fits_storage.core import Base
 
 _standard_filename_re = re.compile('[NS](\d{8}).*')
 _igrins_filename_re = re.compile('SDC[HK]_(\d{8})_.*')

@@ -1,8 +1,8 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 
-from fits_storage.orm.user import User
-from gemini_obs_db.db import Base
+from .user import User
+from fits_storage.core import Base
 
 
 class UserProgram(Base):

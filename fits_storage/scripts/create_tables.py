@@ -25,7 +25,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # ------------------------------------------------------------------------------
+    print("Loaded configuration from: ", ', '.join(fsc.configfiles_used))
+
     with session_scope() as session:
         if args.drop:
             print("Dropping database tables")

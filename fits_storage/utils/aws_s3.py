@@ -10,8 +10,10 @@ from time import sleep
 from urllib.request import pathname2url
 from urllib.parse import unquote
 
-from ..fits_storage_config import storage_root
-from gemini_obs_db.utils.hashes import md5sum
+from fits_storage.config import get_config
+fsc = get_config()
+
+from fits_storage.utils.hashes import md5sum
 from contextlib import contextmanager
 
 from .null_logger import EmptyLogger
@@ -33,8 +35,6 @@ class DownloadError(Exception):
 
 def is_string(obj):
     return isinstance(obj, str)
-
-from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name, s3_staging_area
 
 import boto3
 from boto3.s3.transfer import S3Transfer, S3UploadFailedError, RetriesExceededError
@@ -62,7 +62,7 @@ def generate_ranges(size):
         c = n
 
 class Boto3Helper(object):
-    def __init__(self, bucket_name = s3_bucket_name, logger_ = EmptyLogger()):
+    def __init__(self, bucket_name = fsc.s3_bucket_name, logger_ = EmptyLogger()):
         # This will hold the bucket
         self.l = logger_
         self.b = None
@@ -71,8 +71,8 @@ class Boto3Helper(object):
     @property
     def session(self):
         if boto3.DEFAULT_SESSION is None:
-            boto3.setup_default_session(aws_access_key_id     = aws_access_key,
-                                        aws_secret_access_key = aws_secret_key)
+            boto3.setup_default_session(aws_access_key_id     = fsc.aws_access_key,
+                                        aws_secret_access_key = fsc.aws_secret_key)
         return boto3.DEFAULT_SESSION
 
     @property
@@ -199,7 +199,7 @@ class Boto3Helper(object):
         """
 
         if not fullpath:
-            fullpath = os.path.join(storage_root, keyname)
+            fullpath = os.path.join(fsc.storage_root, keyname)
 
         # Check if the file already exists in the staging area, remove it if so
         if os.path.exists(fullpath):
@@ -246,7 +246,7 @@ class Boto3Helper(object):
 
     @contextmanager
     def fetch_temporary(self, keyname, **kwarg):
-        _, fullpath = mkstemp(dir=s3_staging_area)
+        _, fullpath = mkstemp(dir=fsc.s3_staging_area)
         try:
             if not self.fetch_to_staging(keyname, fullpath, **kwarg):
                 raise DownloadError("Could not download the file for some reason")

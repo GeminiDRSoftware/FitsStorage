@@ -5,7 +5,8 @@ in the Fits Storage System.
 from sqlalchemy.orm import Session
 
 import fits_storage.db as db
-import fits_storage.config as fsc
+from fits_storage.config import get_config
+fsc = get_config()
 
 # Importing orm classes here (or even within imports that get called from
 # here) will cause those tables to be created even though there is no
@@ -26,6 +27,7 @@ from fits_storage.cal import instruments
 # Server tables
 if fsc.is_server:
     from fits_storage import server
+    from fits_storage import queues
 
 def create_tables(session: Session):
     """

@@ -2,8 +2,8 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean
 from sqlalchemy import desc
 
-from gemini_obs_db.db import Base
-from gemini_obs_db.orm.diskfile import DiskFile
+from fits_storage.core import Base
+from fits_storage.core.diskfile import DiskFile
 from ..utils.queue import sortkey_for_filename
 
 

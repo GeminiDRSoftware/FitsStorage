@@ -2,8 +2,8 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 from sqlalchemy.orm import relation
 
-from . import Base
-from .header import Header
+from fits_storage.core import Base
+from fits_storage.core.header import Header
 
 
 __all__ = ["Gsaoi"]

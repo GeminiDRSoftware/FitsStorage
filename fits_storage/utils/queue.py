@@ -1,7 +1,7 @@
 import datetime
 from sqlalchemy.orm import make_transient
 from sqlalchemy.exc import OperationalError, IntegrityError
-from ..orm.queue_error import QueueError, INGESTQUEUE, PREVIEWQUEUE, CALCACHEQUEUE, EXPORTQUEUE
+from fits_storage.queues.queue_error import QueueError, INGESTQUEUE, PREVIEWQUEUE, CALCACHEQUEUE, EXPORTQUEUE
 import traceback
 import linecache
 from time import sleep

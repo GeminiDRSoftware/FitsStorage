@@ -9,7 +9,7 @@ from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Boolean, Text, DateTime
 from sqlalchemy import desc, func
 
-from gemini_obs_db.db import Base
+from fits_storage.core import Base
 from ..utils.queue import sortkey_for_filename
 
 

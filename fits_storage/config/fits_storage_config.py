@@ -89,6 +89,7 @@ class FitsStorageConfig(dict):
     def _calculate_values(self):
         self._calculate_database_url()
         self._calculate_using_sqlite()
+        self._calculate_using_s3()
 
     def _calculate_database_url(self):
         if self.config.get('database_url', None) is None:
@@ -98,6 +99,10 @@ class FitsStorageConfig(dict):
     def _calculate_using_sqlite(self):
         # Config values have to be strings. It will get converted back to a bool when read
         self.config['using_sqlite'] = 'True' if self.config['database_url'].startswith('sqlite:/') else 'False'
+
+    def _calculate_using_s3(self):
+        # For now, this is equal to is_archive
+        self.config['using_s3'] = self.config['is_archive']
 
     def __getitem__(self, key):
         if key in self._bools:

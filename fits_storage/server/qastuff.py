@@ -3,7 +3,7 @@ from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean
 from sqlalchemy.orm import relationship
 import math
 
-from gemini_obs_db.db import Base
+from fits_storage.core import Base
 
 import json
 

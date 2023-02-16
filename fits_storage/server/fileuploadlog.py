@@ -4,9 +4,8 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, Boolean
 from sqlalchemy.orm import relation
 
-from gemini_obs_db.db import Base
+from fits_storage.core import Base
 from .usagelog import UsageLog
-from gemini_obs_db.orm.diskfile import DiskFile
 
 # ------------------------------------------------------------------------------
 class FileUploadLog(Base):

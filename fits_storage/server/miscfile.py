@@ -2,12 +2,13 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy.orm import relation
 
-from gemini_obs_db.db import Base
-from gemini_obs_db.orm.diskfile import DiskFile
+from fits_storage.core import Base
+from fits_storage.core.diskfile import DiskFile
 
-from ..fits_storage_config import using_s3, upload_staging_path
+from fits_storage.config import get_config
+fsc = get_config()
 
-if using_s3:
+if fsc.using_s3:
     from ..utils.aws_s3 import get_helper, ClientError
     s3 = get_helper()
 
@@ -57,7 +58,7 @@ def miscfile_meta_path(path):
     -------
     str : path to JSON metadata file
     """
-    return os.path.join(upload_staging_path, path + '.json')
+    return os.path.join(fsc.upload_staging_path, path + '.json')
 
 
 def is_miscfile(path):
@@ -75,7 +76,7 @@ def is_miscfile(path):
     """
     if os.path.exists(miscfile_meta_path(path)):
         return True
-    elif using_s3:
+    elif fsc.using_s3:
         try:
             md = s3.get_key(path).metadata
             return 'is_misc' in md
@@ -126,7 +127,7 @@ def miscfile_meta(path, urlencode=False):
             meta['description'] = encode_string(meta['description'].encode('utf-8')) \
                 .decode(encoding='utf-8', errors='ignore')
     except IOError:
-        if using_s3:
+        if fsc.using_s3:
             meta = s3.get_key(path).metadata
             meta['description'] = decode_description(meta)
         else:
