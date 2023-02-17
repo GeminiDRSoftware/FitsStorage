@@ -11,7 +11,7 @@ from fits_storage.core import Base
 from fits_storage.core.header import Header
 
 
-class CalCacheQueue(Base):
+class CalCacheQueueEntry(Base):
     """
     This is the ORM object for the CalCacheQueue table.
 
@@ -43,10 +43,10 @@ class CalCacheQueue(Base):
 
         :class:`sqlalchemy.orm.query.Query` SQL Alchemy query object
         """
-        return session.query(CalCacheQueue)\
-                    .filter(CalCacheQueue.inprogress == False)\
-                    .filter(CalCacheQueue.failed == False)\
-                    .order_by(desc(CalCacheQueue.sortkey))
+        return session.query(CalCacheQueueEntry)\
+                    .filter(CalCacheQueueEntry.inprogress == False)\
+                    .filter(CalCacheQueueEntry.failed == False)\
+                    .order_by(desc(CalCacheQueueEntry.sortkey))
 
     # TODO remove tjhis
     # It looks like the rebuild logic is no longer used, I think we can delete these

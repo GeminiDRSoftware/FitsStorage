@@ -7,7 +7,7 @@ from fits_storage.core.diskfile import DiskFile
 from ..utils.queue import sortkey_for_filename
 
 
-class PreviewQueue(Base):
+class PreviewQueueEntry(Base):
     """
     This is the ORM object for the previewqueue table. 
     This forms a queue of files to generate previews for.
@@ -33,10 +33,10 @@ class PreviewQueue(Base):
 
     @staticmethod
     def find_not_in_progress(session):
-        return session.query(PreviewQueue)\
-                    .filter(PreviewQueue.inprogress == False)\
-                    .filter(PreviewQueue.failed == False)\
-                    .order_by(desc(PreviewQueue.sortkey))
+        return session.query(PreviewQueueEntry)\
+                    .filter(PreviewQueueEntry.inprogress == False)\
+                    .filter(PreviewQueueEntry.failed == False)\
+                    .order_by(desc(PreviewQueueEntry.sortkey))
 
     @staticmethod
     def rebuild(session, element):

@@ -57,7 +57,7 @@ def _sortkey(filename, destination):
 
 
 # ------------------------------------------------------------------------------
-class ExportQueue(Base):
+class ExportQueueEntry(Base):
     """
     This is the ORM object for the ExportQueue table.
 
@@ -136,18 +136,18 @@ class ExportQueue(Base):
         #          ORDER BY after, sortkey DESC, filename DESC
 
         inprogress_filenames = (
-            session.query(ExportQueue.filename)
-                .filter(ExportQueue.failed == False)
-                .filter(ExportQueue.inprogress == True)
+            session.query(ExportQueueEntry.filename)
+                .filter(ExportQueueEntry.failed == False)
+                .filter(ExportQueueEntry.inprogress == True)
         )
 
         return (
-            session.query(ExportQueue)
-                .filter(ExportQueue.inprogress == False)
-                .filter(ExportQueue.failed == False)
-                .filter(ExportQueue.after <= datetime.datetime.now())
-                .filter(~ExportQueue.filename.in_(inprogress_filenames))
-                .order_by(ExportQueue.after, desc(ExportQueue.sortkey), desc(ExportQueue.filename))
+            session.query(ExportQueueEntry)
+                .filter(ExportQueueEntry.inprogress == False)
+                .filter(ExportQueueEntry.failed == False)
+                .filter(ExportQueueEntry.after <= datetime.datetime.now())
+                .filter(~ExportQueueEntry.filename.in_(inprogress_filenames))
+                .order_by(ExportQueueEntry.after, desc(ExportQueueEntry.sortkey), desc(ExportQueueEntry.filename))
         )
 
 # TODO seems to be out of use, removing for now

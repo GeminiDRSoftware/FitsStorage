@@ -13,7 +13,7 @@ from fits_storage.core import Base
 from ..utils.queue import sortkey_for_filename
 
 
-class IngestQueue(Base):
+class IngestQueueEntry(Base):
     """
     This is the ORM object for the IngestQueue table
     """
@@ -106,18 +106,18 @@ class IngestQueue(Base):
         #          AND filename not in inprogress_filenames
         #          ORDER BY filename DESC
 
-        inprogress_filenames = (session.query(IngestQueue.filename)
-                .filter(IngestQueue.failed == False)
-                .filter(IngestQueue.inprogress == True)
+        inprogress_filenames = (session.query(IngestQueueEntry.filename)
+                .filter(IngestQueueEntry.failed == False)
+                .filter(IngestQueueEntry.inprogress == True)
         )
 
         return (
-            session.query(IngestQueue)
-                .filter(IngestQueue.inprogress == False)
-                .filter(IngestQueue.failed == False)
-                .filter(IngestQueue.after < datetime.datetime.utcnow())
-                .filter(~IngestQueue.filename.in_(inprogress_filenames))
-                .order_by(desc(IngestQueue.sortkey))
+            session.query(IngestQueueEntry)
+                .filter(IngestQueueEntry.inprogress == False)
+                .filter(IngestQueueEntry.failed == False)
+                .filter(IngestQueueEntry.after < datetime.datetime.utcnow())
+                .filter(~IngestQueueEntry.filename.in_(inprogress_filenames))
+                .order_by(desc(IngestQueueEntry.sortkey))
         )
 
     # TODO this seems to be something we can get rid of
