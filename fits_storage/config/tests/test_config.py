@@ -57,4 +57,6 @@ def test_configused():
         tf.write(configtext)
         tf.flush()
         a = get_config(configfile=tf.name, reload=True)
-        assert len(a.configfiles_used) == 2 and a.configfiles_used[-1] == tf.name
+        # Should use the builtin config file and the supplied one only
+        assert len(a.configfiles_used) == 2 and \
+               a.configfiles_used[1] == tf.name
