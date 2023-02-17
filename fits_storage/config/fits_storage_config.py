@@ -18,13 +18,28 @@ class FitsStorageConfig(dict):
     module.
 
     Files are read as follows:
-    If you pass a configfile argument, that will be the only file read. Otherwise, the following
-    are read in this order. Values from later files in the list take precedence:
+
+    The built-in minimal config file is read first by default. This can be
+    disabled by passing builtin = False
+
+    If you pass a configstring argument, that will be the only other
+    configuration read. A configstring is a string that is treated as if it
+    were the contents of a config file.
+
+    If you pass a configfile argument, that file will be the only other
+    configuration file read. If configfile is an empty string, no other
+    coniguration files will be read.
+
+
+    Otherwise, the following are read in this order:
     * /etc/fits_storage.conf
     * ~/.fits_storage.conf
+
+    When reading configuration values from multiple places, any values read
+    later will take precedence over values read earlier.
     """
 
-    def __init__(self, configfile=None, configstring=None):
+    def __init__(self, configfile=None, configstring=None, builtin=True):
         super().__init__()
 
         # By default, ConfigParser treats everything as a string.
@@ -35,7 +50,9 @@ class FitsStorageConfig(dict):
         self._ints = ['postgres_database_pool_size',
                       'postgres_database_max_overflow']
 
-        self._readfiles(configfile=configfile, configstring=configstring)
+        self._readfiles(configfile=configfile,
+                        configstring=configstring,
+                        builtin=builtin)
 
         # Some parameters can be over-ridden by environment variables
         self._env_overrides()
@@ -43,30 +60,36 @@ class FitsStorageConfig(dict):
         # Some values are calculated from config file values
         self._calculate_values()
 
-    def _readfiles(self, configfile=None, configstring=None):
-        # builtin is the module's internal built-in config file. It provides the default values
-        _builtin = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fits_storage.conf')
+    def _readfiles(self, configfile=None, configstring=None, builtin=True):
+        # builtin is the module's internal built-in config file.
+        # It provides the default values
+        _builtin = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                'fits_storage.conf')
 
-        # Places to look for config files. Values from later ones take precedence
-        self._configfiles = [_builtin,
-                             '/etc/fits_storage.conf',
+        # Places to look for config files. Later ones take precedence
+        self._configfiles = ['/etc/fits_storage.conf',
                              os.path.expanduser('~/.fits_storage.conf')]
 
-        # This can be read back externally to see which config files were actually used.
+        # This can be read back to see which config files were actually used.
         self.configfiles_used = []
 
-        # We make this _private so we can point the public one at default if we don't
-        # have a specific hostname section
+        # We make this _private so we can point the public one at 'DEFAULT' if
+        # we don't have a specific hostname section
         self._config = configparser.ConfigParser()
 
         # Read the config files.
-        if configstring:
+        if builtin:
+            self._config.read(_builtin)
+            self.configfiles_used.append(_builtin)
+        if configstring is not None:
             self._config.read_string(configstring)
-        elif configfile:
-            self._config.read(configfile)
-            self.configfiles_used = [configfile]
+            self.configfiles_used.append(':passed-configstring:')
+        elif configfile is not None:
+            if configfile != '':
+                self._config.read(configfile)
+                self.configfiles_used = [configfile]
         else:
-            self.configfiles_used = self._config.read(self._configfiles)
+            self.configfiles_used.extend(self._config.read(self._configfiles))
 
         # If the config we read has a section for this hostname, point to
         # that directly. It will inherit anything not specified there from the
