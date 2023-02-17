@@ -87,7 +87,7 @@ class FitsStorageConfig(dict):
         elif configfile is not None:
             if configfile != '':
                 self._config.read(configfile)
-                self.configfiles_used = [configfile]
+                self.configfiles_used.append(configfile)
         else:
             self.configfiles_used.extend(self._config.read(self._configfiles))
 

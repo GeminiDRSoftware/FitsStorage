@@ -33,12 +33,28 @@ def test_default_dburl():
     a = get_config(reload=True, configfile='')
     assert a.database_url == 'sqlite:///:memory:'
 
-# Test configstring and setting a value
-def test_configstring():
-    cs = """
+
+configtext = """
     [DEFAULT]
     database_url: arbitary string
     """
-    b = get_config(reload=True, configstring=cs)
+# Test configstring and setting a value
+def test_configstring():
+    a = get_config(reload=True, configstring=configtext)
 
-    assert b.database_url == 'arbitary string'
+    assert a.database_url == 'arbitary string'
+
+import tempfile
+def test_configfile():
+    with tempfile.NamedTemporaryFile(mode='w') as tf:
+        tf.write(configtext)
+        tf.flush()
+        a = get_config(configfile=tf.name, reload=True)
+        assert a.database_url == 'arbitary string'
+
+def test_configused():
+    with tempfile.NamedTemporaryFile(mode='w') as tf:
+        tf.write(configtext)
+        tf.flush()
+        a = get_config(configfile=tf.name, reload=True)
+        assert len(a.configfiles_used) == 2 and a.configfiles_used[-1] == tf.name
