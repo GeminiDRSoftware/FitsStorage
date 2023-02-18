@@ -127,7 +127,7 @@ gemini_telescopes = {
 
 _standard_filename_re = re.compile('[NS](?P<date>\d{8})\w(?P<num>\d+).*')
 _igrins_filename_re = re.compile('SDC[HK]_(?P<date>\d{8})_(?P<num>\d+).*')
-_skycam_filename_re = re.compile('img_(?P<date>\d{8})_(?P<num>\d+).*')
+_skycam_filename_re = re.compile('img_(?P<date>\d{8})_(?P<num>\w+).*')
 _obslog_filename_re = re.compile('(?P<date>\d{8})_(?P<num>.*)_obslog.txt')
 sortkey_regex_dict = {_standard_filename_re: 'z',
                       _igrins_filename_re: 'z',
