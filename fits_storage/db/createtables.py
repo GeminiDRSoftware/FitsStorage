@@ -27,7 +27,10 @@ from fits_storage.cal import instruments
 # Server tables
 if fsc.is_server:
     from fits_storage import server
-    from fits_storage import queues
+    from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
+    from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
+    from fits_storage.queues.orm.previewqueueentry import PreviewQueueEntry
+    from fits_storage.queues.orm.calcachequeueentry import CalCacheQueueEntry
 
 def create_tables(session: Session):
     """

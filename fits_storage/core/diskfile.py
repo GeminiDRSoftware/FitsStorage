@@ -6,7 +6,7 @@ import os
 import datetime
 import re
 
-from fits_storage.utils.hashes import md5sum, md5sum_size_bz2
+from .hashes import md5sum, md5sum_size_bz2
 
 from . import Base
 from .file import File

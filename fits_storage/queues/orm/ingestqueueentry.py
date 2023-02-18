@@ -1,49 +1,40 @@
 """
-This is the ingesqueue ORM class.
+This is the IngestQueueEntry ORM class.
 
 """
 import datetime
-import json
 
 from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Boolean, Text, DateTime
-from sqlalchemy import desc, func
 
 from fits_storage.core import Base
-from ..utils.queue import sortkey_for_filename
+from .ormqueuemixin import OrmQueueMixin
 
-
-class IngestQueueEntry(Base):
+class IngestQueueEntry(OrmQueueMixin, Base):
     """
     This is the ORM object for the IngestQueue table
     """
     __tablename__ = 'ingestqueue'
     __table_args__ = (
-        UniqueConstraint('filename', 'inprogress', 'failed'),
-        UniqueConstraint('filename', 'path'),
+        UniqueConstraint('filename', 'path', 'inprogress', 'failed'),
     )
 
     id = Column(Integer, primary_key=True)
-    filename = Column(Text, nullable=False, unique=False, index=True)
+    filename = Column(Text, nullable=False, index=True)
     path = Column(Text)
-    header_fields = Column(Text)
-    md5_before_header = Column(Text)
-    md5_after_header = Column(Text)
-    reject_new = Column(Boolean)
     inprogress = Column(Boolean, index=True)
-    failed = Column(Boolean)
+    failed = Column(DateTime)
     added = Column(DateTime)
     force_md5 = Column(Boolean)
     force = Column(Boolean)
     after = Column(DateTime)
     sortkey = Column(Text, index=True)
 
-    error_name = 'INGEST'
-
-    def __init__(self, filename, path, header_fields=None, md5_before_header=None, md5_after_header=None,
-                 reject_new=True):
+    def __init__(self, filename, path, force=False, force_md5=False,
+                 after=None):
         """
-        Create an :class:`~orm.ingestqueue.IngestQueue` instance with the given filename and path
+        Create an :class:`~orm.ingestqueue.IngestQueue` instance with the
+        given filename and path
 
         Parameters
         ----------
@@ -51,89 +42,31 @@ class IngestQueueEntry(Base):
             Name of the file to ingest
         path : str
             Path of the file within the `storage_root`
+        force: bool
+            Whether to force reingestion
+        force_md5: bool
+            Whether for force checking of the file md5sum irrespective of the
+            lastmod timestamp on the filesystem in deciding whether to reingest
+        after: datetime.datetime
+            Do not ingest this file until after this timestamp.
         """
-        if header_fields and (not md5_before_header or not md5_after_header):
-            print("IngestQueue constructor MD5(s) missing but header_fields seen, throwing ValueError")
-            raise ValueError("header_fields specified but missing before and after md5 checksums")
-        if header_fields:
-            try:
-                print("Loading header fields as json: %s" % header_fields)
-                json.loads(header_fields)
-            except:
-                print("Invalid JSON, raising error")
-                raise ValueError(f"Invalid json in passed header_fields: {header_fields}")
 
-        print("setting other IQ values")
         self.filename = filename
         self.path = path
-        self.header_fields = header_fields
-        self.md5_before_header = md5_before_header
-        self.md5_after_header = md5_after_header
-        self.reject_new = reject_new
         self.added = datetime.datetime.utcnow()
         self.inprogress = False
-        self.force_md5 = False
-        self.force = False
-        self.after = self.added
-        self.failed = False
-
-        # Sortkey is used to sort the order in which we de-spool the queue.
-        print("done setting other IQ values, setting sortkey")
-        self.sortkey = sortkey_for_filename(filename)
-        print("done setting sortkey and done constructing IQ")
-
-    @staticmethod
-    def find_not_in_progress(session):
-        """
-        Returns a query that will find the elements in the queue that are not 
-        in progress, and that have no duplicates, meaning that there are not two
-        entries where one of them is being processed (it's ok if there's a failed 
-        one...)
-
-        Parameters
-        ----------
-        session : :class:`sqlalchemy.orm.session.Session`
-            SQL Alchemy session to query in
-        """
-        # The query that we're performing here is equivalent to
-        #
-        # WITH inprogress_filenames AS (
-        #   SELECT filename FROM ingestqueue
-        #                   WHERE failed = false AND inprogress = True
-        # )
-        # SELECT id FROM ingestqueue
-        #          WHERE inprogress = false AND failed = false
-        #          AND filename not in inprogress_filenames
-        #          ORDER BY filename DESC
-
-        inprogress_filenames = (session.query(IngestQueueEntry.filename)
-                .filter(IngestQueueEntry.failed == False)
-                .filter(IngestQueueEntry.inprogress == True)
-        )
-
-        return (
-            session.query(IngestQueueEntry)
-                .filter(IngestQueueEntry.inprogress == False)
-                .filter(IngestQueueEntry.failed == False)
-                .filter(IngestQueueEntry.after < datetime.datetime.utcnow())
-                .filter(~IngestQueueEntry.filename.in_(inprogress_filenames))
-                .order_by(desc(IngestQueueEntry.sortkey))
-        )
-
-    # TODO this seems to be something we can get rid of
-    # @staticmethod
-    # def rebuild(session, element):
-    #     session.query(IngestQueue)\
-    #         .filter(IngestQueue.inprogress == False)\
-    #         .filter(IngestQueue.filename == element.filename)\
-    #         .delete()
+        self.force_md5 = force_md5
+        self.force = force
+        self.after = after if after is not None else self.added
+        self.failed = None
+        self.sortkey = self.sortkey_from_filename()
 
     def __repr__(self):
         """
-        Build a string representation of this :class:`~IngestQueue` record
+        Build a string representation of this :class:`~IngestQueueEntry` record
 
         Returns
         -------
-            str : String representation of the :class:`~IngestQueue` record
+            str : String representation of the :class:`~IngestQueueEntry` record
         """
-        return "<IngestQueue('{}', '{}')>".format((self.id, self.filename))
+        return f"<IngestQueue('{self.id}', '{self.filename}')>"
