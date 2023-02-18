@@ -1,7 +1,13 @@
+"""
+__init__.py file for fits_storage.config
+This module provides housekeeping to return a singleton FitsStorageConfig
+instance.
+"""
+
 from .fits_storage_config import FitsStorageConfig
 __all__ = ['get_config', 'FitsStorageConfig']
 
-_config = None
+_CONFIG = None
 
 def get_config(configfile=None, configstring=None, builtin=True, reload=False):
     """
@@ -31,10 +37,10 @@ def get_config(configfile=None, configstring=None, builtin=True, reload=False):
     FitsStorageConfig configuration object instance.
     """
 
-    global _config
-    if _config is None or reload is True:
-        _config = FitsStorageConfig(configfile=configfile,
+    global _CONFIG
+    if _CONFIG is None or reload is True:
+        _CONFIG = FitsStorageConfig(configfile=configfile,
                                     configstring=configstring,
                                     builtin=builtin)
 
-    return _config
+    return _CONFIG

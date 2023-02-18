@@ -1,3 +1,8 @@
+"""
+fits_storage_conf module.
+This module contains the FitsStorageConfig class definition
+"""
+
 import configparser
 import os
 import socket
@@ -61,6 +66,19 @@ class FitsStorageConfig(dict):
         self._calculate_values()
 
     def _readfiles(self, configfile=None, configstring=None, builtin=True):
+        """
+        Read in the prescribed configuration files or strings
+        Parameters
+        ----------
+        configfile: config file to read. See class documentation
+        configstring: config file to read. See class documentation
+        builtin: whether to read the built-in minimal configuration file.
+
+        Returns
+        -------
+        None
+        """
+
         # builtin is the module's internal built-in config file.
         # It provides the default values
         _builtin = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -101,6 +119,9 @@ class FitsStorageConfig(dict):
             self.config = self._config['DEFAULT']
 
     def _env_overrides(self):
+        """
+        Check for environment variables containing configuration values
+        """
         envs = {'storage_root': 'FITS_STORAGE_ROOT',
                 'database_url': 'FITS_STORAGE_DB_URL'}
 
@@ -110,21 +131,38 @@ class FitsStorageConfig(dict):
                 self.config[key] = value
 
     def _calculate_values(self):
+        """
+        After reading all configuration items in, calculate any additional
+        vales that are automatically derived from those values read in.
+        """
         self._calculate_database_url()
         self._calculate_using_sqlite()
         self._calculate_using_s3()
 
     def _calculate_database_url(self):
+        """
+        If database_url is not defined, set it to an sqlite file
+        in the storage_root
+        """
         if self.config.get('database_url', None) is None:
-            sqlite_path = os.path.join(self.config['storage_root'], 'fits_storage.db')
+            sqlite_path = os.path.join(self.config['storage_root'],
+                                       'fits_storage.db')
             self.config['database_url'] = f"sqlite:///{sqlite_path}"
 
     def _calculate_using_sqlite(self):
-        # Config values have to be strings. It will get converted back to a bool when read
-        self.config['using_sqlite'] = 'True' if self.config['database_url'].startswith('sqlite:/') else 'False'
+        """
+        Determine from the database_url if we are using an sqlite database
+        """
+        # Config values have to be strings.
+        # It will get converted back to a bool when read
+        self.config['using_sqlite'] = 'True' if \
+            self.config['database_url'].startswith('sqlite:/') else 'False'
 
     def _calculate_using_s3(self):
-        # For now, this is equal to is_archive
+        """
+        Determine if we're using AWS S3 for storage.
+        For now, this is equal to is_archive
+        """
         self.config['using_s3'] = self.config['is_archive']
 
     def __getitem__(self, key):
