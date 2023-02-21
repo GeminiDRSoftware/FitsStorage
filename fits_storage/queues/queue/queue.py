@@ -33,11 +33,6 @@ class Queue(object):
 
             return query.count()
 
-    def add(self, item):
-        """
-        Add an item to the queue.
-        """
-
     def pop(self, fast_rebuild=False):
         """
         Pop an entry from the queue. We use select-for-update to ensure that

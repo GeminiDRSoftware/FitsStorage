@@ -35,7 +35,9 @@ class IngestQueueEntry(OrmQueueMixin, Base):
     header_update = Column(Text)
 
     def __init__(self, filename, path, force=False, force_md5=False,
-                 after=None):
+                 after=None, header_update=None,
+                 md5_before_header_update=None,
+                 md5_after_header_update=None):
         """
         Create an :class:`~orm.ingestqueue.IngestQueue` instance with the
         given filename and path
@@ -53,6 +55,14 @@ class IngestQueueEntry(OrmQueueMixin, Base):
             lastmod timestamp on the filesystem in deciding whether to reingest
         after: datetime.datetime
             Do not ingest this file until after this timestamp.
+        header_update: dict
+            Header updates from a call to the update_headers API that resulted
+            in this request for ingest. We pass this on to the export queue
+            as a hint to try and avoid retransmitting the whole file
+        md5_after_header_update: str
+            md5sum of the file after the header update
+        md5_before_header_update: str
+            md5sum of the file before the header update
         """
 
         self.filename = filename
@@ -64,6 +74,9 @@ class IngestQueueEntry(OrmQueueMixin, Base):
         self.after = after if after is not None else self.added
         self.failed = None
         self.sortkey = self.sortkey_from_filename()
+        self.header_update = header_update
+        self.md5_before_header_update = md5_before_header_update
+        self.md5_after_header_update = md5_after_header_update
 
     def __repr__(self):
         """
