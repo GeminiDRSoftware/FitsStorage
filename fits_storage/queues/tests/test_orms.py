@@ -1,16 +1,45 @@
+import datetime
+
 from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
+from fits_storage.queues.orm.previewqueueentry import PreviewQueueEntry
 
 
 def test_basiceqe():
+    now = datetime.datetime.utcnow()
+    onesec = datetime.timedelta(seconds=1)
     eqe = ExportQueueEntry('filename', 'path', 'destination')
 
     assert isinstance(eqe, ExportQueueEntry)
+    assert eqe.filename == 'filename'
+    assert eqe.path == 'path'
+    assert eqe.destination == 'destination'
+    assert eqe.inprogress is False
+    assert eqe.after == eqe.added
+    assert (eqe.added - now) < onesec
+    assert eqe.failed is None
+    assert eqe.sortkey == 'aaaaafilename'
+
+
+def test_archivesortkey():
+    eqe = ExportQueueEntry('filename', 'path', 'fooarchivebar')
+
+    assert eqe.sortkey == 'zaaaafilename'
+
 
 def test_basiciqe():
+    now = datetime.datetime.utcnow()
+    onesec = datetime.timedelta(seconds=1)
     iqe = IngestQueueEntry('filename', 'path')
 
     assert isinstance(iqe, IngestQueueEntry)
+    assert iqe.filename == 'filename'
+    assert iqe.path == 'path'
+    assert iqe.inprogress is False
+    assert iqe.failed is None
+    assert (iqe.added - now) < onesec
+    assert iqe.sortkey == 'aaaafilename'
+
 
 def test_sortkey_facility():
     iqe = IngestQueueEntry('S20121122S9876_blah.fits', path='')
@@ -39,3 +68,4 @@ def test_sortkey_other():
     iqe = IngestQueueEntry('blahblah', path='')
 
     assert iqe.sortkey == 'aaaablahblah'
+

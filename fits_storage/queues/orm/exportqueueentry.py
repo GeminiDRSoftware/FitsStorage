@@ -46,7 +46,7 @@ class ExportQueueEntry(OrmQueueMixin, Base):
         self.sortkey = self.sortkey_from_filename()
         self.path = path
         self.destination = destination
-        self.added = datetime.datetime.now()
+        self.added = datetime.datetime.utcnow()
         self.after = self.added
         self.inprogress = False
         self.failed = None
