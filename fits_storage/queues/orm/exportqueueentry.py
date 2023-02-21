@@ -24,6 +24,7 @@ class ExportQueueEntry(OrmQueueMixin, Base):
     sortkey = Column(Text, index=True)
     added = Column(DateTime)
     after = Column(DateTime)
+    error = Column(Text)
 
     def __init__(self, filename, path, destination):
         """

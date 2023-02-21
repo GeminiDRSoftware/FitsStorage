@@ -23,6 +23,7 @@ class CalCacheQueueEntry(OrmQueueMixin, Base):
     added = Column(DateTime)
     sortkey = Column(Text, index=True);
     filename = Column(Text)
+    error = Column(Text)
 
 
     def __init__(self, obs_hid, filename):

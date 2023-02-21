@@ -29,6 +29,7 @@ class IngestQueueEntry(OrmQueueMixin, Base):
     force = Column(Boolean)
     after = Column(DateTime)
     sortkey = Column(Text, index=True)
+    error = Column(Text)
 
     def __init__(self, filename, path, force=False, force_md5=False,
                  after=None):

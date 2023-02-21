@@ -23,6 +23,7 @@ class PreviewQueueEntry(OrmQueueMixin, Base):
     failed = Column(DateTime)
     force = Column(Boolean)
     sortkey = Column(Text, index=True)
+    error = Column(Text)
 
     def __init__(self, diskfile, force=False):
         self.diskfile_id = diskfile.id
