@@ -30,6 +30,9 @@ class IngestQueueEntry(OrmQueueMixin, Base):
     after = Column(DateTime)
     sortkey = Column(Text, index=True)
     error = Column(Text)
+    md5_before_header_update = Column(Text)
+    md5_after_header_update = Column(Text)
+    header_update = Column(Text)
 
     def __init__(self, filename, path, force=False, force_md5=False,
                  after=None):

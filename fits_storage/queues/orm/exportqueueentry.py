@@ -25,6 +25,9 @@ class ExportQueueEntry(OrmQueueMixin, Base):
     added = Column(DateTime)
     after = Column(DateTime)
     error = Column(Text)
+    md5_before_header_update = Column(Text)
+    md5_after_header_update = Column(Text)
+    header_update = Column(Text)
 
     def __init__(self, filename, path, destination):
         """
