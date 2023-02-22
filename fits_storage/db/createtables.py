@@ -73,4 +73,4 @@ def drop_tables(session: Session):
     session : :class:`Session`
         Session to create tables in
     """
-    File.metadata.drop_all(bind=db._saved_engine)
+    Header.metadata.drop_all(bind=db._saved_engine)
