@@ -15,7 +15,6 @@ Helper script for generating the initial database.
 
 if __name__ == "__main__":
 
-    # ------------------------------------------------------------------------------
     # Option Parsing
     parser = ArgumentParser()
     parser.add_argument("--drop", action="store_true", dest="drop",
@@ -25,7 +24,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print("Loaded configuration from: ", ', '.join(fsc.configfiles_used))
+    print("Loaded configuration from: ")
+    for f in fsc.configfiles_used:
+        print(f"  - {f}")
+    print()
+    print(f"Database URL is: {fsc.database_url}")
+    print()
 
     with session_scope() as session:
         if args.drop:
