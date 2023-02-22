@@ -7,7 +7,7 @@ from sqlalchemy.orm import relation
 from . import Base
 from .diskfile import DiskFile
 
-from fits_storage.utils.file_parser import build_parser
+from fits_storage.file_parser import build_parser
 from fits_storage.utils.gemini_metadata_utils import GeminiProgram, procmode_codes
 from fits_storage.utils.gemini_metadata_utils import gemini_gain_settings
 from fits_storage.utils.gemini_metadata_utils import gemini_readspeed_settings
