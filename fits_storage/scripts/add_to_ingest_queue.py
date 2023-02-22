@@ -5,25 +5,44 @@ import re
 import datetime
 import time
 
-from fits_storage.fits_storage_config import storage_root, using_s3
+from fits_storage.config import get_config
+fsc = get_config()
+
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
-from fits_storage.utils.ingestqueue import IngestQueueUtil
 
-from gemini_obs_db.db import session_scope
+from fits_storage.db import session_scope
+from fits_storage.queues.queue import IngestQueue
+
+if fsc.using_s3:
+    from fits_storage.utils.aws_s3 import get_helper
+    s3 = get_helper()
 
 
 """
-Script to add files in the FITS Server to the queue for export to an Archive server.
-
-This script will add files in the system to the queue for exporting to an Archive
-server.  The export service will then post these files to the Archive server for
-ingest there.
+Script to add files to the ingest queue.
 """
+
+def _dayoptions(string):
+    # Function to parse the today and twoday etc options
+    # Returns a compiled regex that can be used with search
+    oneday = datetime.timedelta(days=1)
+    named_intervals = {
+        'today': 1,
+        'twoday': 2,
+        'fourday': 4,
+        'tenday': 10,
+        'twentyday': 20
+    }
+
+    if string in named_intervals:
+        today = datetime.date.utcnow().date()
+        dates = [today - (oneday * n) for n in range(named_intervals[string])]
+        regex = '|'.join(d.strftime("%Y%m%d") for d in dates)
+        return re.compile(regex)
+    else:
+        return re.compile(string)
+
 if __name__ == "__main__":
-    if using_s3:
-        from fits_storage.utils.aws_s3 import get_helper
-        s3 = get_helper()
-
     # Option Parsing
     from argparse import ArgumentParser
     # ------------------------------------------------------------------------------
@@ -76,62 +95,41 @@ if __name__ == "__main__":
     if options.logsuffix:
         setlogfilesuffix(options.logsuffix)
 
-    # Annouce startup
-    now = datetime.datetime.now()
-    logger.info("*********    add_to_ingest_queue.py - starting up at {}".format(now))
-
-    # Get a list of all the files in the datastore
-    # We assume this is just one dir (ie non recursive) for now.
-    gotfiles = False
+    # Announce startup
+    logger.info("*** add_to_ingest_queue.py - starting up at {}"
+                .format(datetime.datetime.now()))
 
     if options.filename:
+        # Just add a single filename
         logger.info("Adding single file: {}".format(options.filename))
         files = [options.filename]
-        gotfiles = True
 
-    if options.listfile:
+    elif options.listfile:
+        # Get list of files from list file
         logger.info("Adding files from list file: {}".format(options.listfile))
+        files = []
         with open(options.listfile) as f:
-            filesread = f.readlines()
-        files = []
-        for l in filesread:
-            files.append(l.strip())
-        gotfiles = True
+            for line in f:
+                files.append(line.strip())
 
-    if gotfiles is False:
-        if using_s3:
+    else:
+        # Read directory to get file list.
+        if fsc.using_s3:
             logger.info("Querying files for ingest from S3 bucket")
-            filelist = s3.key_names()
+            fulllist = s3.key_names()
         else:
-            fulldirpath = os.path.join(storage_root, path)
+            fulldirpath = os.path.join(fsc.storage_root, path)
             logger.info("Queueing files for ingest from: {}".format(fulldirpath))
-            filelist = os.listdir(fulldirpath)
+            fulllist = os.listdir(fulldirpath)
 
-        logger.info("Got file list.")
+        logger.info("Got full file list.")
 
-        file_re = options.file_re
-        # Handle the today and twoday etc options
-        now = datetime.datetime.utcnow()
-        delta = datetime.timedelta(days=1)
-        named_intervals = {
-            'today': 1,
-            'twoday': 2,
-            'fourday': 3,
-            'tenday': 10,
-            'twentyday': 20
-            }
-
-        if options.file_re in named_intervals:
-            then = now.date()
-            dates = [then-(delta*n) for n in range(named_intervals[options.file_re])]
-            file_re = '|'.join(d.strftime("%Y%m%d") for d in dates)
-
-        files = []
-        if file_re:
-            cre = re.compile(file_re)
-            files = list(filter(cre.search, filelist))
+        # Handle the file_re regex, including 'today', 'twoday', etc
+        if options.file_re:
+            cre = _dayoptions(options.file_re)
+            files = list(filter(cre.search, fulllist))
         else:
-            files = filelist
+            files = fulllist
 
     # Skip various tmp files
     # Also require .fits in the filename
@@ -152,6 +150,7 @@ if __name__ == "__main__":
                     or miscfilecre.search(filename))
          )
 
+    thefiles = []
     for filename in files:
         if skip_file(filename):
             logger.info("skipping tmp file: {}".format(filename))
@@ -170,7 +169,7 @@ if __name__ == "__main__":
         newfiles_seconds = options.newfiles * 86400
 
     with session_scope() as session:
-        iq = IngestQueueUtil(session, logger)
+        iq = IngestQueue(session, logger=logger)
         for i, filename in enumerate(thefiles, 1):
             if options.newfiles:
                 fullpath = os.path.join(fulldirpath, filename)
@@ -185,7 +184,7 @@ if __name__ == "__main__":
             else:
                 after = None
             logger.info("Queueing for Ingest: ({}/{}): {}".format(i, n, filename))
-            iq.add_to_queue(filename, path, force=options.force,
+            iq.add(filename, path, force=options.force,
                             force_md5=options.force_md5, after=after)
 
     logger.info("*** add_to_ingestqueue.py exiting normally at {}".format(datetime.datetime.now()))
