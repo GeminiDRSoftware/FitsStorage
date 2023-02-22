@@ -49,3 +49,18 @@ class OrmQueueMixin():
                           m.group('date') + m.group('num')
 
         return sortkey
+    @property
+    def failed(self):
+        """
+        SQLAlchemy doesn't get (v1.4 - there's some discussion of adding this
+        to 2.0 but it's not there yet) support the SQL 'NULLS NOT DISTINCT'
+        clause in constraints. This means we can't use None (or NULL) as a
+        value for failed and still use uniqueness constraints to prevent
+        adding duplicate queue entries. So we're using datetime.datetime.max
+        as a pseudo null value for entries that have not failed yet.
+        """
+
+        if self.failed == datetime.datetime.max:
+            return None
+        else:
+            return self.failed

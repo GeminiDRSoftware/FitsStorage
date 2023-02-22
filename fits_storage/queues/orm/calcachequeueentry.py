@@ -42,5 +42,5 @@ class CalCacheQueueEntry(OrmQueueMixin, Base):
         self.inprogress = False
         self.sortkey = self.sortkey_from_filename()
         self.added = datetime.datetime.utcnow()
-        self.failed = False
+        self.failed = datetime.datetime.max # See Note in OrmQueueMixin
         self.filename = filename

@@ -1,3 +1,5 @@
+import datetime
+
 from sqlalchemy import Column, ForeignKey, UniqueConstraint
 from sqlalchemy import Integer, Text, Boolean, DateTime
 
@@ -29,5 +31,5 @@ class PreviewQueueEntry(OrmQueueMixin, Base):
         self.diskfile_id = diskfile.id
         self.sortkey = self.sortkey_from_filename(diskfile.filename)
         self.inprogress = False
-        self.failed = None
+        self.failed = datetime.datetime.max # See note in OrmQueueMixin
         self.force = force

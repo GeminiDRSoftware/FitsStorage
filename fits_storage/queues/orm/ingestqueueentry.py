@@ -21,7 +21,7 @@ class IngestQueueEntry(OrmQueueMixin, Base):
 
     id = Column(Integer, primary_key=True)
     filename = Column(Text, nullable=False, index=True)
-    path = Column(Text)
+    path = Column(Text, nullable=False)
     inprogress = Column(Boolean, index=True)
     failed = Column(DateTime)
     added = Column(DateTime)
@@ -72,11 +72,12 @@ class IngestQueueEntry(OrmQueueMixin, Base):
         self.force_md5 = force_md5
         self.force = force
         self.after = after if after is not None else self.added
-        self.failed = None
+        self.failed = datetime.datetime.max # See note in OrmQueueMixin
         self.sortkey = self.sortkey_from_filename()
         self.header_update = header_update
         self.md5_before_header_update = md5_before_header_update
         self.md5_after_header_update = md5_after_header_update
+
 
     def __repr__(self):
         """

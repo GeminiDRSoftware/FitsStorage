@@ -49,7 +49,7 @@ class ExportQueueEntry(OrmQueueMixin, Base):
         self.added = datetime.datetime.utcnow()
         self.after = self.added
         self.inprogress = False
-        self.failed = None
+        self.failed = datetime.datetime.max # See Note in OrmQueueMixin
 
         # TODO: A more refined way to prioritize archive exports
         prepend = 'z' if 'archive' in destination else 'a'
