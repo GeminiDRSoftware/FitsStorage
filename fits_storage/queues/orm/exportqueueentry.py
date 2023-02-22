@@ -12,7 +12,7 @@ class ExportQueueEntry(OrmQueueMixin, Base):
     """
     __tablename__ = 'exportqueue'
     __table_args__ = (
-        UniqueConstraint('filename', 'inprogress', 'failed', 'destination'),
+        UniqueConstraint('filename', 'inprogress', 'fail_dt', 'destination'),
     )
 
     id = Column(Integer, primary_key=True)
@@ -20,7 +20,7 @@ class ExportQueueEntry(OrmQueueMixin, Base):
     path = Column(Text)
     destination = Column(Text, nullable=False, index=True)
     inprogress = Column(Boolean, index=True)
-    failed = Column(DateTime)
+    fail_dt = Column(DateTime)
     sortkey = Column(Text, index=True)
     added = Column(DateTime)
     after = Column(DateTime)
@@ -49,7 +49,7 @@ class ExportQueueEntry(OrmQueueMixin, Base):
         self.added = datetime.datetime.utcnow()
         self.after = self.added
         self.inprogress = False
-        self.failed = datetime.datetime.max # See Note in OrmQueueMixin
+        self.fail_dt = datetime.datetime.max # See Note in OrmQueueMixin
 
         # TODO: A more refined way to prioritize archive exports
         prepend = 'z' if 'archive' in destination else 'a'

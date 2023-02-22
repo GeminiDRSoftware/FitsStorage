@@ -1,6 +1,6 @@
 import datetime
-from sqlalchemy import Column, ForeignKey, Text
-from sqlalchemy import Integer, Boolean, DateTime
+from sqlalchemy import Column, ForeignKey, UniqueConstraint
+from sqlalchemy import Integer, Boolean, DateTime, Text
 
 from fits_storage.core import Base
 from .ormqueuemixin import OrmQueueMixin
@@ -15,11 +15,14 @@ class CalCacheQueueEntry(OrmQueueMixin, Base):
     our cached calibration lookups for.
     """
     __tablename__ = 'calcachequeue'
+    __table_args__ = (
+        UniqueConstraint('obs_hid', 'inprogress', 'fail_dt'),
+    )
 
     id = Column(Integer, primary_key=True)
     obs_hid = Column(Integer, ForeignKey(Header.id), nullable=False, index=True)
     inprogress = Column(Boolean, index=True)
-    failed = Column(DateTime)
+    fail_dt = Column(DateTime)
     added = Column(DateTime)
     sortkey = Column(Text, index=True);
     filename = Column(Text)
@@ -42,5 +45,5 @@ class CalCacheQueueEntry(OrmQueueMixin, Base):
         self.inprogress = False
         self.sortkey = self.sortkey_from_filename()
         self.added = datetime.datetime.utcnow()
-        self.failed = datetime.datetime.max # See Note in OrmQueueMixin
+        self.fail_dt = datetime.datetime.max # See Note in OrmQueueMixin
         self.filename = filename

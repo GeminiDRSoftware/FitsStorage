@@ -17,7 +17,7 @@ def test_basiceqe():
     assert eqe.inprogress is False
     assert eqe.after == eqe.added
     assert (eqe.added - now) < onesec
-    assert eqe.failed is None
+    assert eqe.failed is False
     assert eqe.sortkey == 'aaaaafilename'
 
 
@@ -36,7 +36,7 @@ def test_basiciqe():
     assert iqe.filename == 'filename'
     assert iqe.path == 'path'
     assert iqe.inprogress is False
-    assert iqe.failed is None
+    assert iqe.failed is False
     assert (iqe.added - now) < onesec
     assert iqe.sortkey == 'aaaafilename'
 
@@ -69,3 +69,11 @@ def test_sortkey_other():
 
     assert iqe.sortkey == 'aaaablahblah'
 
+def test_failed():
+    iqe = IngestQueueEntry('filename', 'path')
+
+    assert iqe.failed is False
+
+    iqe.failed = True
+
+    assert iqe.failed is True

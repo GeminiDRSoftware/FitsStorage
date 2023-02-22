@@ -2,6 +2,7 @@
 This module contains a class containing utility functions that is mixedin
 to the queue ORM classes.
 """
+import datetime
 
 from fits_storage.utils.gemini_metadata_utils import sortkey_regex_dict
 
@@ -57,10 +58,25 @@ class OrmQueueMixin():
         clause in constraints. This means we can't use None (or NULL) as a
         value for failed and still use uniqueness constraints to prevent
         adding duplicate queue entries. So we're using datetime.datetime.max
-        as a pseudo null value for entries that have not failed yet.
+        as a pseudo null value for fail_dt for entries that have not failed yet.
+
+        What we really want from the user side is a True / False value with
+        the unique constraint only applied to False values. That's not a thing,
+        so we wanted to use a datetime where None implies False, but we can't
+        do that because of the NULLS NOT DISTINCT issue. This property
+        implements that True False interface using the .max workaround.
         """
 
-        if self.failed == datetime.datetime.max:
-            return None
+        if self.fail_dt == datetime.datetime.max:
+            return False
         else:
-            return self.failed
+            return True
+
+    @failed.setter
+    def failed(self, failed):
+        if failed is True:
+            self.fail_dt = datetime.datetime.now()
+        elif failed is False or failed is None:
+            self.fail_dt = datetime.datetime.max
+        else:
+            self.fail_dt = failed

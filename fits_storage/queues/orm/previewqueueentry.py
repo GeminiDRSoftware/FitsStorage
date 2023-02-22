@@ -15,14 +15,14 @@ class PreviewQueueEntry(OrmQueueMixin, Base):
     """
     __tablename__ = 'previewqueue'
     __table_args__ = (
-        UniqueConstraint('diskfile_id', 'inprogress', 'failed'),
+        UniqueConstraint('diskfile_id', 'inprogress', 'fail_dt'),
     )
 
     id = Column(Integer, primary_key=True)
     diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False,
                          unique=True, index=True)
     inprogress = Column(Boolean, index=True)
-    failed = Column(DateTime)
+    fail_dt = Column(DateTime)
     force = Column(Boolean)
     sortkey = Column(Text, index=True)
     error = Column(Text)
@@ -31,5 +31,5 @@ class PreviewQueueEntry(OrmQueueMixin, Base):
         self.diskfile_id = diskfile.id
         self.sortkey = self.sortkey_from_filename(diskfile.filename)
         self.inprogress = False
-        self.failed = datetime.datetime.max # See note in OrmQueueMixin
+        self.fail_dt = datetime.datetime.max # See note in OrmQueueMixin
         self.force = force
