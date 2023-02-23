@@ -1,5 +1,7 @@
 import datetime
 import os
+import tempfile
+from filelock import FileLock
 
 from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
@@ -82,6 +84,7 @@ def test_failed():
 
     assert iqe.failed is True
 
+
 def test_basicccqe():
     ccqe = CalCacheQueueEntry(1, 'filename')
     assert ccqe.obs_hid == 1
@@ -91,12 +94,14 @@ def test_basicccqe():
     assert ccqe.inprogress is False
     assert ccqe.failed is False
 
-class fakeDiskFile(object):
+
+class FakeDiskFile(object):
     id = 1
     filename = 'filename'
 
+
 def test_basicpqe():
-    fdf = fakeDiskFile
+    fdf = FakeDiskFile
     pqe = PreviewQueueEntry(fdf)
 
     assert pqe.diskfile_id == 1
@@ -106,8 +111,6 @@ def test_basicpqe():
     assert pqe.failed is False
 
 
-import tempfile
-from filelock import FileLock
 def test_filemixins():
     dataroot = tempfile.mkdtemp()
     filename = 'test.dat'
@@ -120,7 +123,7 @@ def test_filemixins():
     iqe.storage_root = dataroot
 
     assert iqe.storage_root == dataroot
-    assert iqe.filelastmod > now and iqe.filelastmod < then
+    assert now < iqe.filelastmod < then
     assert iqe.fullpathfilename == fpfn
     assert iqe.file_is_locked is False
 
@@ -129,5 +132,3 @@ def test_filemixins():
 
     os.unlink(fpfn)
     os.rmdir(dataroot)
-
-
