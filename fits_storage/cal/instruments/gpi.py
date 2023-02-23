@@ -2,8 +2,8 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean
 from sqlalchemy.orm import relation
 
-from fits_storage.core import Base
-from fits_storage.core.header import Header
+from fits_storage.core.orm import Base
+from fits_storage.core.orm.header import Header
 
 
 __all__ = ["Gpi"]

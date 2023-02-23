@@ -15,11 +15,11 @@ fsc = get_config()
 # is enough to cause any metadata.create_all() call to create that table.
 
 # Core ORM classes
-from fits_storage.core.header import Header
-from fits_storage.core.diskfilereport import DiskFileReport
-from fits_storage.core.footprint import Footprint
-from fits_storage.core.fulltextheader import FullTextHeader
-from fits_storage.core.photstandard import PhotStandard
+from fits_storage.core.orm.header import Header
+from fits_storage.core.orm.diskfilereport import DiskFileReport
+from fits_storage.core.orm.footprint import Footprint
+from fits_storage.core.orm.fulltextheader import FullTextHeader
+from fits_storage.core.orm.photstandard import PhotStandard
 
 # Calibration instrument classes
 from fits_storage.cal import instruments

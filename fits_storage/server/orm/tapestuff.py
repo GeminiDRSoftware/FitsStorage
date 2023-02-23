@@ -3,7 +3,7 @@ from sqlalchemy import Integer, Text, DateTime, Boolean, BigInteger
 
 from sqlalchemy.orm import relation, relationship
 
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 
 
 class Tape(Base):

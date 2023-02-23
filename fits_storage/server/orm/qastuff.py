@@ -3,7 +3,7 @@ from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean
 from sqlalchemy.orm import relationship
 import math
 
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 
 import json
 

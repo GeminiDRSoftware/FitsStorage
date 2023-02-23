@@ -4,8 +4,8 @@ from sqlalchemy import Column, ForeignKey, Numeric
 from sqlalchemy import Integer, Text, Boolean, Enum
 from sqlalchemy.orm import relation
 
-from fits_storage.core import Base
-from fits_storage.core.header import Header
+from fits_storage.core.orm import Base
+from fits_storage.core.orm.header import Header
 
 # Enumerated column types
 READ_SPEED_SETTINGS = ['slow', 'medium', 'fast', 'standard', 'unknown']

@@ -2,7 +2,7 @@ import datetime
 from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Boolean, Text, DateTime
 
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 from .ormqueuemixin import OrmQueueMixin
 
 class ExportQueueEntry(OrmQueueMixin, Base):

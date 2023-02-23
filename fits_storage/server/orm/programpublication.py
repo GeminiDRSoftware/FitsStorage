@@ -2,7 +2,7 @@ from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Text, String
 from sqlalchemy.orm import backref, relationship
 
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 from .program import Program
 from .publication import Publication
 

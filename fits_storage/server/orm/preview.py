@@ -2,7 +2,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 from sqlalchemy.orm import relationship
 
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 
 
 __all__ = ["Preview"]

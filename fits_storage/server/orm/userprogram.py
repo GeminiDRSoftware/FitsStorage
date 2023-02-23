@@ -2,7 +2,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 
 from .user import User
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 
 
 class UserProgram(Base):

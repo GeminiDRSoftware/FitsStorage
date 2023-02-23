@@ -2,9 +2,9 @@ import datetime
 from sqlalchemy import Column, ForeignKey, UniqueConstraint
 from sqlalchemy import Integer, Boolean, DateTime, Text
 
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 from .ormqueuemixin import OrmQueueMixin
-from fits_storage.core.header import Header
+from fits_storage.core.orm.header import Header
 
 
 class CalCacheQueueEntry(OrmQueueMixin, Base):

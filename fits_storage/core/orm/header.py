@@ -8,11 +8,11 @@ from . import Base
 from .diskfile import DiskFile
 
 from fits_storage.file_parser import build_parser
-from fits_storage.utils.gemini_metadata_utils import GeminiProgram, procmode_codes
-from fits_storage.utils.gemini_metadata_utils import gemini_gain_settings
-from fits_storage.utils.gemini_metadata_utils import gemini_readspeed_settings
-from fits_storage.utils.gemini_metadata_utils import gemini_welldepth_settings
-from fits_storage.utils.gemini_metadata_utils import gemini_readmode_settings
+from fits_storage.gemini_metadata_utils import GeminiProgram, procmode_codes
+from fits_storage.gemini_metadata_utils import gemini_gain_settings
+from fits_storage.gemini_metadata_utils import gemini_readspeed_settings
+from fits_storage.gemini_metadata_utils import gemini_welldepth_settings
+from fits_storage.gemini_metadata_utils import gemini_readmode_settings
 
 from astropy import wcs as pywcs
 from astropy.wcs import SingularMatrixError
@@ -35,7 +35,7 @@ try:
 except:
     pass
 
-from fits_storage.utils.gemini_metadata_utils import obs_types, obs_classes, reduction_states
+from fits_storage.gemini_metadata_utils import obs_types, obs_classes, reduction_states
 
 
 # ------------------------------------------------------------------------------

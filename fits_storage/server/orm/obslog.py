@@ -26,8 +26,8 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Date
 from sqlalchemy.orm import relation
 
-from fits_storage.core import Base
-from fits_storage.core.diskfile import DiskFile
+from fits_storage.core.orm import Base
+from fits_storage.core.orm.diskfile import DiskFile
 # ------------------------------------------------------------------------------
 MONMAP = {'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
           'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12

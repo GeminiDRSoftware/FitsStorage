@@ -2,7 +2,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean, DateTime
 from sqlalchemy.orm import relation
 
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 
 
 class Glacier(Base):

@@ -4,7 +4,7 @@ from sqlalchemy.orm import relation
 
 import datetime
 
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 from .usagelog import UsageLog
 
 class FileDownloadLog(Base):

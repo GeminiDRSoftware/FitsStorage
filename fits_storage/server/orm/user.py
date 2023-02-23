@@ -1,7 +1,7 @@
 from sqlalchemy import Column
 from sqlalchemy import String, Integer, Text, Boolean, DateTime
 
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 
 from hashlib import sha256
 from os import urandom

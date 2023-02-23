@@ -4,11 +4,11 @@ from sqlalchemy import Integer, Text, Enum
 import os
 
 from .diskfile import DiskFile
-from ..fits_verify import fitsverify
+from ...fits_verify import fitsverify
 
 from . import Base
 
-from ..utils.gemini_fits_validator import AstroDataEvaluator, STATUSES
+from ...fits_validator.gemini_fits_validator import AstroDataEvaluator, STATUSES
 
 evaluate = AstroDataEvaluator()
 

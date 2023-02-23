@@ -1,8 +1,8 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
-from fits_storage.core.header import Header
+from fits_storage.core.orm.header import Header
 
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 
 
 class LogComments(Base):

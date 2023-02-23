@@ -7,7 +7,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 
 from io import StringIO
 
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 
 
 class Publication(Base):

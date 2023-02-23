@@ -4,7 +4,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, BigInteger
 from sqlalchemy.orm import relation
 
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 from .user import User
 
 # ------------------------------------------------------------------------------

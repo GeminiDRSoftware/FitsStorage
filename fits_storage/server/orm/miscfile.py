@@ -2,14 +2,14 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy.orm import relation
 
-from fits_storage.core import Base
-from fits_storage.core.diskfile import DiskFile
+from fits_storage.core.orm import Base
+from fits_storage.core.orm.diskfile import DiskFile
 
 from fits_storage.config import get_config
 fsc = get_config()
 
 if fsc.using_s3:
-    from ..utils.aws_s3 import get_helper, ClientError
+    from ...utils.aws_s3 import get_helper, ClientError
     s3 = get_helper()
 
 import json

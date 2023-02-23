@@ -1,7 +1,7 @@
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text, Boolean
 
-from fits_storage.core import Base
+from fits_storage.core.orm import Base
 
 # ------------------------------------------------------------------------------
 class Notification(Base):

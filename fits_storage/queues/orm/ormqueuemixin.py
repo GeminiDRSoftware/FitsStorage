@@ -6,7 +6,7 @@ import datetime
 import os
 import fcntl
 
-from fits_storage.utils.gemini_metadata_utils import sortkey_regex_dict
+from fits_storage.gemini_metadata_utils import sortkey_regex_dict
 
 from fits_storage.config import get_config
 fsc = get_config()
