@@ -13,7 +13,7 @@ from urllib.parse import unquote
 from fits_storage.config import get_config
 fsc = get_config()
 
-from fits_storage.utils.hashes import md5sum
+from fits_storage.core.hashes import md5sum
 from contextlib import contextmanager
 
 from .null_logger import EmptyLogger
