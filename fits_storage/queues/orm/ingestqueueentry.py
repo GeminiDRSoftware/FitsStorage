@@ -1,5 +1,5 @@
 """
-This is the IngestQueueEntry ORM class.
+This module contains the IngestQueueEntry ORM class.
 
 """
 import datetime

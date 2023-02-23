@@ -2,6 +2,7 @@ import datetime
 
 from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
+from fits_storage.queues.orm.calcachequeueentry import CalCacheQueueEntry
 
 
 def test_basiceqe():
@@ -78,3 +79,12 @@ def test_failed():
     iqe.failed = True
 
     assert iqe.failed is True
+
+def test_basicccqe():
+    ccqe = CalCacheQueueEntry(1, 'filename')
+    assert ccqe.obs_hid == 1
+    assert ccqe.filename == 'filename'
+    assert ccqe.sortkey == 'aaaafilename'
+    assert ccqe.added is not None
+    assert ccqe.inprogress is False
+    assert ccqe.failed is False

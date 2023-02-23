@@ -1,9 +1,15 @@
+"""
+This module contains the CalCacheQueueEntry ORM class.
+
+"""
 import datetime
+
 from sqlalchemy import Column, ForeignKey, UniqueConstraint
 from sqlalchemy import Integer, Boolean, DateTime, Text
 
 from fits_storage.core.orm import Base
 from .ormqueuemixin import OrmQueueMixin
+
 from fits_storage.core.orm.header import Header
 
 
@@ -41,8 +47,8 @@ class CalCacheQueueEntry(OrmQueueMixin, Base):
             form the sortkey to prioritize the queue despooling)
         """
         self.obs_hid = obs_hid
+        self.filename = filename
         self.inprogress = False
         self.sortkey = self.sortkey_from_filename()
         self.added = datetime.datetime.utcnow()
         self.fail_dt = self.fail_dt_false  # See Note in OrmQueueMixin
-        self.filename = filename
