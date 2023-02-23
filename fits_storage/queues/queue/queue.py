@@ -43,7 +43,7 @@ class Queue(object):
         transient object not associated with the session. It has all the data
         items from the ORM, but don't try to modify the database with it.
 
-        There are lots of subelties to this. There could be duplicate entries
+        There are lots of subtleties to this. There could be duplicate entries
         in the queue (that's fine), some of which may be marked as failed and
         some may be inprogress. If there are two entries for the same file,
         one in progress and one not, we do not want to pop the second one
@@ -51,7 +51,6 @@ class Queue(object):
 
         So we first create a list of the filenames that are inprogress (but
         not marked as failed), and we exclude that from the selection criteria.
-
         """
         # for brevity:
         session = self.session
@@ -71,7 +70,11 @@ class Queue(object):
         # UPDATE rather than grabbing a whole ACCESS EXCLUSIVE lock,
         # but having it as transient makes sense anyway.
 
-        # Wrap the whole thing in a savepoint so it can roll back cleanly
+        # There's a quirk regarding the way failed is handled. See the note
+        # in ormqueuemixin.py .Basically fail_dt == fail_dt_false
+        # means failed == False
+
+        # Wrap the whole thing in a savepoint, so it can roll back cleanly
         # if there's an exception
         with session.begin_nested():
 
@@ -79,14 +82,13 @@ class Queue(object):
             # exclude. Note, this does not execute this query, that's done
             # within the main query under the select-for-update lock.
 
-            inprogress_filenames = session.query(ormclass).\
-                filter(ormclass.failed == False).\
+            inprogress_filenames = session.query(ormclass.filename).\
+                filter(ormclass.fail_dt == ormclass.fail_dt_false).\
                 filter(ormclass.inprogress == True)
-
 
             query = session.query(ormclass).\
                 filter(ormclass.inprogress == False).\
-                filter(ormclass.failed == False).\
+                filter(ormclass.fail_dt == ormclass.fail_dt_false).\
                 filter(ormclass.after < datetime.datetime.utcnow()).\
                 filter(~ormclass.filename.in_(inprogress_filenames)).\
                 with_for_update(skip_locked=True).\
@@ -94,9 +96,9 @@ class Queue(object):
 
             qentry = query.first()
 
-            if qentry:
-                self.logger.debug(f"Popped id {qelement.id} from "
-                                  f"{ormclass.__tablename__}")
+            if qentry is not None:
+                self.logger.debug(f"Popped id {qentry.id} - {qentry.filename} "
+                                  f"from {ormclass.__tablename__}")
                 # Set to inprogress and flush to the DB.
                 qentry.inprogress = True
                 session.flush()

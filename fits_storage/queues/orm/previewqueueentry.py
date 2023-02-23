@@ -21,14 +21,16 @@ class PreviewQueueEntry(OrmQueueMixin, Base):
     id = Column(Integer, primary_key=True)
     diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False,
                          unique=True, index=True)
+    filename = Column(Text)
     inprogress = Column(Boolean, index=True)
-    fail_dt = Column(DateTime)
+    fail_dt = Column(DateTime, index=True)
     force = Column(Boolean)
     sortkey = Column(Text, index=True)
     error = Column(Text)
 
     def __init__(self, diskfile, force=False):
         self.diskfile_id = diskfile.id
+        self.filename = diskfile.filename
         self.sortkey = self.sortkey_from_filename(diskfile.filename)
         self.inprogress = False
         self.fail_dt = datetime.datetime.max # See note in OrmQueueMixin

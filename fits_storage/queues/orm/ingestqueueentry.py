@@ -10,6 +10,9 @@ from sqlalchemy import Integer, Boolean, Text, DateTime
 from fits_storage.core import Base
 from .ormqueuemixin import OrmQueueMixin
 
+from fits_storage.config import get_config
+fsc = get_config()
+
 class IngestQueueEntry(OrmQueueMixin, Base):
     """
     This is the ORM object for the IngestQueue table
@@ -23,7 +26,7 @@ class IngestQueueEntry(OrmQueueMixin, Base):
     filename = Column(Text, nullable=False, index=True)
     path = Column(Text, nullable=False)
     inprogress = Column(Boolean, index=True)
-    fail_dt = Column(DateTime)
+    fail_dt = Column(DateTime, index=True)
     added = Column(DateTime)
     force_md5 = Column(Boolean)
     force = Column(Boolean)
@@ -72,7 +75,7 @@ class IngestQueueEntry(OrmQueueMixin, Base):
         self.force_md5 = force_md5
         self.force = force
         self.after = after if after is not None else self.added
-        self.fail_dt = datetime.datetime.max # See note in OrmQueueMixin
+        self.fail_dt = self.fail_dt_false # See note in OrmQueueMixin
         self.sortkey = self.sortkey_from_filename()
         self.header_update = header_update
         self.md5_before_header_update = md5_before_header_update
@@ -88,3 +91,48 @@ class IngestQueueEntry(OrmQueueMixin, Base):
             str : String representation of the :class:`~IngestQueueEntry` record
         """
         return f"<IngestQueue('{self.id}', '{self.filename}')>"
+
+    def defer(self):
+        """
+        Examines the file to be ingested and decides whether to defer ingestion.
+        There are two reasons we would defer it:
+        1) The file was modified (according to the filesystem mtime) within
+        the last "defer_threshold" seconds.
+        2) The file is locked.
+
+        If we do defer it, we defer it for defer_delay seconds.
+
+        defer_threshold and defer_delay come from the configuration system.
+
+        Returns
+        -------
+        - A string containing an explanatory message, if the file should be
+        defered
+        - None otherwise
+
+        Note that if the file should be defered, we set the 'after' value of the
+        object to reflect the appropriate delay, but we do not commit the
+        object to the session, it is up to the caller to do that.
+        """
+
+        if fsc.defer_threshold == 0:
+            return None
+
+        # lastmod is in local timezone.
+        age = datetime.datetime.now() - self.filelastmod()
+        threshold = datetime.timedelta(seconds=fsc.defer_threshold)
+        delay = datetime.timedelta(seconds=fsc.defer_delay)
+        message = None
+
+        if age < threshold:
+            # Defer ingestion of this file for defer_secs. 'after' is in UTC
+            message = "Deferring ingestion of recently modified file " \
+                      f"{self.filename} for {fsc.defer_delay} seconds"
+            self.after = datetime.datetime.utcnow() + delay
+
+        elif self.file_is_locked():
+            message = f"Deferring ingestion of locked file {self.filename} " \
+                      f"for {fsc.defer_delay} seconds"
+            self.after = datetime.datetime.utcnow() + delay
+
+        return message

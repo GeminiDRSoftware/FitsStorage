@@ -22,7 +22,7 @@ class CalCacheQueueEntry(OrmQueueMixin, Base):
     id = Column(Integer, primary_key=True)
     obs_hid = Column(Integer, ForeignKey(Header.id), nullable=False, index=True)
     inprogress = Column(Boolean, index=True)
-    fail_dt = Column(DateTime)
+    fail_dt = Column(DateTime, index=True)
     added = Column(DateTime)
     sortkey = Column(Text, index=True);
     filename = Column(Text)

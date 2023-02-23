@@ -20,7 +20,7 @@ class ExportQueueEntry(OrmQueueMixin, Base):
     path = Column(Text)
     destination = Column(Text, nullable=False, index=True)
     inprogress = Column(Boolean, index=True)
-    fail_dt = Column(DateTime)
+    fail_dt = Column(DateTime, index=True)
     sortkey = Column(Text, index=True)
     added = Column(DateTime)
     after = Column(DateTime)

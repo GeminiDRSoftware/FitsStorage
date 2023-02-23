@@ -51,12 +51,12 @@ class IngestQueue(Queue):
         if header_update is not None and isinstance(header_update, dict):
             header_update = json.dumps(header_update)
 
-        iq = IngestQueueEntry(filename, path, force=force, force_md5=force_md5,
+        iqe = IngestQueueEntry(filename, path, force=force, force_md5=force_md5,
                               after=after, header_update=header_update,
                               md5_before_header_update=md5_before_header_update,
                               md5_after_header_update=md5_after_header_update)
 
-        self.session.add(iq)
+        self.session.add(iqe)
         try:
             self.session.commit()
             return True
