@@ -42,6 +42,10 @@ class OrmQueueMixin:
         regexes with value x are next in priority.
         """
 
+        # Storing this in the class for local use allows it to be changed
+        # on the fly for testing these methods.
+        storage_root = fsc.storage_root
+
         if filename is None:
             filename = self.filename
 
@@ -96,13 +100,13 @@ class OrmQueueMixin:
     def fullpathfilename(self):
         """
         Calculates the full path filename - ie concatenation of:
-        fsc.storage_root, self.path, self.filename
+        storage_root, self.path, self.filename
 
         Returns
         -------
         The full path filename of the filename for this queue entry
         """
-        return os.path.join(fsc.storage_root, self.path, self.filename)
+        return os.path.join(self.storage_root, self.path, self.filename)
 
     @property
     def filelastmod(self):
