@@ -35,7 +35,8 @@ try:
 except:
     pass
 
-from fits_storage.gemini_metadata_utils import obs_types, obs_classes, reduction_states
+from fits_storage.gemini_metadata_utils import obs_types, obs_classes, \
+    reduction_states
 
 
 # ------------------------------------------------------------------------------
@@ -68,7 +69,8 @@ class Header(Base):
     __tablename__ = 'header'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
+    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False,
+                         index=True)
     diskfile = relation(DiskFile, order_by=id)
     program_id = Column(Text, index=True)
     engineering = Column(Boolean, index=True)
@@ -252,10 +254,11 @@ class Header(Base):
 
     def footprints(self, ad: astrodata.AstroData):
         """
-        Set footprints based on information in an :class:`astrodata.AstroData` instance.
+        Set footprints based on information in an
+        :class:`astrodata.AstroData` instance.
 
-        This method extracts the WCS from the AstroData instance and uses that to build
-        footprint information.
+        This method extracts the WCS from the AstroData instance and uses
+        that to build footprint information.
 
         Parameters
         ----------
@@ -263,10 +266,11 @@ class Header(Base):
             AstroData object to read footprints from
         """
         retary = {}
-        # Horrible hack - GNIRS etc has the WCS for the extension in the PHU!
+        # Horrible hack - GNIRS etc. has the WCS for the extension in the PHU!
         if ad.tags.intersection({'GNIRS', 'MICHELLE', 'NIFS'}):
             # If we're not in an RA/Dec TANgent frame, don't even bother
-            if (ad.phu.get('CTYPE1') == 'RA---TAN') and (ad.phu.get('CTYPE2') == 'DEC--TAN'):
+            if (ad.phu.get('CTYPE1') == 'RA---TAN') and \
+                    (ad.phu.get('CTYPE2') == 'DEC--TAN'):
                 hdulist = fits.open(ad.path)
                 wcs = pywcs.WCS(hdulist[0].header)
                 wcs.array_shape = hdulist[1].data.shape
@@ -281,7 +285,8 @@ class Header(Base):
             # try using fitsio here too
             hdulist = fits.open(ad.path)
             for (hdu, hdr) in zip(hdulist[1:], ad.hdr): # ad.hdr:
-                if (hdr.get('CTYPE1') == 'RA---TAN') and (hdr.get('CTYPE2') == 'DEC--TAN'):
+                if (hdr.get('CTYPE1') == 'RA---TAN') and \
+                        (hdr.get('CTYPE2') == 'DEC--TAN'):
                     extension = "%s,%s" % (hdr.get('EXTNAME'), hdr.get('EXTVER'))
                     wcs = pywcs.WCS(hdu.header)
                     if hdu.data is not None and hdu.data.shape:

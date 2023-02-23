@@ -17,14 +17,15 @@ class Gpi(Base):
     Parameters
     ----------
     header : :class:`~fits_storage_core.orm.header.Header`
-        Corresponding header rcord for the GPI data
+        Corresponding header record for the GPI data
     ad : :class:`~astrodata.core.AstroData`
         AstroData object to read GPI information from
     """
     __tablename__ = 'gpi'
 
     id = Column(Integer, primary_key=True)
-    header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+    header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
+                       index=True)
     header = relation(Header, order_by=id)
     filter_name = Column(Text, index=True)
     disperser = Column(Text, index=True)
@@ -41,7 +42,7 @@ class Gpi(Base):
         Parameters
         ----------
         header : :class:`~fits_storage_core.orm.header.Header`
-            Corresponding header rcord for the GPI data
+            Corresponding header record for the GPI data
         ad : :class:`~astrodata.core.AstroData`
             AstroData object to read GPI information from
         """

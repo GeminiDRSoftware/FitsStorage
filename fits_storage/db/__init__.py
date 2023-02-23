@@ -15,12 +15,14 @@ _saved_engine = None
 _saved_database_url = None
 _saved_sessionfactory = None
 
+
 def sessionfactory():
     """
     Retrieves a singleton session factory.
 
-    This call grants access to a singleton SQLAlchemy session factory.  If the factory
-    does not exist yet, it is created from the 'database_url' fits storage config value
+    This call grants access to a singleton SQLAlchemy session factory.  If
+    the factory does not exist yet, it is created from the 'database_url'
+    fits storage config value
 
     Returns
     -------
@@ -123,4 +125,5 @@ def compiled_statement(stmt):
     str
         String representation of the query
     """
-    return stmt.compile(dialect=_LiteralDialect(), compile_kwargs={'literal_binds': True})
+    return stmt.compile(dialect=_LiteralDialect(),
+                        compile_kwargs={'literal_binds': True})

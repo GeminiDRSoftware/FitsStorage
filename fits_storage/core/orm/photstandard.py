@@ -8,8 +8,8 @@ from .footprint import Footprint
 
 class PhotStandard(Base):
     """
-    This is the ORM class for the table holding the standard star list for the
-    instrument monitoring.
+    This is the ORM class for the table holding the standard star list for
+    the instrument monitoring.
 
     """
     __tablename__ = 'photstandard'
@@ -35,17 +35,17 @@ class PhotStandard(Base):
 
 class PhotStandardObs(Base):
     """
-    This is the ORM class for the table detailing which standard stars are observed
-    in which headers.
+    This is the ORM class for the table detailing which standard stars are
+    observed in which headers.
 
     """
     __tablename__ = "photstandardobs"
 
     id = Column(Integer, primary_key=True)
-    photstandard_id = Column(Integer, ForeignKey(PhotStandard.id), nullable=False, index=True)
-    footprint_id = Column(Integer, ForeignKey(Footprint.id), nullable=False, index=True)
+    photstandard_id = Column(Integer, ForeignKey(PhotStandard.id),
+                             nullable=False, index=True)
+    footprint_id = Column(Integer, ForeignKey(Footprint.id), nullable=False,
+                          index=True)
     photstandard = relation(PhotStandard, order_by=id)
     footprint = relation(Footprint, order_by=id)
-
-
 

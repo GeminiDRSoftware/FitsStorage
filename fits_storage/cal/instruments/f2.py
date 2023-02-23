@@ -23,7 +23,8 @@ class F2(Base):
     __tablename__ = 'f2'
 
     id = Column(Integer, primary_key=True)
-    header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+    header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
+                       index=True)
     header = relation(Header, order_by=id)
     disperser = Column(Text, index=True)
     filter_name = Column(Text, index=True)
@@ -33,7 +34,9 @@ class F2(Base):
 
     def __init__(self, header: Header, ad):
         """
-        Create an F2 record with the given :class:`~fits_storage_core.orm.header.Header` and data from :class:`astrodata.Astrodata`
+        Create an F2 record with the given
+        :class:`~fits_storage_core.orm.header.Header` and data from
+        :class:`astrodata.Astrodata`
 
         Parameters
         ----------
@@ -49,7 +52,8 @@ class F2(Base):
 
     def populate(self, ad):
         """
-        Populate the F2 information from the given :class:`~astrodata.core.AstroData` object
+        Populate the F2 information from the given
+        :class:`~astrodata.core.AstroData` object
 
         Parameters
         ----------

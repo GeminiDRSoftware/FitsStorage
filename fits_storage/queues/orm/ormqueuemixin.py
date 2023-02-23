@@ -1,5 +1,5 @@
 """
-This module contains a class containing utility functions that is mixedin
+This module contains a class containing utility functions that is mixed-in
 to the queue ORM classes.
 """
 import datetime
@@ -10,6 +10,7 @@ from fits_storage.gemini_metadata_utils import sortkey_regex_dict
 
 from fits_storage.config import get_config
 fsc = get_config()
+
 
 class OrmQueueMixin:
     def sortkey_from_filename(self, filename=None):
@@ -22,9 +23,9 @@ class OrmQueueMixin:
         the filename and form a sortkey based on those.
 
         We also exert some prioritization by prepending a 'z' to high
-        priority files (eg regular science filenames, and other letters to
+        priority files (e.g. regular science filenames), and other letters to
         lower priority files such as site monitoring data. The sort is done
-        in descending order, so 'z' is high priortiy and 'a' is low priority.
+        in descending order, so 'z' is high priority and 'a' is low priority.
 
         The regexes for this are in a dict imported from gemini_metadata_utils.
 
@@ -32,12 +33,12 @@ class OrmQueueMixin:
         simply 'aaaa' followed by the filename. This effectively gives them a
         lower priority than any filenames that do match.
 
-        sortkey_regex_dict: These regular expessions are used by the queues
+        sortkey_regex_dict: These regular expressions are used by the queues
         to determine how to sort ( ie prioritize) files when despooling the
         queues. The regexes should provide two named groups - date (YYYYMMDD)
         and optional num (serial number). The regexes are keys in a dict,
         where the value is a higher level priority. ie files matching regexes
-        with value z are considered highest priority, and those matching
+        with value z are considered the highest priority, and those matching
         regexes with value x are next in priority.
         """
 
@@ -47,7 +48,7 @@ class OrmQueueMixin:
         sortkey = 'aaaa' + filename
 
         # Note, we can't do a 'for a, b in blah' unpack here as the dictionary
-        # key is a compiled regular expression and isn't itterable.
+        # key is a compiled regular expression and isn't iterable.
         for cre in sortkey_regex_dict.keys():
             m = cre.match(filename)
             if m:
@@ -58,6 +59,7 @@ class OrmQueueMixin:
 
     # This is the magic value to represent failed = False.
     fail_dt_false = datetime.datetime.max
+
     @property
     def failed(self):
         """

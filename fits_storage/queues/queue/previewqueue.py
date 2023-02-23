@@ -7,6 +7,7 @@ the queue itself.
 from .queue import Queue
 from ..orm.previewqueueentry import PreviewQueueEntry
 
+
 class PreviewQueue(Queue):
 
     def __init__(self, session, logger=None):

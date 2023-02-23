@@ -2,8 +2,8 @@
 This module holds the CalibrationF2 class
 """
 
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.f2 import F2
+from fits_storage.core.orm.header import Header
+from fits_storage.cal.instruments.f2 import F2
 from .calibration import Calibration, not_processed
 
 
@@ -23,7 +23,8 @@ class CalibrationF2(Calibration):
 
     def set_applicable(self):
         """
-        Get the list of applicable calibration types, such as "flat", "processed_dark", etc.
+        Get the list of applicable calibration types, such as "flat",
+        "processed_dark", etc.
 
         Returns
         -------
@@ -44,12 +45,13 @@ class CalibrationF2(Calibration):
             self.applicable.append('processed_dark')
             self.applicable.append('flat')
             self.applicable.append('processed_flat')
-            # And if they're science frames, they require a photometric_standard
+            # And if they're science, they require a photometric_standard
             if self.descriptors['observation_class'] == 'science':
                 self.applicable.append('photometric_standard')
 
         # Spectroscopy OBJECTs require a dark, flat and arc
-        if (self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == True):
+        if (self.descriptors['observation_type'] == 'OBJECT') and \
+                (self.descriptors['spectroscopy'] == True):
             self.applicable.append('dark')
             self.applicable.append('processed_dark')
             self.applicable.append('flat')
@@ -71,7 +73,8 @@ class CalibrationF2(Calibration):
             self.applicable.append('flat')
             self.applicable.append('processed_flat')
 
-        if self.descriptors['observation_type'] == 'ARC' and self.descriptors['filter_name'] in ['HK', 'K-long']:
+        if self.descriptors['observation_type'] == 'ARC' and \
+                self.descriptors['filter_name'] in ['HK', 'K-long']:
             self.applicable.append('lampoff_flat')
 
         self.applicable.append('processed_bpm')
@@ -80,16 +83,14 @@ class CalibrationF2(Calibration):
         """
         Get a query for darks appropriate for F2.
 
-        Returns
-        -------
-        :class:`sqlalchemy.orm.query.Query` matching the `exposure_time` and F2 `read_mode` within 90 days
+        Returns ------- :class:`sqlalchemy.orm.query.Query` matching the
+        `exposure_time` and F2 `read_mode` within 90 days
         """
         if howmany is None:
             howmany = 1 if processed else 10
 
         query = (
-            self.get_query()
-                .dark(processed=processed)
+            self.get_query().dark(processed=processed)
                 .match_descriptors(Header.exposure_time,
                                    F2.read_mode)
                 # Must totally match: read_mode, exposure_time
@@ -110,7 +111,7 @@ class CalibrationF2(Calibration):
         -------
         list of :class:`sqlalchemy.schema.Column`
         """
-        return (F2.disperser, F2.lyot_stop, F2.filter_name, F2.focal_plane_mask)
+        return F2.disperser, F2.lyot_stop, F2.filter_name, F2.focal_plane_mask
 
     def flat(self, processed=False, howmany=None, return_query=False):
         """
@@ -127,17 +128,23 @@ class CalibrationF2(Calibration):
 
         Returns
         -------
-        :class:`sqlalchemy.orm.query.Query` for flats matching the F2 read_mode and the :meth:`fits_storage.cal.calibration_f2.CalibrationF2.common_descriptors` within 90 days.  Also within 0.001 wavelength for spectroscopy
+
+        :class:`sqlalchemy.orm.query.Query` for flats
+        matching the F2 read_mode and the
+        :meth:`fits_storage.cal.calibration_f2.CalibrationF2
+        .common_descriptors` within 90 days.  Also within 0.001 wavelength
+        for spectroscopy
         """
         if howmany is None:
             howmany = 1 if processed else 10
 
         query = (
-            self.get_query()
-                .flat(processed=processed)
-                # Must totally match: disperser, central_wavelength (spect only), focal_plane_mask, filter_name, lyot_stop, read_mode
+            self.get_query().flat(processed=processed)
+                # Must totally match: disperser, central_wavelength (spect
+                # only), focal_plane_mask, filter_name, lyot_stop, read_mode
                 .match_descriptors(*CalibrationF2.common_descriptors())
-                .tolerance(central_wavelength=0.001, condition=self.descriptors['spectroscopy'])
+                .tolerance(central_wavelength=0.001,
+                           condition=self.descriptors['spectroscopy'])
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
             )
@@ -161,7 +168,9 @@ class CalibrationF2(Calibration):
 
         Returns
         -------
-        :class:`sqlalchemy.orm.query.Query` for arcs matching the F2 :meth:`fits_storage.cal.calibration_f2.CalibrationF2.common_descriptors` within 0.001 wavelength and 90 days
+        :class:`sqlalchemy.orm.query.Query` for arcs matching the F2
+        :meth:`fits_storage.cal.calibration_f2.CalibrationF2
+        .common_descriptors` within 0.001 wavelength and 90 days
         """
         # Default number to associate is 1
         howmany = howmany if howmany else 1
@@ -169,7 +178,8 @@ class CalibrationF2(Calibration):
         query = (
             self.get_query()
                 .arc(processed=processed)
-                # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter_name, lyot_stop
+                # Must Totally Match: disperser, central_wavelength,
+                # focal_plane_mask, filter_name, lyot_stop
                 .match_descriptors(*CalibrationF2.common_descriptors())
                 .tolerance(central_wavelength=0.001)
                 # Absolute time separation must be within 3 months
@@ -195,7 +205,8 @@ class CalibrationF2(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that
+            match the criteria
         """
         # Default 1 bpm
         howmany = howmany if howmany else 1
@@ -204,7 +215,8 @@ class CalibrationF2(Calibration):
         query = self.get_query(include_engineering=True) \
                     .bpm(processed) \
                     .add_filters(*filters) \
-                    .match_descriptors(Header.instrument, Header.detector_binning)
+                    .match_descriptors(Header.instrument,
+                                       Header.detector_binning)
 
         if return_query:
             return query.all(howmany), query
@@ -227,7 +239,10 @@ class CalibrationF2(Calibration):
 
         Returns
         -------
-        :class:`sqlalchemy.orm.query.Query` for flats matching the F2 read_mode and the :meth:`fits_storage.cal.calibration_f2.CalibrationF2.common_descriptors` within 90 days.  Also within 0.001 wavelength for spectroscopy
+        :class:`sqlalchemy.orm.query.Query` for flats matching the F2 read_mode
+        and the :meth:`fits_storage.cal.calibration_f2.CalibrationF2.
+        common_descriptors` within 90 days.
+        Also within 0.001 wavelength for spectroscopy
         """
         if howmany is None:
             howmany = 1 if processed else 10
@@ -235,10 +250,13 @@ class CalibrationF2(Calibration):
         query = (
             self.get_query()
                 .flat(processed=processed)
-                # Must totally match: disperser, central_wavelength (spect only), focal_plane_mask, filter_name, lyot_stop, read_mode
-                .match_descriptors(*CalibrationF2.common_descriptors(), Header.exposure_time)
+                # Must totally match: disperser, central_wavelength (spect
+                # only), focal_plane_mask, filter_name, lyot_stop, read_mode
+                .match_descriptors(*CalibrationF2.common_descriptors(),
+                                   Header.exposure_time)
                 .add_filters(Header.gcal_lamp == 'Off')
-                .tolerance(central_wavelength=0.001, condition=self.descriptors['spectroscopy'])
+                .tolerance(central_wavelength=0.001,
+                           condition=self.descriptors['spectroscopy'])
                 # Absolute time separation must be within 3 months
                 .max_interval(days=1)
             )
@@ -248,12 +266,14 @@ class CalibrationF2(Calibration):
             return query.all(howmany)
 
     @not_processed
-    def photometric_standard(self, processed=False, howmany=None, return_query=False):
+    def photometric_standard(self, processed=False, howmany=None,
+                             return_query=False):
         """
         Get matching photometric standards for an F2 observation.
 
-        This matches photometric standards that are ``OBJECT`` s and ``partnerCal``, matching the F2 ``filter_name`` and
-        ``lyot_stop`` and within a day
+        This matches photometric standards that are ``OBJECT`` s and
+        ``partnerCal``, matching the F2 ``filter_name`` and ``lyot_stop`` and
+        within a day
 
         Parameters
         ----------
@@ -266,7 +286,8 @@ class CalibrationF2(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that
+            match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 10
@@ -277,7 +298,8 @@ class CalibrationF2(Calibration):
                 .photometric_standard(OBJECT=True, partnerCal=True)
                 .match_descriptors(F2.filter_name,
                                    F2.lyot_stop)
-                # Absolute time separation must be within 24 hours of the science
+                # Absolute time separation must be within 24 hours of the
+                # science
                 .max_interval(days=1)
             )
         if return_query:

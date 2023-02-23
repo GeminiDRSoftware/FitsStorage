@@ -1,13 +1,14 @@
-"""
-This module provides various utility functions to work around the lack of support
-for simple geometry types in sqlalchemy. This could be replaced with a more accuate
-sysyem using postGIS to do the co-ordinate transforms properly in the future.
+"""This module provides various utility functions to work around the lack of
+support for simple geometry types in sqlalchemy. This could be replaced with
+a more accurate system using postGIS to do the co-ordinate transforms properly
+in the future.
 
 """
 import sys
 import traceback
 
-from gemini_obs_db.orm.header import Header
+from .orm.header import Header
+
 
 def add_footprint(session, id, fp):
     """
@@ -25,13 +26,15 @@ def add_footprint(session, id, fp):
     form1 = "'(({}, {}), ({}, {}), ({}, {}), ({}, {}))'" 
 
     fptext = form1.format(fp[0][0], fp[0][1], fp[1][0], fp[1][1], fp[2][0],
-                           fp[2][1], fp[3][0], fp[3][1])
+                          fp[2][1], fp[3][0], fp[3][1])
     session.execute("UPDATE footprint set area = {} where id={}".format(fptext, id))
     session.commit()
 
+
 def add_point(session, id, x, y):
     """
-    Sets the coords column of the photstandard table to be a point defined by (x, y).
+    Sets the coords column of the photstandard table to be a point defined by
+    (x, y).
 
     Parameters
     ----------
@@ -45,8 +48,8 @@ def add_point(session, id, x, y):
         Y coordinate
     """
     ptext = "'({}, {})'".format(x, y)
-    session.execute("UPDATE photstandard set coords = {} WHERE id={}".format(ptext,
-                                                                              id))
+    session.execute("UPDATE photstandard set coords = {} WHERE id={}".
+                    format(ptext, id))
     session.commit()
 
 

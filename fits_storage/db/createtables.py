@@ -35,8 +35,8 @@ if fsc.is_server:
 def create_tables(session: Session):
     """
     Creates the database tables appropriate for the configuration.
-    If we're in a server configuration, also handles granting persmissions
-    for the databse user that the web queries run under.
+    If we're in a server configuration, also handles granting permissions
+    for the database user that the web queries run under.
 
     Parameters
     ----------
@@ -56,7 +56,7 @@ def create_tables(session: Session):
         db._saved_engine.execute("ALTER TABLE footprint ADD IF NOT EXISTS area polygon;")
         db._saved_engine.execute("ALTER TABLE photstandard ADD IF NOT EXISTS coords point;")
 
-    # Grant access to server tables for the unprivelidged user that runs the
+    # Grant access to server tables for the unprivileged user that runs the
     # wsgi code for the web server
     # TODO: this needs sorting out.
     # if using_apache and not using_sqlite:

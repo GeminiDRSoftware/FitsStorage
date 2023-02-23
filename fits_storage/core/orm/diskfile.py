@@ -43,7 +43,8 @@ def _determine_timestamp_from_filename(filename: str):
     Returns
     -------
     datetime
-        The datetime implied by the filename, or None if the filename is not a recognized format
+        The datetime implied by the filename, or None if the filename is not
+        a recognized format
     """
     for regex in [
         _standard_filename_timestamp_re,
@@ -58,18 +59,19 @@ def _determine_timestamp_from_filename(filename: str):
             day = int(m.group(3))
             dt = datetime.datetime(year=year, month=month, day=day)
             return dt
-    # Unrecognized filename format, upstream will have to do something appropriate
+    # Unrecognized filename format, upstream will have to do something
+    # appropriate
     return None
 
 
 class DiskFile(Base):
     """
     This is the ORM class for the diskfile table. A diskfile represents an
-    instance of a file on disk. If the file is compressed (with bzip2) we keep
-    some metadata on the actual file as is and also on the decompressed data. 
-    file_md5 and file_size are those of the actual file. data_md5 and data_size
-    correspond to the uncompressed data if the file is compressed, and should be
-    the same as for file_md5/file_size for uncompressed files.
+    instance of a file on disk. If the file is compressed (with bzip2) we
+    keep some metadata on the actual file as is and also on the decompressed
+    data. file_md5 and file_size are those of the actual file. data_md5 and
+    data_size correspond to the uncompressed data if the file is compressed,
+    and should be the same as for file_md5/file_size for uncompressed files.
 
     Parameters
     ----------
@@ -80,7 +82,8 @@ class DiskFile(Base):
     path : str
         The path of the file within the `storage_root`
     compressed : bool
-        True if the file is compressed.  It's also considered compressed if the filename ends in .bz2
+        True if the file is compressed.  It's also considered compressed if
+        the filename ends in .bz2
     """
 
     __tablename__ = 'diskfile'
@@ -120,14 +123,15 @@ class DiskFile(Base):
     # of this diskfile instance.
     uncompressed_cache_file = None
 
-    # We store an astrodata instance here in the same way
-    # These are expensive to instantiate
-    # We instantiate  and close this externally though. It's stored here as it is
-    # tightly linked to this actual diskfile, but obviously, this will not be set in
-    # any DiskFile object returned by the ORM layer, or pulled in as a relation
+    # We store an astrodata instance here in the same way These are expensive
+    # to instantiate We instantiate  and close this externally though. It's
+    # stored here as it is tightly linked to this actual diskfile,
+    # but obviously, this will not be set in any DiskFile object returned by
+    # the ORM layer, or pulled in as a relation
     ad_object = None
 
-    def __init__(self, given_file: File, given_filename: str, path: str, compressed=None):
+    def __init__(self, given_file: File, given_filename: str, path: str,
+                 compressed=None):
         """
         Create a :class:`~fits_storage_core.orm.diskfile.DiskFile` record.
 
@@ -140,7 +144,8 @@ class DiskFile(Base):
         path : str
             The path of the file within the `storage_root`
         compressed : bool
-            True if the file is compressed.  It's also considered compressed if the filename ends in .bz2
+            True if the file is compressed.  It's also considered compressed
+            if the filename ends in .bz2
         """
         self.file_id = given_file.id
         self.filename = given_filename
@@ -191,7 +196,8 @@ class DiskFile(Base):
 
     def fullpath(self):
         """
-        Get the full path to the file, including the `storage_root`, `path`, and `filename`
+        Get the full path to the file, including the `storage_root`, `path`,
+        and `filename`
 
         Returns
         -------

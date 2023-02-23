@@ -1,8 +1,6 @@
-"""
-IngestQueue housekeeping class. Note that this is not the ORM class, which is
-now called IngestQueueEntry as it represents an entry on the queue as opposed to
-the queue itself.
-"""
+"""IngestQueue housekeeping class. Note that this is not the ORM class,
+which is now called IngestQueueEntry as it represents an entry on the queue
+as opposed to the queue itself."""
 
 import json
 from sqlalchemy.exc import IntegrityError
@@ -52,9 +50,9 @@ class IngestQueue(Queue):
             header_update = json.dumps(header_update)
 
         iqe = IngestQueueEntry(filename, path, force=force, force_md5=force_md5,
-                              after=after, header_update=header_update,
-                              md5_before_header_update=md5_before_header_update,
-                              md5_after_header_update=md5_after_header_update)
+                               after=after, header_update=header_update,
+                               md5_before_header_update=md5_before_header_update,
+                               md5_after_header_update=md5_after_header_update)
 
         self.session.add(iqe)
         try:

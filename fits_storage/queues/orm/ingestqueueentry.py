@@ -13,6 +13,7 @@ from .ormqueuemixin import OrmQueueMixin
 from fits_storage.config import get_config
 fsc = get_config()
 
+
 class IngestQueueEntry(OrmQueueMixin, Base):
     """
     This is the ORM object for the IngestQueue table
@@ -75,12 +76,11 @@ class IngestQueueEntry(OrmQueueMixin, Base):
         self.force_md5 = force_md5
         self.force = force
         self.after = after if after is not None else self.added
-        self.fail_dt = self.fail_dt_false # See note in OrmQueueMixin
+        self.fail_dt = self.fail_dt_false  # See note in OrmQueueMixin
         self.sortkey = self.sortkey_from_filename()
         self.header_update = header_update
         self.md5_before_header_update = md5_before_header_update
         self.md5_after_header_update = md5_after_header_update
-
 
     def __repr__(self):
         """
@@ -107,10 +107,10 @@ class IngestQueueEntry(OrmQueueMixin, Base):
         Returns
         -------
         - A string containing an explanatory message, if the file should be
-        defered
+        deferred
         - None otherwise
 
-        Note that if the file should be defered, we set the 'after' value of the
+        Note that if the file should be deferred, we set the 'after' value of the
         object to reflect the appropriate delay, but we do not commit the
         object to the session, it is up to the caller to do that.
         """

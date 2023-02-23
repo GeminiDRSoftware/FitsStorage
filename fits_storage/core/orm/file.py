@@ -10,11 +10,12 @@ __all__ = ["File"]
 
 class File(Base):
     """
-    This is the ORM class for the file table. This is highest level most abstract
-    concept of a 'File'. It's essentially just a unique label that other things
-    - actual DiskFiles for example can reference. The 'name' column here may not
-    be the actual filename - the definitive filename is in the diskfile table,
-    when we have a compressed (bzip2) file, we trim off the .bz2 here.
+    This is the ORM class for the file table. This is the highest level most
+    abstract concept of a 'File'. It's essentially just a unique label that
+    other things - actual DiskFiles for example can reference. The 'name'
+    column here may not be the actual filename - the definitive filename is
+    in the diskfile table, when we have a compressed (bzip2) file, we trim
+    off the .bz2 here.
 
     Parameters
     ----------
@@ -41,11 +42,13 @@ class File(Base):
 
     def __repr__(self):
         """
-        Get a string representation of the :class:`~fits_storage_core.orm.file.File` object
+        Get a string representation of the
+        :class:`~fits_storage_core.orm.file.File` object
 
         Returns
         -------
-        str : string representation of the :class:`~fits_storage_core.orm.file.File`
+        str : string representation of the
+              :class:`~fits_storage_core.orm.file.File`
         """
         return "<File('%s', '%s')>" % (self.id, self.name)
 

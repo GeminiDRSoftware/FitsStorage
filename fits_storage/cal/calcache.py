@@ -1,9 +1,9 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, BigInteger, SmallInteger, Enum
 
-from . import Base
+from fits_storage.core.orm import Base
 
-from fits_storage_core.utils.gemini_metadata_utils import cal_types
+from fits_storage.gemini_metadata_utils import cal_types
 
 
 __all__ = ["CalCache"]
@@ -14,22 +14,24 @@ CALTYPE_ENUM = Enum(*cal_types, name='caltype')
 
 class CalCache(Base):
     """
-    This is the ORM class for the calibration Association Cache. It's too slow 
-    to do all the calibration association in real time in the archive context,
-    so we implement this cache table. We refresh recent observations in the cache
-    periodically via cron.
+    This is the ORM class for the calibration Association Cache. It's too
+    slow to do all the calibration association in real time in the archive
+    context, so we implement this cache table. We refresh recent observations
+    in the cache periodically via cron.
 
     The obs_hid is the header_id of the thing (observation) to be calibrated
-    the cal_hid is the header_id of the calibration that applies the rank is the
-    rank of the calibration - ie 0 is the best one (generally closest in time),
-    1 is next best, etc caltype is the calibration type.
+    the cal_hid is the header_id of the calibration that applies the rank is
+    the rank of the calibration - ie 0 is the best one (generally closest in
+    time), 1 is next best, etc. caltype is the calibration type.
 
     Parameters
     ----------
     obs_hid : int
-        ID of the :class:`~fits_storage_core.orm.header.Header` record for the data being linked
+        ID of the :class:`~fits_storage_core.orm.header.Header`
+        record for the data being linked
     cal_hid : int
-        ID of the :class:`~fits_storage_core.orm.header.Header` record for the calibration
+        ID of the :class:`~fits_storage_core.orm.header.Header` record for the
+        calibration
     caltype : `~fits_storage_core.orm.calcache.CALTYPE_ENUM`
         type of calibration being linked
     rank : int
@@ -47,10 +49,11 @@ class CalCache(Base):
         """
         Create a calcache record linking data to a relevant calibration file.
 
-        A calcache record allows us to quickly lookup matching calibrations without
-        having to redo the very expensive types of queries that normally requires.
-        In essense, we do the query up front and save the results in a pure
-        data-to-calibration lookup table for the calibration type.
+        A calcache record allows us to quickly lookup matching calibrations
+        without having to redo the very expensive types of queries that
+        normally requires. In essence, we do the query up front and save the
+        results in a pure data-to-calibration lookup table for the
+        calibration type.
 
         Parameters
         ----------

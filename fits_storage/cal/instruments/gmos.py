@@ -11,7 +11,8 @@ __all__ = ["Gmos"]
 # ------------------------------------------------------------------------------
 # Enumerated column types
 READ_SPEED_SETTINGS = ['slow', 'fast']
-READ_SPEED_SETTING_ENUM = Enum(*READ_SPEED_SETTINGS, name='gmos_read_speed_setting')
+READ_SPEED_SETTING_ENUM = Enum(*READ_SPEED_SETTINGS,
+                               name='gmos_read_speed_setting')
 
 GAIN_SETTINGS = ['low', 'high']
 GAIN_SETTING_ENUM = Enum(*GAIN_SETTINGS, name='gmos_gain_setting')
@@ -32,14 +33,15 @@ class Gmos(Base):
     __tablename__ = 'gmos'
 
     id = Column(Integer, primary_key=True)
-    header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+    header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
+                       index=True)
     header = relation(Header, order_by=id)
     disperser = Column(Text, index=True)
     filter_name = Column(Text, index=True)
     detector_x_bin = Column(Integer, index=True)
     detector_y_bin = Column(Integer, index=True)
     array_name = Column(Text, index=True)
-    amp_read_area  = Column(Text, index=True)
+    amp_read_area = Column(Text, index=True)
     read_speed_setting = Column(READ_SPEED_SETTING_ENUM, index=True)
     gain_setting = Column(GAIN_SETTING_ENUM, index=True)
     focal_plane_mask = Column(Text, index=True)

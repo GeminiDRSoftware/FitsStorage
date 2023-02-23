@@ -27,7 +27,8 @@ class Nifs(Base):
     __tablename__ = 'nifs'
 
     id = Column(Integer, primary_key=True)
-    header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+    header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
+                       index=True)
     header = relation(Header, order_by=id)
     disperser = Column(Text, index=True)
     filter_name = Column(Text, index=True)
@@ -53,7 +54,8 @@ class Nifs(Base):
 
     def populate(self, ad):
         """
-        Populate the NIFS record data from an :class:`~astrodata.core.AstroData` object
+        Populate the NIFS record data from an
+        :class:`~astrodata.core.AstroData` object
 
         Parameters
         ----------

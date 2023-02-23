@@ -9,6 +9,7 @@ __all__ = ['get_config', 'FitsStorageConfig']
 
 _CONFIG = None
 
+
 def get_config(configfile=None, configstring=None, builtin=True, reload=False):
     """
     Instantiates (if it doesn't already exist) a singleton FitsStorageConfig

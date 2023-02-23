@@ -29,13 +29,13 @@ def duplicate_canonicals(session):
     # Self join DiskFile with its alias and compare their file_ids
     return (
         session.query(distinct(DiskFile.id), File)
-                .join(File)
-                .join(diskfile_alias, DiskFile.file_id == diskfile_alias.file_id)
-                .filter(DiskFile.id != diskfile_alias.id)
-                .filter(DiskFile.canonical == True)
-                .filter(diskfile_alias.canonical == True)
-                .order_by(DiskFile.id)
-        )
+            .join(File)
+            .join(diskfile_alias, DiskFile.file_id == diskfile_alias.file_id)
+            .filter(DiskFile.id != diskfile_alias.id)
+            .filter(DiskFile.canonical == True)
+            .filter(diskfile_alias.canonical == True)
+            .order_by(DiskFile.id)
+    )
 
 
 def duplicate_present(session):
@@ -73,7 +73,8 @@ def present_not_canonical(session):
 
     Returns
     -------
-    :class:`sqlalchemy.orm.query.Query` query for finding the problematic diskfiles
+    :class:`sqlalchemy.orm.query.Query` query for finding the problematic
+    diskfiles
     """
     return (
         session.query(distinct(DiskFile.id), File)

@@ -24,10 +24,9 @@ class CalCacheQueueEntry(OrmQueueMixin, Base):
     inprogress = Column(Boolean, index=True)
     fail_dt = Column(DateTime, index=True)
     added = Column(DateTime)
-    sortkey = Column(Text, index=True);
+    sortkey = Column(Text, index=True)
     filename = Column(Text)
     error = Column(Text)
-
 
     def __init__(self, obs_hid, filename):
         """
@@ -45,5 +44,5 @@ class CalCacheQueueEntry(OrmQueueMixin, Base):
         self.inprogress = False
         self.sortkey = self.sortkey_from_filename()
         self.added = datetime.datetime.utcnow()
-        self.fail_dt = datetime.datetime.max # See Note in OrmQueueMixin
+        self.fail_dt = self.fail_dt_false  # See Note in OrmQueueMixin
         self.filename = filename

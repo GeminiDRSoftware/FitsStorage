@@ -2,12 +2,13 @@
 This is a generic Fits Storage Queue class. It provides housekeeping
 functions that are common to all the queues. Some or all queues may subclass
 this in order to provide queue specific functionality. Note that these are
-*not* the ORM classes - those are now called eg ExportQueueEntry
+*not* the ORM classes - those are now called e.g. ExportQueueEntry
 as instances of those represent entries in the queue, not the queue itself.
 """
 import datetime
 from sqlalchemy import desc
 from sqlalchemy.orm import make_transient
+
 
 class Queue(object):
 
@@ -33,7 +34,7 @@ class Queue(object):
 
             return query.count()
 
-    def pop(self, fast_rebuild=False):
+    def pop(self):
         """
         Pop an entry from the queue. We use select-for-update to ensure that
         this works correctly with multiple clients attempting to pop the
@@ -58,7 +59,7 @@ class Queue(object):
 
         # Note - we make the qentry into a transient instance before we
         # return it. This detaches it from the session - basically it becomes
-        # a convenience container for the values (filename, etc). The problem
+        # a convenience container for the values (filename, etc.). The problem
         # is that if it's still attached to the session but expired (because
         # we did a commit) then the next reference to it (to process the
         # qentry) will initiate a transaction and a SELECT to refresh the

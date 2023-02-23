@@ -34,7 +34,8 @@ class Nici(Base):
     __tablename__ = 'nici'
 
     id = Column(Integer, primary_key=True)
-    header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+    header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
+                       index=True)
     header = relation(Header, order_by=id)
     filter_name = Column(Text, index=True)
     focal_plane_mask = Column(FOCAL_PLANE_MASK_ENUM, index=True)
@@ -59,7 +60,8 @@ class Nici(Base):
 
     def populate(self, ad):
         """
-        Populate the NICI record data from an :class:`~astrodata.core.AstroData` object
+        Populate the NICI record data from an
+        :class:`~astrodata.core.AstroData` object
 
         Parameters
         ----------
@@ -84,4 +86,3 @@ class Nici(Base):
                 self.disperser = disperser
         except (AttributeError, ValueError):
             self.disperser = None
-

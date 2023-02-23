@@ -11,7 +11,7 @@ from sqlalchemy.exc import OperationalError
 from argparse import ArgumentParser
 
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
-from fits_storage.utils.pidfile import PidFile, PidFileError
+from fits_storage.server.pidfile import PidFile, PidFileError
 
 from fits_storage.db import session_scope
 from fits_storage.queues.queue import IngestQueue
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     # cleanly via kill
     loop = True
 
-    # Define signal handlers. This allows us to bail out cleanly eg if we get
+    # Define signal handlers. This allows us to bail out cleanly e.g. if we get
     # a signal. These need to be defined after logger is set up as there is no
     # way to pass the logger as an argument to these.
     def handler(signum, frame):
@@ -128,8 +128,8 @@ if __name__ == "__main__":
                                         "--empty flag set, exiting")
                             break
                         else:
-                                logger.info("Nothing on queue... Waiting")
-                        time.sleep(2)
+                            logger.info("Nothing on queue... Waiting")
+                            time.sleep(2)
                     else:
                         # Don't query queue length in fast_rebuild mode
                         if options.fast_rebuild:
@@ -153,7 +153,7 @@ if __name__ == "__main__":
                         # responsible for adding the file to the export queue
                         # if appropriate. At this point, iqe is marked as
                         # inprogress and is committed to the database.
-                        # ingest_file(iqe) should delete it if it sucessfully
+                        # ingest_file(iqe) should delete it if it successfully
                         # ingests it, or should set the failed and error states
                         # and commit it if not.
 

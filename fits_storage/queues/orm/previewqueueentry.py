@@ -1,11 +1,10 @@
-import datetime
-
 from sqlalchemy import Column, ForeignKey, UniqueConstraint
 from sqlalchemy import Integer, Text, Boolean, DateTime
 
 from fits_storage.core.orm import Base
 from .ormqueuemixin import OrmQueueMixin
 from fits_storage.core.orm.diskfile import DiskFile
+
 
 class PreviewQueueEntry(OrmQueueMixin, Base):
     """
@@ -33,5 +32,5 @@ class PreviewQueueEntry(OrmQueueMixin, Base):
         self.filename = diskfile.filename
         self.sortkey = self.sortkey_from_filename(diskfile.filename)
         self.inprogress = False
-        self.fail_dt = datetime.datetime.max # See note in OrmQueueMixin
+        self.fail_dt = self.fail_dt_false  # See note in OrmQueueMixin
         self.force = force

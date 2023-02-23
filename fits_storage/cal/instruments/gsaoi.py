@@ -23,7 +23,8 @@ class Gsaoi(Base):
     __tablename__ = 'gsaoi'
 
     id = Column(Integer, primary_key=True)
-    header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+    header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
+                       index=True)
     header = relation(Header, order_by=id)
     filter_name = Column(Text, index=True)
     read_mode = Column(Text, index=True)

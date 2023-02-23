@@ -10,21 +10,23 @@ __all__ = ["Niri"]
 
 
 # Enumerated Column types
-READ_MODES = ['High Background', 'Medium Background', 'Low Background', 'Invalid']
+READ_MODES = ['High Background', 'Medium Background', 'Low Background',
+              'Invalid']
 READ_MODE_ENUM = Enum(*READ_MODES, name='niri_read_mode')
 
 WELL_DEPTHS = ['Shallow', 'Deep', 'Invalid']
 WELL_DEPTH_SETTING_ENUM = Enum(*WELL_DEPTHS, name='niri_well_depth_setting')
 
 # Spectroscopy is decommissioned, so go ahead and enumerate the dispersers
-DISPERSERS = ['Hgrismf32_G5228', 'Hgrism_G5203', 'Jgrismf32_G5226', 'Jgrism_G5202',
-              'Kgrismf32_G5227', 'Kgrism_G5204', 'Lgrism_G5205', 'Mgrism_G5206',
-              'MIRROR']
+DISPERSERS = ['Hgrismf32_G5228', 'Hgrism_G5203', 'Jgrismf32_G5226',
+              'Jgrism_G5202', 'Kgrismf32_G5227', 'Kgrism_G5204',
+              'Lgrism_G5205', 'Mgrism_G5206', 'MIRROR']
 
 DISPERSER_ENUM = Enum(*DISPERSERS, name='niri_disperser')
 
-# Very unlikely to get get new ones of these:
-CAMERAS = ['datum', 'f13.9', 'f14', 'f32', 'f6', 'INVALID', 'No Value', 'UNKNOWN']
+# Very unlikely to get new ones of these:
+CAMERAS = ['datum', 'f13.9', 'f14', 'f32', 'f6', 'INVALID', 'No Value',
+           'UNKNOWN']
 CAMERA_ENUM = Enum(*CAMERAS, name='niri_camera')
 
 DATA_SECTIONS = ['Section(x1=0, x2=1024, y1=0, y2=1024)',
@@ -52,7 +54,8 @@ class Niri(Base):
     __tablename__ = 'niri'
 
     id = Column(Integer, primary_key=True)
-    header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+    header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
+                       index=True)
     header = relation(Header, order_by=id)
     disperser = Column(DISPERSER_ENUM, index=True)
     filter_name = Column(Text, index=True)
@@ -81,7 +84,8 @@ class Niri(Base):
 
     def populate(self, ad):
         """
-        Populate the NIRI record data from an :class:`~astrodata.core.AstroData` object
+        Populate the NIRI record data from an
+        :class:`~astrodata.core.AstroData` object
 
         Parameters
         ----------

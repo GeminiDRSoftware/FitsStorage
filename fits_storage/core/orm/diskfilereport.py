@@ -29,7 +29,8 @@ class DiskFileReport(Base):
     __tablename__ = 'diskfilereport'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False, index=True)
+    diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False,
+                         index=True)
     fvreport = Column(Text)
     mdreport = Column(Text)
     mdstatus = Column(STATUS_ENUM, index=True)
@@ -78,11 +79,12 @@ class DiskFileReport(Base):
         """
         filename = None
         if diskfile.compressed:
-            if diskfile.uncompressed_cache_file and os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
+            if diskfile.uncompressed_cache_file and \
+                    os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
                 filename = diskfile.uncompressed_cache_file
             else:
-                # For now, we do not support fitsverify of compressed files if we
-                # are not using the diskfile.uncompressed_cache_file
+                # For now, we do not support fitsverify of compressed files
+                # if we are not using the diskfile.uncompressed_cache_file
                 filename = None
         else:
             # not compressed - just use the diskfile filename
@@ -93,10 +95,11 @@ class DiskFileReport(Base):
             diskfile.isfits = bool(retlist[0])
             diskfile.fvwarnings = retlist[1]
             diskfile.fverrors = retlist[2]
-            # If the FITS file has bad strings in it, fitsverify will quote them in
-            # the report, and the database will object to the bad characters in
-            # the unicode string - errors=ignore makes it ignore these.
-            #O - looks like a bad conversion for python3 support, let's try keeping this simple
+            # If the FITS file has bad strings in it, fitsverify will quote
+            # them in the report, and the database will object to the bad
+            # characters in the unicode string - errors=ignore makes it
+            # ignore these. O - looks like a bad conversion for python3
+            # support, let's try keeping this simple
             if isinstance(retlist[3], str):
                 self.fvreport = retlist[3]
             else:
@@ -117,11 +120,12 @@ class DiskFileReport(Base):
         """
         filename = None
         if diskfile.compressed:
-            if diskfile.uncompressed_cache_file and os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
+            if diskfile.uncompressed_cache_file and \
+                    os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
                 filename = diskfile.uncompressed_cache_file
             else:
-                # For now, we do not support fitsverify of compressed files if we
-                # are not using the diskfile.uncompressed_cache_file
+                # For now, we do not support fitsverify of compressed files
+                # if we are not using the diskfile.uncompressed_cache_file
                 filename = None
         else:
             # not compressed - just use the diskfile filename

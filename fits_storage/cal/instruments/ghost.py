@@ -9,7 +9,8 @@ from fits_storage.core.orm.header import Header
 
 # Enumerated column types
 READ_SPEED_SETTINGS = ['slow', 'medium', 'fast', 'standard', 'unknown']
-READ_SPEED_SETTING_ENUM = Enum(*READ_SPEED_SETTINGS, name='ghost_read_speed_setting')
+READ_SPEED_SETTING_ENUM = Enum(*READ_SPEED_SETTINGS,
+                               name='ghost_read_speed_setting')
 
 GAIN_SETTINGS = ['low', 'high', 'standard']
 GAIN_SETTING_ENUM = Enum(*GAIN_SETTINGS, name='ghost_gain_setting')
@@ -85,10 +86,14 @@ GHOST_ARMS = ["blue", "red", "slitv"]
 
 class ArmFieldDispatcher:
     def __init__(self):
-        # For now, coding for GHOST but I could imagine this being generified/subclassed for IGRINS2/etc
-        # arguably I could code to the constants above, but this makes the subclass option cleaner when it comes
+        # For now, coding for GHOST, but I could imagine this being
+        # generified/subclassed for IGRINS2 etc. arguably I could code to the
+        # constants above, but this makes the subclass option cleaner when it
+        # comes
+
         self.arms = GHOST_ARMS
-        self.descriptors = ((k, _conversion_functions.get(k, lambda x: x)) for k in GHOST_ARM_DESCRIPTORS)
+        self.descriptors = ((k, _conversion_functions.get(k, lambda x: x))
+                            for k in GHOST_ARM_DESCRIPTORS)
 
     def populate_arm_fields(self):
         """
@@ -103,13 +108,15 @@ class ArmFieldDispatcher:
             # read field and keep a copy, per comment above
             val = self.get_field(descriptor)
 
-            # default plain descriptor to None, will be set per arm, or via a bundle function after
+            # default plain descriptor to None, will be set per arm, or via a
+            # bundle function after
             self.set_field(descriptor, None)
             if self.arm() is None:
                 if val is None:
                     print(f"No return for {descriptor}")
                 for arm in self.arms:
-                    self.set_field(f"{descriptor}_{arm}", value_munger(val.get(arm, None)))
+                    self.set_field(f"{descriptor}_{arm}",
+                                   value_munger(val.get(arm, None)))
             else:  # val will be a value, not a dict
                 self.set_field(f"{descriptor}_{self.arm()}", value_munger(val))
                 self.set_field(descriptor, value_munger(val))
@@ -159,7 +166,8 @@ class Ghost(Base):
     __tablename__ = 'ghost'
 
     id = Column(Integer, primary_key=True)
-    header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+    header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
+                       index=True)
     header = relation(Header, order_by=id)
     arm = Column(Text, index=True)
     want_before_arc = Column(Boolean)
@@ -217,7 +225,8 @@ class Ghost(Base):
 
     def populate(self, ad):
         """
-        Populate the Ghost information from the given :class:`astrodata.AstroData`
+        Populate the Ghost information from the given
+        :class:`astrodata.AstroData`
 
         Parameters
         ----------

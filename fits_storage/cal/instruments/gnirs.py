@@ -15,7 +15,8 @@ READ_MODES = ['Very Faint Objects', 'Faint Objects', 'Bright Objects',
 
 READ_MODE_ENUM = Enum(*READ_MODES, name='gnirs_read_mode')
 WELL_DEPTH_SETTINGS = ['Shallow', 'Deep', 'Invalid']
-WELL_DEPTH_SETTING_ENUM = Enum(*WELL_DEPTH_SETTINGS, name='gnirs_well_depth_setting')
+WELL_DEPTH_SETTING_ENUM = Enum(*WELL_DEPTH_SETTINGS,
+                               name='gnirs_well_depth_setting')
 
 
 class Gnirs(Base):
@@ -32,7 +33,8 @@ class Gnirs(Base):
     __tablename__ = 'gnirs'
 
     id = Column(Integer, primary_key=True)
-    header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+    header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
+                       index=True)
     header = relation(Header, order_by=id)
     disperser = Column(Text, index=True)
     filter_name = Column(Text, index=True)

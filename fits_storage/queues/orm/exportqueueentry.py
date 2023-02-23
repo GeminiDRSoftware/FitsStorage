@@ -5,6 +5,7 @@ from sqlalchemy import Integer, Boolean, Text, DateTime
 from fits_storage.core.orm import Base
 from .ormqueuemixin import OrmQueueMixin
 
+
 class ExportQueueEntry(OrmQueueMixin, Base):
     """
     This is the ORM object for the ExportQueue table.
@@ -49,7 +50,7 @@ class ExportQueueEntry(OrmQueueMixin, Base):
         self.added = datetime.datetime.utcnow()
         self.after = self.added
         self.inprogress = False
-        self.fail_dt = datetime.datetime.max # See Note in OrmQueueMixin
+        self.fail_dt = self.fail_dt_false  # See Note in OrmQueueMixin
 
         # TODO: A more refined way to prioritize archive exports
         prepend = 'z' if 'archive' in destination else 'a'

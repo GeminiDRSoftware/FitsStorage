@@ -17,7 +17,8 @@ class FullTextHeader(Base):
     __tablename__ = 'fulltextheader'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False, index=True)
+    diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False,
+                         index=True)
     fulltext = Column(Text)
 
     def __init__(self, diskfile):
@@ -53,14 +54,13 @@ class FullTextHeader(Base):
             ad = astrodata.open(fullpath)
 
         self.fulltext = ""
-        self.fulltext += "Filename: " +  diskfile.filename + "\n\n"
-        self.fulltext += "AstroData Tags: " +str(ad.tags) + "\n\n"
+        self.fulltext += "Filename: " + diskfile.filename + "\n\n"
+        self.fulltext += "AstroData Tags: " + str(ad.tags) + "\n\n"
         self.fulltext += "\n--- PHU ---\n"    
         self.fulltext += repr(ad.phu).strip()
         self.fulltext += "\n"
         for i in range(len(ad)):
             self.fulltext += "\n--- HDU {} ---\n".format(i)
-            #self.fulltext += str(repr(ad[i].hdr).strip(), errors='replace')
             self.fulltext += repr(ad[i].hdr).strip()
             self.fulltext += '\n'
 

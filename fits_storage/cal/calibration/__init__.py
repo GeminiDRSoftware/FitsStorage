@@ -14,9 +14,9 @@ from .calibration_nici import CalibrationNICI
 from .calibration_gpi import CalibrationGPI
 from .calibration_ghost import CalibrationGHOST
 
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.header import Header
+from fits_storage.core.orm.file import File
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.header import Header
 
 
 """
@@ -38,11 +38,13 @@ inst_class = {
 }
 
 
-def get_cal_object(session, filename, header=None, procmode=None, descriptors=None, types=None, full_query=False):
+def get_cal_object(session, filename, header=None, procmode=None,
+                   descriptors=None, types=None, full_query=False):
     """
-    This function returns an appropriate calibration object for the given dataset.
-    Need to pass in a sqlalchemy session that should already be open, the class will not close it
-    Also pass either a filename or a header object instance.
+    This function returns an appropriate calibration object for the given
+    dataset. Need to pass in a sqlalchemy session that should already be
+    open, the class will not close it Also pass either a filename or a header
+    object instance.
 
     Parameters
     ----------
@@ -50,8 +52,8 @@ def get_cal_object(session, filename, header=None, procmode=None, descriptors=No
     session : :class:`sqlalchemy.orm.session.Session`
         The open session to use for querying data
 
-    filename : string
-        The filename to search for.  This is required if header and descriptors are not provided.
+    filename : string The filename to search for.  This is required if header
+    and descriptors are not provided.
 
     header : :class:`fits_storage.orm.header.Header`, optional
         A header to get the appropriate calibration object for
@@ -62,24 +64,24 @@ def get_cal_object(session, filename, header=None, procmode=None, descriptors=No
     types : list of string, optional
         The types of this data, such as `MOS`
 
-    full_query :boolean, defaults to `False`
-        If `True`, query will pull in the `DiskFile` and `File` records as well as the `Header`
+    full_query :boolean, defaults to `False` If `True`, query will pull in
+    the `DiskFile` and `File` records as well as the `Header`
 
-    procmode : str, defaults to None
-        Either 'sq', 'ql', or None to indicate the proc mode.  'ql' will also accept 'sq' calibrations as matches
+    procmode : str, defaults to None Either 'sq', 'ql', or None to indicate
+    the proc mode.  'ql' will also accept 'sq' calibrations as matches
 
-    Returns
-    -------
-    :class:`fits_storage.cal.calibration.Calibration`
-        An instance of the appropriate calibration object, initialized with the passed header (or match by filename)
-        and descriptors.
+    Returns ------- :class:`fits_storage.cal.calibration.Calibration` An
+    instance of the appropriate calibration object, initialized with the
+    passed header (or match by filename) and descriptors.
     """
 
     # Did we get a header?
     if header is None and descriptors is None:
         # Get the header object from the filename
-        query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
-        query = query.filter(File.name == filename).order_by(desc(DiskFile.lastmod))
+        query = session.query(Header)\
+            .select_from(join(Header, join(DiskFile, File)))
+        query = query.filter(File.name == filename)\
+            .order_by(desc(DiskFile.lastmod))
         header = query.first()
 
     # OK, now instantiate the appropriate Calibration object and return it
@@ -89,6 +91,7 @@ def get_cal_object(session, filename, header=None, procmode=None, descriptors=No
         instrument = descriptors['instrument']
 
     cal_class = inst_class.get(instrument, Calibration)
-    cal = cal_class(session, header, descriptors, types, procmode=procmode, full_query=full_query)
+    cal = cal_class(session, header, descriptors, types, procmode=procmode,
+                    full_query=full_query)
 
     return cal

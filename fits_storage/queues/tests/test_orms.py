@@ -2,7 +2,6 @@ import datetime
 
 from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
-from fits_storage.queues.orm.previewqueueentry import PreviewQueueEntry
 
 
 def test_basiceqe():
@@ -64,10 +63,12 @@ def test_sortkey_obslog():
 
     assert iqe.sortkey == 'x20001122GN-2000A-Q-11'
 
+
 def test_sortkey_other():
     iqe = IngestQueueEntry('blahblah', path='')
 
     assert iqe.sortkey == 'aaaablahblah'
+
 
 def test_failed():
     iqe = IngestQueueEntry('filename', 'path')

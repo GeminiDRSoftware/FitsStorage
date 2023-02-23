@@ -22,7 +22,7 @@ class Provenance(Base):
     Parameters
     ----------
     timestamp : datetime
-        Time of the provenance occuring
+        Time of the provenance occurring
     filename : str
         Name of the file involved
     md5 : str
@@ -40,14 +40,15 @@ class Provenance(Base):
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'))
     diskfile = relationship("DiskFile", back_populates="provenance")
 
-    def __init__(self, timestamp: datetime, filename: str, md5: str, primitive: str):
+    def __init__(self, timestamp: datetime, filename: str, md5: str,
+                 primitive: str):
         """
         Create provenance record with the given information
 
         Parameters
         ----------
         timestamp : datetime
-            Time of the provenance occuring
+            Time of the provenance occurring
         filename : str
             Name of the file involved
         md5 : str
@@ -63,7 +64,8 @@ class Provenance(Base):
 
 class ProvenanceHistory(Base):
     """
-    This is the ORM class for storing provenance history details from the FITS file.
+    This is the ORM class for storing provenance history details from the
+    FITS file.
     """
     __tablename__ = 'provenance_history'
 
@@ -75,11 +77,12 @@ class ProvenanceHistory(Base):
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'))
     diskfile = relationship("DiskFile", back_populates="provenance_history")
 
-    def __init__(self, timestamp_start: datetime, timestamp_end: datetime, primitive: str, args: str):
+    def __init__(self, timestamp_start: datetime, timestamp_end: datetime,
+                 primitive: str, args: str):
         """
-        Create a provenahce history record.
+        Create a provenance history record.
 
-        These are more fine grained than the provenance in that it captures
+        These are more fine-grained than the provenance in that it captures
         the arguments and the start and stop times
 
         Parameters
@@ -103,8 +106,10 @@ def ingest_provenance(diskfile):
     """
     Ingest the provenance data from the diskfile into the database.
 
-    This helper method reads the FITS file to extract the :class:`~provenance.Provenance`
-    and :class:`~provenance.ProvenanceHistory` data from it and ingest it into the database.
+    This helper method reads the FITS file to extract the
+    :class:`~provenance.Provenance`
+    and :class:`~provenance.ProvenanceHistory` data from it and ingest it
+    into the database.
 
     Parameters
     ----------
@@ -131,7 +136,8 @@ def ingest_provenance(diskfile):
                 filename = prov[1]
                 md5 = prov[2]
                 provenance_added_by = prov[3]
-                prov_row = Provenance(timestamp, filename, md5, provenance_added_by)
+                prov_row = Provenance(timestamp, filename, md5,
+                                      provenance_added_by)
                 prov_list.append(prov_row)
             diskfile.provenance = prov_list
     if hasattr(ad, 'PROVENANCE_HISTORY'):
@@ -145,6 +151,7 @@ def ingest_provenance(diskfile):
                 timestamp_stop = _parse_timestamp(timestamp_stop_str)
                 primitive = ph[2]
                 args = ph[3]
-                hist = ProvenanceHistory(timestamp_start, timestamp_stop, primitive, args)
+                hist = ProvenanceHistory(timestamp_start, timestamp_stop,
+                                         primitive, args)
                 hist_list.append(hist)
             diskfile.provenance_history = hist_list

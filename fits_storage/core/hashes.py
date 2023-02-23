@@ -12,10 +12,12 @@ __all__ = ["md5sum_size_fp", "md5sum", "md5sum_size_bz2"]
 
 def md5sum_size_fp(fobj):
     """
-    Generates the md5sum and size of the data returned by the file-like object fobj, returns
-    a tuple containing the hex string md5 and the size in bytes.
-    f must be open. It will not be closed. We will read from it until we encounter EOF.
-    No seeks will be done, fobj will be left at eof
+    Generates the md5sum and size of the data returned by the file-like
+    object fobj, returns a tuple containing the hex string md5 and the size
+    in bytes.
+
+    fobj must be open. It will not be closed. We will read from it until we
+    encounter EOF. No seeks will be done, fobj will be left at eof
 
     Parameters
     ----------
@@ -27,7 +29,7 @@ def md5sum_size_fp(fobj):
     str, int : md5 checksum and file size
     """
     # This is the block size by which we read chunks from the file, in bytes
-    block = 1000000 # 1 MB
+    block = 1000000  # 1 MB
 
     hashobj = hashlib.md5()
 
@@ -40,7 +42,7 @@ def md5sum_size_fp(fobj):
         size += len(data)
         hashobj.update(data)
 
-    return (hashobj.hexdigest(), size)
+    return hashobj.hexdigest(), size
 
 
 def md5sum(filename):

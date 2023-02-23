@@ -7,6 +7,7 @@ the queue itself.
 from .queue import Queue
 from ..orm.exportqueueentry import ExportQueueEntry
 
+
 class ExportQueue(Queue):
 
     def __init__(self, session, logger=None):

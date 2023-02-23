@@ -19,6 +19,7 @@ from .orm.logcomments import LogComments
 from .orm.obslog import Obslog
 from .orm.obslog_comment import ObslogComment
 
-from .orm.qastuff import QAreport, QAmetricIQ, QAmetricZP, QAmetricSB, QAmetricPE
+from .orm.qastuff import QAreport, \
+    QAmetricIQ, QAmetricZP, QAmetricSB, QAmetricPE
 
 from .orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead

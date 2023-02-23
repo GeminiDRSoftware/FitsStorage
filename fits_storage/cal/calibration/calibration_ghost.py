@@ -3,9 +3,11 @@ This module holds the CalibrationGHOST class
 """
 from sqlalchemy import or_
 
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.ghost import Ghost, ArmFieldDispatcher, GHOST_ARMS, GHOST_ARM_DESCRIPTORS
-from gemini_calmgr.cal.calibration import Calibration, not_processed, not_imaging, not_spectroscopy, CalQuery
+from fits_storage.core.orm.header import Header
+from fits_storage.cal.instruments.ghost import Ghost, ArmFieldDispatcher, \
+    GHOST_ARMS, GHOST_ARM_DESCRIPTORS
+from fits_storage.cal.calibration.calibration import Calibration, \
+    not_processed, CalQuery
 
 import math
 
@@ -549,10 +551,12 @@ class CalibrationGHOST(Calibration):
         """
         Method to find the best GHOST SLITFLAT for the target dataset
 
-        If the type is 'SLITV', this method falls back to the regular :meth:`flat` logic.
+        If the type is 'SLITV', this method falls back to the regular
+        :meth:`flat` logic.
 
-        This will find GHOST imaging flats with matching read speed setting, gain setting, filter name,
-        res mode, and disperser.  It filters further on the logic in :meth:`imaging_flat`.
+        This will find GHOST imaging flats with matching read speed setting,
+        gain setting, filter name, res mode, and disperser.  It filters
+        further on the logic in :meth:`imaging_flat`.
 
         It matches within 180 days
 
@@ -562,7 +566,8 @@ class CalibrationGHOST(Calibration):
         howmany : int, default 1
             How many do we want results
         flat_descr: list
-            set of filter parameters from the higher level function calling into this helper method
+            set of filter parameters from the higher level function calling
+            into this helper method
         filt: list
             Additional filter terms to apply from the higher level method
         sf: bool
@@ -570,7 +575,8 @@ class CalibrationGHOST(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that match
+            the criteria
         """
         if 'SLITV' in self.types:
             return self.flat(True, howmany, return_query=return_query)
@@ -596,9 +602,10 @@ class CalibrationGHOST(Calibration):
         """
         Method to find the best processed GHOST SLIT for the target dataset
 
-        This will find GHOST processed slits with a 'Sony-ICX674' detector.  It matches the observation
-        type, res mode, and within 30 seconds.  For 'ARC' observation type it matches
-        'PROCESSED_UNKNOWN' data, otherwise it matches 'PREPARED' data.
+        This will find GHOST processed slits with a 'Sony-ICX674' detector.
+        It matches the observation type, res mode, and within 30 seconds.
+        For 'ARC' observation type it matches 'PROCESSED_UNKNOWN' data,
+        otherwise it matches 'PREPARED' data.
 
         Parameters
         ----------
@@ -644,8 +651,8 @@ class CalibrationGHOST(Calibration):
         """
         Method to find the best GHOST processed fringe for the target dataset
 
-        This will find GHOST processed fringes matching the amp read area, filter name, and x and y binning.
-        It matches within 1 year.
+        This will find GHOST processed fringes matching the amp read area,
+        filter name, and x and y binning. It matches within 1 year.
 
         Parameters
         ----------

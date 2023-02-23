@@ -7,6 +7,7 @@ import configparser
 import os
 import socket
 
+
 class FitsStorageConfig(dict):
     """
     Configuration Object for Fits Storage.
@@ -33,7 +34,7 @@ class FitsStorageConfig(dict):
 
     If you pass a configfile argument, that file will be the only other
     configuration file read. If configfile is an empty string, no other
-    coniguration files will be read.
+    configuration files will be read.
 
 
     Otherwise, the following are read in this order:
@@ -92,8 +93,8 @@ class FitsStorageConfig(dict):
         # This can be read back to see which config files were actually used.
         self.configfiles_used = []
 
-        # We make this _private so we can point the public one at 'DEFAULT' if
-        # we don't have a specific hostname section
+        # We make this _private so that we can point the public one at
+        # 'DEFAULT' if we don't have a specific hostname section
         self._config = configparser.ConfigParser()
 
         # Read the config files.

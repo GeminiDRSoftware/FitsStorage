@@ -14,7 +14,7 @@ from fits_storage.db import session_scope
 from fits_storage.queues.queue import IngestQueue
 
 if fsc.using_s3:
-    from fits_storage.utils.aws_s3 import get_helper
+    from fits_storage.server.aws_s3 import get_helper
     s3 = get_helper()
 
 
@@ -22,8 +22,9 @@ if fsc.using_s3:
 Script to add files to the ingest queue.
 """
 
+
 def _dayoptions(string):
-    # Function to parse the today and twoday etc options
+    # Function to parse the today and twoday etc. options
     # Returns a compiled regex that can be used with search
     oneday = datetime.timedelta(days=1)
     named_intervals = {
@@ -35,12 +36,13 @@ def _dayoptions(string):
     }
 
     if string in named_intervals:
-        today = datetime.date.utcnow().date()
+        today = datetime.datetime.utcnow().date()
         dates = [today - (oneday * n) for n in range(named_intervals[string])]
         regex = '|'.join(d.strftime("%Y%m%d") for d in dates)
         return re.compile(regex)
     else:
         return re.compile(string)
+
 
 if __name__ == "__main__":
     # Option Parsing
@@ -48,10 +50,10 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------
     parser = ArgumentParser()
     parser.add_argument("--file-re", action="store", type=str, dest="file_re",
-                help="python regular expression string to select files. "
-                "Special values are today, twoday, fourday, tenday twentyday "
-                "to include only files from today, the last two days, the last "
-                "four days, or the last 10 days respectively (days counted as UTC days)")
+        help="python regular expression string to select files. "
+        "Special values are today, twoday, fourday, tenday twentyday "
+        "to include only files from today, the last two days, the last "
+        "four days, or the last 10 days respectively (days counted as UTC days)")
 
     parser.add_argument("--debug", action="store_true", dest="debug",
                         help="Increase log level to debug")
@@ -59,7 +61,7 @@ if __name__ == "__main__":
     parser.add_argument("--demon", action="store_true", dest="demon",
                         help="Run as a background demon, do not generate stdout")
 
-    parser.add_argument("--path", action="store", dest="path", default = "",
+    parser.add_argument("--path", action="store", dest="path", default="",
                         help="Use given path relative to storage root")
 
     parser.add_argument("--force", action="store_true", dest="force", default=False,
@@ -68,7 +70,7 @@ if __name__ == "__main__":
     parser.add_argument("--force_md5", action="store_true", dest="force_md5",
                         default=False, help="Force md5 file check, not just lastmod date")
 
-    parser.add_argument("--after", action="store", dest="after", default = None,
+    parser.add_argument("--after", action="store", dest="after", default=None,
                         help="Ingest only after this UTC datetime")
 
     parser.add_argument("--newfiles", action="store", type=int, dest="newfiles",
@@ -133,7 +135,6 @@ if __name__ == "__main__":
 
     # Skip various tmp files
     # Also require .fits in the filename
-    thefiles = []
     tmpcre = re.compile("(tmp)|(tiled)")
     fitscre = re.compile(".fits")
     obslogcre = re.compile("_obslog.txt")
@@ -185,6 +186,6 @@ if __name__ == "__main__":
                 after = None
             logger.info("Queueing for Ingest: ({}/{}): {}".format(i, n, filename))
             iq.add(filename, path, force=options.force,
-                            force_md5=options.force_md5, after=after)
+                   force_md5=options.force_md5, after=after)
 
     logger.info("*** add_to_ingestqueue.py exiting normally at {}".format(datetime.datetime.now()))
