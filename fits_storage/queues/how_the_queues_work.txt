@@ -1,0 +1,101 @@
+How the queues work.
+
+Each queue is a database table, the ORMs for these are eg IngestQueueEntry
+which mapps to a single queue entry.
+
+The simple version:
+
+There is an inprogress boolean column in the table. When we add an entry to the
+queue, we set it to False. When request an item from the queue to process we
+look for the highest priority item that has inprogress=False, and we set
+inprogress=True for that item (in a race condition safe manner) and then
+process it. Once processing is completes successfully, we delete that item from
+the queue.
+
+If processing fails, we set failed=True and record an error message in the
+error column.
+
+There can be multiple jobs servicing (processing items from) the queue.
+
+The more complex version:
+
+Note that the same file can be on the queue multiple times in different states.
+
+When we look for an item to process off the queue, rather than simply searching
+on inprogress=False, we build a list of the filenames which are inprogress and
+exclude those filenames. This is because a file may get re-added to the queue
+*while* it is being processed. This is intentional - the file may have just
+got modified for example. Generally we would expect the in-progress worker to
+be working on the old version and we need to let that complete before we
+re-process the new version to avoid race conditions. If the in-progress worker
+happens to have got the new version, that's fine as the subsequent re-process
+will see that the file hasn't changed since the last ingest and will no-op.
+
+There is never any point having the same file queued up twice but not
+in progress at all. We prevent this by having a uniqueness constraint on
+the table.
+
+Handling failues:
+
+If processing of a file fails, we set a flag to say it has failed, and we record
+the error message in the queue entry. We leave the entry in the queue table
+with the failure recorded - it still needs processing after all, and we will
+want to re-try at some point, possibly after manual intervention to fix the
+problem, or possibly automatically. The failure could be due to a bug in the
+code, due to a  problem with the actual file, or due to a transient problem
+like a network outage or similar, especially for the export queue.
+
+Generally, we don't simply re-try failed entries. If nothing changed, there's
+no reason to expect it would now just magically work. The main exception to
+this is the export queue, which is especially susceptible to long-haul network
+outages. The export queue has its own bespoke code for handling this.
+
+The other notable case here is the ingest queue. If a file fails, but then
+the fits file itself is modified (and then either automatically or manually
+re-added to the ingest queue) we do want to try ingesting the new version.
+
+A filename for which there are ANY inprogress entries is NOT available to
+process as we need that the complete first. This implies we should set
+inprogress to False when we stop processing due to a failure.
+
+A filename for which there are ANY failed entries is available to process iff
+there is a queue entry for it which is not failed and not inprogress
+- This means we should only ever select on not inprogress (obviously)
+
+Lifecycle of queueEntry object:
+
+inprogress=False failed=False    - new entry awaiting processing
+inprogress=True  failed=False    - during processing
+inprogress=True  failed=True     - there was an error in processing, but we
+                                 - are still doing stuff
+inprogress=False failed=True     - there wan an error in processing and we
+                                 - have stopped trying.
+
+If multiple entries for a given filename exist as follows, do we want to
+process that file or not:
+
+inprogress=True  failed=ANY
+inprogress=False failed=False
+- NO, this is the "avoid the race condition" case
+
+inprogress=False failed=True
+inprogress=False failed=False   <- Select this one
+- YES, this is the re-try the readded one
+
+inprogress=False failed=True
+- NO, don't re-try unless it gets re-added.
+- We can trigger re-try on this by setting failed=False. If it re-fails, failed
+will go back to True at that point. Or we can just add another entry for it
+
+So:
+- Always select on inprogress==False
+- Exclude any filenames that have inprogress=True
+- Always select on failed==False
+
+
+Finally, when we successfully process a given filename, we should remove any
+failed queue entries for that filename. Once we have successfully processed a
+file, previous failures are by-the-by and there is no longer any intent to
+re-process them. The error messages are recorded in the log files, we don't
+need or want to keep the failed queue entries around once there is no intent
+to re-try them.
