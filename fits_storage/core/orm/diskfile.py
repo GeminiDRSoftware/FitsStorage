@@ -5,6 +5,8 @@ from sqlalchemy.orm import relation, relationship
 import os
 import datetime
 import bz2
+import tempfile
+import hashlib
 
 from ..hashes import md5sum, md5sum_size_bz2
 from ...logger import DummyLogger
@@ -39,6 +41,26 @@ class DiskFile(Base):
     data. file_md5 and file_size are those of the actual file. data_md5 and
     data_size correspond to the uncompressed data if the file is compressed,
     and should be the same as for file_md5/file_size for uncompressed files.
+
+    This class also provides a number of utility methods for interacting with
+    the actual file itself, for example getting the full path to the file,
+    measuring the size, calculating the md5sum etc. These are used both
+    internally (within this class) and externally. In general, methods with
+    names such as file_md5 are ORM methods that reflect database columns.
+    Methods that start with get_ (eg get_file_md5) actually calculate the
+    value from the actual file on disk.
+
+    Finally, this class provides facilities for fetching the file from AWS S3
+    if needed, for storing a "cached" uncompressed version of compressed
+    data, and even for storing an open astrodata instance of the file.
+     here are several operations that need access to the uncompressed
+    file and uncompressing it each time is a significant performance hit, as
+    is opening the file with astrodata.
+    Functionality such as fetching from S3, creating an uncompressed cache
+    file, or opening the file with astrodata are all lazy - they are done on
+    demand, but the result is stored for future use. There is a cleanup()
+    method which will clean up all temporary files. This has to be called
+    manually. We can't use __del__ nicely with SQLAlchemy orm objects.
 
     Parameters
     ----------
@@ -91,6 +113,11 @@ class DiskFile(Base):
     # of this diskfile instance.
     uncompressed_cache_file = None
 
+    # We use this to store the location of a file we fetched from S3. This will
+    # usually be compressed, so most clients will use uncompressed_cache_file
+    # in preferenece to this.
+    local_copy_of_s3_file = None
+
     # We store an astrodata instance here in the same way These are expensive
     # to instantiate We instantiate  and close this externally though. It's
     # stored here as it is tightly linked to this actual diskfile,
@@ -102,10 +129,11 @@ class DiskFile(Base):
     # for convenience and to allow us to manipulate them for testing
     storage_root = fsc.storage_root
     z_staging_dir = fsc.z_staging_dir
+    s3_staging_dir = fsc.s3_staging_dir
 
     # Having the logger here is useful in ingest, but not valid e.g, when
-    # in web code. DummyLogger() is a no-op default
-    logger = DummyLogger()
+    # in web code. DummyLogger() is a no-op default set by __init__()
+    logger = None
 
     def __init__(self, given_file: File, given_filename: str, given_path: str,
                  compressed=None, logger=DummyLogger()):
@@ -123,6 +151,7 @@ class DiskFile(Base):
         compressed : bool
             True if the file is compressed.  It's also considered compressed
             if the filename ends in .bz2
+        logger: python logger instance or FitsStorage DummyLogger instance
         """
         self.file_id = given_file.id
         self.filename = given_filename
@@ -130,50 +159,71 @@ class DiskFile(Base):
         self.present = True
         self.canonical = True
         self.entrytime = datetime.datetime.now()
-        self.file_size = self.get_file_size()
+        self.file_size = os.path.getsize(self.fullpath)
         self.file_md5 = self.get_file_md5()
         self.lastmod = self.get_file_lastmod()
         self.compressed = False
 
-        if logger is not None:
-            self.logger = logger
-
+        self.logger = logger
+        self.uncompressed_cache_file = None
         self.ad_object = None
 
         if compressed is True or given_filename.endswith(".bz2"):
             self.compressed = True
-            # Create the uncompressed cache filename and unzip to it
-            try:
-                if given_filename.endswith(".bz2"):
-                    nonzfilename = given_filename[:-4]
-                else:
-                    nonzfilename = given_filename + "_bz2unzipped"
-                self.uncompressed_cache_file = \
-                    os.path.join(self.z_staging_dir, nonzfilename)
-                if os.path.exists(self.uncompressed_cache_file):
-                    os.unlink(self.uncompressed_cache_file)
-
-                with bz2.open(self.fullpath, mode='rb') as ifp, \
-                        open(self.uncompressed_cache_file, mode='wb') as ofp:
-                    chunksize = 1000000  # 1E6
-                    # TODO: use python 3.8 assignment expression
-                    # while chunk := ifp.read(chunksize):
-                    #    ofp.write(chunk)
-                    chunk = ifp.read()
-                    while chunk:
-                        ofp.write(chunk)
-                        chunk = ifp.read(chunksize)
-            except:
-                # Failed to create the unzipped cache file
-                self.uncompressed_cache_file = None
-                raise
-
-            self.data_md5 = self.get_data_md5()
-            self.data_size = self.get_data_size()
+            self.uncompressed_cache_file = self.get_uncompressed_file()
+            # This also populates data_size and data_md5.
         else:
             self.compressed = False
             self.data_md5 = self.file_md5
             self.data_size = self.file_size
+
+    def get_uncompressed_file(self):
+        if self.uncompressed_cache_file is not None:
+            return self.uncompressed_cache_file
+
+        if self.compressed is None:
+            return self.fullpath
+
+        try:
+            # Create a filename for the uncompressed version
+            tmpfile = tempfile.NamedTemporaryFile(dir=self.z_staging_dir,
+                                                  delete=False)
+
+            # Full path to it in the z_staging dir
+            self.uncompressed_cache_file = tmpfile.name
+
+            self.logger.debug("Creating uncompressed_cache_file "
+                              f"{self.uncompressed_cache_file} for "
+                              f"{self.filename}")
+
+            # And while we're at it, we calculate the data_size and data_md5
+            data_size = 0
+            hashobj = hashlib.md5()
+            with bz2.open(self.fullpath, mode='rb') as ifp:
+                chunksize = 1000000  # 1 MByte
+                # TODO: use python 3.8 assignment expression
+                while True:
+                    chunk = ifp.read(chunksize)
+                    if not chunk:
+                        break
+                    tmpfile.write(chunk)
+                    data_size += len(chunk)
+                    hashobj.update(chunk)
+            tmpfile.close()  # Note it's created with delete=False
+            self.data_size = data_size
+            self.data_md5 = hashobj.hexdigest()
+
+        except:
+            # Failed to create the unzipped cache file
+            self.uncompressed_cache_file = None
+            self.logger.error("Exception creating uncompressed_cache_file "
+                              f"{self.uncompressed_cache_file} from "
+                              f"{self.fullpath} for "
+                              f"{self.filename}", exc_info=True)
+            raise
+
+        return self.uncompressed_cache_file
+
 
     def cleanup(self):
         """
@@ -182,6 +232,7 @@ class DiskFile(Base):
         """
         if self.ad_object is not None:
             try:
+                self.logger.debug("Closing diskfile.ad_object")
                 self.ad_object.close()
                 self.ad_object = None
             except:
@@ -189,6 +240,8 @@ class DiskFile(Base):
 
         if self.uncompressed_cache_file is not None:
             try:
+                self.logger.debug("Deleting uncompressed_cache_file "
+                                  f"{self.uncompressed_cache_file}")
                 os.unlink(self.uncompressed_cache_file)
             except:
                 pass
@@ -218,6 +271,19 @@ class DiskFile(Base):
         """
         return os.path.getsize(self.fullpath)
 
+
+    def get_file_lastmod(self):
+        """
+        Get the lastmod datetime of thje file
+
+        Returns
+        -------
+        datetime.datetime
+            - the lastmod (mtime) of the file on disk
+        """
+        return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath))
+
+
     def file_exists(self):
         """
         Check if the file exists
@@ -242,63 +308,18 @@ class DiskFile(Base):
         """
         return md5sum(self.fullpath)
 
-    def get_data_md5(self):
-        """
-        Get the MD5 checksum of the uncompressed file.
-
-        Returns
-        -------
-        str
-            md5 of the uncompressed file (this may be the same if it is not
-            compressed)
-        """
-        if self.compressed is False:
-            return self.file_md5
-        elif self.uncompressed_cache_file:
-            return md5sum(self.uncompressed_cache_file)
-        else:
-            (u_md5, u_size) = md5sum_size_bz2(self.fullpath)
-            return u_md5
-
-    def get_data_size(self):
-        """
-        Get the size of the uncompressed file
-
-        Returns
-        -------
-        int
-            The size of the file when uncompressed.
-        """
-        if self.compressed is False:
-            return self.get_file_size()
-        elif self.uncompressed_cache_file:
-            return os.path.getsize(self.uncompressed_cache_file)
-        else:
-            (u_md5, u_size) = md5sum_size_bz2(self.fullpath)
-            return u_size
-
-    def get_file_lastmod(self):
-        """
-        Get the time the file was last modified
-
-        Returns
-        -------
-        datetime
-            Reads the last modification date on the file from the filesystem
-        """
-        return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath))
 
     @property
     def get_ad_object(self):
         """
-        Check if ad_object contains an astrodata object, return if so. If
-        not, open the diskfile with AstroData and store the ad object in
-        ad_object and return it.
+        Check if ad_object contains an astrodata object, return it if so. If
+        not, open the uncompressed_cache_file with AstroData and store the
+        ad object in ad_object and return it.
 
         We don't call this from the constructor as at that point we're not sure
-        that we have a fits file. We call this externally rather than opening
-        the file directly with astrodata as that is expensive - this basically
-        acts as a cache
+        that we have a fits file or that we need an ad_object. We call this
+        externally rather than opening the file directly with astrodata as
+        that is expensive - this basically acts as a cache
 
         Returns
         -------

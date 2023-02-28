@@ -3,6 +3,7 @@ This module contains code for ingesting files into the FitsStorage system.
 """
 import dateutil.parser
 
+from sqlalchemy import or_
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
@@ -185,6 +186,9 @@ class Ingester(object):
             # Proceed with normal fits file ingestion
             self.add_fitsfile(diskfile, iqe)
 
+        # We're done with the diskfile we created now
+        diskfile.cleanup()
+
         # If we are exporting to downstream servers, add to export queue now.
         # We don't do this earlier as the downstream server will query back
         # to us about the file, so we need to have ingested it first.
@@ -279,10 +283,11 @@ class Ingester(object):
         None otherwise
         """
 
-        # First, check to see if there is are older versions and mark them
-        # as not present and not canonical
+        # First, check to see if there is are older versions that are either
+        # present or canonical and mark them as not present and not canonical
         olddiskfiles = self.s.query(DiskFile) \
             .filter(DiskFile.file_id == fileobj.id) \
+            .filter(or_(DiskFile.present == True, DiskFile.canonical == True))
 
         for odf in olddiskfiles:
             self.l.debug(f"Marking old diskfile id {odf.id} as not "
