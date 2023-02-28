@@ -38,6 +38,10 @@ class IngestQueueEntry(OrmQueueMixin, Base):
     md5_after_header_update = Column(Text)
     header_update = Column(Text)
 
+    # Store these configuration items in the class to allow manipulating
+    # them for testing and debugging
+    storage_root = fsc.storage_root
+
     def __init__(self, filename, path, force=False, force_md5=False,
                  after=None, header_update=None,
                  md5_before_header_update=None,
@@ -119,7 +123,7 @@ class IngestQueueEntry(OrmQueueMixin, Base):
             return None
 
         # lastmod is in local timezone.
-        age = datetime.datetime.now() - self.filelastmod()
+        age = datetime.datetime.now() - self.filelastmod
         threshold = datetime.timedelta(seconds=fsc.defer_threshold)
         delay = datetime.timedelta(seconds=fsc.defer_delay)
         message = None
@@ -130,9 +134,32 @@ class IngestQueueEntry(OrmQueueMixin, Base):
                       f"{self.filename} for {fsc.defer_delay} seconds"
             self.after = datetime.datetime.utcnow() + delay
 
-        elif self.file_is_locked():
+        elif self.file_is_locked:
             message = f"Deferring ingestion of locked file {self.filename} " \
                       f"for {fsc.defer_delay} seconds"
             self.after = datetime.datetime.utcnow() + delay
 
         return message
+
+    def seterror(self, message):
+        """
+        Convenience function to call when an ingestqueueentry has an
+        error during processing. Appends to the error message, sets failed
+        to be true and inprogress to be false.
+        Note - this method does not commit the session, the caller must do that.
+
+        Parameters
+        ----------
+        message - error message to record
+
+        Returns
+        -------
+        Nothing
+        """
+        if self.error is None:
+            self.error = message
+        else:
+            self.error += '\n\n' + message
+
+        self.inprogress = False
+        self.failed = True

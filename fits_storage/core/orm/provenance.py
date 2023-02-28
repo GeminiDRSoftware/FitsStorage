@@ -1,15 +1,13 @@
 from datetime import datetime
 
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, DateTime, String
+from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy.orm import relationship
 
 from . import Base
 
 
 __all__ = ["Provenance", "ProvenanceHistory", "ingest_provenance"]
-
-# from .diskfile import DiskFile
 
 PROVENANCE_DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 PROVENANCE_DATE_FORMAT_ISO = "%Y-%m-%dT%H:%M:%S.%f"
@@ -34,11 +32,11 @@ class Provenance(Base):
 
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime)
-    filename = Column(String(128))
+    filename = Column(Text)
     md5 = Column(Text)
-    primitive = Column(String(128))
+    primitive = Column(Text)
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'))
-    diskfile = relationship("DiskFile", back_populates="provenance")
+    #diskfile = relationship("DiskFile", back_populates="provenance")
 
     def __init__(self, timestamp: datetime, filename: str, md5: str,
                  primitive: str):
@@ -72,10 +70,10 @@ class ProvenanceHistory(Base):
     id = Column(Integer, primary_key=True)
     timestamp_start = Column(DateTime)
     timestamp_end = Column(DateTime)
-    primitive = Column(String(128))
+    primitive = Column(Text)
     args = Column(Text)
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'))
-    diskfile = relationship("DiskFile", back_populates="provenance_history")
+    #diskfile = relationship("DiskFile", back_populates="provenance_history")
 
     def __init__(self, timestamp_start: datetime, timestamp_end: datetime,
                  primitive: str, args: str):

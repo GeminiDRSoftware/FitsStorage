@@ -3,41 +3,25 @@ This module provides various utility functions to manage and service the preview
 queue.
 
 """
-import os, sys, traceback
-import datetime
-from sqlalchemy import desc
-from sqlalchemy.orm.exc import ObjectDeletedError
-from sqlalchemy.orm import make_transient
+import os
 
 import numpy
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.preview import Preview
-from ..orm.previewqueue import PreviewQueue
+from .orm.preview import Preview
 
-from . import queue
-import functools
+from fits_storage.config import get_config
+fsc = get_config()
 
-from ..fits_storage_config import using_s3
-from ..fits_storage_config import storage_root
-from ..fits_storage_config import preview_path
-from ..fits_storage_config import z_staging_area
-from ..fits_storage_config import max_spectra_preview_frames
-
-import bz2
-
-if using_s3:
-    from ..fits_storage_config import s3_staging_area
+if fsc.using_s3:
     from .aws_s3 import get_helper
 
 import astrodata
 import gemini_instruments
 from gemini_instruments.gmos.pixel_functions import get_bias_level
 from gempy.library.spectral import Spek1D
-
 
 
 def norm(data, percentile=0.3):
@@ -54,190 +38,51 @@ def norm(data, percentile=0.3):
     return data
 
 
-class PreviewQueueUtil(object):
+def make_preview(self, diskfile, force=False):
     """
-    Helper utility for working with the :class:`~PreviewQueue`
-    """
-    def __init__(self, session, logger):
-        """
-        Create utility for working with the preview queue
+    Make the preview, given the diskfile. This can be called either from
+    the preview queue servicing, or from file ingesting.
 
-        Parameters
-        ----------
-        session : :class:`sqlalchemy.orm.session.Session`
-            SQL Alchemy session to work with
-        logger : :class:`~Logger`
-            Logger for log messages
-        """
-        self.s = session
-        self.l = logger
-        if using_s3:
-            self.s3 = get_helper(logger_ = logger)
-
-    def length(self):
-        """
-        Get the length of the queue
-
-        Returns
-        -------
-        int : length of queue
-        """
-        return queue.queue_length(PreviewQueue, self.s)
-
-    def pop(self):
-        """
-        Get the next item off the list
-
-        Returns
-        -------
-        :class:`~PreviewQueue` : next record off the preview queue
-        """
-        return queue.pop_queue(PreviewQueue, self.s, self.l)
-
-    def set_error(self, trans, exc_type, exc_value, tb):
-        "Sets an error message to a transient object"
-        queue.add_error(PreviewQueue, trans, exc_type, exc_value, tb, self.s)
-
-    def delete(self, trans):
-        "Deletes a transient object"
-        queue.delete_with_id(PreviewQueue, trans.id, self.s)
-
-    def process(self, diskfiles, make=False, force=False):
-        """
-        Add the set of diskfiles to the preview queue, or create the previews
-        immediately.
-
-        Parameters
-        ----------
-        diskfiles : iterable of :class:`~DiskFile`
-            List of DiskFiles to generate previews for
-        make : bool
-            True if we should make the preview immediately, False to add to the queue
-        force : bool
-            True if we want to create the preview even if we already have one
-        """
-        try:
-            iter(diskfiles)
-        except TypeError:
-            # Didn't get an iterable; Assume we were passed a single diskfile or
-            # previewqueue
-            diskfiles = (diskfiles,)
-
-        if make:
-            # Go ahead and make the preview now
-            for df in diskfiles:
-                if isinstance(df, PreviewQueue):
-                    pq = df
-                    df = self.s.query(DiskFile).get(pq.diskfile_id)
-                    message = "Making Preview for {}: {}".format(pq.id, df.filename)
-                else:
-                    message = "Making Preview with diskfile_id {}".format(df.id)
-                if len(df.previews) > 0 and not force and not pq.force:
-                    self.l.info("Skipping preview for diskfile_id {} (would duplicate)".format(df.id))
-                    continue
-                self.l.info(message)
-                if df.present:
-                    self.make_preview(df)
-                else:
-                    self.l.info("Skipping non-present diskfile_id {}".format(df.id))
-        else:
-            # Add it to the preview queue
-            for df in diskfiles:
-                if isinstance(df, PreviewQueue):
-                    pq = df
-                    df = self.s.query(DiskFile).get(pq.diskfile_id)
-                self.l.info("Adding PreviewQueue with diskfile_id {}".format(df.id))
-                pq = PreviewQueue(df, force=force)
-                self.s.add(pq)
-            self.s.commit()
-
-    def make_preview(self, diskfile):
-        """
-        Make the preview, given the diskfile.
-        This can be called from within service_ingest_queue ingest_file, in which 
-        case,
-
-        - it will use the pre-fetched / pre-decompressed / pre-opened astrodata 
-        object if possible.
-
-        - the diskfile object should contain an ad_object member which is an 
-        AstroData instance.
-
-        It can also be called by service_preview_queue in which case we won't 
-        have that so it will then either open the file or fetch it from S3 as 
-        appropriate etc.
+    The diskfile object handles providing an ad_object for this code to use
 
         Parameters
         ----------
         diskfile : :class:`~DiskFile`
             DiskFile record to make preview for
         force : bool
-            If True, force (re)creation of the preview even if we already have it
-        """
-        # Setup the preview file
-        preview_filename = diskfile.filename + "_preview.jpg"
+            If True, force (re)creation of the preview even if one already
+            exists
+    """
 
-        if using_s3:
-            # Create the file in s3_staging_area
-            preview_fullpath = os.path.join(s3_staging_area, preview_filename)
-        else:
-            # Create the preview filename
-            preview_fullpath = os.path.join(storage_root, preview_path, preview_filename)
+    # Generate the path to store the preview files to
 
-        # render the preview jpg
-        # Are we responsible for creating an AstroData instance, or is there one for us?
-        our_dfado = diskfile.ad_object == None
-        our_dfcc = False
+    if fsc.using_s3:
+        # Create the file in s3_staging_area
+        preview_path = os.path.join(fsc.s3_staging_area)
+    else:
+        # Create the file in the preview_path in the storage_root
+        preview_path = os.path.join(fsc.storage_root, fsc.preview_path)
+
+    preview_num = 0
+    for extnum in range(len(diskfile.ad_object)):
         try:
-            if our_dfado:
-                # We munge the filenames here to avoid file collisions in the
-                # staging directories with the ingest process.
-                munged_filename = diskfile.filename
-                munged_fullpath = diskfile.fullpath()
+            preview_fullpath = os.join(preview_path, "%s_%03d_preview.jpg"
+                                       % (diskfile.filename, extnum))
+            if len(diskfile.ad_object[0].shape) == 1:
+                # It's a spectrum
+                with open(filename, 'wb') as fp:
+                    try:
+                        self.render_spectra_preview(diskfile.ad_object, fp, idx)
+                    except:
+                        os.unlink(filename)
+                        raise
+
+                # If we're not using S3, that's it, the file is in place.
+                # If we are using s3, need to upload it now.
                 if using_s3:
-                    # Fetch from S3 to staging area
-                    # TODO: We're not checking here if the file was actually retrieved...
-                    if False:  # TODO fixme len(diskfile.ad_object) > 1:
-                        munged_filename = "preview_%s_%d" % (diskfile.filename, idx)
-                    else:
-                        munged_filename = "preview_" + diskfile.filename
-                    munged_fullpath = os.path.join(s3_staging_area, munged_filename)
-                    self.s3.fetch_to_staging(diskfile.filename, fullpath=munged_fullpath)
-
-                if diskfile.compressed:
-                    # Create the uncompressed cache filename and unzip to it
-                    nonzfilename = munged_filename[:-4]
-                    diskfile.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
-                    if os.path.exists(diskfile.uncompressed_cache_file):
-                        os.unlink(diskfile.uncompressed_cache_file)
-                    with bz2.BZ2File(munged_fullpath, mode='rb') as in_file, open(diskfile.uncompressed_cache_file, 'wb') as out_file:
-                        out_file.write(in_file.read())
-                    our_dfcc = True
-                    ad_fullpath = diskfile.uncompressed_cache_file
+                    # Create the file in s3_staging_area
+                    prv_fullpath = os.path.join(s3_staging_area, filename)
                 else:
-                    # Just use the diskfile fullpath
-                    ad_fullpath = munged_fullpath
-                # Open the astrodata instance
-                diskfile.ad_object = astrodata.open(ad_fullpath)
-
-            # Now there should be a diskfile.ad_object, either way...
-            if len(diskfile.ad_object) > 1 and len(diskfile.ad_object[0].shape) == 1:
-                for idx in range(min(len(diskfile.ad_object), max_spectra_preview_frames)):
-                    filename = "%s_%03d.jpg" % (preview_fullpath[0:-4], idx)
-                    with open(filename, 'wb') as fp:
-                        try:
-                            self.render_spectra_preview(diskfile.ad_object, fp, idx)
-                        except:
-                            os.unlink(filename)
-                            raise
-                    # Now we should have a preview in fp. Close the file-object
-
-                    # If we're not using S3, that's it, the file is in place.
-                    # If we are using s3, need to upload it now.
-                    if using_s3:
-                        # Create the file in s3_staging_area
-                        prv_fullpath = os.path.join(s3_staging_area, filename)
-                    else:
                         # Create the preview filename
                         prv_fullpath = os.path.join(storage_root, preview_path, filename)
 
@@ -301,8 +146,6 @@ class PreviewQueueUtil(object):
         """
         add = ad[idx]
 
-        full = norm(add.data)
-
         # plot without axes or frame
         fig = plt.figure(frameon=False)
     
@@ -330,8 +173,8 @@ class PreviewQueueUtil(object):
             plt.plot(x_axis, variance_masked, color='r', label="stddev")
             plt.legend()
         except Exception as e:
-            string = "".join(traceback.format_tb(sys.exc_info()[2]))
-            #self.l.error("Recovering (simplified preview) from Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+            self.l.debug("Exception. Generating simplified preview instead",
+                         exc_info=True)
             plt.plot(flux_masked)
             plt.plot(variance_masked, color='r')
 

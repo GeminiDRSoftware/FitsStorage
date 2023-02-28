@@ -7,12 +7,12 @@ from sqlalchemy.orm import relation
 from . import Base
 from .diskfile import DiskFile
 
+from fits_storage.logger import DummyLogger
 from fits_storage.file_parser import build_parser
 from fits_storage.gemini_metadata_utils import GeminiProgram, procmode_codes
 from fits_storage.gemini_metadata_utils import gemini_gain_settings
 from fits_storage.gemini_metadata_utils import gemini_readspeed_settings
 from fits_storage.gemini_metadata_utils import gemini_welldepth_settings
-from fits_storage.gemini_metadata_utils import gemini_readmode_settings
 
 from astropy import wcs as pywcs
 from astropy.wcs import SingularMatrixError
@@ -21,27 +21,9 @@ from astropy.io import fits
 
 __all__ = ["Header"]
 
-
-# This is a lingering circular dependency on DRAGONS
-import astrodata               # For astrodata errors
-
-# ***************************************************************
-# DO NOT REMOVE THIS IMPORT, IT INITIALIZES THE ASTRODATA FACTORY
-# noinspection PyUnresolvedReferences
-import gemini_instruments      # pylint: disable=unused-import
-
-try:
-    import ghost_instruments
-except:
-    pass
-
 from fits_storage.gemini_metadata_utils import obs_types, obs_classes, \
     reduction_states
 
-
-# ------------------------------------------------------------------------------
-# Replace spaces etc in the readmodes with _s
-gemini_readmode_settings = [i.replace(' ', '_') for i in gemini_readmode_settings]
 
 # Enumerated Column types
 PROCMODE_ENUM = Enum(*procmode_codes, name='procmode')
@@ -132,14 +114,14 @@ class Header(Base):
     proprietary_coordinates = Column(Boolean)
     pre_image = Column(Boolean)
 
-    def __init__(self, diskfile, log=None):
+    def __init__(self, diskfile, logger=DummyLogger()):
         self.diskfile_id = diskfile.id
-        self.populate_fits(diskfile, log)
+        self.populate_fits(diskfile, log=logger)
 
     def __repr__(self):
         return "<Header('%s', '%s')>" % (self.id, self.diskfile_id)
 
-    def populate_fits(self, diskfile: DiskFile, log=None):
+    def populate_fits(self, diskfile: DiskFile, log=DummyLogger()):
         """
         Populates header table values from the FITS headers of the file.
         Uses the AstroData object to access the file.
@@ -148,20 +130,12 @@ class Header(Base):
         ----------
         diskfile : :class:`~fits_storage_core.orm.diskfile.DiskFile`
             DiskFile record to read to populate :class:`~Header` record
-        log : :class:`logging.Logger`
+        log : :class:`logging.Logger` or
+            :class:`fits_storage.logger.DummyLogger`
             Logger to log messages to
         """
-        # The header object is unusual in that we directly pass the constructor
-        # a diskfile object which may have an ad_object in it.
-        if diskfile.ad_object is not None:
-            ad = diskfile.ad_object
-        else:
-            if diskfile.uncompressed_cache_file:
-                fullpath = diskfile.uncompressed_cache_file
-            else:
-                fullpath = diskfile.fullpath()
-            ad = astrodata.open(fullpath)
-        parser = build_parser(ad, log)
+
+        parser = build_parser(diskfile.ad_object, log)
 
         # Check for site_monitoring data. Currently, this only comprises
         # GS_ALLSKYCAMERA, but may accommodate other monitoring data.
@@ -248,60 +222,7 @@ class Header(Base):
         self.pre_image = parser.pre_image()
 
         # Get the types list
-        self.types = str(ad.tags) if hasattr(ad, 'tags') else None
+        self.types = str(diskfile.ad_object.tags) \
+            if hasattr(diskfile.ad_object, 'tags') else None
 
         return
-
-    def footprints(self, ad: astrodata.AstroData):
-        """
-        Set footprints based on information in an
-        :class:`astrodata.AstroData` instance.
-
-        This method extracts the WCS from the AstroData instance and uses
-        that to build footprint information.
-
-        Parameters
-        ----------
-        ad : :class:`astrodata.AstroData`
-            AstroData object to read footprints from
-        """
-        retary = {}
-        # Horrible hack - GNIRS etc. has the WCS for the extension in the PHU!
-        if ad.tags.intersection({'GNIRS', 'MICHELLE', 'NIFS'}):
-            # If we're not in an RA/Dec TANgent frame, don't even bother
-            if (ad.phu.get('CTYPE1') == 'RA---TAN') and \
-                    (ad.phu.get('CTYPE2') == 'DEC--TAN'):
-                hdulist = fits.open(ad.path)
-                wcs = pywcs.WCS(hdulist[0].header)
-                wcs.array_shape = hdulist[1].data.shape
-                try:
-                    fp = wcs.calc_footprint()
-                    retary['PHU'] = fp
-                except SingularMatrixError:
-                    # WCS was all zeros.
-                    pass
-        else:
-            # If we're not in an RA/Dec TANgent frame, don't even bother
-            # try using fitsio here too
-            hdulist = fits.open(ad.path)
-            for (hdu, hdr) in zip(hdulist[1:], ad.hdr): # ad.hdr:
-                if (hdr.get('CTYPE1') == 'RA---TAN') and \
-                        (hdr.get('CTYPE2') == 'DEC--TAN'):
-                    extension = "%s,%s" % (hdr.get('EXTNAME'), hdr.get('EXTVER'))
-                    wcs = pywcs.WCS(hdu.header)
-                    if hdu.data is not None and hdu.data.shape:
-                        shpe = hdu.data.shape
-                        if len(shpe) == 3 and shpe[0] == 1:
-                            shpe = shpe[1:]
-                            wcs = pywcs.WCS(hdu.header, naxis=2)
-                        wcs.array_shape = shpe
-                    elif hdulist[1].data is not None and hdulist[1].data.shape:
-                        wcs.array_shape = hdulist[1].data.shape
-                    try:
-                        fp = wcs.calc_footprint()
-                        retary[extension] = fp
-                    except SingularMatrixError:
-                        # WCS was all zeros.
-                        pass
-
-        return retary

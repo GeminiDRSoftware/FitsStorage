@@ -76,3 +76,26 @@ def setlogfilesuffix(suffix):
     new_filehandler.setFormatter(formatter)
     logger.removeHandler(filehandler)
     logger.addHandler(new_filehandler)
+
+def excinfo(exc_info):
+    """
+    Generates a string form of an exc_info()
+    Parameters
+    ----------
+    exc_info
+
+    Returns
+    -------
+
+    """
+class DummyLogger(object):
+    """
+    A dummy object that you can treat as a logger but which
+    does absolutely nothing.
+    """
+    def noop(self, *stuff):
+        pass
+    info = noop
+    error = noop
+    debug = noop
+    warning = noop

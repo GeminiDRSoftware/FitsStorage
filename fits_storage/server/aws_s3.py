@@ -3,9 +3,6 @@ This module contains utility functions for interacting with AWS S3
 """
 
 import os
-import sys
-import socket
-import traceback
 from time import sleep
 from urllib.request import pathname2url
 from urllib.parse import unquote
@@ -16,30 +13,19 @@ fsc = get_config()
 from fits_storage.core.hashes import md5sum
 from contextlib import contextmanager
 
-from .null_logger import EmptyLogger
+COPY_LIMIT = 5 * 1024 * 1024 * 1000
+# ~ 5GB. (It should probably be 5 * 1024**3, but we use a tad less to make sure...)
 
-# The first part (Helper) was intended as a base class to allow for both Boto2 and Boto3 to
-# coexist peacefully within our codebase. We decided to deprecate Boto2 because it just makes
-# life more complicated, and it's full of bugs that get fixed in Boto3 in advance, because
-# it is now the recommended library to use.
-
-# (Ricardo): I've removed the Boto2 code altogether, but I'll keep the structure as it is.
-#            If at other point anyone out of Gemini wants to use the archive code, it will
-#            be easier to adapt this module to make use of other cloud services.
-
-COPY_LIMIT = 5 * 1024 * 1024 * 1000 # ~ 5GB. (It should probably be 5 * 1024**3, but we use a tad less to make sure...)
-MULTIPART_COPY_PART_SIZE = 2000000000 # A bit under 2GB. Reduces the total number of parts...
+MULTIPART_COPY_PART_SIZE = 2000000000
+# A bit under 2GB. Reduces the total number of parts...
 
 class DownloadError(Exception):
     pass
 
-def is_string(obj):
-    return isinstance(obj, str)
 
 import boto3
 from boto3.s3.transfer import S3Transfer, S3UploadFailedError, RetriesExceededError
 from botocore.exceptions import ClientError
-import shutil
 import logging
 from tempfile import mkstemp
 
@@ -62,17 +48,16 @@ def generate_ranges(size):
         c = n
 
 class Boto3Helper(object):
-    def __init__(self, bucket_name = fsc.s3_bucket_name, logger_ = EmptyLogger()):
-        # This will hold the bucket
-        self.l = logger_
+    def __init__(self, bucket_name=fsc.s3_bucket_name, logger=None):
+        self.l = logger
         self.b = None
         self.b_name = bucket_name
 
     @property
     def session(self):
         if boto3.DEFAULT_SESSION is None:
-            boto3.setup_default_session(aws_access_key_id     = fsc.aws_access_key,
-                                        aws_secret_access_key = fsc.aws_secret_key)
+            boto3.setup_default_session(aws_access_key_id=fsc.aws_access_key,
+                                        aws_secret_access_key=fsc.aws_secret_key)
         return boto3.DEFAULT_SESSION
 
     @property
@@ -97,7 +82,7 @@ class Boto3Helper(object):
 
     def exists_key(self, key):
         try:
-            if is_string(key):
+            if isinstance(key, str):
                 key = self.bucket.Object(key)
             key.expires
             return True
@@ -109,10 +94,10 @@ class Boto3Helper(object):
 
     def get_md5(self, key):
         """
-        Get the MD5 that the S3 server hs for this key.
+        Get the MD5 that the S3 server has for this key.
         Simply strips quotes from the etag value.
         """
-        if is_string(key):
+        if isinstance(key, str):
             key = self.get_key(key)
 
         try:
@@ -121,8 +106,6 @@ class Boto3Helper(object):
             # Old object, we haven't re-calculated the MD5 yet
             return None
 
-    def get_etag(self, key):
-        return key.e_tag
 
     def get_size(self, key):
         return key.content_length
@@ -195,7 +178,7 @@ class Boto3Helper(object):
         """
         Fetch the file from s3 and put it in the storage_root directory.
         Do some validation, and re-try as appropriate
-        Return True if suceeded, False otherwise
+        Return True if succeeded, False otherwise
         """
 
         if not fullpath:

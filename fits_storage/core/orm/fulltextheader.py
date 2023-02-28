@@ -1,11 +1,8 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 
-import astrodata
-import gemini_instruments
-
-from . import Base
-from .diskfile import DiskFile
+from fits_storage.core.orm import Base
+from fits_storage.core.orm.diskfile import DiskFile
 
 
 class FullTextHeader(Base):
@@ -42,16 +39,7 @@ class FullTextHeader(Base):
         diskfile : :class:`~diskfile.DiskFile`
             Read the header out of this diskfile to populate the record
         """
-        # A fulltextheader object is unusual; directly pass the constructor
-        # a diskfile object which may have an ad_object in it.
-        if diskfile.ad_object is not None:
-            ad = diskfile.ad_object
-        else:
-            if diskfile.uncompressed_cache_file:
-                fullpath = diskfile.uncompressed_cache_file
-            else:
-                fullpath = diskfile.fullpath()
-            ad = astrodata.open(fullpath)
+        ad = diskfile.get_ad_object
 
         self.fulltext = ""
         self.fulltext += "Filename: " + diskfile.filename + "\n\n"
@@ -63,5 +51,3 @@ class FullTextHeader(Base):
             self.fulltext += "\n--- HDU {} ---\n".format(i)
             self.fulltext += repr(ad[i].hdr).strip()
             self.fulltext += '\n'
-
-        return

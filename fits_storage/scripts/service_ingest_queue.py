@@ -2,9 +2,7 @@
 
 import datetime
 import signal
-import sys
 import time
-import traceback
 
 from sqlalchemy.exc import OperationalError
 
@@ -15,6 +13,8 @@ from fits_storage.server.pidfile import PidFile, PidFileError
 
 from fits_storage.db import session_scope
 from fits_storage.queues.queue import IngestQueue
+
+from fits_storage.core.ingester import Ingester
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     parser.add_argument("--skip-fv", action="store_true", dest="skip_fv",
                         default=False, help="Do not fitsverify the files")
 
-    parser.add_argument("--skip-wmd", action="store_true", dest="skip_wmd",
+    parser.add_argument("--skip-md", action="store_true", dest="skip_md",
                         default=False, help="Do not metadata check the files")
 
     parser.add_argument("--no-defer", action="store_true", dest="no_defer",
@@ -116,6 +116,8 @@ if __name__ == "__main__":
             ingest_queue = IngestQueue(session, logger)
 
             # Loop forever. loop is a global variable defined up top
+            ingester = Ingester(session, logger, skip_fv=options.skip_fv,
+                                skip_md=options.skip_md)
             while loop:
                 try:
                     # Request a queue entry. The returned entry is marked
@@ -130,34 +132,36 @@ if __name__ == "__main__":
                         else:
                             logger.info("Nothing on queue... Waiting")
                             time.sleep(2)
+                            continue
+
+                    # Don't query queue length in fast_rebuild mode
+                    if options.fast_rebuild:
+                        logger.info(f"Ingesting {iqe.filename} - "
+                                    f"id {iqe.id}")
                     else:
-                        # Don't query queue length in fast_rebuild mode
-                        if options.fast_rebuild:
-                            logger.info(f"Ingesting {iqe.filename} - "
-                                        f"id {iqe.id}")
-                        else:
-                            logger.info(f"Ingesting {iqe.filename} - "
-                                        f"id {iqe.id} "
-                                        f" ({ingest_queue.length()} in queue)")
+                        logger.info(f"Ingesting {iqe.filename} - "
+                                    f"id {iqe.id} "
+                                    f" ({ingest_queue.length()} in queue)")
 
-                        # Check if the file was very recently modified or is
-                        # locked, defer ingestion if so
-                        if not (fsc.using_s3 or options.no_defer):
-                            defer_message = iqe.defer
-                            if defer_message is not None:
-                                logger.info(defer_message)
-                                session.commit()
-                                continue
+                    # Check if the file was very recently modified or is
+                    # locked, defer ingestion if so
+                    if not (fsc.using_s3 or options.no_defer):
+                        defer_message = iqe.defer()
+                        if defer_message is not None:
+                            logger.info(defer_message)
+                            iqe.inprogress = False
+                            session.commit()
+                            continue
 
-                        # Go ahead and ingest the file. ingest_file(iqe) is also
-                        # responsible for adding the file to the export queue
-                        # if appropriate. At this point, iqe is marked as
-                        # inprogress and is committed to the database.
-                        # ingest_file(iqe) should delete it if it successfully
-                        # ingests it, or should set the failed and error states
-                        # and commit it if not.
+                    # Go ahead and ingest the file. At this point, iqe is
+                    # marked as inprogress and is committed to the database.
+                    # ingest_file(iqe) should handle everything from here -
+                    # including deleting the iqe if it successfully ingests
+                    # it, adding it to the export queue if appropriate and
+                    # setting the status and error messages in iqe and
+                    # outputting appropriate log messages if there's a failure.
 
-                        ingest_file(iqe)
+                    ingester.ingest_file(iqe)
 
                 except (KeyboardInterrupt, OperationalError):
                     loop = False
@@ -171,15 +175,15 @@ if __name__ == "__main__":
                     # reoccur if we re-try the same file though, so we set it
                     # as failed and record the error in the iqe too.
                     message = "Unknown Error - no IngestQueueEntry instance"
-                    if iqe:
+                    if iqe is not None:
                         iqe.failed = True
-                        tbs = "".join(traceback.format_tb(sys.exc_info()[2]))
-                        message = f"Exception: {sys.exc_info()[0]} : " \
-                                  f"{sys.exc_info()[1]} ... {tbs}"
+                        iqe.inprogress = False
+                        message = "Exception in service_ingest_queue while " \
+                                  f"processing {iqe.filename}"
                         iqe.error = message
                         session.commit()
-                    logger.error(message)
 
+                    logger.error(message, exc_info=True)
                     # Press on with the next file, don't raise the exception
 
     except PidFileError as e:

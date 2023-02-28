@@ -8,9 +8,6 @@ import fcntl
 
 from fits_storage.gemini_metadata_utils import sortkey_regex_dict
 
-from fits_storage.config import get_config
-fsc = get_config()
-
 
 class OrmQueueMixin:
     def sortkey_from_filename(self, filename=None):
@@ -41,10 +38,6 @@ class OrmQueueMixin:
         with value z are considered the highest priority, and those matching
         regexes with value x are next in priority.
         """
-
-        # Storing this in the class for local use allows it to be changed
-        # on the fly for testing these methods.
-        storage_root = fsc.storage_root
 
         if filename is None:
             filename = self.filename
@@ -107,6 +100,20 @@ class OrmQueueMixin:
         The full path filename of the filename for this queue entry
         """
         return os.path.join(self.storage_root, self.path, self.filename)
+
+
+    @property
+    def file_exists(self):
+        """
+        Determines whether the file exists on disk at the path in the
+        storage_root.
+
+        Returns
+        -------
+        Bool to say whether file exists
+        """
+        fpfn = self.fullpathfilename
+        return os.access(fpfn, os.F_OK | os.R_OK) and os.path.isfile(fpfn)
 
     @property
     def filelastmod(self):

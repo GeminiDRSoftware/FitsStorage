@@ -25,7 +25,9 @@ class Preview(Base):
     id = Column(Integer, primary_key=True)
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False,
                          index=True)
-    diskfile = relationship("DiskFile", back_populates="previews")
+    #diskfile = relationship("DiskFile", back_populates="previews")
+    diskfile = relationship("DiskFile")
+
     filename = Column(Text)
 
     def __init__(self, diskfile, preview_filename: str):

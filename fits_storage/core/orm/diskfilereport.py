@@ -80,7 +80,8 @@ class DiskFileReport(Base):
         filename = None
         if diskfile.compressed:
             if diskfile.uncompressed_cache_file and \
-                    os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
+                    os.access(diskfile.uncompressed_cache_file,
+                              os.F_OK | os.R_OK):
                 filename = diskfile.uncompressed_cache_file
             else:
                 # For now, we do not support fitsverify of compressed files
@@ -88,7 +89,7 @@ class DiskFileReport(Base):
                 filename = None
         else:
             # not compressed - just use the diskfile filename
-            filename = diskfile.fullpath()
+            filename = diskfile.fullpath
 
         if filename:
             retlist = fitsverify(filename)
@@ -121,7 +122,8 @@ class DiskFileReport(Base):
         filename = None
         if diskfile.compressed:
             if diskfile.uncompressed_cache_file and \
-                    os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
+                    os.access(diskfile.uncompressed_cache_file,
+                              os.F_OK | os.R_OK):
                 filename = diskfile.uncompressed_cache_file
             else:
                 # For now, we do not support fitsverify of compressed files

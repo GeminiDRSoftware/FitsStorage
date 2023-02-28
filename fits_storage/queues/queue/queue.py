@@ -70,6 +70,8 @@ class Queue(object):
         # I'm not sure if this is really an issue now we're using SELECT FOR
         # UPDATE rather than grabbing a whole ACCESS EXCLUSIVE lock,
         # but having it as transient makes sense anyway.
+        # NOTE NOTE - no we don't anymore!
+        # TODO - tidy up this comment if it works ok.
 
         # There's a quirk regarding the way failed is handled. See the note
         # in ormqueuemixin.py .Basically fail_dt == fail_dt_false
@@ -105,7 +107,7 @@ class Queue(object):
                 session.flush()
 
                 # Make the qentry transient (see comment above)
-                make_transient(qentry)
+                # make_transient(qentry)
             else:
                 # Got None from .first()
                 self.logger.debug(f"No item to pop on {ormclass.__tablename__}")

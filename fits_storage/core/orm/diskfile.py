@@ -4,13 +4,13 @@ from sqlalchemy.orm import relation, relationship
 
 import os
 import datetime
-import re
+import bz2
 
 from ..hashes import md5sum, md5sum_size_bz2
+from ...logger import DummyLogger
 
 from . import Base
 from .file import File
-
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -21,48 +21,15 @@ from .provenance import Provenance, ProvenanceHistory
 # if fsc.is_server:
 #     from ..server.preview import Preview
 
-_standard_filename_timestamp_re = re.compile(r'[NS](\d{4})(\d{2})(\d{2})[A-Z].*')
-_igrins_filename_timestamp_re = re.compile(r'[A-Z]{4}_(\d{4})(\d{2})(\d{2})_.*')
-_skycam_filename_timestamp_re = re.compile(r'img_(\d{4})(\d{2})(\d{2})_\d{2}h\d{2}m\d{2}s.fits')
-_fallback_filename_timestamp_re = re.compile(r'.*(20\d{2})([0-1]\d)([0-3]\d).*')
+import astrodata
+# DO NOT REMOVE THIS IMPORT, IT INITIALIZES THE ASTRODATA FACTORY
+# noinspection PyUnresolvedReferences
+import gemini_instruments      # pylint: disable=unused-import
 
-
-def _determine_timestamp_from_filename(filename: str):
-    """
-    Infer a timestamp using just the filename.
-
-    Our files follow a small set of possible naming conventions.  These
-    include a representation of the date fo the file.  This helper method
-    is for inferring the date of the file from it's filename.
-
-    Parameters
-    ----------
-    filename : str
-        Name of the file to infer a timestamp for
-
-    Returns
-    -------
-    datetime
-        The datetime implied by the filename, or None if the filename is not
-        a recognized format
-    """
-    for regex in [
-        _standard_filename_timestamp_re,
-        _igrins_filename_timestamp_re,
-        _skycam_filename_timestamp_re,
-        _fallback_filename_timestamp_re
-    ]:
-        m = regex.search(filename)
-        if m:
-            year = int(m.group(1))
-            month = int(m.group(2))
-            day = int(m.group(3))
-            dt = datetime.datetime(year=year, month=month, day=day)
-            return dt
-    # Unrecognized filename format, upstream will have to do something
-    # appropriate
-    return None
-
+try:
+    import ghost_instruments
+except:
+    pass
 
 class DiskFile(Base):
     """
@@ -92,7 +59,8 @@ class DiskFile(Base):
     file_id = Column(Integer, ForeignKey('file.id'), nullable=False, index=True)
     file = relation(File, order_by=id, back_populates='diskfiles')
     # if fsc.is_server
-        #previews = relationship(Preview, back_populates="diskfile", order_by=Preview.filename)
+    #    previews = relationship(Preview, back_populates="diskfile",
+    #    order_by=Preview.filename)
 
     filename = Column(Text, index=True)
     path = Column(Text)
@@ -112,11 +80,11 @@ class DiskFile(Base):
     fverrors = Column(Integer)
     mdready = Column(Boolean)
 
-    datafile_timestamp = Column(DateTime(timezone=True), index=True)
-
-    provenance = relationship(Provenance, back_populates='diskfile', order_by=Provenance.timestamp)
-    provenance_history = relationship(ProvenanceHistory, back_populates='diskfile',
-                                      order_by=ProvenanceHistory.timestamp_start)
+    #provenance = relationship(Provenance, back_populates='diskfile',
+    #                          order_by=Provenance.timestamp)
+    #provenance_history = relationship(ProvenanceHistory,
+    #                                  back_populates='diskfile',
+    #                                  order_by=ProvenanceHistory.timestamp_start)
 
     # We use this to store an uncompressed Cache of a compressed file
     # This is not recorded in the database and is transient for the life
@@ -130,8 +98,17 @@ class DiskFile(Base):
     # the ORM layer, or pulled in as a relation
     ad_object = None
 
-    def __init__(self, given_file: File, given_filename: str, path: str,
-                 compressed=None):
+    # We store the items we use from the configuration system here
+    # for convenience and to allow us to manipulate them for testing
+    storage_root = fsc.storage_root
+    z_staging_dir = fsc.z_staging_dir
+
+    # Having the logger here is useful in ingest, but not valid e.g, when
+    # in web code. DummyLogger() is a no-op default
+    logger = DummyLogger()
+
+    def __init__(self, given_file: File, given_filename: str, given_path: str,
+                 compressed=None, logger=DummyLogger()):
         """
         Create a :class:`~fits_storage_core.orm.diskfile.DiskFile` record.
 
@@ -149,21 +126,21 @@ class DiskFile(Base):
         """
         self.file_id = given_file.id
         self.filename = given_filename
-        self.path = path
+        self.path = given_path
         self.present = True
         self.canonical = True
         self.entrytime = datetime.datetime.now()
         self.file_size = self.get_file_size()
         self.file_md5 = self.get_file_md5()
-        self.lastmod = self.get_lastmod()
+        self.lastmod = self.get_file_lastmod()
+        self.compressed = False
 
-        ts = _determine_timestamp_from_filename(given_filename)
-        if ts is not None:
-            self.datafile_timestamp = ts
-        else:
-            self.datafile_timestamp = self.lastmod
+        if logger is not None:
+            self.logger = logger
 
-        if compressed == True or given_filename.endswith(".bz2"):
+        self.ad_object = None
+
+        if compressed is True or given_filename.endswith(".bz2"):
             self.compressed = True
             # Create the uncompressed cache filename and unzip to it
             try:
@@ -171,17 +148,21 @@ class DiskFile(Base):
                     nonzfilename = given_filename[:-4]
                 else:
                     nonzfilename = given_filename + "_bz2unzipped"
-                self.uncompressed_cache_file = os.path.join(fsc.z_staging_area, nonzfilename)
+                self.uncompressed_cache_file = \
+                    os.path.join(self.z_staging_dir, nonzfilename)
                 if os.path.exists(self.uncompressed_cache_file):
                     os.unlink(self.uncompressed_cache_file)
 
-                os.system('bzcat %s > %s' % (self.fullpath(), self.uncompressed_cache_file))
-                # TODO remove these lines once we are comfortable with the above
-                # in_file = bz2.BZ2File(self.fullpath(), mode='rb')
-                # out_file = open(self.uncompressed_cache_file, 'wb')
-                # out_file.write(in_file.read())
-                # in_file.close()
-                # out_file.close()
+                with bz2.open(self.fullpath, mode='rb') as ifp, \
+                        open(self.uncompressed_cache_file, mode='wb') as ofp:
+                    chunksize = 1000000  # 1E6
+                    # TODO: use python 3.8 assignment expression
+                    # while chunk := ifp.read(chunksize):
+                    #    ofp.write(chunk)
+                    chunk = ifp.read()
+                    while chunk:
+                        ofp.write(chunk)
+                        chunk = ifp.read(chunksize)
             except:
                 # Failed to create the unzipped cache file
                 self.uncompressed_cache_file = None
@@ -194,6 +175,26 @@ class DiskFile(Base):
             self.data_md5 = self.file_md5
             self.data_size = self.file_size
 
+    def cleanup(self):
+        """
+        Clean-up method for DiskFile class.
+        Deletes the uncompressed cache file and ad_object if they exist
+        """
+        if self.ad_object is not None:
+            try:
+                self.ad_object.close()
+                self.ad_object = None
+            except:
+                pass
+
+        if self.uncompressed_cache_file is not None:
+            try:
+                os.unlink(self.uncompressed_cache_file)
+            except:
+                pass
+
+
+    @property
     def fullpath(self):
         """
         Get the full path to the file, including the `storage_root`, `path`,
@@ -204,7 +205,7 @@ class DiskFile(Base):
         str
             full path to file
         """
-        return os.path.join(db_config.storage_root, self.path, self.filename)
+        return os.path.join(self.storage_root, self.path, self.filename)
 
     def get_file_size(self):
         """
@@ -215,9 +216,9 @@ class DiskFile(Base):
         int
             size of file in bytes
         """
-        return os.path.getsize(self.fullpath())
+        return os.path.getsize(self.fullpath)
 
-    def exists(self):
+    def file_exists(self):
         """
         Check if the file exists
 
@@ -226,8 +227,8 @@ class DiskFile(Base):
         bool
             True if the file exits, is a file, and is readable, else False
         """
-        exists = os.access(self.fullpath(), os.F_OK | os.R_OK)
-        isfile = os.path.isfile(self.fullpath())
+        exists = os.access(self.fullpath, os.F_OK | os.R_OK)
+        isfile = os.path.isfile(self.fullpath)
         return exists and isfile
 
     def get_file_md5(self):
@@ -239,7 +240,7 @@ class DiskFile(Base):
         str
             md5 of the file as a string
         """
-        return md5sum(self.fullpath())
+        return md5sum(self.fullpath)
 
     def get_data_md5(self):
         """
@@ -248,16 +249,16 @@ class DiskFile(Base):
         Returns
         -------
         str
-            md5 of the uncompressed file (this may be the same if it is not compressed)
+            md5 of the uncompressed file (this may be the same if it is not
+            compressed)
         """
         if self.compressed is False:
             return self.file_md5
+        elif self.uncompressed_cache_file:
+            return md5sum(self.uncompressed_cache_file)
         else:
-            if self.uncompressed_cache_file:
-                return md5sum(self.uncompressed_cache_file)
-            else:
-                (u_md5, u_size) = md5sum_size_bz2(self.fullpath())
-                return u_md5
+            (u_md5, u_size) = md5sum_size_bz2(self.fullpath)
+            return u_md5
 
     def get_data_size(self):
         """
@@ -270,23 +271,57 @@ class DiskFile(Base):
         """
         if self.compressed is False:
             return self.get_file_size()
+        elif self.uncompressed_cache_file:
+            return os.path.getsize(self.uncompressed_cache_file)
         else:
-            if self.uncompressed_cache_file:
-                return os.path.getsize(self.uncompressed_cache_file)
-            else:
-                (u_md5, u_size) = md5sum_size_bz2(self.fullpath())
-                return u_size
+            (u_md5, u_size) = md5sum_size_bz2(self.fullpath)
+            return u_size
 
-    def get_lastmod(self):
+    def get_file_lastmod(self):
         """
         Get the time the file was last modified
 
         Returns
         -------
         datetime
-            This checks on the filesystem for the last modification date on the file
+            Reads the last modification date on the file from the filesystem
         """
-        return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath()))
+        return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath))
+
+    @property
+    def get_ad_object(self):
+        """
+        Check if ad_object contains an astrodata object, return if so. If
+        not, open the diskfile with AstroData and store the ad object in
+        ad_object and return it.
+
+        We don't call this from the constructor as at that point we're not sure
+        that we have a fits file. We call this externally rather than opening
+        the file directly with astrodata as that is expensive - this basically
+        acts as a cache
+
+        Returns
+        -------
+        astrodata object
+        """
+        if self.ad_object is not None:
+            self.logger.debug('Using ad_object from diskfile')
+            return self.ad_object
+
+        if self.uncompressed_cache_file:
+            self.logger.debug("Using uncompressed cache file from diskfile")
+            fullpath = self.uncompressed_cache_file
+        else:
+            fullpath = self.fullpath
+        try:
+            self.logger.debug(f"Opening {fullpath} with AstroData and storing "
+                              "to diskfile ad_object")
+            self.ad_object = astrodata.open(fullpath)
+            return self.ad_object
+        except:
+            self.logger.error(f"Error opening {fullpath} with AstroData")
+            return None
+
 
     def __repr__(self):
         """
@@ -295,6 +330,8 @@ class DiskFile(Base):
         Returns
         -------
         str
-            A human radable representation of this :class:`~fits_storage_core.orm.diskfile.DiskFile`
+            A human readable representation of this
+            :class:`~fits_storage_core.orm.diskfile.DiskFile`
         """
-        return "<DiskFile('%s', '%s', '%s', '%s')>" % (self.id, self.file_id, self.filename, self.path)
+        return f"<DiskFile({self.id}, {self.file_id}, {self.filename}, " \
+               f"{self.path})>"

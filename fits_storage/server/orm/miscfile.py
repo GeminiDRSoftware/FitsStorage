@@ -9,7 +9,7 @@ from fits_storage.config import get_config
 fsc = get_config()
 
 if fsc.using_s3:
-    from ...utils.aws_s3 import get_helper, ClientError
+    from ..aws_s3 import get_helper, ClientError
     s3 = get_helper()
 
 import json
@@ -27,7 +27,7 @@ MISCFILE_PREFIX = 'miscfile_'
 
 def normalize_diskname(filename):
     """
-    Prepar a filename for use as a `miscfile`.  This is done by adding
+    Prepare a filename for use as a `miscfile`.  This is done by adding
     a prefix of `miscfile_` to the filename, if it not already there
 
     Parameters
