@@ -8,7 +8,7 @@ import bz2
 import tempfile
 import hashlib
 
-from ..hashes import md5sum, md5sum_size_bz2
+from fits_storage.core.hashes import md5sum
 from ...logger import DummyLogger
 
 from . import Base
