@@ -56,9 +56,6 @@ def test_diskfile(tmp_path):
     old_cache_file = diskfile.uncompressed_cache_file
     diskfile.cleanup()
 
-    # assert diskfile.ad_object is None
-    # We close it, but don't set it to None, and there's no reason to.
-    # Should check that it's closed though.
-
     assert os.path.exists(old_cache_file) is False
+    assert diskfile.ad_object is None
     assert diskfile.uncompressed_cache_file is None

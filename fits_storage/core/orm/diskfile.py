@@ -231,21 +231,21 @@ class DiskFile(Base):
         Deletes the uncompressed cache file and ad_object if they exist
         """
         if self.ad_object is not None:
-            try:
-                self.logger.debug("Closing diskfile.ad_object")
-                self.ad_object.close()
-                self.ad_object = None
-            except:
-                pass
+            self.logger.debug("Closing diskfile.ad_object. Well, there's "
+                              "actually no ad.close() method, so we just "
+                               "set ad_object=None and hope for the best")
+            # self.ad_object.close()
+            self.ad_object = None
 
         if self.uncompressed_cache_file is not None:
+            self.logger.debug("Deleting uncompressed_cache_file "
+                              f"{self.uncompressed_cache_file}")
             try:
-                self.logger.debug("Deleting uncompressed_cache_file "
-                                  f"{self.uncompressed_cache_file}")
                 os.unlink(self.uncompressed_cache_file)
-                self.uncompressed_cache_file = None
-            except:
+            except (PermissionError, FileNotFoundError):
                 pass
+
+            self.uncompressed_cache_file = None
 
     @property
     def fullpath(self):
