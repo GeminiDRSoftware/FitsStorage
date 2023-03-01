@@ -20,22 +20,26 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Create log formatter
-formatter = logging.Formatter("%(asctime)s %(process)d:%(module)s:%(lineno)d %(levelname)s: %(message)s")
+formatter = logging.Formatter("%(asctime)s %(process)d:%(module)s:%(lineno)d "
+                              "%(levelname)s: %(message)s")
 
 # Create log message handlers
 # Set default logname
 logname = "%s.log" % (os.path.basename(sys.argv[0]))
 logfile = os.path.join(fsc.log_dir, logname)
-filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount=10, maxBytes=10000000)
+filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount=10,
+                                                   maxBytes=10000000)
 streamhandler = logging.StreamHandler()
 emailsubject = "Messages from FitsStorage on %s" % os.uname()[1]
-smtphandler = logging.handlers.SMTPHandler(mailhost=fsc.smtp_server, fromaddr='fitsdata@gemini.edu',
-                    toaddrs=[fsc.email_errors_to], subject=emailsubject)
+smtphandler = logging.handlers.SMTPHandler(mailhost=fsc.smtp_server,
+                                           fromaddr='fitsdata@gemini.edu',
+                                           toaddrs=[fsc.email_errors_to],
+                                           subject=emailsubject)
 
-# The smtp handler should only do CRITICALs or worse
+# The smtp handler should only do CRITICAL or worse
 smtphandler.setLevel(logging.CRITICAL)
 
-# Add formater to handlers
+# Add formatter to handlers
 filehandler.setFormatter(formatter)
 streamhandler.setFormatter(formatter)
 smtphandler.setFormatter(formatter)
@@ -48,7 +52,8 @@ if fsc.log_dir != '':
 # Utility functions follow
 
 # env var setting for webserver
-loglevels = {"DEBUG": logging.DEBUG, "INFO": logging.INFO, "WARNING": logging.WARN}
+loglevels = {"DEBUG": logging.DEBUG, "INFO": logging.INFO,
+             "WARNING": logging.WARN}
 loglevel = os.getenv("LOG_LEVEL", None)
 if loglevel is not None:
     if loglevel in loglevels:
@@ -60,34 +65,31 @@ def setdebug(want):
     if want:
         logger.setLevel(logging.DEBUG)
 
+
 def setdemon(want):
-    """ If running as a demon, don't output to stdout but do activate email handler """
+    """
+    If running as a demon, don't output to stdout but do activate email
+    handler
+    """
     if want:
         if fsc.email_errors_to != '':
             logger.addHandler(smtphandler)
     else:
         logger.addHandler(streamhandler)
 
+
 def setlogfilesuffix(suffix):
     """ Set a suffix on the log file name """
     logname = "%s-%s.log" % (os.path.basename(sys.argv[0]), suffix)
     logfile = os.path.join(fsc.log_dir, logname)
-    new_filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount=10, maxBytes=10000000)
+    new_filehandler = logging.handlers.RotatingFileHandler(logfile,
+                                                           backupCount=10,
+                                                           maxBytes=10000000)
     new_filehandler.setFormatter(formatter)
     logger.removeHandler(filehandler)
     logger.addHandler(new_filehandler)
 
-def excinfo(exc_info):
-    """
-    Generates a string form of an exc_info()
-    Parameters
-    ----------
-    exc_info
 
-    Returns
-    -------
-
-    """
 class DummyLogger(object):
     """
     A dummy object that you can treat as a logger but which
