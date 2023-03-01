@@ -33,6 +33,7 @@ try:
 except:
     pass
 
+
 class DiskFile(Base):
     """
     This is the ORM class for the diskfile table. A diskfile represents an
@@ -47,7 +48,7 @@ class DiskFile(Base):
     measuring the size, calculating the md5sum etc. These are used both
     internally (within this class) and externally. In general, methods with
     names such as file_md5 are ORM methods that reflect database columns.
-    Methods that start with get_ (eg get_file_md5) actually calculate the
+    Methods that start with get_ (e.g. get_file_md5) actually calculate the
     value from the actual file on disk.
 
     Finally, this class provides facilities for fetching the file from AWS S3
@@ -61,18 +62,6 @@ class DiskFile(Base):
     demand, but the result is stored for future use. There is a cleanup()
     method which will clean up all temporary files. This has to be called
     manually. We can't use __del__ nicely with SQLAlchemy orm objects.
-
-    Parameters
-    ----------
-    given_file : :class:`~fits_storage_core.orm.file.File`
-        A :class:`~fits_storage_core.orm.file.File` record to associate with
-    given_filename : str
-        The name of the file
-    path : str
-        The path of the file within the `storage_root`
-    compressed : bool
-        True if the file is compressed.  It's also considered compressed if
-        the filename ends in .bz2
     """
 
     __tablename__ = 'diskfile'
@@ -102,9 +91,9 @@ class DiskFile(Base):
     fverrors = Column(Integer)
     mdready = Column(Boolean)
 
-    #provenance = relationship(Provenance, back_populates='diskfile',
+    # provenance = relationship(Provenance, back_populates='diskfile',
     #                          order_by=Provenance.timestamp)
-    #provenance_history = relationship(ProvenanceHistory,
+    # provenance_history = relationship(ProvenanceHistory,
     #                                  back_populates='diskfile',
     #                                  order_by=ProvenanceHistory.timestamp_start)
 
@@ -115,7 +104,7 @@ class DiskFile(Base):
 
     # We use this to store the location of a file we fetched from S3. This will
     # usually be compressed, so most clients will use uncompressed_cache_file
-    # in preferenece to this.
+    # in preference to this.
     local_copy_of_s3_file = None
 
     # We store an astrodata instance here in the same way These are expensive
@@ -125,18 +114,9 @@ class DiskFile(Base):
     # the ORM layer, or pulled in as a relation
     ad_object = None
 
-    # We store the items we use from the configuration system here
-    # for convenience and to allow us to manipulate them for testing
-    storage_root = fsc.storage_root
-    z_staging_dir = fsc.z_staging_dir
-    s3_staging_dir = fsc.s3_staging_dir
-
-    # Having the logger here is useful in ingest, but not valid e.g, when
-    # in web code. DummyLogger() is a no-op default set by __init__()
-    logger = None
-
     def __init__(self, given_file: File, given_filename: str, given_path: str,
-                 compressed=None, logger=DummyLogger()):
+                 compressed=None, logger=DummyLogger(),
+                 storage_root=None, z_staging_dir=None, s3_staging_dir=None):
         """
         Create a :class:`~fits_storage_core.orm.diskfile.DiskFile` record.
 
@@ -146,13 +126,33 @@ class DiskFile(Base):
             A :class:`~fits_storage_core.orm.file.File` record to associate with
         given_filename : str
             The name of the file
-        path : str
+        given_path : str
             The path of the file within the `storage_root`
         compressed : bool
             True if the file is compressed.  It's also considered compressed
             if the filename ends in .bz2
         logger: python logger instance or FitsStorage DummyLogger instance
+        storage_root : str or None
+        z_staging_dir : str or None
+        s3_staging_dir : str or None
+            These three are provided here to they can be overridden for
+            testing and debugging. They default to None which causes them
+            to take the values from the configuration system.
         """
+
+        # We store the items we use from the configuration system in the class
+        # for convenience and to allow us to manipulate them for testing.
+        self.storage_root = storage_root if storage_root is not None \
+            else fsc.storage_root
+        self.z_staging_dir = z_staging_dir if z_staging_dir is not None \
+            else fsc.z_staging_dir
+        self.s3_staging_dir = s3_staging_dir if s3_staging_dir is not None \
+            else fsc.s3_staging_dir
+
+        # Having the logger here is useful in ingest, but not valid e.g, when
+        # in web code. DummyLogger() is a no-op default
+        self.logger = logger
+
         self.file_id = given_file.id
         self.filename = given_filename
         self.path = given_path
@@ -164,7 +164,6 @@ class DiskFile(Base):
         self.lastmod = self.get_file_lastmod()
         self.compressed = False
 
-        self.logger = logger
         self.uncompressed_cache_file = None
         self.ad_object = None
 
@@ -176,6 +175,7 @@ class DiskFile(Base):
             self.compressed = False
             self.data_md5 = self.file_md5
             self.data_size = self.file_size
+
 
     def get_uncompressed_file(self):
         if self.uncompressed_cache_file is not None:
@@ -243,9 +243,9 @@ class DiskFile(Base):
                 self.logger.debug("Deleting uncompressed_cache_file "
                                   f"{self.uncompressed_cache_file}")
                 os.unlink(self.uncompressed_cache_file)
+                self.uncompressed_cache_file = None
             except:
                 pass
-
 
     @property
     def fullpath(self):
@@ -271,10 +271,9 @@ class DiskFile(Base):
         """
         return os.path.getsize(self.fullpath)
 
-
     def get_file_lastmod(self):
         """
-        Get the lastmod datetime of thje file
+        Get the lastmod datetime of the file
 
         Returns
         -------
@@ -282,7 +281,6 @@ class DiskFile(Base):
             - the lastmod (mtime) of the file on disk
         """
         return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath))
-
 
     def file_exists(self):
         """
@@ -307,7 +305,6 @@ class DiskFile(Base):
             md5 of the file as a string
         """
         return md5sum(self.fullpath)
-
 
     @property
     def get_ad_object(self):
@@ -342,7 +339,6 @@ class DiskFile(Base):
         except:
             self.logger.error(f"Error opening {fullpath} with AstroData")
             return None
-
 
     def __repr__(self):
         """
