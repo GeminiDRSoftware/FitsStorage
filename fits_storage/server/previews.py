@@ -416,8 +416,7 @@ def make_preview(self, diskfile, force=False):
                 plt.plot(x_axis, variance_masked, color='r', label="stddev")
                 plt.legend()
             except Exception as e:
-                string = "".join(traceback.format_tb(sys.exc_info()[2]))
-                #self.l.error("Recovering (simplified preview) from Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+                #self.l.error("Recovering (simplified preview) from Exception", exc_info=True)
                 plt.plot(flux_masked)
                 plt.plot(variance_masked, color='r')
         else:

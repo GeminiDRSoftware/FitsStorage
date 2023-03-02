@@ -4,10 +4,6 @@ PH TODO list 2023
 level interfaces that we can use rather than doing things like multipart
 handling ourselves.
 
-* Provenance and ProvenanceHistory support. in core.ingest.py we skip it.
+* Provenance and ProvenanceHistory support. in core.ingester.py we skip it.
 Code review of core.orm.provenance.py and parts of diskfie.py needed.
 
-* All exception handlers should just say:
-logger.error("Exception happened", exc_info=True)
-and the logger will pretty-print the exc_info for you!
-This works for error and debug.
