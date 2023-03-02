@@ -135,7 +135,7 @@ class Header(Base):
             Logger to log messages to
         """
 
-        parser = build_parser(diskfile.ad_object, log)
+        parser = build_parser(diskfile.get_ad_object, log)
 
         # Check for site_monitoring data. Currently, this only comprises
         # GS_ALLSKYCAMERA, but may accommodate other monitoring data.
