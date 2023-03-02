@@ -1,24 +1,31 @@
-import astrodata
-from gemini_obs_db.orm.f2 import F2
-import fits_storage.fits_storage_config as fsc
-from tests.file_helper import ensure_file
+import os
+
+from fits_storage.core.orm.file import File
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.header import Header
+
+from fits_storage.cal.orm.f2 import F2
+from fits_storage.core.tests.helpers import fetch_file
 
 
-class MockHeader:
-    def __init__(self, id):
-        self.id = id
+def test_f2(tmp_path):
+    storage_root = os.path.join(tmp_path, "storage_root")
+    z_staging_dir = os.path.join(tmp_path, "z_staging")
+    s3_staging_dir = os.path.join(tmp_path, "s3_staging")
 
+    os.mkdir(storage_root)
+    os.mkdir(z_staging_dir)
+    os.mkdir(s3_staging_dir)
 
-def test_f2(monkeypatch):
-    monkeypatch.setattr(fsc, "storage_root", "/tmp")
-
-    h = MockHeader(123)
-    data_file = 'S20181219S0333.fits'
-
-    ensure_file(data_file, '/tmp')
-    ad = astrodata.open('/tmp/%s' % data_file)
-
-    f2 = F2(h, ad)
+    test_file = 'S20181219S0333.fits.bz2'
+    fetch_file(test_file, storage_root)
+    fileobj = File(test_file)
+    diskfile = DiskFile(fileobj, test_file, '',
+                        storage_root=storage_root,
+                        z_staging_dir=z_staging_dir,
+                        s3_staging_dir=s3_staging_dir)
+    header = Header(diskfile)
+    f2 = F2(header, diskfile.get_ad_object)
 
     assert (f2.disperser == 'JH_G5801')
     assert (f2.filter_name == 'Open&JH_G0809')
