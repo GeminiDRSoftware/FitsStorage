@@ -1,25 +1,15 @@
-import astrodata
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.gsaoi import Gsaoi
-from gemini_obs_db.orm.header import Header
-from tests.file_helper import ensure_file
-import fits_storage.fits_storage_config as fsc
+from fits_storage.cal.orm.gsaoi import Gsaoi
+from fits_storage.core.orm.header import Header
+
+from fits_storage.core.tests.helpers import make_diskfile
 
 
-def test_gsaoi(monkeypatch):
-    monkeypatch.setattr(fsc, "storage_root", "/tmp")
-
+def test_gsaoi(tmp_path):
     data_file = 'S20181018S0151.fits'
 
-    ensure_file(data_file, '/tmp')
-    ad = astrodata.open('/tmp/%s' % data_file)
-
-    f = File(data_file)
-    df = DiskFile(f, data_file, "")
-    df.ad_object = ad
-    h = Header(df)
-    gsaoi = Gsaoi(h, ad)
+    diskfile = make_diskfile(data_file, tmp_path)
+    header = Header(diskfile)
+    gsaoi = Gsaoi(header, diskfile.get_ad_object)
 
     assert(gsaoi.filter_name == 'K_G1106&Clear')
     assert(gsaoi.read_mode == 'FOWLER')

@@ -1,33 +1,15 @@
 import os.path
 import hashlib
 
-from fits_storage.core.orm.diskfile import DiskFile
-from fits_storage.core.orm.file import File
-
-from fits_storage.core.tests.helpers import fetch_file
+from fits_storage.core.tests.helpers import make_diskfile
 
 from astrodata import AstroData
 
 
 def test_diskfile(tmp_path):
-    storage_root = os.path.join(tmp_path, "storage_root")
-    z_staging_dir = os.path.join(tmp_path, "z_staging")
-    s3_staging_dir = os.path.join(tmp_path, "s3_staging")
+    diskfile = make_diskfile('N20200127S0023.fits.bz2', tmp_path)
 
-    os.mkdir(storage_root)
-    os.mkdir(z_staging_dir)
-    os.mkdir(s3_staging_dir)
-
-    test_file = 'N20200127S0023.fits.bz2'
-    fetch_file(test_file, storage_root)
-
-    fileobj = File(test_file)
-    diskfile = DiskFile(fileobj, test_file, '',
-                        storage_root=storage_root,
-                        z_staging_dir=z_staging_dir,
-                        s3_staging_dir=s3_staging_dir)
-
-    assert diskfile.filename == test_file
+    assert diskfile.filename == 'N20200127S0023.fits.bz2'
     assert diskfile.path == ''
     assert diskfile.present is True
     assert diskfile.canonical is True
@@ -38,7 +20,7 @@ def test_diskfile(tmp_path):
     assert diskfile.data_size == 4213440
 
     assert diskfile.fullpath is not None
-    assert diskfile.fullpath.endswith(test_file) is True
+    assert diskfile.fullpath.endswith('N20200127S0023.fits.bz2') is True
     assert diskfile.uncompressed_cache_file is not None
     assert diskfile.file_exists() is True
     assert os.path.getsize(diskfile.uncompressed_cache_file) == 4213440

@@ -1,25 +1,15 @@
-import astrodata
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.michelle import Michelle
-from tests.file_helper import ensure_file
-import fits_storage.fits_storage_config as fsc
+from fits_storage.core.orm.header import Header
+from fits_storage.cal.orm.michelle import Michelle
+
+from fits_storage.core.tests.helpers import make_diskfile
 
 
-def test_michelle(monkeypatch):
-    monkeypatch.setattr(fsc, "storage_root", "/tmp")
-
+def test_michelle(tmp_path):
     data_file = 'N20100119S0080.fits'
 
-    ensure_file(data_file, '/tmp')
-    ad = astrodata.open('/tmp/%s' % data_file)
-
-    f = File(data_file)
-    df = DiskFile(f, data_file, "")
-    df.ad_object = ad
-    h = Header(df)
-    michelle = Michelle(h, ad)
+    diskfile = make_diskfile(data_file, tmp_path)
+    header = Header(diskfile)
+    michelle = Michelle(header, diskfile.get_ad_object)
 
     assert(michelle.disperser == 'MedN2')
     assert(michelle.filter_name == 'blank')

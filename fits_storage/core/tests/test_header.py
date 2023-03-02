@@ -1,31 +1,13 @@
-import os.path
 import datetime
 from ast import literal_eval
 
 from fits_storage.core.orm.header import Header
-from fits_storage.core.orm.diskfile import DiskFile
-from fits_storage.core.orm.file import File
 
-from fits_storage.core.tests.helpers import fetch_file
+from fits_storage.core.tests.helpers import make_diskfile
 
 
 def test_header(tmp_path):
-    storage_root = os.path.join(tmp_path, "storage_root")
-    z_staging_dir = os.path.join(tmp_path, "z_staging")
-    s3_staging_dir = os.path.join(tmp_path, "s3_staging")
-
-    os.mkdir(storage_root)
-    os.mkdir(z_staging_dir)
-    os.mkdir(s3_staging_dir)
-
-    test_file = 'N20200127S0023.fits.bz2'
-    fetch_file(test_file, storage_root)
-
-    fileobj = File(test_file)
-    diskfile = DiskFile(fileobj, test_file, '',
-                        storage_root=storage_root,
-                        z_staging_dir=z_staging_dir,
-                        s3_staging_dir=s3_staging_dir)
+    diskfile = make_diskfile('N20200127S0023.fits.bz2', tmp_path)
     header = Header(diskfile)
 
     assert header.program_id == 'GN-2019B-FT-111'

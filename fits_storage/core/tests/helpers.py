@@ -5,6 +5,8 @@ import os
 import shutil
 import requests
 
+from fits_storage.core.orm.file import File
+from fits_storage.core.orm.diskfile import DiskFile
 
 def fetch_file(filename, dest_dir):
     """
@@ -29,3 +31,40 @@ def fetch_file(filename, dest_dir):
     if r.status_code == 200:
         with open(destination, 'wb') as f:
             f.write(r.content)
+
+def make_diskfile(filename, tmpdir):
+    """
+    A helper to build a diskfile object as many tests of the orm classes
+    require one. This function will set up directories inside the tmpdir,
+    will fetch the file, and will instantiate File and DiskFile objects.
+
+    Parameters
+    ----------
+    filename : str
+        Filename of the file
+    tmpdir : str or Path
+        generally the tmp_dir from pytest. Inside this directory, we will
+        create storage_root, z_staging_dir, and s3_staging_dir directories
+        that are used in fetching and uncompressing the file.
+
+    Returns
+    -------
+    a diskfile object for the file.
+    """
+    storage_root = os.path.join(tmpdir, "storage_root")
+    z_staging_dir = os.path.join(tmpdir, "z_staging")
+    s3_staging_dir = os.path.join(tmpdir, "s3_staging")
+
+    os.mkdir(storage_root)
+    os.mkdir(z_staging_dir)
+    os.mkdir(s3_staging_dir)
+
+    fetch_file(filename, storage_root)
+
+    fileobj = File(filename)
+    diskfile = DiskFile(fileobj, filename, '',
+                        storage_root=storage_root,
+                        z_staging_dir=z_staging_dir,
+                        s3_staging_dir=s3_staging_dir)
+
+    return diskfile

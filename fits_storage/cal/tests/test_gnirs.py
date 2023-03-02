@@ -1,25 +1,15 @@
-import astrodata
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.gnirs import Gnirs
-from gemini_obs_db.orm.header import Header
-from tests.file_helper import ensure_file
-import fits_storage.fits_storage_config as fsc
+from fits_storage.cal.orm.gnirs import Gnirs
+from fits_storage.core.orm.header import Header
+
+from fits_storage.core.tests.helpers import make_diskfile
 
 
-def test_gnirs(monkeypatch):
-    monkeypatch.setattr(fsc, "storage_root", "/tmp")
-
+def test_gnirs(tmp_path):
     data_file = 'N20180524S0117.fits'
 
-    ensure_file(data_file, '/tmp')
-    ad = astrodata.open('/tmp/%s' % data_file)
-
-    f = File(data_file)
-    df = DiskFile(f, data_file, "")
-    df.ad_object = ad
-    h = Header(df)
-    gnirs = Gnirs(h, ad)
+    diskfile = make_diskfile(data_file, tmp_path)
+    header = Header(diskfile)
+    gnirs = Gnirs(header, diskfile.get_ad_object)
 
     assert(gnirs.disperser == 'MIRROR')
     assert(gnirs.filter_name == 'Open&H2_G0522')

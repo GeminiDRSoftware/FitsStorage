@@ -1,25 +1,15 @@
-import astrodata
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.gmos import Gmos
-from gemini_obs_db.orm.header import Header
-from tests.file_helper import ensure_file
-import fits_storage.fits_storage_config as fsc
+from fits_storage.cal.orm.gmos import Gmos
+from fits_storage.core.orm.header import Header
+
+from fits_storage.core.tests.helpers import make_diskfile
 
 
-def test_gmos(monkeypatch):
-    monkeypatch.setattr(fsc, "storage_root", "/tmp")
-
+def test_gmos(tmp_path):
     data_file = 'N20191002S0080.fits'
 
-    ensure_file(data_file, '/tmp')
-    ad = astrodata.open('/tmp/%s' % data_file)
-
-    f = File(data_file)
-    df = DiskFile(f, data_file, "")
-    df.ad_object = ad
-    h = Header(df)
-    gmos = Gmos(h, ad)
+    diskfile = make_diskfile(data_file, tmp_path)
+    header = Header(diskfile)
+    gmos = Gmos(header, diskfile.get_ad_object)
 
     assert(gmos.disperser == 'R400+_G5305')
     assert(gmos.filter_name == 'OG515_G0306&open2-8')

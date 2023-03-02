@@ -1,25 +1,15 @@
-import astrodata
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.nifs import Nifs
-from tests.file_helper import ensure_file
-import fits_storage.fits_storage_config as fsc
+from fits_storage.core.orm.header import Header
+from fits_storage.cal.orm.nifs import Nifs
+
+from fits_storage.core.tests.helpers import make_diskfile
 
 
-def test_nifs(monkeypatch):
-    monkeypatch.setattr(fsc, "storage_root", "/tmp")
-
+def test_nifs(tmp_path):
     data_file = 'N20150505S0119.fits'
 
-    ensure_file(data_file, '/tmp')
-    ad = astrodata.open('/tmp/%s' % data_file)
-
-    f = File(data_file)
-    df = DiskFile(f, data_file, "")
-    df.ad_object = ad
-    h = Header(df)
-    nifs = Nifs(h, ad)
+    diskfile = make_diskfile(data_file, tmp_path)
+    header = Header(diskfile)
+    nifs = Nifs(header, diskfile.get_ad_object)
 
     assert(nifs.filter_name == 'HK_G0603')
     assert(nifs.focal_plane_mask == '3.0_Mask_G5610')

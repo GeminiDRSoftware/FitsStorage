@@ -1,25 +1,15 @@
-import astrodata
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.niri import Niri
-from tests.file_helper import ensure_file
-import fits_storage.fits_storage_config as fsc
+from fits_storage.core.orm.header import Header
+from fits_storage.cal.orm.niri import Niri
+
+from fits_storage.core.tests.helpers import make_diskfile
 
 
-def test_niri(monkeypatch):
-    monkeypatch.setattr(fsc, "storage_root", "/tmp")
-
+def test_niri(tmp_path):
     data_file = 'N20180329S0134.fits'
 
-    ensure_file(data_file, '/tmp')
-    ad = astrodata.open('/tmp/%s' % data_file)
-
-    f = File(data_file)
-    df = DiskFile(f, data_file, "")
-    df.ad_object = ad
-    h = Header(df)
-    niri = Niri(h, ad)
+    diskfile = make_diskfile(data_file, tmp_path)
+    header = Header(diskfile)
+    niri = Niri(header, diskfile.get_ad_object)
 
     assert(niri.focal_plane_mask == 'f6-cam_G5208')
     assert(niri.disperser == 'MIRROR')
