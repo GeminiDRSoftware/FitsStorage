@@ -3,9 +3,8 @@ This module holds the CalibrationNICI class
 """
 import datetime
 
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.nici import Nici
+from fits_storage.core.orm.header import Header
+from fits_storage.cal.orm.nici import Nici
 from .calibration import Calibration, not_processed
 
 class CalibrationNICI(Calibration):

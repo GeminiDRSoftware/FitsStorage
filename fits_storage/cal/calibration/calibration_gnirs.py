@@ -3,9 +3,8 @@ This module holds the CalibrationGNIRS class
 """
 from itertools import chain
 
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.gnirs import Gnirs
+from fits_storage.core.orm.header import Header
+from fits_storage.cal.orm.gnirs import Gnirs
 from .calibration import Calibration, not_processed
 
 from sqlalchemy import or_, desc

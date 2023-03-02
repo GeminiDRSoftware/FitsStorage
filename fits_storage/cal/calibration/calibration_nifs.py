@@ -5,9 +5,8 @@ import datetime
 
 from sqlalchemy import or_
 
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.nifs import Nifs
+from fits_storage.core.orm.header import Header
+from fits_storage.cal.orm.nifs import Nifs
 from .calibration import Calibration
 
 class CalibrationNIFS(Calibration):

@@ -3,9 +3,8 @@ This module holds the CalibrationMICHELLE class
 """
 import datetime
 
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.michelle import Michelle
+from fits_storage.core.orm.header import Header
+from fits_storage.cal.orm.michelle import Michelle
 from .calibration import Calibration
 
 class CalibrationMICHELLE(Calibration):

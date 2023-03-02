@@ -4,7 +4,7 @@ This module holds the CalibrationGHOST class
 from sqlalchemy import or_
 
 from fits_storage.core.orm.header import Header
-from fits_storage.cal.instruments.ghost import Ghost, ArmFieldDispatcher, \
+from fits_storage.cal.orm.ghost import Ghost, ArmFieldDispatcher, \
     GHOST_ARMS, GHOST_ARM_DESCRIPTORS
 from fits_storage.cal.calibration.calibration import Calibration, \
     not_processed, CalQuery

@@ -7,8 +7,8 @@ import math
 
 from sqlalchemy import desc
 
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.gmos import Gmos
+from fits_storage.core.orm.header import Header
+from fits_storage.cal.orm.gmos import Gmos
 
 from .calibration import Calibration, DEFAULT_ORDER_BY_NONE
 from .calibration import not_imaging

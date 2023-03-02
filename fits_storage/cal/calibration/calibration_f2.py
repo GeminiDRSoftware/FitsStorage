@@ -3,7 +3,7 @@ This module holds the CalibrationF2 class
 """
 
 from fits_storage.core.orm.header import Header
-from fits_storage.cal.instruments.f2 import F2
+from fits_storage.cal.orm.f2 import F2
 from .calibration import Calibration, not_processed
 
 
