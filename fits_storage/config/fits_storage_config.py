@@ -52,7 +52,8 @@ class FitsStorageConfig(dict):
         # These lists define configuration keywords that will be converted
         # to another type automatically as they are requested
         self._bools = ['using_sqlite', 'database_debug', 'use_utc',
-                       'is_server', 'is_archive', 'using_s3', 'using_previews']
+                       'is_server', 'is_archive', 'using_s3', 'using_previews',
+                       'using_fitsverify']
         self._ints = ['postgres_database_pool_size',
                       'postgres_database_max_overflow',
                       'defer_threshold', 'defer_delay']
@@ -140,6 +141,7 @@ class FitsStorageConfig(dict):
         self._calculate_database_url()
         self._calculate_using_sqlite()
         self._calculate_using_s3()
+        self._calculate_using_fitsverify()
 
     def _calculate_database_url(self):
         """
@@ -166,6 +168,13 @@ class FitsStorageConfig(dict):
         For now, this is equal to is_archive
         """
         self.config['using_s3'] = self.config['is_archive']
+
+    def _calculate_using_fitsverify(self):
+        """
+        If not set, default to the value of is_server
+        """
+        if self.config['using_fitsverify'] == '' :
+            self.config['using_fitsverify'] = self.config['is_server']
 
     def __getitem__(self, key):
         if key in self._bools:

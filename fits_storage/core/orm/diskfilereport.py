@@ -1,10 +1,12 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Enum
 
-import os
-
 from .diskfile import DiskFile
 from ...fits_verify import fitsverify
+
+from fits_storage.logger import DummyLogger
+from fits_storage.config import get_config
+fsc = get_config()
 
 from . import Base
 
@@ -35,7 +37,9 @@ class DiskFileReport(Base):
     mdreport = Column(Text)
     mdstatus = Column(STATUS_ENUM, index=True)
 
-    def __init__(self, diskfile, skip_fv, skip_md):
+    def __init__(self, diskfile, skip_fv, skip_md, logger=DummyLogger(),
+                 using_fitsverify=fsc.using_fitsverify,
+                 fitsverify_path=fsc.fitsverify_path):
         """
         Create a :class:`~DiskFileReport` for the given :class:`~DiskFile`
         by running the FITS and metadata checks.
@@ -50,20 +54,19 @@ class DiskFileReport(Base):
             If `True`, skip the Metadata verification report
         """
         self.diskfile_id = diskfile.id
-        if skip_fv:
+        self.logger = logger
+
+        if skip_fv or not using_fitsverify:
             diskfile.fverrors = 0
         else:
-            try:
-                self.fits_verify(diskfile)
-            except:
-                # stub out for testing locally w/o fv
-                diskfile.fverrors = 0
+            self.fits_verify(diskfile, fvpath=fitsverify_path)
+
         if skip_md:
             diskfile.mdready = True
         else:
             self.md(diskfile)
 
-    def fits_verify(self, diskfile):
+    def fits_verify(self, diskfile, fvpath=None):
         """
         Calls the fits_verify module and records the results.
 
@@ -72,39 +75,28 @@ class DiskFileReport(Base):
 
         - Populates the fvreport in self
 
+        We pass fvpath on to the fitsverify module. If it contains anything,
+        it will be treated as the path to the fitsverify executable. If not,
+        the fitsverify module will search $PATH for it.
+
         Parameters
         ----------
         diskfile : :class:`~DiskFile`
             Run FITS verify report on this :class:`~DiskFile`
-        """
-        filename = None
-        if diskfile.compressed:
-            if diskfile.uncompressed_cache_file and \
-                    os.access(diskfile.uncompressed_cache_file,
-                              os.F_OK | os.R_OK):
-                filename = diskfile.uncompressed_cache_file
-            else:
-                # For now, we do not support fitsverify of compressed files
-                # if we are not using the diskfile.uncompressed_cache_file
-                filename = None
-        else:
-            # not compressed - just use the diskfile filename
-            filename = diskfile.fullpath
 
-        if filename:
-            retlist = fitsverify(filename)
-            diskfile.isfits = bool(retlist[0])
-            diskfile.fvwarnings = retlist[1]
-            diskfile.fverrors = retlist[2]
-            # If the FITS file has bad strings in it, fitsverify will quote
-            # them in the report, and the database will object to the bad
-            # characters in the unicode string - errors=ignore makes it
-            # ignore these. O - looks like a bad conversion for python3
-            # support, let's try keeping this simple
-            if isinstance(retlist[3], str):
-                self.fvreport = retlist[3]
-            else:
-                self.fvreport = retlist[3].decode("utf-8", errors='replace')
+        fvpath : str or None
+            Path to the fitsverify executable.
+        """
+        filename = diskfile.get_uncompressed_file()
+
+        try:
+            retlist = fitsverify(filename, fvpath=fvpath)
+        except Exception:
+            self.logger.error("Exception during fitsverify", exc_info=True)
+
+        diskfile.isfits = bool(retlist[0])
+        diskfile.fvwarnings = retlist[1]
+        diskfile.fverrors = retlist[2]
 
     def md(self, diskfile):
         """
@@ -119,27 +111,15 @@ class DiskFileReport(Base):
         diskfile : :class:`~DiskFile`
             Run the Metadata report on this :class:`~DiskFile`
         """
-        filename = None
-        if diskfile.compressed:
-            if diskfile.uncompressed_cache_file and \
-                    os.access(diskfile.uncompressed_cache_file,
-                              os.F_OK | os.R_OK):
-                filename = diskfile.uncompressed_cache_file
-            else:
-                # For now, we do not support fitsverify of compressed files
-                # if we are not using the diskfile.uncompressed_cache_file
-                filename = None
-        else:
-            # not compressed - just use the diskfile filename
-            filename = diskfile.fullpath()
+        filename = diskfile.get_uncompressed_file()
 
-        if filename:
-            try:
-                result = evaluate(diskfile.ad_object)
-                diskfile.mdready = result.passes
-                self.mdstatus = result.code
-                if result.message is not None:
-                    self.mdreport = result.message
-            except Exception as e:
-                # don't want to fail the ingest over a metadata report
-                pass
+        try:
+            result = evaluate(diskfile.ad_object)
+            diskfile.mdready = result.passes
+            self.mdstatus = result.code
+            if result.message is not None:
+                self.mdreport = result.message
+        except Exception as e:
+            # don't want to fail the ingest over a metadata report
+            self.logger.error("Exception during metadata validation",
+                              exc_info=True)

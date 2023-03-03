@@ -60,3 +60,14 @@ def test_configused():
         # Should use the builtin config file and the supplied one only
         assert len(a.configfiles_used) == 2 and \
                a.configfiles_used[1] == tf.name
+
+def test_using_fitsverify():
+    a = get_config()
+    assert a.using_fitsverify is False
+
+    configtext = """
+    [DEFAULT]
+    is_server = True
+    """
+    a = get_config(configstring=configtext, reload=True)
+    assert a.using_fitsverify is True
