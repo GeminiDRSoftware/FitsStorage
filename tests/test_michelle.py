@@ -1,7 +1,7 @@
 from fits_storage.core.orm.header import Header
 from fits_storage.cal.orm.michelle import Michelle
 
-from fits_storage.core.tests.helpers import make_diskfile
+from helpers import make_diskfile
 
 
 def test_michelle(tmp_path):

@@ -1,7 +1,7 @@
 from fits_storage.core.orm.header import Header
 from fits_storage.cal.orm.nici import Nici
 
-from fits_storage.core.tests.helpers import make_diskfile
+from helpers import make_diskfile
 
 
 def test_nici(tmp_path):
