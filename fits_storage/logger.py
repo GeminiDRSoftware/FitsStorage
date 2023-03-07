@@ -95,7 +95,7 @@ class DummyLogger(object):
     A dummy object that you can treat as a logger but which
     does absolutely nothing.
     """
-    def noop(self, *stuff):
+    def noop(self, *args, **kwargs):
         pass
     info = noop
     error = noop
