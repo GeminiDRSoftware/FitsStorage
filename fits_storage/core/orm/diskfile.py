@@ -142,11 +142,11 @@ class DiskFile(Base):
 
         # We store the items we use from the configuration system in the class
         # for convenience and to allow us to manipulate them for testing.
-        self.storage_root = storage_root if storage_root is not None \
+        self._storage_root = storage_root if storage_root is not None \
             else fsc.storage_root
-        self.z_staging_dir = z_staging_dir if z_staging_dir is not None \
+        self._z_staging_dir = z_staging_dir if z_staging_dir is not None \
             else fsc.z_staging_dir
-        self.s3_staging_dir = s3_staging_dir if s3_staging_dir is not None \
+        self._s3_staging_dir = s3_staging_dir if s3_staging_dir is not None \
             else fsc.s3_staging_dir
 
         # Having the logger here is useful in ingest, but not valid e.g, when
@@ -176,6 +176,26 @@ class DiskFile(Base):
             self.data_md5 = self.file_md5
             self.data_size = self.file_size
 
+
+    # These need to be properties so that they self-initialize - instances
+    # of this class returned by the sqlalchemy layer do not get __init__ed.
+    @property
+    def storage_root(self):
+        if not hasattr(self, '_storage_root'):
+            self._storage_root = fsc.storage_root
+        return self._storage_root
+
+    @property
+    def z_staging_dir(self):
+        if not hasattr(self, '_z_staging_dir'):
+            self._z_staging_dir = fsc.z_staging_dir
+        return self._z_staging_dir
+
+    @property
+    def s3_staging_dir(self):
+        if not hasattr(self, '_s3_staging_dir'):
+            self._s3_staging_dir = fsc.s3_staging_dir
+        return self._s3_staging_dir
 
     def get_uncompressed_file(self):
         if self.uncompressed_cache_file is not None:
