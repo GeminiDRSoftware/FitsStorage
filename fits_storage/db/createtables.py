@@ -22,7 +22,7 @@ from fits_storage.core.orm.fulltextheader import FullTextHeader
 from fits_storage.core.orm.photstandard import PhotStandard
 
 # Calibration instrument classes
-from fits_storage.cal import instruments
+from fits_storage.cal import orm
 
 # Server tables
 if fsc.is_server:

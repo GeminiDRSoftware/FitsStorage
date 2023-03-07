@@ -19,7 +19,7 @@ from fits_storage.core.orm.fulltextheader import FullTextHeader
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.footprint import Footprint, footprints
 from fits_storage.core import geometryhacks
-from fits_storage.cal.instruments import instrument_class
+from fits_storage.cal.orm import instrument_class
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -468,7 +468,7 @@ class Ingester(object):
                     # This is a bit quirky because SQLAlchemy doesn't natively
                     # support the geometry types that we use.
                     # Hence, the geometryhacks.py module...
-                    footprint = Footprint(header.id, label)
+                    footprint = Footprint(header, label)
                     self.s.add(footprint)
                     self.s.flush()
                     geometryhacks.add_footprint(self.s, footprint.id, fp)
