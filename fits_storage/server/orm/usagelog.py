@@ -40,13 +40,9 @@ class UsageLog(Base):
             The context for this web session
         """
         self.utdatetime = datetime.datetime.utcnow()
-
         self.ip_address = ctx.env.remote_ip
-        if 'User-Agent' in ctx.req:
-            self.user_agent = ctx.req['User-Agent']
-        if 'Referer' in ctx.req:
-            self.referer = ctx.req['Referer']
-
+        self.user_agent = ctx.req.env.user_agent
+        self.referer = ctx.req.env.referrer
         self.method = ctx.env.method
         self.uri = ctx.env.unparsed_uri
 

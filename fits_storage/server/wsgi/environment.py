@@ -46,3 +46,11 @@ class Environment(object):
     @property
     def cookies(self):
         return http.cookies.SimpleCookie(self._env['HTTP_COOKIE'])
+
+    @property
+    def user_agent(self):
+        return self._env.get('HTTP_USER_AGENT', None)
+
+    @property
+    def referrer(self):
+        return self._env.get('HTTP_REFERER', None)
