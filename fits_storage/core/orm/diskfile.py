@@ -151,7 +151,7 @@ class DiskFile(Base):
 
         # Having the logger here is useful in ingest, but not valid e.g, when
         # in web code. DummyLogger() is a no-op default
-        self.logger = logger
+        self._logger = logger
 
         self.file_id = given_file.id
         self.filename = given_filename
@@ -196,6 +196,12 @@ class DiskFile(Base):
         if not hasattr(self, '_s3_staging_dir'):
             self._s3_staging_dir = fsc.s3_staging_dir
         return self._s3_staging_dir
+
+    @property
+    def logger(self):
+        if not hasattr(self, '_logger'):
+            self._logger = DummyLogger()
+        return self._logger
 
     def get_uncompressed_file(self):
         if self.uncompressed_cache_file is not None:
