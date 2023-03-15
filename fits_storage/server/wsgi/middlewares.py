@@ -147,7 +147,7 @@ class StaticServer(object):
             try:
                 path = os.path.join(fsc.htmldocroot, '/'.join(uri[1:]))
                 if mtype is not None:
-                    ctx.resp.set_content_type(mtype)
+                    ctx.resp.content_type = mtype
                 return ctx.resp.append(open(path, 'rb').read()).respond()
             except IOError:
                 ctx.resp.client_error(Return.HTTP_FORBIDDEN)

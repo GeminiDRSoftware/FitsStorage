@@ -7,6 +7,7 @@ from fits_storage.server.wsgi.routing import Map, Rule
 from fits_storage.server.wsgi.context import get_context
 
 from .debug import debugmessage
+from fits_storage.web.statistics import stats
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -16,7 +17,7 @@ url_map = Map([
 #    Rule('/', redirect_to=('/searchform' if use_as_archive else '/usage.html')),
     Rule('/debug', debugmessage),
     # Rule('/content', content),                                      # Database Statistics
-    # Rule('/stats', stats),
+    Rule('/stats', stats),
     # Rule('/qareport', qareport, methods=['POST']),                  # Submit QA metric measurement report
     # Rule('/usagereport', usagereport),                              # Usage Statistics and Reports
     # Rule('/usagestats', usagestats),                                # Usage Stats

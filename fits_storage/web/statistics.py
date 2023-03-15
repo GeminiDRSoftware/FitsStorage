@@ -1,68 +1,77 @@
-"""
-This is a script which defines functions for generating content, general, and possibly usage statistics on the database. It queries the database for stats and outputs them as HTML
-"""
+"""This is a script which defines functions for generating content, general,
+and possibly usage statistics on the database. It queries the database for
+stats and outputs them as HTML"""
+
+import datetime
+from collections import namedtuple
 
 from sqlalchemy import desc, func, join, and_, or_, cast, between, distinct
-from sqlalchemy import Interval, Date, String
-from sqlalchemy.sql import column
+from sqlalchemy import Interval, Date
 from sqlalchemy.orm import aliased
-
-from ..fits_storage_config import fits_system_status
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.header import Header
-from ..orm.ingestqueue import IngestQueue
-
-from ..utils.query_utils import to_int, null_to_zero
-from ..utils.web import get_context
 
 from . import templating
 
-from datetime import datetime, timedelta, time as dt_time, date as dt_date
-from collections import defaultdict, namedtuple
+from fits_storage.core.orm.file import File
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.header import Header
+
+from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
+
+from fits_storage.db.query_utils import to_int, null_to_zero
+from fits_storage.server.wsgi.context import get_context
+
+from fits_storage.config import get_config
+fsc = get_config()
 
 @templating.templated("statistics/stats.html")
 def stats():
     """
-    Provides live statistics on fits database: total filesize, ingest queue status, and datarate for various date ranges is queried. Information is
+    Provides live statistics on fits database: total filesize, ingest queue
+    status, and datarate for various date ranges is queried. Information is
     presented in html in the browser in a list format.
     """
 
     session = get_context().session
     # DiskFile table statistics
-    DiskFileStats = namedtuple('DiskFileStats', "total_rows present_rows present_size latest last_minute last_hour last_day last_queries")
+    DiskFileStats = namedtuple('DiskFileStats',
+                               "total_rows present_rows present_size latest "
+                               "last_minute last_hour last_day last_queries")
     df_query = session.query(DiskFile)
     def number_of_entries_within(delta):
-        return df_query.filter(DiskFile.entrytime > (datetime.now() - delta)).count()
+        return df_query.filter(DiskFile.entrytime >
+                               (datetime.datetime.now() - delta)).count()
 
     diskfile_stats = DiskFileStats(
-        total_rows   = df_query.count(),
+        total_rows = df_query.count(),
         present_rows = df_query.filter(DiskFile.present == True).count(),
-        present_size = session.query(func.sum(DiskFile.file_size)).filter(DiskFile.present == True).one()[0],
-        latest       = session.query(func.max(DiskFile.entrytime)).one()[0],
-        last_minute  = number_of_entries_within(timedelta(minutes=1)),
-        last_hour    = number_of_entries_within(timedelta(hours=1)),
-        last_day     = number_of_entries_within(timedelta(days=1)),
+        present_size = session.query(func.sum(DiskFile.file_size))
+        .filter(DiskFile.present == True).one()[0],
+        latest = session.query(func.max(DiskFile.entrytime)).one()[0],
+        last_minute = number_of_entries_within(datetime.timedelta(minutes=1)),
+        last_hour = number_of_entries_within(datetime.timedelta(hours=1)),
+        last_day = number_of_entries_within(datetime.timedelta(days=1)),
         last_queries = df_query.order_by(desc(DiskFile.entrytime)).limit(10)
         )
 
     # Ingest queue stats
     IngestStats = namedtuple('IngestStats', "count in_progress")
     ingest_stats = IngestStats(
-        count = session.query(IngestQueue).count(),
-        in_progress = session.query(IngestQueue).filter(IngestQueue.inprogress == True).count(),
+        count = session.query(IngestQueueEntry).count(),
+        in_progress = session.query(IngestQueueEntry)
+        .filter(IngestQueueEntry.inprogress == True).count(),
         )
 
     # Data rate statistics
-    today = datetime.utcnow().date()
-    zerohour = dt_time(0, 0, 0)
-    comb = datetime.combine(today, zerohour)
+    today = datetime.datetime.utcnow().date()
+    zerohour = datetime.time(0, 0, 0)
+    comb = datetime.datetime.combine(today, zerohour)
     onemsecond = cast('1 microsecond', Interval)
     oneday = cast('1 day', Interval)
 
     def period_stats(until, times, period):
-        # For more info on how generate_series work to create the time intervals, please
-        # refer to the documentation for logreports.build_query
+        # For more info on how generate_series work to create the time
+        # intervals, please refer to the documentation for
+        # logreports.build_query
         #
         # It's all PostgreSQL black magic and trickery ;-)
 
@@ -97,22 +106,24 @@ def stats():
 @templating.templated("statistics/content.html", with_generator=True)
 def content():
     """
-    Queries database for information concerning the total number and filesize of all stored files.
-    Produces tables presenting the results, sorted by various properties such as instrument,
-    observation class/type, and year of observation.
+    Queries database for information concerning the total number and filesize
+    of all stored files. Produces tables presenting the results, sorted by
+    various properties such as instrument, observation class/type, and year
+    of observation.
     """
 
     session = get_context().session
 
     # Presents total files and filesize
     filenum, filesize, datasize = (
-        session.query(func.count(), func.sum(DiskFile.file_size), func.sum(DiskFile.data_size))
-                .filter(DiskFile.canonical == True)
-                .one()
+        session.query(func.count(), func.sum(DiskFile.file_size),
+                      func.sum(DiskFile.data_size))
+                        .filter(DiskFile.canonical == True).one()
         )
 
-    # This query takes canonical files grouped by telescope and instrument, and counts the
-    # total files. This is the general query that we'll specialize to extract all the stats
+    # This query takes canonical files grouped by telescope and instrument,
+    # and counts the total files. This is the general query that we'll
+    # specialize to extract all the stats
     by_instrument_query = (
         session.query(Header.telescope, Header.instrument,
                       func.count().label("instnum"),                      # Total images taken by the instrument
@@ -138,7 +149,7 @@ def content():
 
     # datetime variables and queries declared here
     # reject invalid 1969 type years by selecting post 1990
-    firstyear = dt_date(1990, 0o1, 0o1)
+    firstyear = datetime.date(1990, 0o1, 0o1)
     start = session.query(func.min(Header.ut_datetime)).filter(Header.ut_datetime > firstyear).one()[0]
     end = session.query(func.max(Header.ut_datetime)).select_from(join(Header, DiskFile)).filter(DiskFile.canonical == True).one()[0]
 
@@ -165,7 +176,7 @@ def content():
         )
 
     return dict(
-        is_development = (fits_system_status == "development"),
+        is_development = (fsc.fits_system_status == "development"),
         num_files      = filenum,
         size_files     = filesize,
         data_size      = datasize,
