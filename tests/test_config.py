@@ -28,6 +28,13 @@ def test_int():
 
     assert type(b) is int
 
+# Test list return
+def test_list():
+    a = get_config()
+    b = a.blocked_urls
+
+    assert type(b) is list
+
 # Test got correct default
 def test_default_dburl():
     a = get_config(reload=True, configfile='')

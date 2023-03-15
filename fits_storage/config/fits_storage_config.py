@@ -6,6 +6,7 @@ This module contains the FitsStorageConfig class definition
 import configparser
 import os
 import socket
+from ast import literal_eval
 
 
 class FitsStorageConfig(dict):
@@ -45,18 +46,18 @@ class FitsStorageConfig(dict):
     later will take precedence over values read earlier.
     """
 
+    # By default, ConfigParser treats everything as a string.
+    # These lists define configuration keywords that will be converted
+    # to another type automatically as they are requested
+    _bools = ['using_sqlite', 'database_debug', 'use_utc', 'is_server',
+              'is_archive', 'using_s3', 'using_previews', 'using_fitsverify']
+    _ints = ['postgres_database_pool_size', 'postgres_database_max_overflow',
+             'defer_threshold', 'defer_delay']
+    _lists = ['blocked_urls']
+
     def __init__(self, configfile=None, configstring=None, builtin=True):
         super().__init__()
 
-        # By default, ConfigParser treats everything as a string.
-        # These lists define configuration keywords that will be converted
-        # to another type automatically as they are requested
-        self._bools = ['using_sqlite', 'database_debug', 'use_utc',
-                       'is_server', 'is_archive', 'using_s3', 'using_previews',
-                       'using_fitsverify']
-        self._ints = ['postgres_database_pool_size',
-                      'postgres_database_max_overflow',
-                      'defer_threshold', 'defer_delay']
 
         self._readfiles(configfile=configfile,
                         configstring=configstring,
@@ -176,11 +177,37 @@ class FitsStorageConfig(dict):
         if self.config['using_fitsverify'] == '' :
             self.config['using_fitsverify'] = self.config['is_server']
 
+    def _getlist(self, key):
+        """
+        Parse the string from the config item and return a list. This allows
+        config file entries of the form: foo = ['one', 'two', 'four']
+
+        This uses ast.literal_eval and the only error checking is that we end
+        up with a list - if not, we raise a ValueError. If there are any other
+        errors, we just let the exception rise, as there's liklely little we
+        can do about it and we do not want to continue with missing config
+        items due to a typo in the config file.
+
+        Parameters
+        ----------
+        key - the name of the config item
+
+        Returns
+        -------
+        the actual list
+        """
+        result = literal_eval(self.config[key])
+        if not isinstance(result, list):
+            raise ValueError
+        return result
+
     def __getitem__(self, key):
         if key in self._bools:
             return self.config.getboolean(key)
         if key in self._ints:
             return self.config.getint(key)
+        if key in self._lists:
+            return self._getlist(key)
         return self.config[key]
 
     def __setitem__(self, key, value):
