@@ -7,8 +7,11 @@ from datetime import datetime
 
 from jinja2 import Environment, FileSystemLoader
 
-from ..fits_storage_config import template_root
-from ..utils.web import get_context, Return
+from fits_storage.config import get_config
+fsc = get_config()
+
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
 
 
 def datetime_filter(value, format=None, chopped=False):
@@ -114,7 +117,7 @@ included_extensions = [
 
 def get_env():
     """Create a Jinja environment that includes our customizations"""
-    jinja_env = Environment(loader=FileSystemLoader(template_root),
+    jinja_env = Environment(loader=FileSystemLoader(fsc.template_root),
                             extensions=included_extensions,
     # When autoescape=False we assume that by default everything we output
     # is HTML-safe (no '<', no '>', no '&', ...)

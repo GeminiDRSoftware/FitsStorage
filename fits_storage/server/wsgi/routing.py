@@ -1,9 +1,14 @@
 import re
-from .adapter import get_context, Return
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
+
 from urllib.parse import parse_qs
 
 # This rule regular expressions is copied from werkzeug's, as we intend to make it
 # syntax-compatible
+
+# Why are we copying this code rather than just importing the module???
+
 _rule_re = re.compile(r'''
    (?P<static>[^<]*)                              # static rule data. Eg: /example/foo
    <
