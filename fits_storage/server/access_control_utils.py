@@ -6,20 +6,18 @@ import datetime
 
 from sqlalchemy import func
 
-from gemini_obs_db.utils.gemini_metadata_utils import ONEDAY_OFFSET
-from ..orm.userprogram import UserProgram
+from fits_storage.gemini_metadata_utils import ONEDAY_OFFSET
 
 from ..web.userprogram import get_program_list, get_file_list, get_obsid_list
 
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.header import Header
-from ..orm.obslog import Obslog
-from ..orm.miscfile import MiscFile
-
-from .web import get_context
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.header import Header
+from fits_storage.server.orm.obslog import Obslog
+from fits_storage.server.orm.miscfile import MiscFile
 
 
-def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None, user_obsid_list=None,
+def canhave_coords(session, user, header, gotmagic=False,
+                   user_progid_list=None, user_obsid_list=None,
                    user_file_list=None):
     """
     Returns a boolean saying whether the given user can have access to the

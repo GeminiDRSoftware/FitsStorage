@@ -7,3 +7,21 @@ handling ourselves.
 * Provenance and ProvenanceHistory support. in core.ingester.py we skip it.
 Code review of core.orm.provenance.py and parts of diskfie.py needed.
 
+* Reenable commented provenance line in summary_generator.py after we sort
+out provenance in diskfile. Does this actually do anything?
+
+* previews and spectrum previews.
+
+* re enable previews in summary_generator.py after sorting them out upstream.
+
+* Once we're switched over to nginx, make it accept http keep-alive. In
+the export system, use requests sessions (see hacks on cpofits-lv3). This
+should apply to things like the jsonsummary etc calls that the export system
+makes too. Also apply same in delete files and other cases where we hit the
+api from a client.
+
+* server/access_control_utils.py has got convoluted and messy. Needs some
+refresh. Suggest add a is_released property to the orm classes for header,
+miscfile and obslog (the latter will handle the necessary queries). Also
+suggest move the log handling back to the callers, it might save a few lines
+of code putting it here, but it makes it more convoluted and less explicit.

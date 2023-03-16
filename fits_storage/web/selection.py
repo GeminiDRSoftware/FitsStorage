@@ -9,58 +9,54 @@ import urllib.parse, urllib.error
 
 from sqlalchemy import or_, func
 
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_telescope, gemini_instrument
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_observation_type, gemini_observation_class
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_reduction_state
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_caltype, gmos_gratingname
-from gemini_obs_db.utils.gemini_metadata_utils import gmos_focal_plane_mask, gemini_fitsfilename
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_binning, GeminiDataLabel, GeminiObservation
-from gemini_obs_db.utils.gemini_metadata_utils import GeminiProgram, ratodeg, dectodeg, srtodeg
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_date, gemini_daterange, get_time_period
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_time_period_from_range
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_settings
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_welldepth_settings, gemini_readmode_settings
-from gemini_obs_db.orm.gpi import Gpi
+import fits_storage.gemini_metadata_utils as gmu
 
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
-from ..orm.footprint import Footprint
-from ..orm.photstandard import PhotStandardObs
-from ..orm.program import Program
-from ..orm.programpublication import ProgramPublication
+#TODO - get rid of this link into the GPI table
+from fits_storage.cal.orm.gpi import Gpi
 
-# A number of the choices in the getselection inner loop are just simple checks
-# that can be represented by a data structure. It's better to keep it like that
-# to simplify updates without breaking the logic.If the first item is callable,
-# it's called, if it's a tuple it's considered a set of possible values.
-from ..orm.target import TargetPresence
+from fits_storage.core.orm.header import Header
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.file import File
+from fits_storage.core.orm.footprint import Footprint
+from fits_storage.core.orm.photstandard import PhotStandardObs
+from fits_storage.server.orm.program import Program
+from fits_storage.server.orm.programpublication import ProgramPublication
+
+#from ..orm.target import TargetPresence
+
+# A number of the choices in the getselection inner loop are just simple
+# checks that can be represented by a data structure. It's better to keep it
+# like that to simplify updates without breaking the logic. If the first item
+# is callable, it's called, if it's a tuple it's considered a set of possible
+# values.
 
 getselection_test_pairs = (
-    (gemini_telescope, 'telescope'),
-    (gemini_date, 'date'),
-    (gemini_daterange, 'daterange'),
-    (gemini_fitsfilename, 'filename'),
-    (gemini_observation_type, 'observation_type'),
-    (gemini_observation_class, 'observation_class'),
-    (gemini_caltype, 'caltype'),
-    (gemini_reduction_state, 'reduction'),
-    (gmos_gratingname, 'disperser'),
-    (gmos_focal_plane_mask, 'focal_plane_mask'),
-    (gemini_binning, 'binning'),
-    (lambda x: gemini_instrument(x, gmos=True), 'inst'),
-    (gemini_gain_settings, 'gain'),
-    (gemini_readspeed_settings, 'readspeed'),
-    (gemini_welldepth_settings, 'welldepth'),
-    (gemini_readmode_settings, 'readmode')
+    (gmu.gemini_telescope, 'telescope'),
+    (gmu.gemini_date, 'date'),
+    (gmu.gemini_daterange, 'daterange'),
+    (gmu.gemini_fitsfilename, 'filename'),
+    (gmu.gemini_observation_type, 'observation_type'),
+    (gmu.gemini_observation_class, 'observation_class'),
+    (gmu.gemini_caltype, 'caltype'),
+    (gmu.gemini_reduction_state, 'reduction'),
+    (gmu.gmos_gratingname, 'disperser'),
+    (gmu.gmos_focal_plane_mask, 'focal_plane_mask'),
+    (gmu.gemini_binning, 'binning'),
+    (lambda x: gmu.gemini_instrument(x, gmos=True), 'inst'),
+    (gmu.gemini_gain_settings, 'gain'),
+    (gmu.gemini_readspeed_settings, 'readspeed'),
+    (gmu.gemini_welldepth_settings, 'welldepth'),
+    (gmu.gemini_readmode_settings, 'readmode')
 )
 
 # Some other selections are of the key=value type and they're not tested; the
-# values are set without further check. Those can be moved straight to a dictionary
-# that defines the key we found and which selection to store its value in.
+# values are set without further check. Those can be moved straight to a
+# dictionary that defines the key we found and which selection to store its
+# value in.
 #
-# There are some complex associations, though (like proid or obsid), which we'll
-# leave for the if-ifelse block
+# There are some complex associations, though (like progid or obsid),
+# which we'll leave for the if-ifelse block
+
 getselection_key_value = {
     'filename': 'filename',
     'disperser': 'disperser',
@@ -112,7 +108,7 @@ getselection_simple_associations = {
     'NOTAO': 'ao',
     }
 
-# At last, some of the entries select a boolean
+# Some entries select a boolean...
 getselection_booleans = {
     'imaging': ('spectroscopy', False),
     'spectroscopy': ('spectroscopy', True),
@@ -134,7 +130,7 @@ getselection_booleans = {
     'gpi_astrometric_standard': ('gpi_astrometric_standard', True),
 
      # this is basically a dummy value for the search form defaults
-    'includeengineering': ('engineering', 'Include'),
+     'includeengineering': ('engineering', 'Include'),
     }
 
 getselection_detector_roi = {
@@ -144,15 +140,15 @@ getselection_detector_roi = {
     'central768': 'Central768',
     'central512': 'Central512',
     'central256': 'Central256',
-    'custom': 'Custm'
+    'custom': 'Custom'
     }
 
 
 def getselection(things):
     """
-    This takes a list of things from the URL, and returns a selection hash that 
-    is used by the html generators. We disregard all but the most specific of
-    a project id, observation id or datalabel.
+    This takes a list of things from the URL, and returns a selection hash
+    that is used by the html generators. We disregard all but the most
+    specific of a project id, observation id or datalabel.
 
     """
     selection = {}
@@ -184,20 +180,20 @@ def getselection(things):
                 selection[kw] = val
             elif thing in getselection_simple_associations:
                 selection[getselection_simple_associations[thing]] = thing
-            elif GeminiProgram(thing).valid:
-                selection['program_id'] = GeminiProgram(thing).program_id
+            elif gmu.GeminiProgram(thing).valid:
+                selection['program_id'] = gmu.GeminiProgram(thing).program_id
             elif key == 'progid':
                 if value is not None and isinstance(value, str):
                     value = value.strip()
-                if GeminiDataLabel(value).valid:
+                if gmu.GeminiDataLabel(value).valid:
                     selection['data_label'] = value
-                elif GeminiObservation(value).valid:
+                elif gmu.GeminiObservation(value).valid:
                     selection['observation_id'] = value
                 else:
                     selection['program_id'] = value
-            elif GeminiObservation(thing).observation_id or key == 'obsid':
+            elif gmu.GeminiObservation(thing).observation_id or key == 'obsid':
                 selection['observation_id'] = value.strip()
-            elif GeminiDataLabel(thing).datalabel or key == 'datalabel':
+            elif gmu.GeminiDataLabel(thing).datalabel or key == 'datalabel':
                 selection['data_label'] = value.strip()
             elif thing in {'LGS', 'NGS'}:
                 selection['lgs'] = thing
@@ -323,8 +319,9 @@ def sayselection(selection):
     if 'lgs' in selection:
         parts.append("LGS" if selection['lgs'] == 'LGS' else "NGS")
 
-    # If any of the previous tests contributed parts to the list, this will create
-    # a return string like '; ...; ...; ...'. Otherwise we get an empty string.
+    # If any of the previous tests contributed parts to the list, this will
+    # create a return string like '; ...; ...; ...'. Otherwise we get an
+    # empty string.
     ret = '; '.join([''] + parts)
 
     if 'notrecognised' in selection:
@@ -372,8 +369,8 @@ def queryselection(query, selection):
     and return the query object
     """
 
-    # This function is used to add the stuff to stop it finding data by coords when
-    # the coords are proprietary.
+    # This function is used to add the stuff to stop it finding data by
+    # coords when the coords are proprietary.
     def querypropcoords(query):
         return query.filter(or_(Header.proprietary_coordinates == False, Header.release <= func.now()))
 
@@ -415,7 +412,7 @@ def queryselection(query, selection):
         # For the local fits servers, we do some manipulation to treat
         # it as an observing night...
 
-        startdt, enddt = get_time_period(selection['date'])
+        startdt, enddt = gmu.get_time_period(selection['date'])
 
         # check it's between these two
         query = query.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime < enddt)
@@ -423,14 +420,14 @@ def queryselection(query, selection):
     # Should we query by daterange?
     if 'daterange' in selection:
         # Parse the date to start and end datetime objects
-        startdt, enddt = gemini_time_period_from_range(selection['daterange'])
+        startdt, enddt = gmu.gemini_time_period_from_range(selection['daterange'])
         # check it's between these two
         query = query.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime < enddt)
 
     if 'lastmoddaterange' in selection:
         try:
             a, b = selection['lastmoddaterange'].split(' ')
-            startfiledt, endfiledt = get_time_period(a, b, False)
+            startfiledt, endfiledt = gmu.get_time_period(a, b, False)
             query = query.filter(DiskFile.lastmod >= startfiledt).filter(DiskFile.lastmod < endfiledt)
         except Exception:
             # parse error on datetime
@@ -439,7 +436,7 @@ def queryselection(query, selection):
     if 'entrytimedaterange' in selection:
         try:
             a, b = selection['entrytimedaterange'].split(' ')
-            startfiledt, endfiledt = get_time_period(a, b, False)
+            startfiledt, endfiledt = gmu.get_time_period(a, b, False)
             query = query.filter(DiskFile.entrytime >= startfiledt).filter(DiskFile.entrytime < endfiledt)
         except Exception:
             # parse error on datetime
@@ -545,7 +542,7 @@ def queryselection(query, selection):
         match = re.match(r"(-?[\d:\.]+)-(-?[\d:\.]+)", selection['dec'])
         if match is None:
             # single value
-            degs = dectodeg(selection['dec'])
+            degs = gmu.dectodeg(selection['dec'])
             if degs is None:
                 # Invalid value.
                 selection['warning'] = 'Invalid Dec format. Ignoring your Dec constraint.'
@@ -553,16 +550,16 @@ def queryselection(query, selection):
             else:
                 # valid single value, get search radius
                 if 'sr' in list(selection.keys()):
-                    sr = srtodeg(selection['sr'])
+                    sr = gmu.srtodeg(selection['sr'])
                     if sr is None:
                         selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
                         selection['sr'] = '180'
-                        sr = srtodeg(selection['sr'])
+                        sr = gmu.srtodeg(selection['sr'])
                 else:
                     # No search radius specified. Default it for them
                     selection['warning'] = 'No Search Radius given, defaulting to 3 arcmin'
                     selection['sr'] = '180'
-                    sr = srtodeg(selection['sr'])
+                    sr = gmu.srtodeg(selection['sr'])
                 lower = degs - sr
                 upper = degs + sr
 
@@ -571,8 +568,8 @@ def queryselection(query, selection):
 
         else:
             # Got two values
-            lower = dectodeg(match.group(1))
-            upper = dectodeg(match.group(2))
+            lower = gmu.dectodeg(match.group(1))
+            upper = gmu.dectodeg(match.group(2))
             if (lower is None) or (upper is None):
                 selection['warning'] = 'Invalid Dec range format. Ignoring your Dec constraint.'
                 valid = False
@@ -595,7 +592,7 @@ def queryselection(query, selection):
         value = selection['ra'].split('-')
         if len(value) == 1:
             # single value
-            degs = ratodeg(value[0])
+            degs = gmu.ratodeg(value[0])
             if degs is None:
                 # Invalid value.
                 selection['warning'] = 'Invalid RA format. Ignoring your RA constraint.'
@@ -603,20 +600,21 @@ def queryselection(query, selection):
             else:
                 # valid single value, get search radius
                 if 'sr' in list(selection.keys()):
-                    sr = srtodeg(selection['sr'])
+                    sr = gmu.srtodeg(selection['sr'])
                     if sr is None:
                         selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
                         selection['sr'] = '180'
-                        sr = srtodeg(selection['sr'])
+                        sr = gmu.srtodeg(selection['sr'])
                 else:
                     # No search radius specified. Default it for them
                     selection['warning'] = 'No Search Radius given, defaulting to 3 arcmin'
                     selection['sr'] = '180'
-                    sr = srtodeg(selection['sr'])
+                    sr = gmu.srtodeg(selection['sr'])
 
-                # Don't apply a factor 15 as that is done in the conversion to degrees
-                # But we do need to account for the factor cos(dec) here.
-                # We use the cosdec value from above here, or assume 1.0 if it is not set
+                # Don't apply a factor 15 as that is done in the conversion
+                # to degrees. But we do need to account for the factor cos(
+                # dec) here. We use the cosdec value from above here,
+                # or assume 1.0 if it is not set
                 cosdec = 1.0 if cosdec is None else cosdec
                 sr /= cosdec
                 lower = degs - sr
@@ -624,8 +622,8 @@ def queryselection(query, selection):
 
         elif len(value) == 2:
             # Got two values
-            lower = ratodeg(value[0])
-            upper = ratodeg(value[1])
+            lower = gmu.ratodeg(value[0])
+            upper = gmu.ratodeg(value[1])
             if (lower is None) or (upper is None):
                 selection['warning'] = 'Invalid RA range format. Ignoring your RA constraint.'
                 valid = False
@@ -750,9 +748,9 @@ def queryselection(query, selection):
                 func.to_tsvector(Program.title).match(' & '.join(selection['ProgramText'].split()))
                 )
 
-    if 'ephemeris_target' in selection:
-        query = query.join(TargetPresence, TargetPresence.diskfile_id == DiskFile.id)
-        query = query.filter(TargetPresence.target_name == selection['ephemeris_target'])
+    #if 'ephemeris_target' in selection:
+    #    query = query.join(TargetPresence, TargetPresence.diskfile_id == DiskFile.id)
+    #    query = query.filter(TargetPresence.target_name == selection['ephemeris_target'])
 
     if 'gpi_astrometric_standard' in selection:
         query = query.join(Gpi, Gpi.header_id == Header.id)
@@ -817,35 +815,36 @@ def selection_to_URL(selection, with_columns=False):
             pass
         elif key == 'data_label':
             # See if it is a valid data_label
-            dl = GeminiDataLabel(selection[key])
+            dl = gmu.GeminiDataLabel(selection[key])
             if dl.valid:
                 # Regular form, just stuff it in
                 urlstring += '/%s' % selection[key]
             else:
-                # It's a non standard one
+                # It's a non-standard one
                 urlstring += '/datalabel=%s' % selection[key]
         elif key == 'observation_id':
             # See if it is a valid observation id, or if we need to add obsid=
-            go = GeminiObservation(selection[key])
+            go = gmu.GeminiObservation(selection[key])
             if go.valid:
                 # Regular obs id, just stuff it in
                 urlstring += '/%s' % selection[key]
             else:
-                # It's a non standard one
+                # It's a non-standard one
                 urlstring += '/obsid=%s' % selection[key]
         elif key == 'program_id':
             # See if it is a valid program id, or if we need to add progid=
-            gp = GeminiProgram(selection[key])
+            gp = gmu.GeminiProgram(selection[key])
             if gp.valid:
                 # Regular program id, just stuff it in
                 urlstring += '/%s' % selection[key]
             else:
-                # It's a non standard one
+                # It's a non-standard one
                 urlstring += '/progid=%s' % selection[key]
         elif key == 'object':
-            # We need to double-escape this because the webserver/wsgi code (outside our control) will
-            # de-escape it for us and we'll be left with, for instance, /s that we can't differentiate
-            # from those in the path.
+            # We need to double-escape this because the webserver/wsgi code (
+            # outside our control) will de-escape it for us and we'll be left
+            # with, for instance, /s that we can't differentiate from those
+            # in the path.
             urlstring += '/object=%s' % urllib.parse.quote(selection[key]).replace('/', '%252F')
         elif key == 'publication':
             urlstring += '/publication=%s' % urllib.parse.quote(selection[key])

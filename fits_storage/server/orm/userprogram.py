@@ -7,11 +7,11 @@ from fits_storage.core.orm import Base
 
 class UserProgram(Base):
     """
-    This is the ORM class for the userprogram table. This provides the association
-    for which users are associated with which programs, observations, or files and
-    should have access to proprietary data from them.
+    This is the ORM class for the userprogram table. This provides the
+    association for which users are associated with which programs,
+    observations, or files and should have access to proprietary data from them.
 
-    This is a N:M mapping.
+    This is an N:M mapping.
 
     """
     __tablename__ = 'userprogram'
@@ -23,10 +23,12 @@ class UserProgram(Base):
     filename = Column(Text, nullable=True, index=True)
     path = Column(Text, nullable=True, index=True)
 
-    def __init__(self, user_id, program_id=None, observation_id=None, filename=None, path=None):
+    def __init__(self, user_id, program_id=None, observation_id=None,
+                 filename=None, path=None):
         """
-        Create a UserProgram record linking a user and program, observation, or file together.
-        These linked records encompass what proprietary data the user has access to.
+        Create a UserProgram record linking a user and program, observation,
+        or file together. These linked records encompass what proprietary
+        data the user has access to.
 
         Parameters
         ----------

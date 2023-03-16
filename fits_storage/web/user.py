@@ -1,26 +1,7 @@
 """
-This module handles the web 'user' functions - creating user accounts, login / logout, password reset etc
+This module handles the web 'user' functions - creating user accounts,
+login / logout, password reset etc
 """
-import json
-import urllib
-
-import requests
-from urllib.parse import urlencode
-
-from sqlalchemy import desc, and_, or_
-
-from sqlalchemy.orm.exc import NoResultFound
-
-from gemini_obs_db.utils.gemini_metadata_utils import GeminiObservation
-from ..orm.user import User
-from ..orm.userprogram import UserProgram
-
-from ..utils.web import get_context, Return
-
-from ..fits_storage_config import fits_servername, smtp_server, use_as_archive, orcid_client_id, orcid_client_secret, \
-    orcid_server, orcid_enabled, orcid_redirect_url
-
-from . import templating
 
 import re
 import datetime
@@ -28,10 +9,31 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import functools
+import json
+import urllib
+import requests
+from urllib.parse import urlencode
 
-import logging
+from sqlalchemy import desc, and_, or_
+from sqlalchemy.exc import NoResultFound
 
-bad_password_msg = "Bad password - must be at least 14 characters long, and contain at least one lower case letter, upper case letter, decimal digit and non-alphanumeric character (e.g. !, #, %, * etc)"
+from fits_storage.gemini_metadata_utils import GeminiObservation
+from fits_storage.server.orm.user import User
+from fits_storage.server.orm.userprogram import UserProgram
+
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
+
+from . import templating
+
+from fits_storage.config import get_config
+fsc = get_config()
+
+
+bad_password_msg = "Bad password - must be at least 14 characters long, and " \
+                   "contain at least one lower case letter, upper case " \
+                   "letter, decimal digit and non-alphanumeric character " \
+                   "(e.g. !, #, %, * etc)"
 
 
 @templating.templated("user/request_account.html")
@@ -71,7 +73,11 @@ def request_account(things):
         elif len(username) < 2:
             reason_bad = "Username too short. Must be at least 2 characters"
         elif username_inuse(username):
-            reason_bad = 'Username is already in use, choose a different one. If this is your username, you can <a href="/login">log in</a> if you know your password, or <a href="/request_password_reset">reset your password</a> if you have forgotten it.'
+            reason_bad = 'Username is already in use, please choose a ' \
+                         'different one. If this is your username, you can ' \
+                         '<a href="/login">log in</a> if you know your ' \
+                         'password, or <a href="/request_password_reset">' \
+                         'reset your password</a> if you have forgotten it.'
         elif fullname == '':
             reason_bad = "No Full name supplied"
         elif len(fullname) < 5:
@@ -90,14 +96,15 @@ def request_account(things):
     template_args = dict(
         reason_bad=reason_bad,
         request_attempted=request_attempted,
-        # Contruct the thing_string for the url to link back to their form
+        # Construct the thing_string for the url to link back to their form
         thing_string='/'.join(things),
         valid_request=valid_request,
         # User data
         username=username,
         fullname=fullname,
         email=email,
-        maybe_gemini=email.endswith("@gemini.edu"),
+        maybe_gemini=email.endswith("@gemini.edu") or
+                     email.endswith("@noirlab.edu"),
         # For debugging
         debugging=False,
         formdata=formdata
@@ -151,11 +158,12 @@ Regards,
 registered to this email address. If you did not request a password reset, 
 you can safely ignore this email, though if you get several spurious reset 
 request emails, please file a helpdesk ticket at 
-<a href="http://www.gemini.edu/sciops/helpdesk">http://www.gemini.edu/sciops/helpdesk</a>
+<a href="http://www.gemini.edu/sciops/helpdesk">
+http://www.gemini.edu/sciops/helpdesk</a>
 in the Gemini Observatory Archive category to let us know. Assuming that you 
 requested this password reset, please click on the link below or paste it into 
-your browser to reset your password. The reset link is only valid for 15 minutes, 
-so please do that promptly.</p>
+your browser to reset your password. The reset link is only valid for 15 
+minutes, so please do that promptly.</p>
 <p>The username for this account is {username}</p>
 <p><a href="{url}">{url}</a></p>
 <p>Regards,</p>
@@ -169,7 +177,8 @@ so please do that promptly.</p>
     fullname = user.fullname
     token = user.generate_reset_token()
 
-    url = "https://%s/password_reset/%d/%s" % (fits_servername, userid, token)
+    url = "https://%s/password_reset/%d/%s" % (fsc.fits_servername,
+                                               userid, token)
 
     plaintext = message_text.format(name=fullname, username=username, url=url)
     htmltext = message_html.format(name=fullname, username=username, url=url)
@@ -186,7 +195,7 @@ so please do that promptly.</p>
     msg.attach(part2)
 
     try:
-        smtp = smtplib.SMTP(smtp_server)
+        smtp = smtplib.SMTP(fsc.smtp_server)
         smtp.sendmail(fromaddr, tolist, msg.as_string())
     except:
         return False
@@ -237,13 +246,11 @@ def password_reset(userid, token):
     # If we got this far we have a valid request.
     template_args['valid_request'] = True
     # Did we get a submitted form?
-    request_attempted = False
     request_valid = False
     formdata = ctx.get_form_data()
     password = None
     again = None
     if formdata:
-        request_attempted = True
         if 'password' in formdata:
             password = formdata['password'].value
         if 'again' in formdata:
@@ -253,7 +260,8 @@ def password_reset(userid, token):
         if password is None:
             template_args['reason_bad'] = 'No new Password supplied'
         elif password != again:
-            template_args['reason_bad'] = 'Password and Password again do not match'
+            template_args['reason_bad'] = \
+                'Password and Password again do not match'
         elif bad_password(password):
             template_args['reason_bad'] = bad_password_msg
         else:
@@ -289,7 +297,6 @@ def change_email(things):
 
     # Process the form data first if there is any
     formdata = ctx.get_form_data()
-    request_attempted = False
     valid_request = None
     reason_bad = None
     successful = False
@@ -299,7 +306,6 @@ def change_email(things):
 
     # Parse the form data here
     if formdata:
-        request_attempted = True
         if 'newemail' in formdata:
             newemail = formdata['newemail'].value
         if 'newagain' in formdata:
@@ -326,7 +332,6 @@ def change_email(things):
     if valid_request:
         user = ctx.user
         if user is None:
-            valid_request = False
             reason_bad = 'You are not currently logged in'
         else:
             user.email = newemail
@@ -355,7 +360,6 @@ def change_password(things):
 
     # Process the form data first if there is any
     formdata = ctx.get_form_data()
-    request_attempted = False
     valid_request = None
     reason_bad = None
     successful = False
@@ -366,7 +370,6 @@ def change_password(things):
 
     # Parse the form data here
     if formdata:
-        request_attempted = True
         if 'oldpassword' in formdata:
             oldpassword = formdata['oldpassword'].value
         if 'newpassword' in formdata:
@@ -393,13 +396,10 @@ def change_password(things):
     if valid_request:
         user = ctx.user
         if user is None:
-            valid_request = False
             reason_bad = 'You are not currently logged in'
         elif not user.username:
-            valid_request = False
             reason_bad = 'This account has no password based login'
         elif user.validate_password(oldpassword) is False:
-            valid_request = False
             reason_bad = 'Current password not correct'
         else:
             user.change_password(newpassword)
@@ -433,6 +433,7 @@ def request_password_reset():
     email = None
 
     # Parse the form data here
+    thing = None
     if formdata:
         if 'thing' in list(formdata.keys()):
             thing = formdata['thing'].value
@@ -503,7 +504,7 @@ def staff_access():
             action = formdata['action'].value
 
     thisuser = ctx.user
-    if thisuser is None or thisuser.superuser != True:
+    if thisuser is None or thisuser.superuser is not True:
         return dict(allowed=False)
 
     template_args = dict(allowed=True)
@@ -511,7 +512,8 @@ def staff_access():
     # If we got an action, do it
     if username:
         try:
-            user = ctx.session.query(User).filter(User.username == username).one()
+            user = ctx.session.query(User).filter(User.username == username)\
+                .one()
             if action == "Grant":
                 action_name = 'Granting'
                 user.gemini_staff = True
@@ -524,7 +526,8 @@ def staff_access():
             template_args['no_result'] = True
 
     # Have applied changes, now generate list of staff users
-    template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
+    template_args['user_list'] = ctx.session.query(User).\
+        order_by(User.gemini_staff, User.username)
 
     return template_args
 
@@ -552,11 +555,13 @@ def admin_change_email():
 
     # Permission requires either superuser or user_admin
     thisuser = ctx.user
-    if thisuser is None or (thisuser.superuser is not True and thisuser.user_admin is not True):
+    if thisuser is None or (thisuser.superuser is not True and
+                            thisuser.user_admin is not True):
         return dict(allowed=False)
 
     template_args = dict(allowed=True)
-    template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
+    template_args['user_list'] = ctx.session.query(User)\
+        .order_by(User.gemini_staff, User.username)
     if email and email_inuse(email):
         template_args['email_in_use'] = True
         return template_args
@@ -567,7 +572,8 @@ def admin_change_email():
     # If we got an action, do it
     if username:
         try:
-            user = ctx.session.query(User).filter(User.username == username).one()
+            user = ctx.session.query(User).filter(User.username == username)\
+                .one()
             user.email = email
             template_args['email_changed'] = True
             template_args['action_user'] = user
@@ -575,7 +581,8 @@ def admin_change_email():
             template_args['no_result'] = True
 
     # Have applied changes, now generate list of staff users
-    template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
+    template_args['user_list'] = ctx.session.query(User)\
+        .order_by(User.gemini_staff, User.username)
 
     ctx.session.commit()
 
@@ -604,15 +611,18 @@ def admin_change_password():
 
     # Permission requires either superuser or user_admin
     thisuser = ctx.user
-    if thisuser is None or (thisuser.superuser is not True and thisuser.user_admin is not True):
+    if thisuser is None or (thisuser.superuser is not True and
+                            thisuser.user_admin is not True):
         return dict(allowed=False)
 
     template_args = dict(allowed=True)
-    template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
+    template_args['user_list'] = ctx.session.query(User)\
+        .order_by(User.gemini_staff, User.username)
 
     if username:
         try:
-            user = ctx.session.query(User).filter(User.username == username).one()
+            user = ctx.session.query(User).filter(User.username == username)\
+                .one()
             user.reset_password(password)
             ctx.session.commit()
             template_args['password_changed'] = True
@@ -621,7 +631,8 @@ def admin_change_password():
             template_args['no_result'] = True
 
     # Have applied changes, now generate list of staff users
-    template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
+    template_args['user_list'] = ctx.session.query(User)\
+        .order_by(User.gemini_staff, User.username)
 
     ctx.session.commit()
 
@@ -640,12 +651,8 @@ def admin_file_permissions():
     formdata = ctx.get_form_data()
     usernames = ''
     item = ''
-    action = ''
     filter = ''
     delete = None
-    obs_page = 1
-    file_page = 1
-    per_page = 20
     warnings = list()
 
     # Parse the form data
@@ -661,14 +668,16 @@ def admin_file_permissions():
 
     # Permission requires either superuser or user_admin
     thisuser = ctx.user
-    if thisuser is None or (thisuser.superuser is not True and thisuser.user_admin is not True
+    if thisuser is None or (thisuser.superuser is not True
+                            and thisuser.user_admin is not True
                             and thisuser.file_permission_admin is not True):
         return dict(allowed=False)
 
     template_args = dict(allowed=True)
 
     if delete:
-        up = ctx.session.query(UserProgram).filter(UserProgram.id == delete).delete()
+        up = ctx.session.query(UserProgram)\
+            .filter(UserProgram.id == delete).delete()
 
     # If we got an action, do it
     if item:
@@ -678,38 +687,46 @@ def admin_file_permissions():
                 try:
                     obscheck = GeminiObservation(itemx)
                     if not obscheck.valid:
-                        warnings.append(f'Observation ID <b>{itemx}</b> has invalid format, adding anyway')
+                        warnings.append(f'Observation ID <b>{itemx}</b> '
+                                        'has invalid format, adding anyway')
                 except Exception as e:
-                    warnings.append(f'Observation ID <b>{itemx}</b> has invalid format, adding anyway')
+                    warnings.append(f'Observation ID <b>{itemx}</b> '
+                                    'has invalid format, adding anyway')
 
     if usernames and item:
         for username in usernames.split(','):
             username = username.strip()
             try:
-                user = ctx.session.query(User).filter(User.username == username).one()
+                user = ctx.session.query(User)\
+                    .filter(User.username == username).one()
                 for itemx in item.split(','):
                     itemx = itemx.strip()
                     if itemx.endswith('.fits'):
-                        up = ctx.session.query(UserProgram).filter(UserProgram.filename == itemx) \
+                        up = ctx.session.query(UserProgram)\
+                            .filter(UserProgram.filename == itemx) \
                             .filter(UserProgram.user_id == user.id).first()
                         if up is None:
                             up = UserProgram(user_id=user.id, filename=itemx)
                             ctx.session.add(up)
                             ctx.session.flush()
                     else:
-                        up = ctx.session.query(UserProgram).filter(UserProgram.observation_id == itemx) \
+                        up = ctx.session.query(UserProgram)\
+                            .filter(UserProgram.observation_id == itemx) \
                             .filter(UserProgram.user_id == user.id).first()
                         if up is None:
-                            up = UserProgram(user_id=user.id, observation_id=itemx)
+                            up = UserProgram(user_id=user.id,
+                                             observation_id=itemx)
                             ctx.session.add(up)
                             ctx.session.flush()
             except NoResultFound:
-                warnings.append(f'Username <b>{username}</b> not found in system, ignoring')
+                warnings.append(f'Username <b>{username}</b> not found in '
+                                'system, ignoring')
 
     observation_list = list()
-    q = ctx.session.query(UserProgram, User).filter(and_(UserProgram.observation_id != None,
-                                                         UserProgram.observation_id != ''),
-                                                    User.id == UserProgram.user_id)
+    q = ctx.session.query(UserProgram, User)\
+        .filter(and_(UserProgram.observation_id is not None,
+                     UserProgram.observation_id != ''),
+                     User.id == UserProgram.user_id)
     if filter:
         q = q.filter(or_(UserProgram.observation_id == filter,
                          User.username == filter))
@@ -730,9 +747,10 @@ def admin_file_permissions():
         user_list.append(usr)
 
     file_list = list()
-    q = ctx.session.query(UserProgram, User).filter(and_(UserProgram.filename != None,
-                                                         UserProgram.filename != ''),
-                                                    User.id == UserProgram.user_id)
+    q = ctx.session.query(UserProgram, User)\
+        .filter(and_(UserProgram.filename is not None,
+                     UserProgram.filename != ''),
+                     User.id == UserProgram.user_id)
     if filter:
         q = q.filter(or_(UserProgram.filename == filter,
                          User.username == filter))
@@ -759,21 +777,12 @@ def admin_file_permissions():
 def login(things):
     """
     Presents and processes a login form
-    Sends session cookie if sucessfull
+    Sends session cookie if successful
     """
     ctx = get_context()
 
-    redirect = None
-    try:
-        qs = ctx.env.qs
-        if qs and qs.startswith('redirect='):
-            redirect = qs[9:]
-    except KeyError:
-        pass  # no query string, that's ok and redirect is set to None
-
     # Process the form data first if there is any
     formdata = ctx.get_form_data()
-    request_attempted = False
     valid_request = None
     reason_bad = None
 
@@ -784,7 +793,6 @@ def login(things):
 
     # Parse the form data here
     if formdata:
-        request_attempted = True
         if 'username' in formdata:
             username = formdata['username'].value
         if 'password' in formdata:
@@ -802,13 +810,16 @@ def login(things):
             reason_bad = "Username / password not valid"
         else:
             # Find the user and check if the password is valid
-            user = ctx.session.query(User).filter(User.username == username).one()
+            user = ctx.session.query(User)\
+                .filter(User.username == username).one()
             if user.validate_password(password):
-                # Sucessfull login
+                # Successful login
                 cookie = user.log_in()
                 valid_request = True
             else:
-                reason_bad = 'Username / password not valid. If you need to reset your password, <a href="/request_password_reset">Click Here</a>'
+                reason_bad = 'Username / password not valid. ' \
+                             'If you need to reset your password, ' \
+                             '<a href="/request_password_reset">Click Here</a>'
 
     if valid_request:
         # Cookie expires in 1 year
@@ -847,7 +858,8 @@ def logout():
 
         if len(users) > 1:
             # Eeek, multiple users with the same session cookie!?!?!
-            ctx.log("Logout - Multiple Users with same session cookie: %s" % cookie)
+            ctx.log("Logout - Multiple Users with same session cookie: %s"
+                    % cookie)
         for user in users:
             user.log_out_all()
 
@@ -862,11 +874,12 @@ def logout():
 @templating.templated("user/whoami.html")
 def whoami(things):
     """
-    Tells you who you are logged in as, and presents the account maintainace links
+    Tells you who you are logged in as, and presents the account maintainace
+    links
     """
     # Find out who we are if logged in
 
-    template_args = {'orcid_enabled': orcid_enabled}
+    template_args = {'orcid_enabled': fsc.orcid_enabled}
 
     user = get_context().user
 
@@ -881,8 +894,8 @@ def whoami(things):
         # no user
         pass
 
-    # Construct the "things" part of the URL for the link that want to be able to
-    # take you back to the same form contents
+    # Construct the "things" part of the URL for the link that want to be
+    # able to take you back to the same form contents
     template_args['thing_string'] = '/'.join(things)
 
     return template_args
@@ -891,14 +904,14 @@ def whoami(things):
 @templating.templated("user/list.html")
 def user_list():
     """
-    Displays a list of archive users. Must be logged in as a gemini_staff user to
-    see this.
+    Displays a list of archive users. Must be logged in as a gemini_staff
+    user to see this.
     """
 
     ctx = get_context()
 
     thisuser = ctx.user
-    if thisuser is None or thisuser.gemini_staff != True:
+    if thisuser is None or thisuser.gemini_staff is not True:
         return dict(staffer=False)
 
     users = (ctx.session.query(User)
@@ -912,16 +925,20 @@ def user_list():
 
 def email_inuse(email):
     """
-    Check the database to see if this email is already in use. Returns True if it is, False otherwise.
+    Check the database to see if this email is already in use. Returns True
+    if it is, False otherwise.
 
-    Email addresses are case-insensitive, so we have to get clever here to do a case insensitive
-    match.  Also, in future we can add a constraint to the database.  However, currently we already
-    have existing users with duplicate emails.  So, until we have a strategy for how to unwind those
-    accounts we can't constrain the database.  A trigger would be another option, but we'd still want
-    to catch it here to alert the user.  I'm inclined to just fix the account data and then add a
-    proper unique constraint and skip doing any kind of trigger validation.
+    Email addresses are case-insensitive, so we have to get clever here to do
+    a case-insensitive match.  Also, in future we can add a constraint to the
+    database.  However, currently we already have existing users with
+    duplicate emails.  So, until we have a strategy for how to unwind those
+    accounts we can't constrain the database.  A trigger would be another
+    option, but we'd still want to catch it here to alert the user.  I'm
+    inclined to just fix the account data and then add a proper unique
+    constraint and skip doing any kind of trigger validation.
     """
-    rows = get_context().session.execute("select count(1) from archiveuser where LOWER(email)=:email",
+    rows = get_context().session.execute("select count(1) from archiveuser "
+                                         "where LOWER(email)=:email",
                                          {'email': email.lower()})
     for row in rows:
         if len(row) > 0 and row[0] == 0:
@@ -931,19 +948,23 @@ def email_inuse(email):
 
 def username_inuse(username):
     """
-    Check the database to see if a username is already in use. Returns True if it is, False otherwise
+    Check the database to see if a username is already in use. Returns True
+    if it is, False otherwise
     """
 
-    num = get_context().session.query(User).filter(User.username == username).count()
+    num = get_context().session.query(User).\
+        filter(User.username == username).count()
     return num != 0
 
 
 def orcid_inuse(orcid):
     """
-    Check the database to see if a username is already in use. Returns True if it is, False otherwise
+    Check the database to see if a username is already in use. Returns True
+    if it is, False otherwise
     """
 
-    num = get_context().session.query(User).filter(User.orcid_id == orcid).count()
+    num = get_context().session.query(User).\
+        filter(User.orcid_id == orcid).count()
     return num != 0
 
 
@@ -967,72 +988,81 @@ def bad_password(candidate):
     return True
 
 
-def needs_login(magic_cookies=(), only_magic=False, staffer=False, misc_upload=False, superuser=False,
-                content_type='html', annotate=None, archive_only=False):
-    """Decorator for functions that need a user to be logged in, or some sort of cookie
-       to be set. The basic use is (notice the decorator parenthesis, they're important)::
+def needs_login(magic_cookies=(), only_magic=False, staff=False,
+                misc_upload=False, superuser=False, content_type='html',
+                annotate=None, archive_only=False):
+    """
+    Decorator for functions that need a user to be logged in, or some sort of
+    cookie to be set. The basic use is (notice the decorator parenthesis,
+    they're important)::
 
            @needs_login()
            def decorated_function():
                ...
 
-       Which rejects access if the user is not logged in. The decorator accepts a number
-       of keyword arguments. The most restrictive is the one that applies, except for
-       magic cookies:
+    Which rejects access if the user is not logged in. The decorator accepts
+    a number of keyword arguments. The most restrictive is the one that
+    applies, except for magic cookies:
 
-       ``magic_cookie=[...]``
-         A list of cookie ``(name, expected_value)`` pairs. If the query provides a pair that matches any
-         of the included ones, even non-logged in users will have granted access. Useful for scripts,
-         etc.
+    ``magic_cookie=[...]``
+        A list of cookie ``(name, expected_value)`` pairs. If the query provides
+        a pair that matches any of the included ones, even non-logged in users
+        will have granted access. Useful for scripts, etc.
 
-       ``only_magic=(False|True)``
-         This relates to the **EXPECTED** value of a cookie (the one provided in ``magic_cookie``). If any of
-         the expected cookie pairs has an empty (eg. ``None``) value, then the behaviour of ``needs_login``
-         is the following:
+    ``only_magic=(False|True)``
+        This relates to the **EXPECTED** value of a cookie (the one provided
+        in ``magic_cookie``). If any of the expected cookie pairs has an
+        empty (eg. ``None``) value, then the behaviour of ``needs_login`` is
+        the following:
 
-         * If ``only_magic`` is ``False``, then we revert to the standard auth protocol (we don't check for
-           magic cookies at all)
-         * If ``only_magic`` is ``True``, and one of the expected values is None, then we allow access always
+         * If ``only_magic`` is ``False``, then we revert to the standard
+         auth protocol (we don't check for magic cookies at all)
 
-       ``staffer=(False|True)``
-         If ``True``, the user must be Gemini Staff
+         * If ``only_magic`` is ``True``, and one of the expected values is
+         None, then we allow access always
+
+       ``staff=(False|True)``
+         If ``True``, the user must be staff
 
        ``superuser=(False|True)``
-         If ``True``, the user must be Superuser of the Archive system
+         If ``True``, the user must be a superuser
 
        ``content_type='...'``
-         Can be set to ``'html'`` (the default) or ``'json'``, depending on the kind of answer
-         we want to provide, in case that the access is forbidden
+         Can be set to ``'html'`` (the default) or ``'json'``, depending on
+         the kind of answer we want to provide, in case that the access is
+         forbidden
 
        ``archive_only=(False|True)``
-         If ``True``, authentication is only required if this is an archive server
+         If ``True``, authentication is only required if this is an archive
+         server
     """
 
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(*args, **kw):
-            logging.debug("Checking authorization")
             ctx = get_context()
 
-            ctype = 'application/json' if content_type == 'json' else 'text/html'
+            ctype = 'application/json' \
+                if content_type == 'json' else 'text/html'
 
-            disabled_cookies = any(not expected for cookie, expected in magic_cookies)
+            disabled_cookies = \
+                any(not expected for cookie, expected in magic_cookies)
 
             got_magic = False
             if disabled_cookies and only_magic:
-                logging.debug("No cookies, only magic")
                 got_magic = True
             elif not disabled_cookies:
                 for cookie, content in magic_cookies:
                     try:
-                        # Helper function will return True if the cookie matches the value
-                        # or, if the value is a json list, we can match any value (makes value migration easier)
+                        # Helper function will return True if the cookie
+                        # matches the value or, if the value is a json list,
+                        # we can match any value (makes value migration easier)
                         def cookie_match(ck, check):
                             if ck == check:
                                 return True
                             try:
                                 checks = json.loads(check)
-                                if checks is not None and isinstance(checks, list):
+                                if isinstance(checks, list):
                                     for chk in checks:
                                         if ck == chk:
                                             return True
@@ -1042,39 +1072,36 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, misc_upload=F
                             return False
 
                         if content is not None and cookie_match(ctx.cookies[cookie], content):  # ctx.cookies[cookie] == content:
-                            logging.debug("Saw magic cookie")
                             got_magic = True
                             break
                     except KeyError:
                         pass
 
-            if archive_only and not use_as_archive:
-                logging.debug("Archive only and not use as archive")
+            if archive_only and not fsc.use_as_archive:
                 # Bypass protection - archive_only and not the archive
                 got_magic = True
             if not got_magic:
-                logging.debug("Handling auth")
-                raise_error = functools.partial(ctx.resp.client_error, code=Return.HTTP_FORBIDDEN, content_type=ctype,
+                raise_error = functools.partial(ctx.resp.client_error,
+                                                code=Return.HTTP_FORBIDDEN,
+                                                content_type=ctype,
                                                 annotate=annotate)
                 if only_magic:
-                    logging.info("Could not find a proper magic cookie for a cookie-only service")
-                    raise_error(message="Could not find a proper magic cookie for a cookie-only service")
+                    raise_error(message="Could not find a proper magic "
+                                        "cookie for a cookie-only service")
                 user = ctx.user
                 if not user:
-                    logging.info("You need to be logged in to access this resource")
-                    raise_error(message="You need to be logged in to access this resource")
+                    raise_error(message="You need to be logged in to access "
+                                        "this resource")
                 if superuser is True and not user.superuser:
-                    logging.info("You need to be logged in as a Superuser to access this resource")
-                    raise_error(message="You need to be logged in as a Superuser to access this resource")
-                if staffer is True and not user.gemini_staff:
-                    logging.info("You need to be logged in as Gemini Staff member to access this service")
-                    raise_error(message="You need to be logged in as Gemini Staff member to access this resource")
+                    raise_error(message="You need to be logged in as a "
+                                        "superuser to access this resource")
+                if staff is True and not user.gemini_staff:
+                    raise_error(message="You need to be logged in as Gemini "
+                                        "Staff member to access this resource")
                 if misc_upload is True and (not user.misc_upload and not user.superuser):
-                    logging.info("You need to be logged in with misc upload permission (or as a superuser) to access "
-                                 "this service")
-                    raise_error(message="You need to be logged in with misc upload permission or as a supersuer to "
-                                        "access this service")
-            logging.debug("Past auth check, calling method")
+                    raise_error(message="You need to be logged in with misc "
+                                        "upload permission or as a supersuer "
+                                        "to access this service")
             return fn(*args, **kw)
 
         return wrapper
@@ -1087,13 +1114,13 @@ def orcid(code):
     """
     Generates and handles ORCID backed accounts
 
-    ``code``
-      This is the ORCID supplied authentication code.  We can use this to request
-      the users identity from the ORCID service.  On the first pass to this
-      endpoint, there is no code and we redirect the user to the ORCID login page.
+    ``code`` This is the ORCID supplied authentication code.  We can use this
+    to request the users identity from the ORCID service.  On the first pass
+    to this endpoint there is no code, and we redirect the user to the ORCID
+    login page.
     """
 
-    if not orcid_enabled:
+    if not fsc.orcid_enabled:
         return dict(
             notification_message="",
             reason_bad="ORCID not enabled on this system"
@@ -1102,26 +1129,27 @@ def orcid(code):
     notification_message = ""
     reason_bad = ""
 
-    redirect_url = orcid_redirect_url
+    redirect_url = fsc.orcid_redirect_url
 
     ctx = get_context()
 
     if code:
         # Need to POST the token to ORCID to get the credentials
         data = {
-            "client_id": orcid_client_id,
-            "client_secret": orcid_client_secret,
+            "client_id": fsc.orcid_client_id,
+            "client_secret": fsc.orcid_client_secret,
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": redirect_url
         }
-        orcid_token_url = 'https://%s/oauth/token' % orcid_server
+        orcid_token_url = 'https://%s/oauth/token' % fsc.orcid_server
         r = requests.post(orcid_token_url, json=data)
         if r.status_code == 200:
             response_data = r.json()
             orcid_id = response_data["orcid"]
             # create a session for this orcid id
-            user = ctx.session.query(User).filter(User.orcid_id == orcid_id).one_or_none()
+            user = ctx.session.query(User).\
+                filter(User.orcid_id == orcid_id).one_or_none()
             if user is None:
                 # Authorized as ORCID user and we haven't seen this ORCID before
                 if ctx.user:
@@ -1138,17 +1166,19 @@ def orcid(code):
                     session.commit()
 
             cookie = user.log_in()
-            exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=31536000)
-            ctx.cookies.set('gemini_archive_session', cookie, expires=exp, path="/")
-            ctx.resp.redirect_to('/searchform')  # 'http://localhost:8090/searchform')
+            exp = datetime.datetime.utcnow() + \
+                  datetime.timedelta(seconds=31536000)
+            ctx.cookies.set('gemini_archive_session', cookie,
+                            expires=exp, path="/")
+            ctx.resp.redirect_to('/searchform')
         else:
             reason_bad = "Error communicating with ORCID service"
     else:
         # Send them to ORCID, which will callback here with their token
-        orcid_url = 'https://%s/oauth/authorize?client_id=%s&' \
-                    'response_type=code&scope=/authenticate&redirect_uri=%s' \
-                    % (orcid_server, orcid_client_id, urllib.parse.quote(redirect_url))
-
+        orcid_url = f'https://{fsc.orcid_server}/oauth/authorize?client_id=' \
+                    f'{fsc.orcid_client_id}' \
+                    f'&response_type=code&scope=/authenticate' \
+                    f'&redirect_uri={urllib.parse.quote(redirect_url)}'
         ctx.resp.redirect_to(orcid_url)
 
     template_args = dict(

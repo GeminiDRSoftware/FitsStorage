@@ -2,12 +2,17 @@
 This module contains the routing implementation that uses the routes.py
 functions. This used to be bundled in the wsgihandler.py module
 """
+from functools import partial
 
 from fits_storage.server.wsgi.routing import Map, Rule
 from fits_storage.server.wsgi.context import get_context
 
 from .debug import debugmessage
-from fits_storage.web.statistics import stats
+from fits_storage.web.statistics import stats, content
+from fits_storage.web.logreports import usagereport
+from fits_storage.web.summary import summary
+
+from .routing import SequenceConverter, SelectionConverter
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -16,10 +21,10 @@ url_map = Map([
     # Queries to the root should redirect to a sensible page
 #    Rule('/', redirect_to=('/searchform' if use_as_archive else '/usage.html')),
     Rule('/debug', debugmessage),
-    # Rule('/content', content),                                      # Database Statistics
+    Rule('/content', content),                                      # Database Statistics
     Rule('/stats', stats),
     # Rule('/qareport', qareport, methods=['POST']),                  # Submit QA metric measurement report
-    # Rule('/usagereport', usagereport),                              # Usage Statistics and Reports
+    Rule('/usagereport', usagereport),                              # Usage Statistics and Reports
     # Rule('/usagestats', usagestats),                                # Usage Stats
     # Rule('/xmltape', xmltape),                                      # XML Tape handler
     # Rule('/taperead', taperead),                                    # TapeRead handler
@@ -140,8 +145,8 @@ url_map = Map([
     #      collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     #
     # # This is the header summary handler
-    # Rule('/summary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'summary'),
-    #      collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/summary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'summary'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     # Rule('/diskfiles/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'diskfiles'),
     #      collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     # Rule('/ssummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'ssummary'),
@@ -164,8 +169,8 @@ url_map = Map([
     ],
 
     converters = {
-     #   'selection': SelectionConverter,
-     #   'seq_of':    SequenceConverter
+        'selection': SelectionConverter,
+        'seq_of':    SequenceConverter
     }
 )
 

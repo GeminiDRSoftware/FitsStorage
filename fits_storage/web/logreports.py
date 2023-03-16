@@ -10,26 +10,28 @@ from sqlalchemy import and_, between, cast, desc, extract, func, join
 from sqlalchemy import Date, Interval, String
 from sqlalchemy.orm import aliased
 
-from ..fits_storage_config import logreports_use_materialized_view
-from gemini_obs_db.db import pg_db
-from gemini_obs_db.db import Base
-from ..orm.usagelog import UsageLog
-from ..orm.querylog import QueryLog
-from ..orm.downloadlog import DownloadLog
-from ..orm.filedownloadlog import FileDownloadLog
-from ..orm.fileuploadlog import FileUploadLog
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.header import Header
-from ..orm.user import User
+from fits_storage.db import _saved_engine
+from fits_storage.core.orm import Base
+from fits_storage.server.orm.usagelog import UsageLog
+from fits_storage.server.orm.querylog import QueryLog
+from fits_storage.server.orm.downloadlog import DownloadLog
+from fits_storage.server.orm.filedownloadlog import FileDownloadLog
+from fits_storage.server.orm.fileuploadlog import FileUploadLog
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.header import Header
+from fits_storage.server.orm.user import User
 
-from ..utils.query_utils import to_int, null_to_zero
-from ..utils.web import get_context, Return
+from fits_storage.db.query_utils import to_int, null_to_zero
 
-from gemini_obs_db.utils.gemini_metadata_utils import ONEDAY_OFFSET
+from fits_storage.server.wsgi.context import get_context
+
+from fits_storage.gemini_metadata_utils import ONEDAY_OFFSET
 
 from .user import needs_login
-from .selection import getselection, queryselection, sayselection
 from . import templating
+
+from fits_storage.config import get_config
+fsc = get_config()
 
 def logs(session, filter_func = None):
     aQueryLog = session.query(QueryLog, func.row_number().over(QueryLog.usagelog_id).label('row_number'))
@@ -44,7 +46,7 @@ def logs(session, filter_func = None):
 
     return AliasedQueryLog, AliasedDownloadLog
 
-@needs_login(staffer=True)
+@needs_login(staff=True)
 @templating.templated("logreports/usagereport.html", with_generator=True)
 def usagereport():
     """
@@ -137,7 +139,7 @@ def usagereport():
 
     return template_args
 
-@needs_login(staffer=True)
+@needs_login(staff=True)
 @templating.templated("logreports/usagedetails.html")
 def usagedetails(ulid):
     """
@@ -175,7 +177,7 @@ def usagedetails(ulid):
         uplog = fileuploadlogs
         )
 
-@needs_login(staffer=True)
+@needs_login(staff=True)
 @templating.templated("logreports/downloadlog.html", with_generator=True)
 def downloadlog(patterns):
     """
@@ -259,7 +261,7 @@ usagestats_header = """
 </tr>
 """
 
-@needs_login(staffer=True)
+@needs_login(staff=True)
 @templating.templated("logreports/usagestats.html", with_generator=True)
 def usagestats():
     """
@@ -381,7 +383,7 @@ def build_query(session, period, since=None):
        provide this data quickly.  If that fails, the call falls back to the older brute
        force query (which is slow).
        """
-    if logreports_use_materialized_view:
+    if fsc.logreports_use_materialized_view:
         try:
             partial = False
             for result in build_query_materialized_view(session, period, since):
@@ -407,7 +409,7 @@ def build_query_materialized_view(session, period, since=None):
        will work over all the data set.'''
     conn = None
     try:
-        conn = pg_db.connect()
+        conn = _saved_engine.connect()
         if period == "year":
             rs = conn.execute("select * from year_usage_stats order by yr desc")
         elif period == "week":
@@ -641,7 +643,7 @@ def build_query_brute_force(session, period, since=None):
                        .order_by(start)\
                        .group_by(start)
     else:
-        raise RuntimeException('No valid period specified')
+        raise Exception('No valid period specified')
 
     # The rest of the the function defines some auxiliary terms that we'll use to build
     # the summarizing columns, which is what WE REALLY WANT to extract. They're not

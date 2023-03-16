@@ -3,20 +3,21 @@ This module contains the web summary generator class.
 """
 
 from collections import OrderedDict, namedtuple
-from html import escape
 
-from gemini_obs_db.utils.gemini_metadata_utils import GeminiDataLabel, degtora, degtodec, GeminiProgram, \
-    GeminiObservation
+from fits_storage.gemini_metadata_utils import GeminiDataLabel, \
+    degtora, degtodec, GeminiProgram, GeminiObservation
 
-from ..utils.userprogram import canhave_header, canhave_coords
+from fits_storage.server.access_control_utils import canhave_header, canhave_coords
 
-from ..fits_storage_config import using_previews
+from fits_storage.config import get_config
+fsc = get_config()
 
-# The following dictionary maps column key names as used in the summary template
-# with a pair of values (column name, compressed name). The column name refers
-# to the internal key used by the SummaryGenerator to access a column definition.
-# The compressed name is a character (typically a letter, but not restricted to it)
-# used in links to the searchform to persist the columns that should be displayed.
+# The following dictionary maps column key names as used in the summary
+# template with a pair of values (column name, compressed name). The column
+# name refers to the internal key used by the SummaryGenerator to access a
+# column definition. The compressed name is a character (typically a letter,
+# but not restricted to it) used in links to the searchform to persist the
+# columns that should be displayed.
 
 search_col_mapping = {
 #   col_key    (column_name, compressed_name)
@@ -347,7 +348,10 @@ class SummaryGenerator(object):
         row.uri = self.uri
         row.deprogrammed_uri = self.deprogrammed_uri
         row.procmode = header.procmode
-        if diskfile.provenance:
+
+        # TODO - reenable after we sort out probvenance.
+        #if diskfile.provenance:
+        if False:
             row.has_provenance = True
         else:
             row.has_provenance = False
@@ -384,8 +388,8 @@ class SummaryGenerator(object):
             c.content = None
             if col.summary_func:
                 preview = None
-                if diskfile.previews:
-                    preview = diskfile.previews[0]
+                #if diskfile.previews:
+                #    preview = diskfile.previews[0]
                 value = getattr(self, col.summary_func)(header=header,
                                                         diskfile=diskfile,
                                                         file=file,
@@ -627,7 +631,7 @@ class SummaryGenerator(object):
                           path=diskfile.path, filename=diskfile.filename):
             ret = dict(name=file.name)
             # Preview link
-            if using_previews and preview is not None:
+            if fsc.using_previews and preview is not None:
                 ret['prev'] = True
 
             # Download select button

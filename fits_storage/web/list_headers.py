@@ -3,23 +3,24 @@ This module contains the main list_headers function which is used for the web
 summaries and a few other places to convert a selection dictionary into a
 header object list by executing the query.
 """
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.preview import Preview
-from gemini_obs_db.orm.header import Header
-from ..orm.program import Program
-from gemini_obs_db.orm.provenance import Provenance
-from ..orm.obslog import Obslog
-from ..orm.obslog_comment import ObslogComment
-from ..fits_storage_config import fits_open_result_limit, fits_closed_result_limit
+from fits_storage.core.orm.file import File
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.server.orm.preview import Preview
+from fits_storage.core.orm.header import Header
+from fits_storage.server.orm.program import Program
+from fits_storage.server.orm.obslog import Obslog
+from fits_storage.server.orm.obslog_comment import ObslogComment
 from .selection import queryselection, openquery
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_date, gemini_time_period_from_range
+from fits_storage.gemini_metadata_utils import gemini_date, gemini_time_period_from_range
 from sqlalchemy import asc, desc, func, nullslast
 
-from ..utils.web import get_context
+from fits_storage.server.wsgi.context import get_context
 
+from fits_storage.config import get_config
+fsc = get_config()
 
-def list_headers(selection, orderby, full_query=False, add_previews=False, session=None, unlimit=False):
+def list_headers(selection, orderby, full_query=False, add_previews=False,
+                 session=None, unlimit=False):
     """
     This function queries the database for a list of header table
     entries that satisfy the selection criteria.
@@ -36,11 +37,18 @@ def list_headers(selection, orderby, full_query=False, add_previews=False, sessi
     # The basic query...
     if full_query:
         if add_previews:
-            # query = session.query(Header, DiskFile, File, ObslogComment, Preview).join(DiskFile).join(File, DiskFile.file_id == File.id).filter(Header.diskfile_id == DiskFile.id).outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label).outerjoin(Preview, Preview.diskfile_id == DiskFile.id)
-            query = session.query(Header, DiskFile, File, ObslogComment).join(DiskFile, Header.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id).filter(Header.diskfile_id == DiskFile.id).outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label).outerjoin(Preview, Preview.diskfile_id == DiskFile.id)
+            query = session.query(Header, DiskFile, File, ObslogComment)\
+                .join(DiskFile, Header.diskfile_id == DiskFile.id)\
+                .join(File, DiskFile.file_id == File.id)\
+                .filter(Header.diskfile_id == DiskFile.id)\
+                .outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label)\
+                .outerjoin(Preview, Preview.diskfile_id == DiskFile.id)
         else:
-            # query = session.query(Header, DiskFile, File, ObslogComment).join(DiskFile).join(File).outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label)
-            query = session.query(Header, DiskFile, File, ObslogComment).join(DiskFile, Header.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id).filter(Header.diskfile_id == DiskFile.id).outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label)
+            query = session.query(Header, DiskFile, File, ObslogComment)\
+                .join(DiskFile, Header.diskfile_id == DiskFile.id)\
+                .join(File, DiskFile.file_id == File.id)\
+                .filter(Header.diskfile_id == DiskFile.id)\
+                .outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label)
     else:
         query = session.query(Header).join(DiskFile).join(File)
     query = queryselection(query, selection)
@@ -48,9 +56,12 @@ def list_headers(selection, orderby, full_query=False, add_previews=False, sessi
 
     # Do we have any order by arguments?
 
-    whichorderby = ['instrument', 'data_label', 'observation_class', 'observation_type', 'airmass', 'ut_datetime', 'local_time',
-                    'raw_iq', 'raw_cc', 'raw_bg', 'raw_wv', 'qa_state', 'filter_name', 'exposure_time', 'object', 'disperser', 
-                    'focal_plane_mask', 'ra', 'dec', 'detector_binning', 'central_wavelength']
+    whichorderby = ['instrument', 'data_label', 'observation_class',
+                    'observation_type', 'airmass', 'ut_datetime', 'local_time',
+                    'raw_iq', 'raw_cc', 'raw_bg', 'raw_wv', 'qa_state',
+                    'filter_name', 'exposure_time', 'object', 'disperser',
+                    'focal_plane_mask', 'ra', 'dec', 'detector_binning',
+                    'central_wavelength']
 
     order_criteria = []
     if orderby:
@@ -78,6 +89,7 @@ def list_headers(selection, orderby, full_query=False, add_previews=False, sessi
 
     # Default sorting by ascending date if closed query, desc date if open query
     if is_openquery:
+        # TODO - this comment about custom indexes scares me.
         # This makes the query extremely slow on ops - I think we have the custom index needed for 2022-1
         order_criteria.append(nullslast(desc(Header.ut_datetime)))
         # order_criteria.append(desc(Header.ut_datetime))
@@ -89,9 +101,9 @@ def list_headers(selection, orderby, full_query=False, add_previews=False, sessi
     # If this is an open query, we should limit the number of responses
     if not unlimit:
         if is_openquery:
-            query = query.limit(fits_open_result_limit)
+            query = query.limit(fsc.fits_open_result_limit)
         else:
-            query = query.limit(fits_closed_result_limit)
+            query = query.limit(fsc.fits_closed_result_limit)
 
     # Return the list of DiskFile objects
     return query.all()

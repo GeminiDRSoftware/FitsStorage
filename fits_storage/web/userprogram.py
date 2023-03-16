@@ -5,9 +5,8 @@ find out what programs they have access to etc
 """
 import requests
 
-from ..orm.userprogram import UserProgram
-from ..utils.web import get_context
-
+from fits_storage.server.orm.userprogram import UserProgram
+from fits_storage.server.wsgi.context import get_context
 from . import templating
 
 

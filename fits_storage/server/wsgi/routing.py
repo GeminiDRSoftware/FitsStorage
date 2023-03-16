@@ -4,6 +4,8 @@ from fits_storage.server.wsgi.returnobj import Return
 
 from urllib.parse import parse_qs
 
+from fits_storage.web.selection import getselection
+
 # This rule regular expressions is copied from werkzeug's, as we intend to make it
 # syntax-compatible
 
@@ -391,3 +393,150 @@ class Map(object):
         # method we used was not allowed
         if found:
             ctx.resp.client_error(Return.HTTP_METHOD_NOT_ALLOWED, 'method not allowed: %s, %s' % (path_info, method))
+
+
+# *****************
+# CUSTOM CONVERTERS
+
+class SelectionConverter(BaseConverter):
+    """
+    The regular expression for this converter is very simple: just take whatever
+    is left from the URL query.
+
+    When a variable is declared along with this converter type, no other variables
+    should follow it, because there will be no URL left for them.
+
+    ``SelectionConverter`` accepts some arguments (which should be seen as "selectors"):
+
+    * ``SEL``
+    * ``ASSOC``
+    * ``NOLNK``
+    * ``BONLY``
+
+    Passing no argument is equivalent to passing just ``SEL``. If any other argument
+    is passed, then ``SEL`` **must** be included among the arguments. See the
+    documentation for ``to_python`` method to learn about their uses.
+    """
+
+    regex = '.*'
+
+    def __init__(self, *args):
+        if args:
+            if 'SEL' not in args:
+                raise ValueError("One of the arguments for selection must be 'SEL'")
+
+            # Possible values: SEL, ASSOC, NOLNK, BONLY
+            self.res_order = args
+        else:
+            self.res_order = ['SEL']
+
+    def to_python(self, value):
+        """
+        Takes the URL fed as input, breaks it into components, and then performs a nomber
+        of operations over it. Finally, return a tuple.
+
+        The number of results in the tuple will match the number of *arguments* passed to
+        the converter.
+
+        ``SEL``
+          This argument is always present. It will get us the result of
+          ``getselection(components)``. This is the last action to be performed, as the
+          other arguments affect the ``components`` input.
+        ``ASSOC``
+          Will add a boolean element to the return tuple. If ``associated_calibrations``
+          is found in the URL, it will be removed before the return value will be ``True``.
+          Otherwise, return ``False``.
+        ``NOLNK``
+          Also boolean. If ``nolinks`` is found, it will be removed and the return value
+          will be ``False``. Otherwise, return ``True``.
+        ``BONLY``
+          ``True`` if ``body_only`` is present in the URL. ``False`` otherwise.
+
+        The order in which the arguments have been passed to the selector matters to the
+        order in which their results are returned in the tuple. So, if we got
+        ``<selection:foo>``, then the result is ``(getselection_dictionary,)``; for
+        ``<selection(SEL,NOLNK,BONLY):sel,links,body_only)``, we'll get something
+        like ``(dict, bool, bool)``; but for ``<selection(ASSOC,SEL):assoc_cals,sel>``
+        we'd get ``(bool, dict)``.
+
+        Notice that for all the examples, we've provided as many variable names as
+        arguments, to make sure that the mapping between tuple arguments and variables
+        is even. This is also why the order of argument matters: it makes easier to
+        match the returned values to variable names.
+        """
+        assoc = False
+        links = True
+        bonly = False
+        things = [v for v in value.split('/') if v != '']
+        if 'ASSOC' in self.res_order:
+            try:
+                things.remove('associated_calibrations')
+                assoc = True
+            except ValueError:
+                pass
+
+        if 'NOLNK' in self.res_order:
+            try:
+                things.remove('nolinks')
+                links = False
+            except ValueError:
+                pass
+
+        if 'BONLY' in self.res_order:
+            try:
+                things.remove('body_only')
+                bonly = True
+            except ValueError:
+                pass
+
+        result = []
+        for r in self.res_order:
+            if r == 'SEL':
+                result.append(getselection(things))
+            elif r == 'ASSOC':
+                result.append(assoc)
+            elif r == 'NOLNK':
+                result.append(links)
+            elif r == 'BONLY':
+                result.append(bonly)
+        if len(result) == 1:
+            return result[0]
+        return tuple(result)
+
+
+class SequenceConverter(BaseConverter):
+    """
+    The regular expression for this converter is very simple: just take whatever
+    is left from the URL query.
+
+    When a variable is declared along with this converter type, no other variables
+    should follow it, because there will be no URL left for them.
+
+    ``SequenceConverter`` accepts arguments. If there are any arguments, they are
+    interpreted as a set of unique **allowed** values.
+    """
+
+    regex = '.*'
+
+    def __init__(self, *args):
+        self.allowed = set(args or ())
+
+    def to_python(self, value):
+        """
+        Returns a list of strings, where each element is one of the components of
+        the URL. Ie. if passed ``"/foo/bar/baz/"``, this function will return
+        ``['foo', 'bar', 'baz']``.
+
+        If the converter got arguments, and any of the components is not part
+        of the set of arguments, this function will raise a ``ValueError``
+        exception.
+        """
+        things = [v for v in value.split('/') if v != '']
+        if self.allowed and any(th not in self.allowed for th in things):
+            raise ValueError('Illegal values in the URL')
+
+        return things
+
+
+# END CUSTOM CONVERTERS
+# *********************

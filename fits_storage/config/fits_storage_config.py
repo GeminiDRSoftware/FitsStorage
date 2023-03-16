@@ -50,9 +50,11 @@ class FitsStorageConfig(dict):
     # These lists define configuration keywords that will be converted
     # to another type automatically as they are requested
     _bools = ['using_sqlite', 'database_debug', 'use_utc', 'is_server',
-              'is_archive', 'using_s3', 'using_previews', 'using_fitsverify']
+              'is_archive', 'using_s3', 'using_previews', 'using_fitsverify',
+              'logreports_use_materialized_view', 'ordid_enabled']
     _ints = ['postgres_database_pool_size', 'postgres_database_max_overflow',
-             'defer_threshold', 'defer_delay']
+             'defer_threshold', 'defer_delay', 'fits_open_result_limit',
+             'fits_closed_result_limit']
     _lists = ['blocked_urls']
 
     def __init__(self, configfile=None, configstring=None, builtin=True):

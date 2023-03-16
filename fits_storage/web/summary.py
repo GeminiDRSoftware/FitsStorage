@@ -4,35 +4,38 @@ This module contains the main web summary code.
 import datetime
 import json
 
-from ..utils.web import get_context
-from ..fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
+from fits_storage.server.wsgi.context import get_context
+
 from .selection import sayselection, openquery, selection_to_URL
 from .list_headers import list_headers
 
-from .summary_generator import SummaryGenerator, NO_LINKS, FILENAME_LINKS, ALL_LINKS, selection_to_column_names
-import re
+from .summary_generator import SummaryGenerator, NO_LINKS, FILENAME_LINKS, \
+    ALL_LINKS, selection_to_column_names
 
 from . import templating
 
 from urllib.parse import quote_plus
 
-# We assume that servers used as archive use a calibration association cache table
-from ..fits_storage_config import use_as_archive
-if use_as_archive:
-    from gemini_calmgr.cal.associate_calibrations import associate_cals_from_cache as associate_cals
+from fits_storage.config import get_config
+fsc = get_config()
+
+# We assume that archive servers use a calibration association cache table
+if fsc.is_archive:
+    from gemini_calmgr.cal.associate_calibrations \
+        import associate_cals_from_cache as associate_cals
 else:
     from gemini_calmgr.cal.associate_calibrations import associate_cals
 
-from .userprogram import get_program_list, get_obsid_list, get_file_list, get_permissions_list
+from .userprogram import get_permissions_list
 
-from ..orm.querylog import QueryLog
+from fits_storage.server.orm.querylog import QueryLog
 
 def summary(sumtype, selection, orderby, links=True, body_only=False):
     """
     This is the main summary generator.
     The main work is done by the summary_body() function.
     This function just wraps that in the relevant html
-    tags to make it a page in it's own right.
+    tags to make it a page in its own right.
     """
     if sumtype == 'associated_cals_json':
         return json_summary(sumtype, selection, orderby, links)
@@ -66,14 +69,14 @@ def json_summary(sumtype, selection, orderby, links):
 
 def summary_body(sumtype, selection, orderby, links=True, additional_columns=()):
     """
-    This is the main summary generator.
-    sumtype is the summary type required
-    selection is an array of items to select on, simply passed through to the webhdrsummary function
-    orderby specifies how to order the output table, simply passed through to the webhdrsummary function
+    This is the main summary generator. sumtype is the summary type required.
+    selection is an array of items to select on, simply passed through to the
+    webhdrsummary function orderby specifies how to order the output table,
+    simply passed through to the webhdrsummary function
 
-    This function outputs header and footer for the html page,
-    and calls the webhdrsummary function to actually generate
-    the html table containing the actual summary information.
+    This function outputs header and footer for the html page, and calls the
+    webhdrsummary function to actually generate the html table containing the
+    actual summary information.
     """
 
     ctx = get_context()
@@ -89,9 +92,10 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
 
     # If this is a diskfiles summary, select even ones that are not canonical
     if sumtype != 'diskfiles':
-        # Usually, we want to only select headers with diskfiles that are canonical
+        # Usually, we want to only select headers with canonical diskfiles
         selection['canonical'] = True
-    # Archive search results should only show files that are present, so they can be downloaded
+    # Archive search results should only show files that are present,
+    # so they can be downloaded
     if sumtype in {'searchresults', 'customsearch'}:
         selection['present'] = True
 
@@ -104,8 +108,8 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
     headers = list_headers(selection, orderby, full_query=True, add_previews=True)
     num_headers = len(headers)
 
-    hit_open_limit = num_headers == fits_open_result_limit
-    hit_closed_limit = num_headers == fits_closed_result_limit
+    hit_open_limit = num_headers == fsc.fits_open_result_limit
+    hit_closed_limit = num_headers == fsc.fits_closed_result_limit
 
     querylog.query_completed = datetime.datetime.utcnow()
     querylog.numresults = num_headers
@@ -135,12 +139,14 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
 
     # Did we get any results?
     if len(headers) > 0:
-        # We have a session at this point, so get the user and their program list to
-        # pass down the chain to use figure out whether to display download links
+        # We have a session at this point, so get the user and their program
+        # list to pass down the chain to use figure out whether to display
+        # download links
         user = ctx.user
         user_progid_list, user_obsid_list, user_file_list = get_permissions_list(user)
-        sumtable_data = summary_table(sumtype, headers, selection, sumlinks, user, user_progid_list,
-                                      user_obsid_list, user_file_list, additional_columns)
+        sumtable_data = summary_table(sumtype, headers, selection, sumlinks,
+                                      user, user_progid_list, user_obsid_list,
+                                      user_file_list, additional_columns)
     else:
         sumtable_data = {}
 
@@ -151,12 +157,12 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
 
     return dict(
         got_results      = sumtable_data,
-        dev_system       = (sumtype not in {'searchresults', 'customsearch', 'associated_cals'}) and fits_system_status == 'development',
+        dev_system       = (sumtype not in {'searchresults', 'customsearch', 'associated_cals'}) and fsc.fits_system_status == 'development',
         open_query       = openquery(selection),
         hit_open_limit   = hit_open_limit,
         hit_closed_limit = hit_closed_limit,
-        open_limit       = fits_open_result_limit,
-        closed_limit     = fits_closed_result_limit,
+        open_limit       = fsc.fits_open_result_limit,
+        closed_limit     = fsc.fits_closed_result_limit,
         selection        = selection,
         calibrations     = True if sumtype == 'associated_cals' else False,
         **sumtable_data
