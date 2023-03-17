@@ -14,6 +14,9 @@ from fits_storage.web.summary import summary
 from fits_storage.web.searchform import searchform
 from fits_storage.web.user import whoami
 
+from fits_storage.web.tapestuff import tape, tapewrite, tapefile, \
+    jsontapefilelist, taperead, fileontape
+
 from .routing import SequenceConverter, SelectionConverter
 
 from fits_storage.config import get_config
@@ -28,8 +31,7 @@ url_map = Map([
     # Rule('/qareport', qareport, methods=['POST']),                  # Submit QA metric measurement report
     Rule('/usagereport', usagereport),                              # Usage Statistics and Reports
     # Rule('/usagestats', usagestats),                                # Usage Stats
-    # Rule('/xmltape', xmltape),                                      # XML Tape handler
-    # Rule('/taperead', taperead),                                    # TapeRead handler
+    Rule('/taperead', taperead),                                    # TapeRead handler
     # Rule('/notification', notification),                            # Emailnotification handler
     # Rule('/import_odb_notifications', import_odb_notifications,     # Notification update from odb handler
     #      methods=['POST']),
@@ -52,7 +54,7 @@ url_map = Map([
     #                                                                 #   permissions
     #
     # Rule('/nameresolver/<resolver>/<target>', nameresolver),        # Name resolver proxy
-    # Rule('/fileontape/<filename>', fileontape),                     # The fileontape handler
+    Rule('/fileontape/<filename>', fileontape),                     # The fileontape handler
     # Rule('/file/<filenamegiven>', fileserver),                      # This is the fits file server
     # Rule('/download/', download_post, methods=['POST']),
     # Rule('/download/<selection(SEL,ASSOC):selection,associated_calibrations>',
@@ -61,12 +63,12 @@ url_map = Map([
     # Rule('/qaforgui/<date>', qaforgui),                             # Retrieve QA metrics, json version for GUI
     # Rule('/usagedetails/<int:ulid>', usagedetails),                 # Usage Reports
     # Rule('/downloadlog/<seq_of:patterns>', downloadlog),            # Download log
-    # Rule('/tape', tape),                                            # Tape handler
-    # Rule('/tape/<search>', tape),                                   # Tape handler
-    # Rule('/tapewrite', tapewrite),                                  # TapeWrite handler
-    # Rule('/tapewrite/<label>', tapewrite),                          # TapeWrite handler
-    # Rule('/tapefile/<int:tapewrite_id>', tapefile),                 # TapeFile handler
-    # Rule('/jsontapefile/<filepre>', jsontapefilelist),              # json tape file list handler)
+    Rule('/tape', tape),                                            # Tape handler
+    Rule('/tape/<search>', tape),                                   # Tape handler
+    Rule('/tapewrite', tapewrite),                                  # TapeWrite handler
+    Rule('/tapewrite/<label>', tapewrite),                          # TapeWrite handler
+    Rule('/tapefile/<int:tapewrite_id>', tapefile),                 # TapeFile handler
+    Rule('/jsontapefile/<filepre>', jsontapefilelist),              # json tape file list handler)
     # Rule('/request_account/<seq_of:things>', request_account),      # new account request
     # Rule('/password_reset/<int:userid>/<token>', password_reset),   # account password reset request
     # Rule('/login/<seq_of:things>', login),                          # login form

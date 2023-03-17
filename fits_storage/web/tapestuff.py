@@ -1,17 +1,20 @@
 """
 This module contains the tape related html generator functions. 
 """
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from ..orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
+from sqlalchemy.exc import NoResultFound, MultipleResultsFound
+
+from fits_storage.server.orm.tapestuff import Tape, TapeWrite, TapeFile, \
+    TapeRead
 from . import templating
 
-from ..utils.web import get_context
+from fits_storage.server.wsgi.context import get_context
 
-from sqlalchemy import join, desc, func, or_
+from sqlalchemy import join, desc, func
 
 import datetime
 
 from .file_list import _for_json
+
 
 def bzornot(thing):
     """
@@ -29,9 +32,13 @@ def bzornot(thing):
 
 def jsontapefilelist(filepre):
     """
-    This generates a JSON list of tapefiles where the filename starts with filepre
+    This generates a JSON list of tapefiles where the filename starts with
+    filepre
     """
-    tfs = get_context().session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape))).filter(Tape.active == True).filter(TapeWrite.suceeded == True).filter(TapeFile.filename.startswith(filepre)).all()
+    tfs = get_context().session.query(TapeFile)\
+        .select_from(join(TapeFile, join(TapeWrite, Tape)))\
+        .filter(Tape.active is True).filter(TapeWrite.suceeded is True)\
+        .filter(TapeFile.filename.startswith(filepre)).all()
 
     thelist = []
     for tf in tfs:
@@ -47,7 +54,8 @@ def jsontapefilelist(filepre):
     get_context().resp.send_json(thelist)
 
 
-@templating.templated("tapestuff/fileontape.xml", content_type='text/xml', with_generator=True)
+@templating.templated("tapestuff/fileontape.xml", content_type='text/xml',
+                      with_generator=True)
 def fileontape(filename):
     """
     Outputs xml describing the tapes that the specified file is on
@@ -56,18 +64,19 @@ def fileontape(filename):
     filenames = bzornot(filename)
 
     query = (
-        get_context().session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
-                .filter(Tape.active == True).filter(TapeWrite.suceeded == True)
-                .filter(TapeFile.filename.in_(filenames))
+        get_context().session.query(TapeFile)
+        .select_from(join(TapeFile, join(TapeWrite, Tape)))
+        .filter(Tape.active is True).filter(TapeWrite.suceeded is True)
+        .filter(TapeFile.filename.in_(filenames))
         )
 
     return dict(
-        filelist = query
+        filelist=query
         )
 
 
 @templating.templated("tapestuff/tape.html", with_generator=True)
-def tape(search = None):
+def tape(search=None):
     """
     This is the tape list function
     """
@@ -123,28 +132,32 @@ def tape(search = None):
             query = query.filter(Tape.label.like(searchstring))
         tapequery = query.order_by(desc(Tape.id))
 
-
         for tape in tapequery:
             # Count Writes
-            twqtotal = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id)
-            twq = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
+            twqtotal = session.query(TapeWrite)\
+                .filter(TapeWrite.tape_id == tape.id)
+            twq = session.query(TapeWrite)\
+                .filter(TapeWrite.tape_id == tape.id)\
+                .filter(TapeWrite.suceeded is True)
             # Count Bytes
             bytes = 0
             if twq.count():
-                bytesquery = session.query(func.sum(TapeWrite.size)).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
+                bytesquery = session.query(func.sum(TapeWrite.size))\
+                    .filter(TapeWrite.tape_id == tape.id)\
+                    .filter(TapeWrite.suceeded is True)
                 bytes = bytesquery.one()[0] or 0
 
             yield (tape, twqtotal.count(), twq.count(), float(bytes)/1.0E9)
 
     return dict(
-        bad = bad,
-        warning = warning,
-        generator = generator(),
+        bad=bad,
+        warning=warning,
+        generator=generator(),
         )
 
 
 @templating.templated("tapestuff/tapewrite.html", with_generator=True)
-def tapewrite(label = None):
+def tapewrite(label=None):
     """
     This is the tapewrite list function. Label may be an integer ID or a string
     """
@@ -164,13 +177,14 @@ def tapewrite(label = None):
             try:
                 query = query.filter(Tape.id == tapequery.one().id)
             except NoResultFound:
-                return dict(message = "Could not find tape by label search")
+                return dict(message="Could not find tape by label search")
             except MultipleResultsFound:
-                return dict(message = "Found multiple tapes by label search. Please give the ID instead")
+                return dict(message="Found multiple tapes by label search. "
+                                    "Please give the ID instead")
 
     query = query.order_by(desc(TapeWrite.startdate))
 
-    return dict(tws = query)
+    return dict(tws=query)
 
 
 @templating.templated("tapestuff/tapefile.html", with_generator=True)
@@ -184,9 +198,10 @@ def tapefile(tapewrite_id):
 
 #    tapewrite_id = things[0]
 
-    query = get_context().session.query(TapeFile).filter(TapeFile.tapewrite_id == tapewrite_id).order_by(TapeFile.id)
+    query = get_context().session.query(TapeFile)\
+        .filter(TapeFile.tapewrite_id == tapewrite_id).order_by(TapeFile.id)
 
-    return dict(tapefiles = query)
+    return dict(tapefiles=query)
 
 
 @templating.templated("tapestuff/taperead.html", with_generator=True)
@@ -196,4 +211,4 @@ def taperead():
     """
     query = get_context().session.query(TapeRead).order_by(TapeRead.id)
 
-    return dict(tapereads = query)
+    return dict(tapereads=query)

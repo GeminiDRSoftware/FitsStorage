@@ -3,18 +3,23 @@ This is the Fits Storage Web Summary module. It provides the functions
 which query the database and generate html for the web header
 summaries.
 """
-import json
 
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
+from decimal import Decimal
+from datetime import datetime, date, time
+from sqlalchemy import Integer, Text, DateTime, Numeric, Date, Time, \
+    BigInteger, Enum
+
+from fits_storage.core.orm.header import Header
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.file import File
 from .selection import queryselection, openquery
 from .summary import list_headers
 from .standards import get_standard_obs
-from ..orm.ingestqueue import IngestQueue
+from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
 
-from ..utils.userprogram import canhave_coords
-from ..utils.web import get_context, with_content_type
+from fits_storage.server.access_control_utils import canhave_coords
+
+from fits_storage.server.wsgi.context import get_context
 
 from . import templating
 
@@ -26,7 +31,9 @@ diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
                    'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready',
                    'entrytime')
 
-@templating.templated("filelist/filelist.xml", content_type='text/xml', with_generator=True)
+
+@templating.templated("filelist/filelist.xml", content_type='text/xml',
+                      with_generator=True)
 def xmlfilelist(selection):
     """
     This generates an xml list of the files that met the selection
@@ -34,7 +41,9 @@ def xmlfilelist(selection):
 
     def generate_headers(selection):
         orderby = ['filename_asc']
-        for header, diskfile, file, obslogcomm in list_headers(selection, orderby, full_query=True):
+        for header, diskfile, file, obslogcomm in list_headers(selection,
+                                                               orderby,
+                                                               full_query=True):
             ret = (header, diskfile, file)
             if header.phot_standard:
                 yield ret + (get_standard_obs(header.id),)
@@ -42,9 +51,10 @@ def xmlfilelist(selection):
                 yield ret + (None,)
 
     return dict(
-        selection = selection,
-        content   = generate_headers(selection),
+        selection=selection,
+        content=generate_headers(selection),
         )
+
 
 def diskfile_dicts(headers, return_header=False, check_ingest_queue=False):
     for header in headers:
@@ -62,7 +72,8 @@ def diskfile_dicts(headers, return_header=False, check_ingest_queue=False):
                 if fname.endswith('.bz2'):
                     fname = fname[:-4]
                 fname = f"{fname}%"
-                query = ctx.session.query(IngestQueue).filter(IngestQueue.filename.like(fname))
+                query = ctx.session.query(IngestQueueEntry)\
+                    .filter(IngestQueueEntry.filename.like(fname))
                 if query.count() > 0:
                     pending_ingest = True
         thedict['pending_ingest'] = pending_ingest
@@ -70,6 +81,7 @@ def diskfile_dicts(headers, return_header=False, check_ingest_queue=False):
             yield thedict
         else:
             yield thedict, header
+
 
 def jsonfilelist(selection, fields=None):
     """
@@ -84,24 +96,27 @@ def jsonfilelist(selection, fields=None):
     check_ingest_queue = False
     if 'pending_ingest' in req.env.qs:
         check_ingest_queue = True
-    thelist = list(diskfile_dicts(headers, check_ingest_queue=check_ingest_queue))
+    thelist = list(diskfile_dicts(headers,
+                                  check_ingest_queue=check_ingest_queue))
 
     if fields is None:
         get_context().resp.send_json(thelist, indent=4)
     else:
-        get_context().resp.send_json([dict((k, d[k]) for k in fields) for d in thelist], indent=4)
+        get_context().resp.send_json([dict((k, d[k]) for k in fields)
+                                      for d in thelist], indent=4)
 
-header_fields = ('program_id', 'engineering', 'science_verification', 'procmode',
-                 'calibration_program', 'observation_id', 'data_label',
-                 'telescope', 'instrument', 'ut_datetime', 'local_time',
-                 'observation_type', 'observation_class', 'object', 'ra',
-                 'dec', 'azimuth', 'elevation', 'cass_rotator_pa',
-                 'airmass', 'filter_name', 'exposure_time', 'disperser',
-                 'camera', 'central_wavelength', 'wavelength_band',
-                 'focal_plane_mask', 'detector_binning', 'detector_gain_setting',
-                 'detector_roi_setting', 'detector_readspeed_setting',
-                 'detector_welldepth_setting', 'detector_readmode_setting', 
-                 'spectroscopy', 'mode',
+
+header_fields = ('program_id', 'engineering', 'science_verification',
+                 'procmode', 'calibration_program', 'observation_id',
+                 'data_label', 'telescope', 'instrument', 'ut_datetime',
+                 'local_time', 'observation_type', 'observation_class',
+                 'object', 'ra', 'dec', 'azimuth', 'elevation',
+                 'cass_rotator_pa', 'airmass', 'filter_name', 'exposure_time',
+                 'disperser', 'camera', 'central_wavelength', 'wavelength_band',
+                 'focal_plane_mask', 'detector_binning',
+                 'detector_gain_setting', 'detector_roi_setting',
+                 'detector_readspeed_setting', 'detector_welldepth_setting',
+                 'detector_readmode_setting', 'spectroscopy', 'mode',
                  'adaptive_optics', 'laser_guide_star', 'wavefront_sensor',
                  'gcal_lamp', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg',
                  'requested_iq', 'requested_cc', 'requested_wv',
@@ -110,6 +125,7 @@ header_fields = ('program_id', 'engineering', 'science_verification', 'procmode'
 
 proprietary_fields = ('ra', 'dec', 'azimuth', 'elevation', 'airmass',
                       'object', 'cass_rotator_pa')
+
 
 def jsonsummary(selection, orderby=None):
     """
@@ -124,7 +140,7 @@ def jsonsummary(selection, orderby=None):
 
     # Like the summaries, only list canonical files by default
     if 'canonical' not in list(selection.keys()):
-        selection['canonical']=True
+        selection['canonical'] = True
 
     if orderby is None:
         orderby = ['filename_asc']
@@ -153,12 +169,10 @@ def jsonsummary(selection, orderby=None):
 
 def jsonqastate(selection):
     """
-    This generates a JSON list giving datalabel, entrytime, data_md5 and qa_state.
-    It is intended for use by the ODB.
-    It does not limit the number of results
+    This generates a JSON list giving datalabel, entrytime, data_md5 and
+    qa_state. It is intended for use by the ODB. It does not limit the number
+    of results
     """
-    then = datetime.now()
-
     ctx = get_context()
 
     # Like the summaries, only list canonical files by default
@@ -166,8 +180,9 @@ def jsonqastate(selection):
         selection['canonical']=True
 
     # We do this directly rather than with list_headers for efficiency
-    # as this could be used on very large queries bu the ODB
-    query = ctx.session.query(Header, DiskFile).select_from(Header, DiskFile, File)
+    # as this could be used on very large queries by the ODB
+    query = ctx.session.query(Header, DiskFile)\
+        .select_from(Header, DiskFile, File)
     query = query.filter(Header.diskfile_id == DiskFile.id)
     query = query.filter(DiskFile.file_id == File.id)
     query = queryselection(query, selection)
@@ -182,9 +197,7 @@ def jsonqastate(selection):
 
     ctx.resp.send_json(thelist)
 
-from decimal import Decimal
-from datetime import datetime, date, time
-from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean, Date, Time, BigInteger, Enum
+
 def _for_json(thing):
     """
     JSON can't serialize some types, this does best representation we can
