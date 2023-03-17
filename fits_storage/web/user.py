@@ -919,7 +919,7 @@ def user_list():
                        desc(User.gemini_staff),
                        User.username))
 
-    return dict(staffer=True,
+    return dict(staff=True,
                 users=users)
 
 

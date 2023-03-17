@@ -7,7 +7,7 @@
 {% block body %}
  <H1>Gemini Observatory Archive ORCID Login</H1>
  {% if valid_request %}
-   <P>Welcome, you are sucessfully logged in to the Gemini Archive.</P>
+   <P>Welcome, you are successfully logged in to the Gemini Archive.</P>
    {% if thing_string %}
      <p><a href="/searchform/{{ thing_string }}">Click here to go back to your search form</a></p>
      <p><a href="/searchform">Click here to go to an empty search form</a></p>
@@ -18,7 +18,7 @@
    <p><a href="/my_programs">Click here to register programs</a></p>
  {% else %}
    {% if reason_bad %}
-     <P>Log-in did not suceed: {{ reason_bad }}. Please try again.</P>
+     <P>Log-in did not succeed: {{ reason_bad }}. Please try again.</P>
    {% endif %}
  {% endif %}{# valid request #}
 {% endblock %}
