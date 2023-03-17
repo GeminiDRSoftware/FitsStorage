@@ -1,21 +1,3 @@
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-
-from ..fits_storage_config import using_s3, fits_open_result_limit, fits_closed_result_limit
-
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_fitsfilename
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.header import Header
-from ..orm.obslog import Obslog
-from ..orm.downloadlog import DownloadLog
-from ..orm.filedownloadlog import FileDownloadLog
-from ..orm.miscfile import MiscFile
-
-from ..utils.web import get_context, Return, with_content_type
-
-from .selection import openquery, selection_to_URL
-from .summary import list_headers
-
 import time
 import datetime
 import bz2
@@ -23,18 +5,39 @@ from io import BytesIO
 import tarfile
 import os
 
+from sqlalchemy.exc import NoResultFound, MultipleResultsFound
+
+from fits_storage.gemini_metadata_utils import gemini_fitsfilename
+
+from fits_storage.core.orm.file import File
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.header import Header
+
+from fits_storage.server.orm.obslog import Obslog
+from fits_storage.server.orm.downloadlog import DownloadLog
+from fits_storage.server.orm.filedownloadlog import FileDownloadLog
+from fits_storage.server.orm.miscfile import MiscFile
+
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
+
+from fits_storage.server.access_control_utils import icanhave
+
+from .selection import openquery, selection_to_URL
+from .summary import list_headers
+
+from fits_storage.config import get_config
+fsc = get_config()
+
 # We assume that servers used as archive use a calibraiton association cache table
-from ..fits_storage_config import use_as_archive
-if use_as_archive:
+if fsc.is_archive:
     from gemini_calmgr.cal.associate_calibrations import associate_cals_from_cache as associate_cals
 else:
     from gemini_calmgr.cal.associate_calibrations import associate_cals
 
-if using_s3:
-    from ..utils.aws_s3 import get_helper
+if fsc.using_s3:
+    from fits_storage.server.aws_s3 import get_helper
     s3 = get_helper()
-
-from ..utils.userprogram import icanhave
 
 filename_elements = (
     'program_id',
@@ -75,7 +78,8 @@ You can verify file integrity by running 'md5sum -c md5sums.txt'.
 
 readme_associated = """\
 Note that this download was from an associated calibrations page -
-it only contains the calibration files that are associated with the science query.
+it only contains the calibration files that are associated with the science 
+query.
 
 """
 
@@ -85,11 +89,13 @@ because they are proprietary data that you do not have access to:
 {denied}
 """
 
+
 def make_tarinfo(name, **kw):
     ti = tarfile.TarInfo(name)
     for key, value in list(kw.items()):
         setattr(ti, key, value)
     return ti
+
 
 def download_post():
     # Parse form data
@@ -105,7 +111,7 @@ def download_post():
     return download(selection = {'filelist': thelist},
                     associated_calibrations = False)
 
-@with_content_type("application/tar")
+
 def download(selection, associated_calibrations):
     """
     This is the download server. Given a selection, it will send a tarball of the
@@ -122,6 +128,7 @@ def download(selection, associated_calibrations):
     selection['present'] = True
 
     ctx = get_context()
+    ctx.resp.content_type = "application/tar"
     # Open a database session
 
     session = ctx.session
@@ -153,30 +160,41 @@ def download(selection, associated_calibrations):
         downloadlog.sending_files = False
         downloadlog.add_note("Nothing to download, aborted")
         ctx.resp.content_type = 'text/plain'
-        ctx.resp.append("No files to download. Either you asked to download marked files, but didn't mark any files, or you specified a selection criteria that doesn't find any files")
+        ctx.resp.append("No files to download. Either you asked to download "
+                        "marked files, but didn't mark any files, or you "
+                        "specified a selection criteria that doesn't find "
+                        "any files")
         session.commit()
         return
 
-    if openquery(selection) and len(headers) > fits_open_result_limit:
+    if openquery(selection) and len(headers) > fsc.fits_open_result_limit:
         # Open query. Almost certainly too many files
         downloadlog.sending_files = False
         downloadlog.add_note("Hit Open result Limit, aborted")
         ctx.resp.content_type = 'text/plain'
         ctx.resp.append_iterable(
-            ["Your selection criteria does not restrict the number of results, and more than %d were found. " % fits_open_result_limit,
-             "Please refine your selection more before attempting to download. Queries that can contain an arbitrary number of results have a lower limit applied than more constrained queries. Including a date range or program id will prevent an arbitrary number of results being found will raise the limit"]
+            ["Your selection criteria does not restrict the number of results,"
+             " and more than %d were found. " % fsc.fits_open_result_limit,
+             "Please refine your selection more before attempting to download. "
+             "Queries that can contain an arbitrary number of results have a "
+             "lower limit applied than more constrained queries. Including a "
+             "date range or program id will prevent an arbitrary number of "
+             "results being found will raise the limit"]
         )
         session.commit()
         return
 
-    if len(headers) > fits_closed_result_limit:
+    if len(headers) > fsc.fits_closed_result_limit:
         # Open query. Almost certainly too many files
         downloadlog.sending_files = False
         downloadlog.add_note("Hit Closed result limit, aborted")
         ctx.resp.content_type = 'text/plain'
         ctx.append_iterable(
-            ["More than %d results were found. This is beyond the limit we allow" % fits_closed_result_limit,
-             "Please refine your selection more before attempting to download. If you really want all these files, we suggest you break your search into several smaller date range pieces and download one set at a time."]
+            [f"More than {fsc.fits_closed_result_limit} results were found. "
+             "This is beyond the limit we allow. Please refine your selection "
+             "more before attempting to download. If you really want all "
+             "these files, we suggest you break your search into several "
+             "smaller date range pieces and download one set at a time."]
         )
         session.commit()
         return
@@ -194,9 +212,12 @@ def download(selection, associated_calibrations):
         for header in headers:
             filedownloadlog = FileDownloadLog(ctx.usagelog)
             if not header.diskfile.present:
-                # File has been updated behind our backs. Try to find the new one
+                # File has been updated behind our backs. Try to find the new
+                # one
                 file_id = header.diskfile.file_id
-                header = session.query(Header).join(DiskFile).filter(DiskFile.file_id == file_id).filter(DiskFile.present == True).one()
+                header = session.query(Header).join(DiskFile)\
+                    .filter(DiskFile.file_id == file_id)\
+                    .filter(DiskFile.present == True).one()
                 filedownloadlog.add_note("File replaced during download")
             filedownloadlog.diskfile_filename = header.diskfile.filename
             filedownloadlog.diskfile_file_md5 = header.diskfile.file_md5
@@ -204,8 +225,9 @@ def download(selection, associated_calibrations):
             session.add(filedownloadlog)
             if icanhave(ctx, header, filedownloadlog):
                 filedownloadlog.canhaveit = True
-                md5file += "%s  %s\n" % (header.diskfile.file_md5, header.diskfile.filename)
-                if using_s3:
+                md5file += "%s  %s\n" % (header.diskfile.file_md5,
+                                         header.diskfile.filename)
+                if fsc.using_s3:
                     with s3.fetch_temporary(header.diskfile.filename) as buffer:
                         # Write buffer into tarfile
                         # - create a tarinfo object
@@ -230,7 +252,7 @@ def download(selection, associated_calibrations):
                             raise
 
                 else:
-                    tar.add(header.diskfile.fullpath(), header.diskfile.filename)
+                    tar.add(header.diskfile.fullpath, header.diskfile.filename)
             else:
                 # Permission denied, add to the denied list
                 filedownloadlog.canhaveit = False
@@ -453,10 +475,10 @@ This was unexpected. Please, inform the administrators.
 
 def sendonefile(diskfile, content_type=None, filenamegiven=None):
     """
-    Send the (one) fits file referred to by the diskfile object to the client.
-    This sends data as compressed or uncompressed depending on the givebn filename
-    extension (.bz2 for compressed).  If no given filename is passed, the filename
-    is taken from the diskfile entry.
+    Send the (one) fits file referred to by the diskfile object to the
+    client. This sends data as compressed or uncompressed depending on the
+    givebn filename extension (.bz2 for compressed).  If no given filename is
+    passed, the filename is taken from the diskfile entry.
     """
 
     ctx = get_context()
@@ -473,7 +495,7 @@ def sendonefile(diskfile, content_type=None, filenamegiven=None):
     if content_type == 'application/fits':
         resp.set_header('Content-Disposition', 'attachment; filename="%s"' % filenamegiven)
 
-    if using_s3:
+    if fsc.using_s3:
         # S3 file server
         # resp.content_length = diskfile.data_size
         with s3.fetch_temporary(fname) as buffer:
@@ -496,15 +518,15 @@ def sendonefile(diskfile, content_type=None, filenamegiven=None):
             if diskfile.compressed == True:
                 if filenamegiven.lower().endswith('.bz2'):
                     resp.content_length = diskfile.file_size
-                    resp.sendfile(diskfile.fullpath())
+                    resp.sendfile(diskfile.fullpath)
                 else:
                     # Unzip it on the fly
                     resp.content_length = diskfile.data_size
-                    resp.sendfile_obj(BZ2OnTheFlyDecompressor(open(diskfile.fullpath(), 'rb')))
+                    resp.sendfile_obj(BZ2OnTheFlyDecompressor(open(diskfile.fullpath, 'rb')))
             else:
                 if filenamegiven.lower().endswith('.bz2'):
-                    resp.sendfile_obj(BZ2OnTheFlyCompressor(open(diskfile.fullpath(), 'rb')))
+                    resp.sendfile_obj(BZ2OnTheFlyCompressor(open(diskfile.fullpath, 'rb')))
                 else:
-                    resp.sendfile(diskfile.fullpath())
+                    resp.sendfile(diskfile.fullpath)
         except IOError:
             ctx.resp.client_error(Return.HTTP_NOT_FOUND, unexpected_not_found_template.format(fname=filenamegiven))

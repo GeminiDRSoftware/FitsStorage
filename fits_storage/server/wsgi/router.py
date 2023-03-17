@@ -18,6 +18,8 @@ from fits_storage.web.logreports import \
 from fits_storage.web.summary import summary
 from fits_storage.web.diskfilereports import report
 
+from fits_storage.web.fileserver import fileserver, download, download_post
+
 from fits_storage.web.searchform import searchform, nameresolver
 
 from fits_storage.web.user import whoami, login, logout, request_account, \
@@ -116,10 +118,10 @@ url_map = Map([
     Rule('/nameresolver/<resolver>/<target>', nameresolver),
 
     # File server and downloads
-    # Rule('/file/<filenamegiven>', fileserver),
-    # Rule('/download/', download_post, methods=['POST']),
-    # Rule('/download/<selection(SEL,ASSOC):selection,associated_calibrations>',
-    #      download, methods=['GET']),
+    Rule('/file/<filenamegiven>', fileserver),
+    Rule('/download/', download_post, methods=['POST']),
+    Rule('/download/<selection(SEL,ASSOC):selection,associated_calibrations>',
+         download, methods=['GET']),
 
     # Previews
     # Rule('/preview/<filenamegiven>', preview),
