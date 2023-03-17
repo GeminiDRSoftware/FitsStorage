@@ -91,6 +91,8 @@ class DiskFile(Base):
     fverrors = Column(Integer)
     mdready = Column(Boolean)
 
+    provenance = None
+    provenance_history = None
     # provenance = relationship(Provenance, back_populates='diskfile',
     #                          order_by=Provenance.timestamp)
     # provenance_history = relationship(ProvenanceHistory,

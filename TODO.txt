@@ -29,3 +29,9 @@ of code putting it here, but it makes it more convoluted and less explicit.
 * /curation should require being logged in at least, preferably as admin
 or superuser as it can be database intensive. Review URL list for similar
 urls that should not be public.
+
+* refactor web/diskfilereports.py to have separate functions for the various
+reports (see multiple uses in wsgi/router.py) rather than looking at the
+usagelog record to figure out what report we're supposed to generate. Sigh.
+
+* re-implement a queue status display

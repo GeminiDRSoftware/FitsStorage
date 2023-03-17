@@ -16,8 +16,9 @@ from fits_storage.web.logreports import \
     usagereport, usagedetails, downloadlog, usagestats
 
 from fits_storage.web.summary import summary
+from fits_storage.web.diskfilereports import report
 
-from fits_storage.web.searchform import searchform
+from fits_storage.web.searchform import searchform, nameresolver
 
 from fits_storage.web.user import whoami, login, logout, request_account, \
     request_password_reset, change_password, change_email, password_reset, \
@@ -45,8 +46,6 @@ url_map = Map([
     Rule('/content', content),
     Rule('/stats', stats),
     Rule('/curation', curation_report),
-
-    # Rule('/qareport', qareport, methods=['POST']),                  # Submit QA metric measurement report
 
     # Log queries and reports
     Rule('/usagereport', usagereport),
@@ -80,9 +79,62 @@ url_map = Map([
     Rule('/taperead', taperead),
     Rule('/fileontape/<filename>', fileontape),
 
-    # Rule('/notification', notification),                            # Emailnotification handler
-    # Rule('/import_odb_notifications', import_odb_notifications,     # Notification update from odb handler
-    #      methods=['POST']),
+    # Diskfile Reports - you can give these either a diskfile_id or a filename
+    Rule('/fitsverify/<thing>', report),
+    Rule('/mdreport/<thing>', report),
+    Rule('/fullheader/<thing>', report),
+
+    # Archive Search Form, summaries etc
+    Rule('/searchform/<seq_of:things>', searchform,
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+
+    Rule('/summary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>',
+         partial(summary, 'summary'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/diskfiles/<selection(SEL,NOLNK,BONLY):selection,links,body_only>',
+         partial(summary, 'diskfiles'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/ssummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>',
+         partial(summary, 'ssummary'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/lsummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>',
+         partial(summary, 'lsummary'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule(
+        '/searchresults/<selection(SEL,NOLNK,BONLY):selection,links,body_only>',
+        partial(summary, 'searchresults'),
+        collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule(
+        '/associated_cals/<selection(SEL,NOLNK,BONLY):selection,links,body_only>',
+        partial(summary, 'associated_cals'),
+        collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule(
+        '/associated_cals_json/<selection(SEL,NOLNK,BONLY):selection,links,body_only>',
+        partial(summary, 'associated_cals_json'),
+        collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+
+    Rule('/nameresolver/<resolver>/<target>', nameresolver),
+
+    # File server and downloads
+    # Rule('/file/<filenamegiven>', fileserver),
+    # Rule('/download/', download_post, methods=['POST']),
+    # Rule('/download/<selection(SEL,ASSOC):selection,associated_calibrations>',
+    #      download, methods=['GET']),
+
+    # Previews
+    # Rule('/preview/<filenamegiven>', preview),
+    # Rule('/preview/<filenamegiven>/<int:number>', preview),
+    # Rule('/num_previews/<filenamegiven>', num_previews),
+
+    # QA metrics
+    # Rule('/qareport', qareport, methods=['POST']),
+    # Rule('/qametrics/<seq_of(iq,zq,sb,pe):metrics>', qametrics),
+    # Rule('/qaforgui/<date>', qaforgui),
+
+    # Notifications
+    # Rule('/notification', notification),
+    # Rule('/import_odb_notifications', import_odb_notifications, methods=['POST']),
+
 
     # Rule('/update_headers', update_headers, methods=['POST']),      # JSON RPC dispatcher
     # Rule('/ingest_files', ingest_files, methods=['POST']),          # JSON RPC dispatcher
@@ -91,30 +143,8 @@ url_map = Map([
     #      methods=['POST']),                                          # JSON RPC dispatcher
     # Rule('/publication/ads/<bibcode>', publication_ads),            # Publication ADS Info
     # Rule('/list_publications', list_publications),                  # Publication Bibcode/Link List
-    #
-
-    #
-    # Rule('/nameresolver/<resolver>/<target>', nameresolver),        # Name resolver proxy
-    # Rule('/file/<filenamegiven>', fileserver),                      # This is the fits file server
-    # Rule('/download/', download_post, methods=['POST']),
-    # Rule('/download/<selection(SEL,ASSOC):selection,associated_calibrations>',
-    #      download, methods=['GET']),
-    # Rule('/qametrics/<seq_of(iq,zq,sb,pe):metrics>', qametrics),    # Retrieve QA metrics, simple initial version
-    # Rule('/qaforgui/<date>', qaforgui),                             # Retrieve QA metrics, json version for GUI
 
 
-    # Rule('/preview/<filenamegiven>', preview),                      # previews
-    # Rule('/preview/<filenamegiven>/<int:number>', preview),         # previews
-    # Rule('/num_previews/<filenamegiven>', num_previews),            # number of available previews related to the given file
-    #
-    # Rule('/console', console),
-    # Rule('/console/ingest_queue', console_ingest_queue),
-    # Rule('/console/ingest_errors', console_ingest_errors),
-    # Rule('/console/export_queue', console_export_queue),
-    # Rule('/queuestatus', queuestatus_summary),                      # Show some info on what's going on with the queues
-    # Rule('/queuestatus/json', queuestatus_update),                  # Show some info on what's going on with the queues
-    # Rule('/queuestatus/<qshortname>/<int:oid>', queuestatus_tb),    # Show some info on what's going on with the queues
-    #
     # Rule('/miscfiles', miscfiles.miscfiles),                        # Miscellanea (Opaque files)
     # Rule('/miscfiles/<int:handle>', miscfiles.miscfiles),           # Miscellanea (Opaque files)
     # Rule('/miscfiles/validate_add', miscfiles.validate,             # Miscellanea (Opaque files)
@@ -127,15 +157,7 @@ url_map = Map([
     #      partial(upload_file, processed_cal=True),
     #      methods=['POST']),
     #
-    # # This returns the fitsverify, mdreport or fullheader text from the database
-    # # you can give it either a diskfile_id or a filename
-    # Rule('/fitsverify/<thing>', report),
-    # Rule('/mdreport/<thing>', report),
-    # Rule('/fullheader/<thing>', report),
-    #
-    # Rule('/fitsverify', report, defaults=dict(thing=None)),
-    # Rule('/mdreport', report, defaults=dict(thing=None)),
-    # Rule('/fullheader', report, defaults=dict(thing=None)),
+
     #
     # Rule('/calibrations/<selection:selection>', calibrations),      # The calibrations handler
     # Rule('/xmlfilelist/<selection:selection>', xmlfilelist),        # The xml and json file list handlers
@@ -171,27 +193,7 @@ url_map = Map([
     # # the same reason as with obslogs (see above)
     # Rule('/gmoscaljson/<selection:selection>', gmoscal_json),
     #
-    # # Archive Search Form
-    Rule('/searchform/<seq_of:things>', searchform,
-         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
 
-    # # This is the header summary handler
-    Rule('/summary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'summary'),
-         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    Rule('/diskfiles/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'diskfiles'),
-         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    Rule('/ssummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'ssummary'),
-         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    Rule('/lsummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'lsummary'),
-         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    Rule('/searchresults/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'searchresults'),
-         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    Rule('/associated_cals/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'associated_cals'),
-         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    Rule('/associated_cals_json/<selection(SEL,NOLNK,BONLY):selection,links,body_only>',
-         partial(summary, 'associated_cals_json'),
-         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    #
     # # ORCID login handling/account setup
     # Rule('/orcid', orcid, collect_qs_args=dict(code='code'), defaults=dict(code=None)),
     #

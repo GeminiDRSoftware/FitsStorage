@@ -1,19 +1,22 @@
-# Provides functionality to extract and present full header information or metadata reports
+# Provides functionality to extract and present full header information or
+# metadata reports
 
 import re
 
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound
 
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_fitsfilename
+from fits_storage.gemini_metadata_utils import gemini_fitsfilename
 
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.diskfile import DiskFile
-from ..orm.diskfilereport import DiskFileReport
-from gemini_obs_db.orm.header import Header
-from ..orm.fulltextheader import FullTextHeader
+from fits_storage.core.orm.file import File
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.diskfilereport import DiskFileReport
+from fits_storage.core.orm.header import Header
+from fits_storage.core.orm.fulltextheader import FullTextHeader
 
-from ..utils.userprogram import canhave_coords
-from ..utils.web import get_context, Return
+from fits_storage.server.access_control_utils import canhave_coords
+
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
 
 def report(thing):
     ctx = get_context()
@@ -27,6 +30,7 @@ def report(thing):
 
         return
 
+    # TODO - this is a horrible hack, not a neat solution.
     this = ctx.usagelog.this
 
     if thing.isdigit():
