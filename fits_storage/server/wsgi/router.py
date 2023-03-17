@@ -21,6 +21,10 @@ from fits_storage.web.diskfilereports import report
 from fits_storage.web.fileserver import fileserver, download, download_post
 
 from fits_storage.web.searchform import searchform, nameresolver
+from fits_storage.web.file_list import xmlfilelist, jsonfilelist, \
+    jsonsummary, jsonqastate
+
+from fits_storage.web.progsobserved import progsobserved, sitemap
 
 from fits_storage.web.user import whoami, login, logout, request_account, \
     request_password_reset, change_password, change_email, password_reset, \
@@ -116,6 +120,15 @@ url_map = Map([
         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
 
     Rule('/nameresolver/<resolver>/<target>', nameresolver),
+    Rule('/xmlfilelist/<selection:selection>', xmlfilelist),
+    Rule('/jsonfilelist/<selection:selection>', jsonfilelist),
+    Rule('/jsonfilenames/<selection:selection>', partial(jsonfilelist,
+                                                         fields={'name'})),
+    Rule('/jsonsummary/<selection:selection>', jsonsummary,
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/jsonqastate/<selection:selection>', jsonqastate),
+    Rule('/programsobserved/<selection:selection>', progsobserved),
+    Rule('/sitemap.xml', sitemap),
 
     # File server and downloads
     Rule('/file/<filenamegiven>', fileserver),
@@ -138,18 +151,19 @@ url_map = Map([
     # Rule('/import_odb_notifications', import_odb_notifications, methods=['POST']),
 
 
-    # Rule('/update_headers', update_headers, methods=['POST']),      # JSON RPC dispatcher
-    # Rule('/ingest_files', ingest_files, methods=['POST']),          # JSON RPC dispatcher
-    # Rule('/ingest_programs', ingest_programs, methods=['POST']),    # JSON RPC dispatcher
-    # Rule('/ingest_publications', ingest_publications,
-    #      methods=['POST']),                                          # JSON RPC dispatcher
-    # Rule('/publication/ads/<bibcode>', publication_ads),            # Publication ADS Info
-    # Rule('/list_publications', list_publications),                  # Publication Bibcode/Link List
+    # Rule('/update_headers', update_headers, methods=['POST']),
+    # Rule('/ingest_files', ingest_files, methods=['POST']),
+    # Rule('/ingest_programs', ingest_programs, methods=['POST']),
 
+    # Publication handling
+    # Rule('/ingest_publications', ingest_publications, methods=['POST']),
+    # Rule('/publication/ads/<bibcode>', publication_ads),
+    # Rule('/list_publications', list_publications),
 
-    # Rule('/miscfiles', miscfiles.miscfiles),                        # Miscellanea (Opaque files)
-    # Rule('/miscfiles/<int:handle>', miscfiles.miscfiles),           # Miscellanea (Opaque files)
-    # Rule('/miscfiles/validate_add', miscfiles.validate,             # Miscellanea (Opaque files)
+    # Miscfiles
+    # Rule('/miscfiles', miscfiles.miscfiles),
+    # Rule('/miscfiles/<int:handle>', miscfiles.miscfiles),
+    # Rule('/miscfiles/validate_add', miscfiles.validate,
     #      methods=['POST']),
     #
     # Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
@@ -162,12 +176,7 @@ url_map = Map([
 
     #
     # Rule('/calibrations/<selection:selection>', calibrations),      # The calibrations handler
-    # Rule('/xmlfilelist/<selection:selection>', xmlfilelist),        # The xml and json file list handlers
-    # Rule('/jsonfilelist/<selection:selection>', jsonfilelist),
-    # Rule('/jsonfilenames/<selection:selection>', partial(jsonfilelist, fields={'name'})),
-    # Rule('/jsonsummary/<selection:selection>', jsonsummary,
-    #      collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    # Rule('/jsonqastate/<selection:selection>', jsonqastate),
+
     # Rule('/calmgr/<selection:selection>', xmlcalmgr),               # The calmgr handler, returning xml (legacy url)
     # Rule('/xmlcalmgr/<selection:selection>', xmlcalmgr),            # The calmgr handler, returning xml
     # Rule('/jsoncalmgr/<selection:selection>', jsoncalmgr),          # The calmgr handler, returning json
@@ -175,8 +184,7 @@ url_map = Map([
     # Rule('/gmoscaltwilightdetails', gmoscaltwilightdetails),        # The GMOS twilight flat and bias report
     # Rule('/gmoscaltwilightfiles', gmoscaltwilightfiles),            # The GMOS twilight flat list of files
     # Rule('/gmoscalbiasfiles/<selection:selection>', gmoscalbiasfiles),  # The GMOS bias list of files
-    # Rule('/programsobserved/<selection:selection>',                 # This is the projects observed feature
-    #      progsobserved),
+
     #
     # # Group of URIs dealing with program/publication
     # Rule('/programinfo/<program_id>', program_info),                # Displays data from a program

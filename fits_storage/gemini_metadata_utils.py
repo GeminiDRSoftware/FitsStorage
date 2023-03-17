@@ -1144,8 +1144,8 @@ def get_date_offset() -> timedelta:
     timedelta
         The `timedelta` to use for this application/server.
     """
-    if db_config.use_utc:
-        return ZERO_OFFSET
+    #if db_config.use_utc:
+    #    return ZERO_OFFSET
 
     # Calculate the proper offset to add to the date
     # We consider the night boundary to be 14:00 local time

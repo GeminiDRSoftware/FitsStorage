@@ -3,17 +3,17 @@ This is the Fits Storage Web Summary module. It provides the functions
 which query the database and generate html for the web header
 summaries.
 """
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
+from fits_storage.core.orm.header import Header
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.file import File
 from .selection import sayselection, queryselection
 from . import templating
 from sqlalchemy import join, not_, func
 import datetime
 
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_date
+from fits_storage.gemini_metadata_utils import gemini_date
 
-from ..utils.web import get_context
+from fits_storage.server.wsgi.context import get_context
 
 @templating.templated("progsobserved.html")
 def progsobserved(selection):
@@ -27,13 +27,14 @@ def progsobserved(selection):
     session = get_context().session
 
     # the basic query in this case
-    query = session.query(Header.program_id).select_from(join(join(DiskFile, File), Header))
+    query = session.query(Header.program_id)\
+        .select_from(join(join(DiskFile, File), Header))
 
     # Add the selection criteria
     query = queryselection(query, selection)
 
     # Knock out null values. No point showing them as None for engineering files
-    query = query.filter(Header.program_id != None)
+    query = query.filter(Header.program_id is not None)
 
     # And the group by clause
     progs_query = query.group_by(Header.program_id)
@@ -45,7 +46,7 @@ def progsobserved(selection):
         )
 
 @templating.templated("sitemap.xml", content_type='text/xml')
-def sitemap(req):
+def sitemap():
     """
     This generates a sitemap.xml for google et al.
     We advertise a page for each program that we have data for... :-)
@@ -57,8 +58,10 @@ def sitemap(req):
     session = get_context().session
 
     # the basic query in this case
-    query = session.query(Header.program_id, func.max(Header.ut_datetime)).group_by(Header.program_id)
-    query = query.filter(not_(Header.program_id.contains('ENG'))).filter(not_(Header.program_id.contains('CAL')))
+    query = session.query(Header.program_id, func.max(Header.ut_datetime))\
+        .group_by(Header.program_id)\
+        .filter(not_(Header.program_id.contains('ENG')))\
+        .filter(not_(Header.program_id.contains('CAL')))
 
     items = []
 
