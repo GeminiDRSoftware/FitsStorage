@@ -32,6 +32,10 @@ if fsc.is_server:
     from fits_storage.queues.orm.previewqueueentry import PreviewQueueEntry
     from fits_storage.queues.orm.calcachequeueentry import CalCacheQueueEntry
 
+# Calcache table
+if fsc.is_archive:
+    from fits_storage.cal.orm.calcache import CalCache
+
 def create_tables(session: Session):
     """
     Creates the database tables appropriate for the configuration.

@@ -11,6 +11,8 @@ from .debug import debugmessage
 from fits_storage.web.statistics import stats, content
 from fits_storage.web.logreports import usagereport
 from fits_storage.web.summary import summary
+from fits_storage.web.searchform import searchform
+from fits_storage.web.user import whoami
 
 from .routing import SequenceConverter, SelectionConverter
 
@@ -19,7 +21,7 @@ fsc = get_config()
 
 url_map = Map([
     # Queries to the root should redirect to a sensible page
-#    Rule('/', redirect_to=('/searchform' if use_as_archive else '/usage.html')),
+    Rule('/', redirect_to=('/searchform' if fsc.is_archive else '/static/usage.html')),
     Rule('/debug', debugmessage),
     Rule('/content', content),                                      # Database Statistics
     Rule('/stats', stats),
@@ -68,7 +70,7 @@ url_map = Map([
     # Rule('/request_account/<seq_of:things>', request_account),      # new account request
     # Rule('/password_reset/<int:userid>/<token>', password_reset),   # account password reset request
     # Rule('/login/<seq_of:things>', login),                          # login form
-    # Rule('/whoami/<seq_of:things>', whoami),                        # whoami
+    Rule('/whoami/<seq_of:things>', whoami),                        # whoami
     # Rule('/change_email/<seq_of:things>', change_email),            # change_password
     # Rule('/change_password/<seq_of:things>', change_password),      # change_password
     # Rule('/my_programs/<seq_of:things>', my_programs),              # my_programs
@@ -141,25 +143,25 @@ url_map = Map([
     # Rule('/gmoscaljson/<selection:selection>', gmoscal_json),
     #
     # # Archive Search Form
-    # Rule('/searchform/<seq_of:things>', searchform,
-    #      collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    #
+    Rule('/searchform/<seq_of:things>', searchform,
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+
     # # This is the header summary handler
     Rule('/summary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'summary'),
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    # Rule('/diskfiles/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'diskfiles'),
-    #      collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    # Rule('/ssummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'ssummary'),
-    #      collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    # Rule('/lsummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'lsummary'),
-    #      collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    # Rule('/searchresults/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'searchresults'),
-    #      collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    # Rule('/associated_cals/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'associated_cals'),
-    #      collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    # Rule('/associated_cals_json/<selection(SEL,NOLNK,BONLY):selection,links,body_only>',
-    #      partial(summary, 'associated_cals_json'),
-    #      collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/diskfiles/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'diskfiles'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/ssummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'ssummary'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/lsummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'lsummary'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/searchresults/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'searchresults'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/associated_cals/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'associated_cals'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/associated_cals_json/<selection(SEL,NOLNK,BONLY):selection,links,body_only>',
+         partial(summary, 'associated_cals_json'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     #
     # # ORCID login handling/account setup
     # Rule('/orcid', orcid, collect_qs_args=dict(code='code'), defaults=dict(code=None)),

@@ -168,9 +168,10 @@ class FitsStorageConfig(dict):
     def _calculate_using_s3(self):
         """
         Determine if we're using AWS S3 for storage.
-        For now, this is equal to is_archive
+        This defaults to the is_archive value if not specified
         """
-        self.config['using_s3'] = self.config['is_archive']
+        if 'using_s3' not in self.config:
+            self.config['using_s3'] = self.config['is_archive']
 
     def _calculate_using_fitsverify(self):
         """

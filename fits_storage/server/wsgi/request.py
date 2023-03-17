@@ -1,6 +1,8 @@
 import json
 
 from .environment import Environment
+from .helperobjects import ItemizedFieldStorage
+
 
 class Request(object):
     """

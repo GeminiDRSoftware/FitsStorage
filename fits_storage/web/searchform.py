@@ -13,16 +13,19 @@ from xml.parsers.expat import ExpatError
 
 from . import templating
 
-from .calibrations import calibrations
-from gemini_obs_db.utils.gemini_metadata_utils import GeminiDataLabel, GeminiObservation, gemini_date
+from fits_storage.gemini_metadata_utils import GeminiDataLabel, \
+    GeminiObservation, gemini_date
 
 from .selection import getselection, selection_to_URL
 from .summary import summary_body
 from .summary_generator import selection_to_column_names, selection_to_form_indices
 from .summary_generator import formdata_to_compressed, search_col_mapping
 
-from ..fits_storage_config import fits_aux_datadir, fits_servertitle, use_as_archive
-from ..utils.web import get_context, Return
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
+
+from fits_storage.config import get_config
+fsc = get_config()
 
 # ------------------------------------------------------------------------------
 @templating.templated("search_and_summary/searchform.html", with_generator=True)
@@ -144,9 +147,9 @@ def searchform(things, orderby):
                 pass
 
     template_args = dict(
-        server_title   = fits_servertitle,
+        server_title   = fsc.fits_server_title,
         title_suffix   = title_suffix,
-        archive_style  = use_as_archive,
+        archive_style  = fsc.is_archive,
         thing_string   = thing_string,
         args_string    = args_string,
         updated        = updated,  # updateform(selection),
