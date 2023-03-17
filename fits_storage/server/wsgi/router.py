@@ -8,11 +8,23 @@ from fits_storage.server.wsgi.routing import Map, Rule
 from fits_storage.server.wsgi.context import get_context
 
 from .debug import debugmessage
+
 from fits_storage.web.statistics import stats, content
-from fits_storage.web.logreports import usagereport
+from fits_storage.web.curationreport import curation_report
+
+from fits_storage.web.logreports import \
+    usagereport, usagedetails, downloadlog, usagestats
+
 from fits_storage.web.summary import summary
+
 from fits_storage.web.searchform import searchform
-from fits_storage.web.user import whoami
+
+from fits_storage.web.user import whoami, login, logout, request_account, \
+    request_password_reset, change_password, change_email, password_reset, \
+    user_list, staff_access, admin_change_email, admin_change_password, \
+    admin_file_permissions
+
+from fits_storage.web.userprogram import my_programs
 
 from fits_storage.web.tapestuff import tape, tapewrite, tapefile, \
     jsontapefilelist, taperead, fileontape
@@ -25,19 +37,53 @@ fsc = get_config()
 url_map = Map([
     # Queries to the root should redirect to a sensible page
     Rule('/', redirect_to=('/searchform' if fsc.is_archive else '/static/usage.html')),
+
+    # Debugging and testing
     Rule('/debug', debugmessage),
-    Rule('/content', content),                                      # Database Statistics
+
+    # Database statistics etc
+    Rule('/content', content),
     Rule('/stats', stats),
+    Rule('/curation', curation_report),
+
     # Rule('/qareport', qareport, methods=['POST']),                  # Submit QA metric measurement report
-    Rule('/usagereport', usagereport),                              # Usage Statistics and Reports
-    # Rule('/usagestats', usagestats),                                # Usage Stats
-    Rule('/taperead', taperead),                                    # TapeRead handler
+
+    # Log queries and reports
+    Rule('/usagereport', usagereport),
+    Rule('/usagestats', usagestats),
+    Rule('/usagedetails/<int:ulid>', usagedetails),
+    Rule('/downloadlog/<seq_of:patterns>', downloadlog),
+
+    # User accounts
+    Rule('/whoami/<seq_of:things>', whoami),
+    Rule('/my_programs/<seq_of:things>', my_programs),
+    Rule('/login/<seq_of:things>', login),
+    Rule('/logout', logout),
+    Rule('/request_account/<seq_of:things>', request_account),
+    Rule('/request_password_reset', request_password_reset),
+    Rule('/password_reset/<int:userid>/<token>', password_reset),
+    Rule('/change_password/<seq_of:things>', change_password),
+    Rule('/change_email/<seq_of:things>', change_email),
+    Rule('/user_list', user_list),
+    Rule('/staff_access', staff_access),
+    Rule('/admin_change_email', admin_change_email),
+    Rule('/admin_change_password', admin_change_password),
+    Rule('/admin_file_permissions', admin_file_permissions),
+
+    # Tape stuff
+    Rule('/tape', tape),
+    Rule('/tape/<search>', tape),
+    Rule('/tapewrite', tapewrite),
+    Rule('/tapewrite/<label>', tapewrite),
+    Rule('/tapefile/<int:tapewrite_id>', tapefile),
+    Rule('/jsontapefile/<filepre>', jsontapefilelist),
+    Rule('/taperead', taperead),
+    Rule('/fileontape/<filename>', fileontape),
+
     # Rule('/notification', notification),                            # Emailnotification handler
     # Rule('/import_odb_notifications', import_odb_notifications,     # Notification update from odb handler
     #      methods=['POST']),
-    # Rule('/request_password_reset', request_password_reset),        # request password reset email
-    # Rule('/logout', logout),                                        # logout
-    # Rule('/user_list', user_list),                                  # user_list
+
     # Rule('/update_headers', update_headers, methods=['POST']),      # JSON RPC dispatcher
     # Rule('/ingest_files', ingest_files, methods=['POST']),          # JSON RPC dispatcher
     # Rule('/ingest_programs', ingest_programs, methods=['POST']),    # JSON RPC dispatcher
@@ -46,36 +92,17 @@ url_map = Map([
     # Rule('/publication/ads/<bibcode>', publication_ads),            # Publication ADS Info
     # Rule('/list_publications', list_publications),                  # Publication Bibcode/Link List
     #
-    # Rule('/curation', curation_report),                             # curation_report handler
-    # Rule('/staff_access', staff_access),                            # staff_access
-    # Rule('/admin_change_email', admin_change_email),                # admin page for changing a user's email
-    # Rule('/admin_change_password', admin_change_password),          # admin page for changing a user's password
-    # Rule('/admin_file_permissions', admin_file_permissions),        # admin page for changing custom per-file/obsid
-    #                                                                 #   permissions
+
     #
     # Rule('/nameresolver/<resolver>/<target>', nameresolver),        # Name resolver proxy
-    Rule('/fileontape/<filename>', fileontape),                     # The fileontape handler
     # Rule('/file/<filenamegiven>', fileserver),                      # This is the fits file server
     # Rule('/download/', download_post, methods=['POST']),
     # Rule('/download/<selection(SEL,ASSOC):selection,associated_calibrations>',
     #      download, methods=['GET']),
     # Rule('/qametrics/<seq_of(iq,zq,sb,pe):metrics>', qametrics),    # Retrieve QA metrics, simple initial version
     # Rule('/qaforgui/<date>', qaforgui),                             # Retrieve QA metrics, json version for GUI
-    # Rule('/usagedetails/<int:ulid>', usagedetails),                 # Usage Reports
-    # Rule('/downloadlog/<seq_of:patterns>', downloadlog),            # Download log
-    Rule('/tape', tape),                                            # Tape handler
-    Rule('/tape/<search>', tape),                                   # Tape handler
-    Rule('/tapewrite', tapewrite),                                  # TapeWrite handler
-    Rule('/tapewrite/<label>', tapewrite),                          # TapeWrite handler
-    Rule('/tapefile/<int:tapewrite_id>', tapefile),                 # TapeFile handler
-    Rule('/jsontapefile/<filepre>', jsontapefilelist),              # json tape file list handler)
-    # Rule('/request_account/<seq_of:things>', request_account),      # new account request
-    # Rule('/password_reset/<int:userid>/<token>', password_reset),   # account password reset request
-    # Rule('/login/<seq_of:things>', login),                          # login form
-    Rule('/whoami/<seq_of:things>', whoami),                        # whoami
-    # Rule('/change_email/<seq_of:things>', change_email),            # change_password
-    # Rule('/change_password/<seq_of:things>', change_password),      # change_password
-    # Rule('/my_programs/<seq_of:things>', my_programs),              # my_programs
+
+
     # Rule('/preview/<filenamegiven>', preview),                      # previews
     # Rule('/preview/<filenamegiven>/<int:number>', preview),         # previews
     # Rule('/num_previews/<filenamegiven>', num_previews),            # number of available previews related to the given file

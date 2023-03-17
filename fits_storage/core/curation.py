@@ -3,8 +3,8 @@ This module contains the functions for curation_report.py that compare items in
 the tables Header and DiskFile.
 
 """
-from .diskfile import DiskFile
-from .file import File
+from .orm.diskfile import DiskFile
+from .orm.file import File
 
 from sqlalchemy import distinct
 from sqlalchemy.orm import aliased
@@ -28,13 +28,12 @@ def duplicate_canonicals(session):
     # Make an alias of DiskFile
     # Self join DiskFile with its alias and compare their file_ids
     return (
-        session.query(distinct(DiskFile.id), File)
-            .join(File)
-            .join(diskfile_alias, DiskFile.file_id == diskfile_alias.file_id)
-            .filter(DiskFile.id != diskfile_alias.id)
-            .filter(DiskFile.canonical == True)
-            .filter(diskfile_alias.canonical == True)
-            .order_by(DiskFile.id)
+        session.query(distinct(DiskFile.id), File).join(File)
+        .join(diskfile_alias, DiskFile.file_id == diskfile_alias.file_id)
+        .filter(DiskFile.id != diskfile_alias.id)
+        .filter(DiskFile.canonical is True)
+        .filter(diskfile_alias.canonical is True)
+        .order_by(DiskFile.id)
     )
 
 
@@ -53,13 +52,13 @@ def duplicate_present(session):
     """
     return (
         session.query(distinct(DiskFile.id), File)
-            .join(File)
-            .join(diskfile_alias, DiskFile.file_id == diskfile_alias.file_id)
-            .filter(DiskFile.id != diskfile_alias.id)
-            .filter(DiskFile.present == True)
-            .filter(diskfile_alias.present == True)
-            .order_by(DiskFile.id)
-        )
+        .join(File)
+        .join(diskfile_alias, DiskFile.file_id == diskfile_alias.file_id)
+        .filter(DiskFile.id != diskfile_alias.id)
+        .filter(DiskFile.present is True)
+        .filter(diskfile_alias.present is True)
+        .order_by(DiskFile.id)
+    )
 
 
 def present_not_canonical(session):
@@ -77,9 +76,8 @@ def present_not_canonical(session):
     diskfiles
     """
     return (
-        session.query(distinct(DiskFile.id), File)
-            .join(File)
-            .filter(DiskFile.present == True)
-            .filter(DiskFile.canonical == False)
-            .order_by(DiskFile.id)
+        session.query(distinct(DiskFile.id), File).join(File)
+        .filter(DiskFile.present is True)
+        .filter(DiskFile.canonical is False)
+        .order_by(DiskFile.id)
         )

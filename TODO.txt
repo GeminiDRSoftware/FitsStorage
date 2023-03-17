@@ -25,3 +25,7 @@ refresh. Suggest add a is_released property to the orm classes for header,
 miscfile and obslog (the latter will handle the necessary queries). Also
 suggest move the log handling back to the callers, it might save a few lines
 of code putting it here, but it makes it more convoluted and less explicit.
+
+* /curation should require being logged in at least, preferably as admin
+or superuser as it can be database intensive. Review URL list for similar
+urls that should not be public.

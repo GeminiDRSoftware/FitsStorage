@@ -1,12 +1,13 @@
 """
 This module contains the curation_report html generator function.
 """
-from gemini_obs_db.orm.header import Header
-from ..orm.curation import duplicate_canonicals, duplicate_present, present_not_canonical
+from fits_storage.core.curation import duplicate_canonicals, \
+    duplicate_present, present_not_canonical
 
-from ..utils.web import get_context
+from fits_storage.server.wsgi.context import get_context
 
 from . import templating
+
 
 @templating.templated("curation_report.html")
 def curation_report():
@@ -18,7 +19,7 @@ def curation_report():
     session = get_context().session
 
     return dict(
-        dup_canon   = duplicate_canonicals(session),
-        dup_pres    = duplicate_present(session),
-        pres_no_can = present_not_canonical(session)
+        dup_canon=duplicate_canonicals(session),
+        dup_pres=duplicate_present(session),
+        pres_no_can=present_not_canonical(session)
         )
