@@ -849,6 +849,25 @@ class GHOSTFileParser(AstroDataFileParser):
             return None
         return gs
 
+class GRACESFileParser(AstroDataFileParser):
+    def reduction(self) -> str:
+        reduction = 'RAW'
+        try:
+            if self.ad.phu.get('REDUCTIO') is not None:
+                reduction = 'PROCESSED_SCIENCE'
+        except:
+            pass
+        return reduction
+
+    def procmode(self) -> str:
+        procmode = None
+        try:
+            if self.ad.phu.get('REDUCTIO') is not None:
+                procmode = 'ql'
+        except:
+            pass
+        return procmode
+
 
 def build_parser(ad, log) -> FileParser:
     if hasattr(ad, 'tags') and 'GMOS' in ad.tags:
@@ -865,6 +884,8 @@ def build_parser(ad, log) -> FileParser:
                 return NICIFileParser(ad, log)
             elif ad.instrument().upper() == 'IGRINS':
                 return IGRINSFileParser(ad, log)
+            elif ad.instrument().upper() == 'GRACES':
+                return GRACESFileParser(ad, log)
     except:
         pass
     return AstroDataFileParser(ad, log)
