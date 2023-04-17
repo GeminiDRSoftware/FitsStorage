@@ -1,11 +1,14 @@
+#!/usr/bin/env python
+
 import datetime
 import subprocess
 
-from fits_storage.fits_storage_config import fits_dbname
+from fits_storage.config import get_config
 from fits_storage.logger import logger, setdebug, setdemon
 
 from optparse import OptionParser
 
+fsc = get_config()
 
 """
 Script to vacuum the Postgres database.
@@ -26,7 +29,10 @@ if __name__ == "__main__":
     now = datetime.datetime.now()
     logger.info("*********  database_vacuum.py - starting up at %s" % now)
 
-    command = ["/usr/bin/vacuumdb", "--verbose", "--analyze", "--dbname", fits_dbname]
+    command = ["/usr/bin/vacuumdb",
+               "--verbose",
+               "--analyze",
+               "--dbname", fsc.fits_dbname]
 
     logger.info("Executing vacuumdb")
 

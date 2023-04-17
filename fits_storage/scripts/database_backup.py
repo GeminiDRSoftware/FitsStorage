@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+
 import os
 import re
 import datetime
 import subprocess
 
-from fits_storage.fits_storage_config import fits_db_backup_dir, fits_dbname
+from fits_storage.config import get_config
 from fits_storage.logger import logger, setdebug, setdemon
 
 
@@ -11,13 +13,16 @@ from fits_storage.logger import logger, setdebug, setdemon
 Script to backup the Postgres database.
 """
 
+# FitsStorage Configuration
+fsc = get_config()
+
+# Get a single 'now' value to use for consistency
+now = datetime.datetime.now()
+
 if __name__ == "__main__":
-
-    datestring = datetime.datetime.now().isoformat()
-
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("--dontdelete", action="store_true", dest="dontdelete", help="Don't actually delete anything, just say what would be deleted")
+    parser.add_option("--dontdelete", action="store_true", dest="dontdelete", help="Don't actually delete any old backups, just say what would be deleted")
     parser.add_option("--dontbackup", action="store_true", dest="dontbackup", help="Don't back up the database, just clean up")
     parser.add_option("--exclude-queues", action="store_true", dest="queues", help="Dont dump the queue tables as this conflicts with their locking and causes the queues to hang up during backup.")
     parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
@@ -29,43 +34,48 @@ if __name__ == "__main__":
     setdebug(options.debug)
     setdemon(options.demon)
 
-    # Annouce startup
-    now = datetime.datetime.now()
+    # Announce startup
     logger.info("*********    database_backup.py - starting up at %s" % now)
 
+    # Check if destination directory exists
+    if not os.path.isdir(fsc.fits_db_backup_dir):
+        logger.error("Backup Directory %s does not exist",
+                     fsc.fits_db_backup_dir)
+        exit(1)
+    if not os.access(fsc.fits_db_backup_dir, os.W_OK):
+        logger.error("No write permission to Backup Directory %s",
+                     fsc.fits_db_backup_dir)
+        exit(1)
 
-    # BACKUP STUFF
+    # Do the pg_dump backup
     if not options.dontbackup:
-        # The backup filename
-        filename = "%s.%s.pg_dump_c" % (fits_dbname, datestring)
+
+        filename = f"{fsc.fits_db_backup_dir}/{fsc.fits._dbname}." \
+                   f"{datetime.datetime.now().isoformat()}.pg_dump_c"
+        logger.debug("Backup Filename is %s", filename)
+
+        command = ["/usr/bin/pg_dump",
+                   "--format=c",
+                   f"--file={filename}"]
         if options.queues:
-            command = ["/usr/bin/pg_dump", "--format=c", "--file=%s/%s" % (fits_db_backup_dir, filename), '--exclude-table=*queue*', fits_dbname]
-        else:
-            command = ["/usr/bin/pg_dump", "--format=c", "--file=%s/%s" % (fits_db_backup_dir, filename), fits_dbname]
+            command.append('--exclude-table=*queue*')
+        command.append(fsc.fits_dbname)
+        logger.debug("Command is: %s", str(command))
 
-        os.makedirs(fits_db_backup_dir, exist_ok=True)
-
-        logger.info("Executing pg_dump")
+        logger.info("Executing pg_dump...")
         sp = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdoutstring, stderrstring) = sp.communicate()
         logger.info(stderrstring)
         logger.info(stdoutstring)
+        logger.info("... pg_dump complete.")
 
-        logger.info("-- Finished, Exiting")
 
+    # Cleanup old backup files
+    today = now.date()
 
-    # CLEANUP STUFF
-    split_date = now.isoformat().split('T')[0].split('-')
+    backup_files = os.listdir(fsc.fits_db_backup_dir)
 
-    # Strip date
-    year = int(split_date[0])
-    month = int(split_date[1])
-    day = int(split_date[2])
-    today = datetime.date(year, month, day)
-
-    db_backup = os.listdir(fits_db_backup_dir)
-
-    for filename in db_backup:
+    for filename in backup_files:
         # Strip filename
         match = re.match('fitsdata.(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).(\d{6}).pg_dump_c', filename)
         try:
@@ -93,14 +103,14 @@ if __name__ == "__main__":
                     if options.dontdelete:
                         logger.info("This file would be deleted: %s" % filename)
                     else:
-                        os.remove("%s/%s" % (fits_db_backup_dir, filename))
+                        os.remove("%s/%s" % (fsc.fits_db_backup_dir, filename))
                         logger.info("Deleting file: %s" % filename)
             else:
                 if options.dontdelete:
                     logger.info("This file would be deleted: %s" % filename)
                 else:
                     logger.info("Deleting file: %s" % filename)
-                    os.remove("%s/%s" % (fits_db_backup_dir, filename))
+                    os.remove("%s/%s" % (fsc.fits_db_backup_dir, filename))
         except AttributeError:
             # No match
             logger.info("The file %s is not in the expected format." % filename)
