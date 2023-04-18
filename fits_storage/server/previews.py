@@ -68,7 +68,8 @@ def make_preview(self, diskfile, force=False):
         try:
             preview_fullpath = os.join(preview_path, "%s_%03d_preview.jpg"
                                        % (diskfile.filename, extnum))
-            if len(diskfile.ad_object[0].shape) == 1:
+            if False:  # spect code needs more work.
+            #if len(diskfile.ad_object[0].shape) == 1:
                 # It's a spectrum
                 with open(filename, 'wb') as fp:
                     try:
@@ -97,6 +98,7 @@ def make_preview(self, diskfile, force=False):
                         preview = Preview(diskfile, filename)
                         self.s.add(preview)
             else:
+                # It's imaging.
                 with open(preview_fullpath, 'wb') as fp:
                     try:
                         self.render_preview(diskfile.ad_object, fp)
@@ -429,12 +431,3 @@ def make_preview(self, diskfile, force=False):
 
         plt.close()
 
-
-if __name__ == "__main__":
-    from .. import logger
-
-    pqu = PreviewQueueUtil(None, logger.logger)
-    # Example of one that had the black blotch
-    # pqu.render_preview(astrodata.open("/Users/ooberdorf/Downloads/N20200730S0218.fits"), "/Users/ooberdorf/test.jpg")
-    # Example of one that worked with the old way and failed after the fix
-    pqu.render_preview(astrodata.open("/Users/ooberdorf/dataflow/S20221209S0016.fits"), "/Users/ooberdorf/test.jpg")
