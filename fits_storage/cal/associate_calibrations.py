@@ -8,7 +8,7 @@ from fits_storage.gemini_metadata_utils import cal_types
 from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
-from .calcache import CalCache
+from fits_storage.cal.orm.calcache import CalCache
 
 mapping = {
     'processed_bias': ('bias', {'processed': True}),
