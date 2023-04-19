@@ -21,8 +21,6 @@ fsc = get_config()
 
 
 if __name__ == "__main__":
-
-    # ------------------------------------------------------------------------------
     parser = ArgumentParser()
     parser.add_argument("--skip-fv", action="store_true", dest="skip_fv",
                         default=False, help="Do not fitsverify the files")

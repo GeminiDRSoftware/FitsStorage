@@ -204,6 +204,10 @@ class Ingester(object):
                     self.s.add(eqe)
                 self.s.commit()
 
+        # Finally, delete the iqe we have just completed
+        self.s.delete(iqe)
+        self.s.commit()
+
     def need_to_add_diskfile(self, iqe, fileobj):
         """
         Determine whether we need to add a diskfile for this file object and
@@ -541,9 +545,5 @@ class Ingester(object):
 
         for failed_iqe in failed_iqes:
             self.s.delete(failed_iqe)
-
-        # And delete the iqe that we're working on...
-        self.s.delete(iqe)
-        self.s.commit()
 
         return True
