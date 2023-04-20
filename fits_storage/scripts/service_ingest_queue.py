@@ -63,6 +63,9 @@ if __name__ == "__main__":
                         help="This flag indicates that service_ingest_queue "
                              "should exit once the queue is empty.")
 
+    parser.add_argument("--oneshot", action="store_true", dest="oneshot",
+                        default=False, help="Process only one file then exit")
+
     options = parser.parse_args()
 
     # Logging level to debug? Include stdio log?
@@ -131,6 +134,9 @@ if __name__ == "__main__":
                             logger.info("Nothing on queue... Waiting")
                             time.sleep(2)
                             continue
+
+                    if options.oneshot:
+                        loop = False
 
                     # Don't query queue length in fast_rebuild mode
                     if options.fast_rebuild:
