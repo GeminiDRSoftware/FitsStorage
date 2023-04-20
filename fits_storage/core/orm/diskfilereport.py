@@ -64,8 +64,10 @@ class DiskFileReport(Base):
             self.fits_verify(diskfile, fvpath=fitsverify_path)
 
         if skip_md:
+            logger.debug("Skipping Metadata validation")
             diskfile.mdready = True
         else:
+            logger.debug("Calling Metadata validator")
             self.md(diskfile)
 
     def fits_verify(self, diskfile, fvpath=None):
@@ -117,7 +119,7 @@ class DiskFileReport(Base):
         filename = diskfile.get_uncompressed_file()
 
         try:
-            result = evaluate(diskfile.ad_object)
+            result = evaluate(filename)
             diskfile.mdready = result.passes
             self.mdstatus = result.code
             if result.message is not None:

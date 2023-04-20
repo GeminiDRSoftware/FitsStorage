@@ -174,12 +174,11 @@ class AstroDataEvaluator(Evaluator):
 
         return s
 
-    def evaluate(self, ad_object):
+    def evaluate(self, filename):
         try:
             # Opens the raw FITS file and sends it to 
             return super(AstroDataEvaluator, self).evaluate(
-                    pf.open(ad_object.path, memmap=True, do_not_scale_image_data=True, mode='readonly'),
-                    ad_object.tags)
+                    pf.open(filename, memmap=True, do_not_scale_image_data=True, mode='readonly'))
         except NotGeminiData:
             return Result(False, 'NOTGEMINI', "This doesn't look at all like data produced at Gemini")
         except BadFilter:
