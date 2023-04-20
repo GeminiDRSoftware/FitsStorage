@@ -27,6 +27,8 @@ def ingest_standards(session, filename, logger=DummyLogger()):
     Load the standards text file into the Standards table
     """
 
+    count = 0
+
     # Loop through entries in the standards text file, adding to table
     with open(filename, 'r') as standards:
         for line in standards:
@@ -62,3 +64,7 @@ def ingest_standards(session, filename, logger=DummyLogger()):
 
             # Hack in the geometrical point column
             add_point(session, std.id, std.ra, std.dec)
+
+            count += 1
+
+    logger.info("Ingested %d standards" % count)

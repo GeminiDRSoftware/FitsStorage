@@ -38,7 +38,7 @@ if __name__ == "__main__":
     if options.filename:
         filename = options.filename
     else:
-        filename = os.path.join(fsc.fits_aux_datadir, "standards.txt")
+        filename = os.path.join(fsc.aux_datadir, "standards.txt")
     logger.info("Reading from file: %s" % filename)
 
     with session_scope() as session:
