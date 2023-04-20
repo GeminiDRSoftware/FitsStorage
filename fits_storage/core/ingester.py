@@ -426,7 +426,7 @@ class Ingester(object):
 
         try:
             self.l.debug("Adding new DiskFileReport entry")
-            dfreport = DiskFileReport(diskfile, self.skip_fv, self.skip_md)
+            dfreport = DiskFileReport(diskfile, self.skip_fv, self.skip_md, logger=self.l)
             self.s.add(dfreport)
             self.s.commit()
         except:

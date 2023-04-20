@@ -43,10 +43,10 @@ def fitsverify(filename, fvpath=None):
     subp = subprocess.Popen([fvpath, filename],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdoutstring, stderrstring) = subp.communicate()
-    report = stdoutstring + stderrstring
 
     stdoutstring = stdoutstring.decode('utf8', errors='ignore')
     stderrstring = stderrstring.decode('utf8', errors='ignore')
+    report = stdoutstring + stderrstring
 
     # Check to see if we got a not a fits file situation
     if re.search('This does not look like a FITS file.', stdoutstring):

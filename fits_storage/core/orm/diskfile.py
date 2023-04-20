@@ -209,7 +209,7 @@ class DiskFile(Base):
         if self.uncompressed_cache_file is not None:
             return self.uncompressed_cache_file
 
-        if self.compressed is None:
+        if self.compressed is False:
             return self.fullpath
 
         try:

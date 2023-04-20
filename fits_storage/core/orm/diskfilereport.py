@@ -57,8 +57,10 @@ class DiskFileReport(Base):
         self.logger = logger
 
         if skip_fv or not using_fitsverify:
+            logger.debug("Skipping fits_verify")
             diskfile.fverrors = 0
         else:
+            logger.debug("Calling fits_verify")
             self.fits_verify(diskfile, fvpath=fitsverify_path)
 
         if skip_md:
@@ -97,6 +99,7 @@ class DiskFileReport(Base):
         diskfile.isfits = bool(retlist[0])
         diskfile.fvwarnings = retlist[1]
         diskfile.fverrors = retlist[2]
+        self.fvreport = retlist[3]
 
     def md(self, diskfile):
         """
