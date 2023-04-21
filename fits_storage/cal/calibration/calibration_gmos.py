@@ -10,7 +10,7 @@ from sqlalchemy import desc
 from fits_storage.core.orm.header import Header
 from fits_storage.cal.orm.gmos import Gmos
 
-from .calibration import Calibration, DEFAULT_ORDER_BY_NONE
+from .calibration import Calibration
 from .calibration import not_imaging
 from .calibration import not_processed
 from .calibration import not_spectroscopy
@@ -698,61 +698,22 @@ class CalibrationGMOS(Calibration):
 
         filters = []
 
-        # Find the dispersion, assume worst case if we can't match it
-        n = 1200.0
-        disperser_values = ['1200', '600', '831', '400', '150']
-        for dv in disperser_values:
-            if dv in self.descriptors['disperser']:
-                n = float(dv)
-        dispersion = 0.03/n
-        # Replace with this if we start storing dispersion in the gmos table and map
-        # it in above in the list of `instrDescriptors` to copy.
-        # dispersion = float(self.descriptors['dispersion'])
-
-        # per conversation with Chris Simpson
-        tolerance = 200 * dispersion
-
-        central_wavelength = float(self.descriptors['central_wavelength'])
-        lower_bound = central_wavelength - tolerance
-        upper_bound = central_wavelength + tolerance
-
-        filters.append(Header.central_wavelength.between(lower_bound, upper_bound))
-
-        # we get 1000 rows here to have a limit of some sort, but in practice
-        # we get all the cals, then sort them below, then limit it per the request
-        query = \
-            self.get_query() \
+        query = self.get_query() \
                 .standard(processed) \
                 .add_filters(*filters) \
+                .tolerance(central_wavelength=self._wavelength_tolerance())\
                 .match_descriptors(Header.instrument,
                                    Gmos.disperser,
                                    Gmos.detector_x_bin,
                                    Gmos.detector_y_bin,
                                    Gmos.filter_name) \
                 .max_interval(days=183)
-        results = query.all(1000)
+        results = query.all(howmany)
 
-        ut_datetime = self.descriptors['ut_datetime']
-        wavelength = float(self.descriptors['central_wavelength'])
-
-        # we score it based on the wavelength deviation expressed as a fraction of the wavelength itself,
-        # plus the difference in date as a fraction of the allowed 365 day interval.  This is a placeholder
-        # and we can do something else, add some weighting, add a squaring of the deviation, or other terms
-        def score(header):
-            if not isinstance(header, Header):
-                header = header[0]
-            wavelength_score = abs(float(header.central_wavelength) - wavelength) / tolerance
-            ut_datetime_score = abs((header.ut_datetime - ut_datetime).seconds) / (30.0*24.0*60.0*60.0)
-            return wavelength_score + ut_datetime_score
-
-        retval = [r for r in results]
-
-        # do the actual sort and return our requested max results
-        retval.sort(key=score)
         if return_query:
-            return retval[0:howmany], query
+            return results, query
         else:
-            return retval[0:howmany]
+            return results
 
 
     # We don't handle processed ones (yet)
@@ -808,7 +769,7 @@ class CalibrationGMOS(Calibration):
                 # Must match central wavelength to within some tolerance.
                 # We don't do separate ones for dithers in wavelength?
                 # tolerance = 0.02 microns
-                .tolerance(central_wavelength=0.02)
+                .tolerance(central_wavelength=self._wavelength_tolerance())
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
                 .all(howmany)
@@ -821,9 +782,10 @@ class CalibrationGMOS(Calibration):
         """
         Method to find the best specphot observation
 
-        This will match on non-'Twilight' partner cal or program cal for the same instrument, filter,
-        disperser, focal plane mask, and amp read area with  a central wavelength within 0.05
-        (or 0.1 for MOS) microns within 1 year.
+        This will match on non-'Twilight' partner cal or program cal for the
+        same instrument, filter, disperser, focal plane mask, and amp read
+        area with  a central wavelength within 0.05 (or 0.1 for MOS) microns
+        within 1 year.
 
         Parameters
         ----------
@@ -841,42 +803,45 @@ class CalibrationGMOS(Calibration):
         howmany = howmany if howmany else 4
 
         filters = []
-        # Must match the focal plane mask, unless the science is a mos mask in
-        # which case the specphot is longslit.
 
+        tol = self._wavelength_tolerance()
+        # If the science is MOS or LS, any longslit will do for the specphot.
+        # If the science is IFU, any IFU will do for the specphot.
         if 'MOS' in self.types:
             filters.append(Gmos.focal_plane_mask.contains('arcsec'))
-            tol = 0.10 # microns
+            tol = self._wavelength_tolerance(pixels=1000)
+        elif 'LS' in self.types:
+            filters.append(Gmos.focal_plane_mask.contains('arcsec'))
+        elif 'IFU' in self.types:
+            filters.append(Gmos.focal_plane_mask.contains('IFU'))
         else:
+            # Catchall for oddball cases, require direct match
             filters.append(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
-            tol = 0.05 # microns
 
-        # The science amp_read_area must be equal or substring of the
-        # cal amp_read_area. If the science frame uses all the amps, then they must
-        # be a direct match as all amps must be there - this is more efficient for
-        # the DB as it will use the index. Otherwise, the science frame could
-        # have a subset of the amps thus we must do the substring match.
+        # The science amp_read_area must be equal or substring of the cal
+        # amp_read_area. If the science frame uses all the amps, then they
+        # must be a direct match as all amps must be there - this is more
+        # efficient for the DB as it will use the index. Otherwise,
+        # the science frame could have a subset of the amps thus we must do
+        # the substring match.
 
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
             filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         elif self.descriptors['amp_read_area'] is not None:
                 filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        return (
-            self.get_query()
-                # They are OBJECT partnerCal or progCal spectroscopy frames with
-                # target not twilight.
+        return (self.get_query()
+                # They are OBJECT partnerCal or progCal spectroscopy frames
+                # with target not twilight.
                 .raw().OBJECT().spectroscopy(True)
                 .add_filters(Header.observation_class.in_(['partnerCal', 'progCal']),
                              Header.object != 'Twilight',
                              *filters)
-                # Found lots of examples where detector binning does not match,
-                # so we're not adding those
+                # Note no requirement to match detector binning
                 .match_descriptors(Header.instrument,
                                    Gmos.filter_name,
                                    Gmos.disperser)
                 # Must match central wavelength to within some tolerance.
-                # We don't do separate ones for dithers in wavelength?
                 .tolerance(central_wavelength=tol)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
@@ -974,70 +939,41 @@ class CalibrationGMOS(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+            list of :class:`fits_storage.core.orm.header.Header` records
+            that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 1
         filters = []
 
-        lower_bound, upper_bound, tolerance = self._get_fuzzy_wavelength()
-        filters.append(Header.central_wavelength.between(lower_bound, upper_bound))
+        # For slitillum we require the same spatial (y) binning, but no
+        # requirement to match spectral (x) binning. (PH discussion with
+        # Chris Simpson 20-Apr-2023)
 
-        # we get 1000 rows here to have a limit of some sort, but in practice
-        # we get all the cals, then sort them below, then limit it per the request
         query = self.get_query() \
                 .slitillum(processed) \
                 .add_filters(*filters) \
+                .tolerance(central_wavelength=self._wavelength_tolerance())\
                 .match_descriptors(Header.instrument,
                                    Gmos.disperser,
-                                   Gmos.detector_x_bin,
                                    Gmos.detector_y_bin,
-                                   Gmos.filter_name) \
+                                   Gmos.filter_name,
+                                   Gmos.focal_plane_mask) \
                 .max_interval(days=183)
-        results = (
-            query.all(1000))
+        return query.all(howmany)
 
-        ut_datetime = self.descriptors['ut_datetime']
-        wavelength = float(self.descriptors['central_wavelength'])
 
-        # we score it based on the wavelength deviation expressed as a fraction of the wavelength itself,
-        # plus the difference in date as a fraction of the allowed 365 day interval.  This is a placeholder
-        # and we can do something else, add some weighting, add a squaring of the deviation, or other terms
-        def score(header):
-            if not isinstance(header, Header):
-                header = header[0]
-            wavelength_score = abs(float(header.central_wavelength) - wavelength) / tolerance
-            ut_datetime_score = abs((header.ut_datetime - ut_datetime).seconds) / (30.0*24.0*60.0*60.0)
-            return wavelength_score + ut_datetime_score
-
-        retval = [r for r in results]
-
-        # do the actual sort and return our requested max results
-        retval.sort(key=score)
-        if len(retval) > howmany:
-            if return_query:
-                return retval[0:howmany], query
-            else:
-                return retval[0:howmany]
-        else:
-            if return_query:
-                return retval, query
-            else:
-                return retval
-
-    def _get_fuzzy_wavelength(self):
+    def _wavelength_tolerance(self, pixels=200):
         """
-        Get a fuzzy match for wavelengths.
-
-        This uses a simplified calculation for the disperser to get a tolerance
-        for the wavelength.  Then it calculates the upper and lower wavelength
-        to match.  It returns these bounds, plus the tolerance so the caller can
-        use that to judge "closeness" of matches in terms of the tolerance.
-        That can be used for scoring the quality of the wavelength match.
+        Calculate a sensible default wavelength tolerance.
+        This uses a simplified calculation based on the disperser name to
+        estimate the dispersion, and then generate a wavelength tolerance
+        from a number of (unbinned) pixels. The default is 200 pixels but you
+        can specify that as required.
 
         Returns
         -------
-        float, float, float : lower wavelength,  upper wavelength, tolerance
+        float : suggested wavelength tolerance in um
         """
         # Find the dispersion, assume worst case if we can't match it
         n = 1200.0
@@ -1046,15 +982,14 @@ class CalibrationGMOS(Calibration):
             if dv in self.descriptors['disperser']:
                 n = float(dv)
         dispersion = 0.03/n
-        # Replace with this if we start storing dispersion in the gmos table and map
-        # it in above in the list of `instrDescriptors` to copy.
+        # Note, dispersion here is the approximate um/pixel.
+
+        # Replace with this if we start storing dispersion in the gmos table
+        # and map it in above in the list of `instrDescriptors` to copy.
         # dispersion = float(self.descriptors['dispersion'])
 
-        # per conversation with Chris Simpson
-        tolerance = 200 * dispersion
+        # OO: per conversation with Chris Simpson
+        # PH: Presumably the intent is a 200 pixel tolerance.
+        tolerance = pixels * dispersion
 
-        central_wavelength = float(self.descriptors['central_wavelength'])
-        lower_bound = central_wavelength - tolerance
-        upper_bound = central_wavelength + tolerance
-
-        return lower_bound, upper_bound, tolerance
+        return tolerance
