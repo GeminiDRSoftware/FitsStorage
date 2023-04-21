@@ -1,6 +1,8 @@
 import datetime
 import sys
 
+from sqlalchemy.exc import IntegrityError
+
 from fits_storage.queues.orm.calcachequeueentry import CalCacheQueueEntry
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.core.orm.header import Header
@@ -25,6 +27,8 @@ if __name__ == "__main__":
     parser.add_option("--lastdays", action="store", type="int",
                       dest="lastdays",
                       help="queue observations with ut_datetime in last n days")
+    parser.add_option("--instrument", action="store", dest="instrument",
+                      type="string", help="Only add files for this instrument")
     parser.add_option("--all", action="store_true",
                       dest="all",
                       help="queue all observations in database. "
@@ -43,8 +47,8 @@ if __name__ == "__main__":
     setdebug(options.debug)
     setdemon(options.demon)
 
-    # Annouce startup
-    logger.info("*********    add_to_calcache_queue.py - starting up at %s"
+    # Announce startup
+    logger.info("***   add_to_calcache_queue.py - starting up at %s"
                 % datetime.datetime.now())
 
     if not (options.file_pre or options.lastdays or options.all):
@@ -56,13 +60,11 @@ if __name__ == "__main__":
         # Get a list of header IDs to queue. NB files don't have to be
         # present, but we do want the canonical one.
         # We use the header.ut_datetime as the sortkey for the queue
-        query = session.query(Header.id, DiskFile.filename)\
-            .select_from(Header, DiskFile)\
-            .filter(DiskFile.id == Header.diskfile_id)\
-            .filter(DiskFile.canonical is True)
+        query = session.query(Header).join(DiskFile)\
+            .filter(DiskFile.canonical == True)
 
         if not options.ignore_mdbad:
-            query = query.filter(DiskFile.mdready is True)
+            query = query.filter(DiskFile.mdready == True)
 
         if options.file_pre:
             query = query.filter(DiskFile.filename.like(options.file_pre+'%'))
@@ -72,17 +74,27 @@ if __name__ == "__main__":
                    datetime.timedelta(days=options.lastdays)
             query = query.filter(Header.ut_datetime > then)
 
-        hids = query.all()
+        headers = query.all()
 
-        logger.info("Got %d header items to queue" % len(hids))
+        logger.info("Got %d header items to queue" % len(headers))
 
-        for num, (hid, filename) in enumerate(hids):
-            logger.debug("Adding CalCacheQueue with obs_hid %s", hid)
+        # Note, we don't try and batch these commits as if there's an
+        # IntegrityError resulting from an entry already existing, that will
+        # fail the entire commit and thus the entire batch.
+        for header in headers:
+            hid = header.id
+            filename = header.diskfile.filename
+            logger.info("Adding CalCacheQueueEntry with obs_hid %s, "
+                         "filename %s", hid, filename)
             cqe = CalCacheQueueEntry(hid, filename)
-            session.add(cqe)
-            if num % 1000 == 0:
-                logger.info("Committing batch %d", num)
+            try:
+                session.add(cqe)
                 session.commit()
+            except IntegrityError:
+                session.rollback()
+                logger.debug("IntegrityError adding hid %s - filename %s"
+                             "to queue. Likely they are already on the"
+                             "queue", hid, filename)
 
     logger.info("*** add_to_calcache_queue.py exiting normally at %s" %
                 datetime.datetime.now())
