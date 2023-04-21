@@ -18,10 +18,6 @@ from datetime import timedelta
 from fits_storage import gemini_metadata_utils as gmu
 # from fits_storage.utils.render_query import render_query
 
-DEFAULT_ORDER_BY_FIRST = 0
-DEFAULT_ORDER_BY_LAST = 1
-DEFAULT_ORDER_BY_NONE = 2
-
 
 _remappings = {
     "shuffle_pixels": "nod_pixels"
@@ -257,14 +253,13 @@ class CalQuery(object):
 
             raise AttributeError(attmsg.format(self.__class__.__name__, name))
 
-    def all(self, limit, extra_order_terms=None,
-            default_order=DEFAULT_ORDER_BY_LAST):
+    def all(self, limit, extra_order_terms=None, order_by=None):
         """
         Returns a list of results, limited in number by the `limit` argument.
 
-        The function will optionally sort the data according to certain
-        criteria, according to the values of `extra_order_terms` and
-        `default_order`.
+        The function will by default order by closest in time.
+        You can also pass extra_order_terms
+        which will be applied before and in addition to the default ordering.
 
         `extra_order_terms` is by default ``None``, and accepts an iterable 
         (tuple, list, ...) of SQLAlchemy sorting terms.
@@ -272,17 +267,10 @@ class CalQuery(object):
 
             ``desc(Header.blah == foo)``)
 
-        which reflects additional sorting terms out of our "default".
 
-        `default_order` defaults to ``DEFAULT_ORDER_BY_LAST`` and accepts
-        also ``DEFAULT_ORDER_BY_FIRST`` and ``DEFAULT_ORDER_BY_NONE``. It
-        affects the application of the "default" sorting, which means "closer
-        in time first".
-
-        If `default_order` is **not** ``DEFAULT_ORDER_BY_NONE``, then our
-        default sorting will be applied either at the beginning or the end of
-        the terms supplied in `extra_order_terms`. If `extra_order_terms` is
-        ``None``, only the ``default_order`` setting will apply.
+        You can also pass order_by, which will over-ride all of the above
+        ordering logic and will simply add .order_by(order_by) to the
+        sqlalchemy query
 
         Examples:
 
@@ -294,38 +282,28 @@ class CalQuery(object):
         >> query_object.all(limit=5,
             extra_order_terms=[desc(Header.program_id=='BLAH')])
 
-        # Returns up to 5 objects, sorting by the default order criteria,
-        and then # "Header.program_id == BLAH"   (matching first)
-        >> query_object.all(limit=5,
-            extra_order_terms=[desc(Header.program_id=='BLAH')],
-            default_order=DEFAULT_ORDER_BY_FIRST)
 
         """
-        # Enforcing deterministic sort of procmode by a case query,
-        # postgresql was exhibiting reverse alpha sort on natural order and
-        # that surprised me
+        # If returning both raw and processed, return processed first.
         enums = Header.procmode.type.enums
         whens = {pm: str(pm) if pm else 'AAA' for pm in
                  enums}
-        sort_logic = case(value=Header.procmode, whens=whens, else_='AAA').\
+        procmode_sort_logic = case(value=Header.procmode, whens=whens, else_='AAA').\
             label("procmode_sortkey")
 
-        order = () if extra_order_terms is None else tuple(extra_order_terms)
+        extra_order = () if extra_order_terms is None else tuple(extra_order_terms)
 
-        if default_order is not DEFAULT_ORDER_BY_NONE:
-            # Order by absolute time separation.
-            targ_ut_dt_secs = int((self.descr['ut_datetime']
-                                   - UT_DATETIME_SECS_EPOCH)
-                                  .total_seconds())
-            def_order = func.abs(Header.ut_datetime_secs - targ_ut_dt_secs)
-            present_order = desc(DiskFile.present)
-            procmode_order = desc(sort_logic)  # Header.procmode
-            if default_order == DEFAULT_ORDER_BY_LAST:
-                order = order + (present_order, def_order, procmode_order)
-            else:
-                order = (present_order, def_order, procmode_order) + order
+        # Order by absolute time separation.
+        targ_ut_dt_secs = int((self.descr['ut_datetime']
+                               - UT_DATETIME_SECS_EPOCH)
+                               .total_seconds())
+        def_order = func.abs(Header.ut_datetime_secs - targ_ut_dt_secs)
+        procmode_order = desc(procmode_sort_logic)
+        order = (def_order, procmode_order) + extra_order
 
-        if order:
+        if order_by is not None:
+            self.query = self.query.order_by(order_by)
+        else:
             self.query = self.query.order_by(*order)
 
         # if os.getenv("CAL_QUERY_DEBUG", False):

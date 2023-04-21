@@ -13,7 +13,7 @@ from fits_storage.db import session_scope
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.server.pidfile import PidFile, PidFileError
 
-from fits_storage.queues.queue import CalCacheQueue, cache_associations
+from fits_storage.queues.queue import CalCacheQueue
 
 
 from fits_storage.config import get_config
@@ -41,8 +41,11 @@ if __name__ == "__main__":
     # Logging level to debug? Include stdio log?
     setdebug(options.debug)
     setdemon(options.demon)
+
+    taskname = 'service_calcache_queue'
     if options.name:
-        setlogfilesuffix(options.name)
+        taskname += '-' + options.name
+        setlogfilesuffix(taskname)
 
     # Need to set up the global loop variable before we define the signal
     # handlers. This is the loop forever variable later, allowing us to stop
@@ -77,8 +80,9 @@ if __name__ == "__main__":
                 datetime.datetime.now())
 
     try:
-        with PidFile(logger, options.name, dummy=not options.lockfile) as \
-                pidfile, session_scope() as session:
+        with PidFile(taskname, logger, dummy=not options.lockfile) as pidfile, \
+                session_scope() as session:
+
             # Loop forever. loop is a global variable defined up top
             ccq = CalCacheQueue(session, logger)
             while loop:
@@ -105,7 +109,7 @@ if __name__ == "__main__":
 
                     try:
                         # Do the associations and put them in the CalCache table
-                        cache_associations(session, ccqe.obs_hid)
+                        ccq.cache_associations(ccqe.obs_hid)
                     except:
                         session.rollback()
                         message = "Exception while associating calibrations " \
