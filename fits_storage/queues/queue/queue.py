@@ -57,21 +57,11 @@ class Queue(object):
         session = self.session
         ormclass = self.ormclass
 
-        # Note - we make the qentry into a transient instance before we
-        # return it. This detaches it from the session - basically it becomes
-        # a convenience container for the values (filename, etc.). The problem
-        # is that if it's still attached to the session but expired (because
-        # we did a commit) then the next reference to it (to process the
-        # qentry) will initiate a transaction and a SELECT to refresh the
-        # values, and that transaction will then hold a FOR ACCESS SHARE lock
-        # on the table until we complete the processing and do a commit -
-        # which will block the ACCESS EXCLUSIVE (or FOR UPDATE?) lock from
-        # being granted (to pop another item) until the transfer completes.
-        # I'm not sure if this is really an issue now we're using SELECT FOR
-        # UPDATE rather than grabbing a whole ACCESS EXCLUSIVE lock,
-        # but having it as transient makes sense anyway.
-        # NOTE NOTE - no we don't anymore!
-        # TODO - tidy up this comment if it works ok.
+        # Note - in the past we would make the qentry a transient instance
+        # before returning it because of issues with ACCESS EXCLUSIVE locking.
+        # Now that SQLAlchemy supports and we're using SELECT FOR UPDATE,
+        # that's no longer a factor, and we DO NOT make the qentries into
+        # transient objects befofe returning them.
 
         # There's a quirk regarding the way failed is handled. See the note
         # in ormqueuemixin.py .Basically fail_dt == fail_dt_false
@@ -91,10 +81,14 @@ class Queue(object):
 
             query = session.query(ormclass).\
                 filter(ormclass.inprogress == False).\
-                filter(ormclass.fail_dt == ormclass.fail_dt_false).\
-                filter(ormclass.after < datetime.datetime.utcnow()).\
-                filter(~ormclass.filename.in_(inprogress_filenames)).\
-                with_for_update(skip_locked=True).\
+                filter(ormclass.fail_dt == ormclass.fail_dt_false). \
+                filter(~ormclass.filename.in_(inprogress_filenames))
+
+            if hasattr(ormclass, 'after'):
+                query = query.filter(ormclass.after <
+                                     datetime.datetime.utcnow())
+
+            query = query.with_for_update(skip_locked=True).\
                 order_by(desc(ormclass.sortkey))
 
             qentry = query.first()
