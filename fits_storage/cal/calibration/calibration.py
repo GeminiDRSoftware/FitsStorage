@@ -286,8 +286,7 @@ class CalQuery(object):
         """
         # If returning both raw and processed, return processed first.
         enums = Header.procmode.type.enums
-        whens = {pm: str(pm) if pm else 'AAA' for pm in
-                 enums}
+        whens = {pm: str(pm) if pm else 'AAA' for pm in enums}
         procmode_sort_logic = case(value=Header.procmode, whens=whens, else_='AAA').\
             label("procmode_sortkey")
 
@@ -331,7 +330,7 @@ class CalQuery(object):
         rt_err = "No such descriptor '{}' defined in the header"
         if condition:
             for descriptor, tol in list(kw.items()):
-                # Occassionally we get a None for some descriptors, so run
+                # Occasionally we get a None for some descriptors, so run
                 # this in a try except
                 try:
                     lo = float(self.descr[descriptor]) - tol

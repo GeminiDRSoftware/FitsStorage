@@ -5,19 +5,17 @@ The CalibrationGMOS class
 
 import math
 
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 
 from fits_storage.core.orm.header import Header
 from fits_storage.cal.orm.gmos import Gmos
+
+from fits_storage.gemini_metadata_utils import UT_DATETIME_SECS_EPOCH
 
 from .calibration import Calibration
 from .calibration import not_imaging
 from .calibration import not_processed
 from .calibration import not_spectroscopy
-
-from gempy.utils import logutils
-
-log = logutils.get_logger(__name__)
 
 
 class CalibrationGMOS(Calibration):
@@ -830,7 +828,7 @@ class CalibrationGMOS(Calibration):
         elif self.descriptors['amp_read_area'] is not None:
                 filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        return (self.get_query()
+        query = (self.get_query()
                 # They are OBJECT partnerCal or progCal spectroscopy frames
                 # with target not twilight.
                 .raw().OBJECT().spectroscopy(True)
@@ -845,8 +843,11 @@ class CalibrationGMOS(Calibration):
                 .tolerance(central_wavelength=tol)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
-                .all(howmany)
             )
+
+        orderby = self._closest_wlen_time_order(time_range=365,
+                                                wlen_range=tol)
+        return query.all(howmany, order_by=orderby)
 
     # We don't handle processed ones (yet)
     @not_processed
@@ -950,17 +951,20 @@ class CalibrationGMOS(Calibration):
         # requirement to match spectral (x) binning. (PH discussion with
         # Chris Simpson 20-Apr-2023)
 
+        wlen_tol = self._wavelength_tolerance()
         query = self.get_query() \
                 .slitillum(processed) \
                 .add_filters(*filters) \
-                .tolerance(central_wavelength=self._wavelength_tolerance())\
+                .tolerance(central_wavelength=wlen_tol)\
                 .match_descriptors(Header.instrument,
                                    Gmos.disperser,
                                    Gmos.detector_y_bin,
                                    Gmos.filter_name,
                                    Gmos.focal_plane_mask) \
                 .max_interval(days=183)
-        return query.all(howmany)
+        orderby = self._closest_wlen_time_order(time_range=183,
+                                                wlen_range=wlen_tol)
+        return query.all(howmany, order_by=orderby)
 
 
     def _wavelength_tolerance(self, pixels=200):
@@ -993,3 +997,48 @@ class CalibrationGMOS(Calibration):
         tolerance = pixels * dispersion
 
         return tolerance
+
+    def _closest_wlen_time_order(self, time_range=1, wlen_range=0.1):
+        """
+        This utility function generates the argument for an order_by()
+        clause that consists of a weighted combination of closest in time
+        and closest in wavelenth. This is useful for various gmos spectroscopy
+        calibrations such as photspec and slitillum where we take them
+        infrequently and also sometimes at not quite the same wavelength - for
+        example if the science does a wavelength dither to cover the chip gaps
+        but the calibration (often) does not. We include a wavelength tolerance
+        to account for the latter, but a wavelength tolerance plus closest-in-
+        time ordering will often result in the first item returned not being the
+        best (ie it is within the tolerance but an exact or much closer
+        wavelength match may be available just a few minutes earlier or later).
+
+        Essentially a scoring metric is generated, as follows:
+        score = abs(DT/time_range) + abs(DW/wlen_range)
+        where:
+        DT is DeltaTime = abs(science_utdatetime - calibration_utdatetime)
+        DW is DeltaWavelength defined similarly
+        time_range is interpreted as being in days
+        wlen_range is interpreted as being in microns.
+
+        - ie we normalize the time and wlen deltas each by a nominal range
+        in order to weight them in the score appropriately.
+        """
+
+        # absolute time separation part first
+
+        # Normalization factor supplied in days, need seconds
+        norm_secs = float(time_range * 86400)
+
+        sci_ut_dt_secs = int((self.descriptors['ut_datetime']
+                               - UT_DATETIME_SECS_EPOCH).total_seconds())
+        dt_score = func.abs((Header.ut_datetime_secs - sci_ut_dt_secs)
+                             /norm_secs)
+
+        sci_wl = self.descriptors['central_wavelength']
+        wl_score = func.abs((Header.central_wavelength - sci_wl) / wlen_range)
+
+        score = dt_score + wl_score
+
+        order = desc(score)
+
+        return order
