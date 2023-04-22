@@ -36,6 +36,8 @@ from fits_storage.web.userprogram import my_programs
 from fits_storage.web.tapestuff import tape, tapewrite, tapefile, \
     jsontapefilelist, taperead, fileontape
 
+from fits_storage.web.calmgr import xmlcalmgr, jsoncalmgr
+
 from .routing import SequenceConverter, SelectionConverter
 
 from fits_storage.config import get_config
@@ -177,9 +179,9 @@ url_map = Map([
     #
     # Rule('/calibrations/<selection:selection>', calibrations),      # The calibrations handler
 
-    # Rule('/calmgr/<selection:selection>', xmlcalmgr),               # The calmgr handler, returning xml (legacy url)
-    # Rule('/xmlcalmgr/<selection:selection>', xmlcalmgr),            # The calmgr handler, returning xml
-    # Rule('/jsoncalmgr/<selection:selection>', jsoncalmgr),          # The calmgr handler, returning json
+    Rule('/calmgr/<selection:selection>', xmlcalmgr),               # The calmgr handler, returning xml (legacy url)
+    Rule('/xmlcalmgr/<selection:selection>', xmlcalmgr),            # The calmgr handler, returning xml
+    Rule('/jsoncalmgr/<selection:selection>', jsoncalmgr),          # The calmgr handler, returning json
     # Rule('/gmoscal/<selection:selection>', gmoscal_html),           # The GMOS twilight flat and bias report
     # Rule('/gmoscaltwilightdetails', gmoscaltwilightdetails),        # The GMOS twilight flat and bias report
     # Rule('/gmoscaltwilightfiles', gmoscaltwilightfiles),            # The GMOS twilight flat list of files

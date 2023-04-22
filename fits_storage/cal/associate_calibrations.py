@@ -3,7 +3,7 @@ This module contains the "associated calibrations" code. It is used
 to generate a summary table of calibration data associated with the
 results of a search
 """
-from .calibration import get_cal_object
+from fits_storage.cal.calibration import get_cal_object
 from fits_storage.gemini_metadata_utils import cal_types
 from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
