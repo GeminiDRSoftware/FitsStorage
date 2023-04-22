@@ -2,21 +2,22 @@
 This module contains the calibrations html generator function.
 """
 import datetime
+from sqlalchemy import join, desc
 
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_date
+from fits_storage.gemini_metadata_utils import gemini_date
 from .selection import sayselection, queryselection, openquery, selection_to_URL
-from gemini_calmgr.cal import get_cal_object
-from ..fits_storage_config import fits_servername, fits_system_status, use_as_archive
+from fits_storage.cal.calibration import get_cal_object
 
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
+from fits_storage.core.orm.header import Header
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.file import File
 
-from ..utils.web import get_context
+from fits_storage.server.wsgi.context import get_context
 
 from . import templating
 
-from sqlalchemy import join, desc
+from fits_storage.config import get_config
+fsc = get_config()
 
 class Result(object):
     def __init__(self, **kw):
@@ -256,10 +257,10 @@ def calibrations(selection):
     }
 
     template_args = dict(
-        fits_server    = fits_servername,
-        secure         = use_as_archive,
+        fits_server    = fsc.fits_servername,
+        secure         = fsc.use_as_archive,
         say_selection  = sayselection(selection),
-        is_development = fits_system_status == "development",
+        is_development = fsc.fits_system_status == "development",
         counter        = counter,
         )
 

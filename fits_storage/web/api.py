@@ -5,16 +5,14 @@ import fcntl
 from time import strptime
 from glob import iglob
 
-#import pyfits as pf
-from astropy.io import fits as pf
+from sqlalchemy.exc import NoResultFound
+from fits_storage.core.orm.header import Header
+from fits_storage.core.orm.diskfile import DiskFile
 
-from sqlalchemy.orm.exc import NoResultFound
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.diskfile import DiskFile
-from ..orm.program import Program
-from ..orm.programpublication import ProgramPublication
-from ..orm.publication import Publication
-from ..orm.obslog_comment import ObslogComment
+from fits_storage.server.orm.program import Program
+from fits_storage.server.orm.programpublication import ProgramPublication
+from fits_storage.server.orm.publication import Publication
+from fits_storage.server.orm.obslog_comment import ObslogComment
 
 from ..utils.ingestqueue import IngestQueueUtil, IngestError
 from ..utils.api import ApiProxy, ApiProxyError, NewCardsIncluded

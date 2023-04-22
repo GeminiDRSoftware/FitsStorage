@@ -2,10 +2,10 @@
 This module contains the calibrations html generator function.
 """
 
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.provenance import Provenance
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.provenance import Provenance
 
-from ..utils.web import get_context
+from fits_storage.server.wsgi.context import get_context
 
 from . import templating
 

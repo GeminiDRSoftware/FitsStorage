@@ -21,10 +21,10 @@ fsc = get_config()
 
 # We assume that archive servers use a calibration association cache table
 if fsc.is_archive:
-    from gemini_calmgr.cal.associate_calibrations \
+    from fits_storage.cal.associate_calibrations \
         import associate_cals_from_cache as associate_cals
 else:
-    from gemini_calmgr.cal.associate_calibrations import associate_cals
+    from fits_storage.cal.associate_calibrations import associate_cals
 
 from .userprogram import get_permissions_list
 

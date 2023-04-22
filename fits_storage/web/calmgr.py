@@ -2,27 +2,9 @@
 This module contains the calmgr html generator function.
 """
 from collections import namedtuple
+from sqlalchemy import join, desc
 
 import simplejson as json
-
-from fits_storage.utils.api import WSGIError, BAD_REQUEST
-
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.header import Header
-
-from .selection import queryselection, openquery
-
-from ..utils.web import get_context, Return
-
-from gemini_calmgr.cal import get_cal_object
-from ..fits_storage_config import storage_root, fits_servername
-from gemini_obs_db.utils.gemini_metadata_utils import cal_types
-
-from . import templating
-from .templating import SkipTemplateError
-
-from sqlalchemy import join, desc
 
 from psycopg2 import InternalError
 from sqlalchemy.exc import DataError
@@ -35,6 +17,27 @@ import sys
 import traceback
 
 from ast import literal_eval
+
+from fits_storage.core.orm.file import File
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.header import Header
+
+from .selection import queryselection, openquery
+
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
+
+from fits_storage.cal.calibration import get_cal_object
+
+from fits_storage.gemini_metadata_utils import cal_types
+
+from . import templating
+from .templating import SkipTemplateError
+
+from fits_storage.config import get_config
+fsc = get_config()
+
+
 
 no_func = lambda x: None
 
@@ -208,8 +211,8 @@ def generate_post_calmgr(selection, caltype, procmode=None):
                              qtype='POST',
                              log=ctx.log,
                              add_note=usagelog.add_note,
-                             hostname=fits_servername,
-                             storage_root=storage_root)
+                             hostname=fsc.fits_servername,
+                             storage_root=fsc.storage_root)
         )
 
     # Commit the changes to the usagelog
