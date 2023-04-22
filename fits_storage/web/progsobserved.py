@@ -34,7 +34,7 @@ def progsobserved(selection):
     query = queryselection(query, selection)
 
     # Knock out null values. No point showing them as None for engineering files
-    query = query.filter(Header.program_id is not None)
+    query = query.filter(Header.program_id != None)
 
     # And the group by clause
     progs_query = query.group_by(Header.program_id)

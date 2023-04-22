@@ -31,8 +31,8 @@ def duplicate_canonicals(session):
         session.query(distinct(DiskFile.id), File).join(File)
         .join(diskfile_alias, DiskFile.file_id == diskfile_alias.file_id)
         .filter(DiskFile.id != diskfile_alias.id)
-        .filter(DiskFile.canonical is True)
-        .filter(diskfile_alias.canonical is True)
+        .filter(DiskFile.canonical == True)
+        .filter(diskfile_alias.canonical == True)
         .order_by(DiskFile.id)
     )
 
@@ -55,8 +55,8 @@ def duplicate_present(session):
         .join(File)
         .join(diskfile_alias, DiskFile.file_id == diskfile_alias.file_id)
         .filter(DiskFile.id != diskfile_alias.id)
-        .filter(DiskFile.present is True)
-        .filter(diskfile_alias.present is True)
+        .filter(DiskFile.present == True)
+        .filter(diskfile_alias.present == True)
         .order_by(DiskFile.id)
     )
 
@@ -77,7 +77,7 @@ def present_not_canonical(session):
     """
     return (
         session.query(distinct(DiskFile.id), File).join(File)
-        .filter(DiskFile.present is True)
-        .filter(DiskFile.canonical is False)
+        .filter(DiskFile.present == True)
+        .filter(DiskFile.canonical == False)
         .order_by(DiskFile.id)
         )

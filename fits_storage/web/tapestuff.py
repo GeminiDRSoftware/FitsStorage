@@ -37,7 +37,7 @@ def jsontapefilelist(filepre):
     """
     tfs = get_context().session.query(TapeFile)\
         .select_from(join(TapeFile, join(TapeWrite, Tape)))\
-        .filter(Tape.active is True).filter(TapeWrite.suceeded is True)\
+        .filter(Tape.active == True).filter(TapeWrite.suceeded == True)\
         .filter(TapeFile.filename.startswith(filepre)).all()
 
     thelist = []
@@ -66,7 +66,7 @@ def fileontape(filename):
     query = (
         get_context().session.query(TapeFile)
         .select_from(join(TapeFile, join(TapeWrite, Tape)))
-        .filter(Tape.active is True).filter(TapeWrite.suceeded is True)
+        .filter(Tape.active == True).filter(TapeWrite.suceeded == True)
         .filter(TapeFile.filename.in_(filenames))
         )
 
@@ -138,13 +138,13 @@ def tape(search=None):
                 .filter(TapeWrite.tape_id == tape.id)
             twq = session.query(TapeWrite)\
                 .filter(TapeWrite.tape_id == tape.id)\
-                .filter(TapeWrite.suceeded is True)
+                .filter(TapeWrite.suceeded == True)
             # Count Bytes
             bytes = 0
             if twq.count():
                 bytesquery = session.query(func.sum(TapeWrite.size))\
                     .filter(TapeWrite.tape_id == tape.id)\
-                    .filter(TapeWrite.suceeded is True)
+                    .filter(TapeWrite.suceeded == True)
                 bytes = bytesquery.one()[0] or 0
 
             yield (tape, twqtotal.count(), twq.count(), float(bytes)/1.0E9)

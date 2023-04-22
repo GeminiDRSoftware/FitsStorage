@@ -131,7 +131,7 @@ def check_present(session, filename):
     for this filename with `present` set to True
     """
     df = session.query(DiskFile).filter(DiskFile.filename == filename).\
-        filter(DiskFile.present is True).first()
+        filter(DiskFile.present == True).first()
     if not df:
         return False
     src = os.path.join(fsc.dhs_perm, filename)

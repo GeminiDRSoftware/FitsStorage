@@ -724,7 +724,7 @@ def admin_file_permissions():
 
     observation_list = list()
     q = ctx.session.query(UserProgram, User)\
-        .filter(and_(UserProgram.observation_id is not None,
+        .filter(and_(UserProgram.observation_id != None,
                      UserProgram.observation_id != ''),
                      User.id == UserProgram.user_id)
     if filter:
@@ -748,7 +748,7 @@ def admin_file_permissions():
 
     file_list = list()
     q = ctx.session.query(UserProgram, User)\
-        .filter(and_(UserProgram.filename is not None,
+        .filter(and_(UserProgram.filename != None,
                      UserProgram.filename != ''),
                      User.id == UserProgram.user_id)
     if filter:
