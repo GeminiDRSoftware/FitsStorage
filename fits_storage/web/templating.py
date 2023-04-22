@@ -111,7 +111,7 @@ custom_filters = {
 }
 
 included_extensions = [
-    'jinja2.ext.with_'
+#    'jinja2.ext.with_'
 ]
 
 
