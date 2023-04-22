@@ -804,7 +804,7 @@ class CalibrationGMOS(Calibration):
 
         tol = self._wavelength_tolerance()
         # If the science is MOS or LS, any longslit will do for the specphot.
-        # If the science is IFU, any IFU will do for the specphot.
+        # If the science is IFU, must use the same IFO for the specphot.
         if 'MOS' in self.types:
             filters.append(Gmos.focal_plane_mask.contains('arcsec'))
             tol = self._wavelength_tolerance(pixels=1000)
@@ -816,17 +816,7 @@ class CalibrationGMOS(Calibration):
             # Catchall for oddball cases, require direct match
             filters.append(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
 
-        # The science amp_read_area must be equal or substring of the cal
-        # amp_read_area. If the science frame uses all the amps, then they
-        # must be a direct match as all amps must be there - this is more
-        # efficient for the DB as it will use the index. Otherwise,
-        # the science frame could have a subset of the amps thus we must do
-        # the substring match.
-
-        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
-            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
-        elif self.descriptors['amp_read_area'] is not None:
-                filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+        # amp_read_area is not relevant to specphots
 
         query = (self.get_query()
                 # They are OBJECT partnerCal or progCal spectroscopy frames
