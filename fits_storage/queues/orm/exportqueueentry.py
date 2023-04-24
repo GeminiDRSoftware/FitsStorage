@@ -30,7 +30,9 @@ class ExportQueueEntry(OrmQueueMixin, Base):
     md5_after_header_update = Column(Text)
     header_update = Column(Text)
 
-    def __init__(self, filename, path, destination):
+    def __init__(self, filename, path, destination, after=None,
+                 md5_before_header_update=None, md5_after_header_update=None,
+                 header_update=None):
         """
         Create an :class:`~ExportQueueEntry` record
 
@@ -42,15 +44,29 @@ class ExportQueueEntry(OrmQueueMixin, Base):
             Path of the file within the `storage_root`
         destination : str
             URL of the server to export to
+        after : datetime.datetime
+            datetime only after which to export the file
+        header_update: dict
+            Header updates from a call to the update_headers API that resulted
+            in this request for export. This gets passed from the ingest queue
+            as a hint to try and avoid retransmitting the whole file
+        md5_after_header_update: str
+            md5sum of the file after the header update
+        md5_before_header_update: str
+            md5sum of the file before the header update
         """
+
         self.filename = filename
         self.sortkey = self.sortkey_from_filename()
         self.path = path
         self.destination = destination
         self.added = datetime.datetime.utcnow()
-        self.after = self.added
+        self.after = after if after is not None else self.added
         self.inprogress = False
         self.fail_dt = self.fail_dt_false  # See Note in OrmQueueMixin
+        self.header_update = header_update
+        self.md5_before_header_update = md5_before_header_update
+        self.md5_after_header_update = md5_after_header_update
 
         # TODO: A more refined way to prioritize archive exports
         prepend = 'z' if 'archive' in destination else 'a'
