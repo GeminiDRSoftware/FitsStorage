@@ -3,16 +3,17 @@ clean centos 7 machine standard ISG install.
 - Have ISG set up a user account for you with sudo all.
 
 sudo yum -y install httpd httpd-devel mod_ssl openssl
-sudo chmod oug+rx /var/log/httpd
-sudo yum -y install postgresql postgresql-server postgresql-devel
+sudo yum -y install httpd postgresql postgresql-server postgresql-devel
 
 # On AWS centos machines need to install EPEL repository (included by default on ISG config)
 sudo yum install -y epel-release
 
 # Also need:
-sudo yum -y install gcc gcc-c++ python-pip python-devel libpng-devel blas lapack openblas openblas-devel gcc-gfortran cfitsio-devel freetype-devel
+#sudo yum -y install gcc gcc-c++ python-pip python-devel libpng-devel blas lapack openblas openblas-devel gcc-gfortran cfitsio-devel freetype-devel
+sudo yum -y install gcc gcc-c++ python-pip python-devel gcc-gfortran cfitsio-devel
 
 sudo pip install --upgrade pip
+sudo pip install mod_wsgi==4.4.21
 sudo pip install psycopg2
 sudo pip install sqlalchemy
 sudo pip install pyyaml
@@ -20,6 +21,7 @@ sudo pip install jinja2
 sudo pip install pyfits
 sudo pip install pywcs
 sudo pip install dateutils
+sudo pip install requests
 sudo pip install matplotlib
 sudo pip install scipy
 sudo pip install pandas
@@ -36,34 +38,90 @@ geminidata:x:502:fitsdata
 sudo mkdir /opt/FitsStorage
 sudo chown fitsdata:fitsdata /opt/FitsStorage/
 
-sudo mkdir /opt/python_modules
-sudo chown phirst /opt/python_modules
+* Now let's setup the web server
+* Modify the variables at the beginning of the following script if needed
+
+cat > /tmp/install_script.sh << EOF
+FITSSTORAGE_ROOT=/opt/FitsStorage
+# NOTE!!! IF YOU MODIFY THE FOLLOWING, THE CHANGES NEED TO BE TRANSLATED TO
+# /etc/systemd/system/fits-httpd.service!!!!!!!!!!!
+MODWSGI_DIR=/opt/modwsgi-default
+
+# Explanation of options that we are setting in the MODWSGI_OPTS
+# --server-root                        Where to store the server setup information
+# --access-log                         Enable access log (off by default)
+# --url-alias                          Alias URL for static files (one per alias)
+# --python-path                        Additional content for PYTHONPATH
+
+MODWSGI_OPTS="\\
+ --server-root \$MODWSGI_DIR \\
+ --port 80 \\
+ --user apache --group apache \\
+ --access-log \\
+ --url-alias /static \$FITSSTORAGE_ROOT/htmldocroot \\
+ --url-alias /favicon.ico \$FITSSTORAGE_ROOT/htmldocroot/favicon.ico \\
+ --url-alias /robots.txt \$FITSSTORAGE_ROOT/htmldocroot/robots.txt \\
+ --python-path \$FITSSTORAGE_ROOT \\
+"
+
+mkdir \$MODWSGI_DIR
+
+# The extra argument is the WSGI entry point
+mod_wsgi-express setup-server \$MODWSGI_OPTS \$FITSSTORAGE_ROOT/fits_storage/wsgihandler.py
+
+# And set let apache handle that dir from now on
+# TODO: Rethink this; most probably it's better to have root having permissions
+#       over everything that apache doesn't need to touch
+chown -R apache:apache \$MODWSGI_DIR
+EOF
+
+sudo bash /tmp/install_script.sh
+
+* Edit the config file just generated (/opt/modwsgi-default/httpd.conf) and add this lines by the end
+  of the "Alias" list:
+* Also change it to File * for permissions
+
+AliasMatch '/(.*\.html)' '/opt/FitsStorage/htmldocroot/$1'
+AliasMatch '/(.*\.css)' '/opt/FitsStorage/htmldocroot/$1'
+AliasMatch '/(.*\.js)' '/opt/FitsStorage/htmldocroot/$1'
+
+  It should look like:
+
+[...]
+Alias '/favicon.ico' '/opt/FitsStorage/htmldocroot/favicon.ico'
+
+<Directory '/opt/FitsStorage/htmldocroot'>
+<Files '*'>
+    Require all granted
+</Files>
+</Directory>
+
+AliasMatch '/(.*\.html)' '/opt/FitsStorage/htmldocroot/$1'
+AliasMatch '/(.*\.css)' '/opt/FitsStorage/htmldocroot/$1'
+AliasMatch '/(.*\.js)' '/opt/FitsStorage/htmldocroot/$1'
+
+<IfDefine MOD_WSGI_VERIFY_CLIENT>
+<Location '/'>
+SSLVerifyClient require
+SSLVerifyDepth 1
+</Location>
+</IfDefine>
+[...]
+
+
+* To run the web server from systemd
+sudo cp /opt/FitsStorage/otherfiles/etc_systemd_system_fits-httpd.service /etc/systemd/system/fits-httpd.service
+
 
 * LOG in as fitsdata and do:
 cd /opt/FitsStorage
 svn checkout http://scisoft/svn/FitsStorage/trunk .
 
-* Log out and back in as yourself (phirst)
 
-cd /opt/python_modules
-tar xvzf /opt/FitsStorage/otherfiles/mod_python-3.3.1-2.tar.gz
-cd mod_python-3.3.1
-./configure --with-apxs=/usr/bin/apxs --prefix=/opt/python_modules
-make
-sudo make install_dso
-cd dist
-python setup.py install --prefix=/opt/python_modules
+* Log out and back in as yourself (phirst)
 
 # if using s3
 sudo pip install boto3
-
-sudo mkdir /opt/fitsverify
-sudo chown phirst /opt/fitsverify
-cd /opt/fitsverify
-tar xvf /opt/FitsStorage/otherfiles/fitsverify.tar
-mv fitsverify/* .
-rmdir fitsverify
-gcc -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -I/usr/include/cfitsio -lcfitsio -lm -lnsl
 
 sudo mkdir /opt/gemini_python
 sudo chown phirst /opt/gemini_python
@@ -71,19 +129,14 @@ cd /opt/gemini_python
 svn checkout http://chara.hi.gemini.edu/svn/DRSoftware/gemini_python/trunk .
 
 cd
-sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf.d-zz-archive.conf /etc/httpd/conf.d/zz-archive.conf
-sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf.modules.d-10-python.conf /etc/httpd/conf.modules.d/10-python.conf
-sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf-httpd.conf /etc/httpd/conf/httpd.conf 
 sudo cp /opt/FitsStorage/otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
-sudo mkdir /var/www/python-egg-cache
-sudo chmod oug+rwx /var/www/python-egg-cache
 
 # Set up postgres
 sudo mkdir /data/pgsql_data
 sudo chown postgres:postgres /data/pgsql_data
 sudo cp /lib/systemd/system/postgresql.service /etc/systemd/system/
 sudo vi /etc/systemd/system/postgresql.service
-Enviroment=PGDATA=/data/pgsql_data
+Environment=PGDATA=/data/pgsql_data
 sudo systemctl daemon-reload
 sudo postgresql-setup initdb
 sudo systemctl start postgresql.service
@@ -109,7 +162,7 @@ sudo systemctl restart postgresql.service
 
 # Need to set postgresql and httpd to start at boot
 sudo systemctl enable postgresql.service
-sudo systemctl enable httpd.service
+sudo systemctl enable fits-httpd.service
 
 
 # Log and backup directories
@@ -136,6 +189,7 @@ vi fits_storage_config.py
 /usr/bin/createdb fitsdata
 python scripts/create_tables.py
 
+
 # OK, should now be good to go.
 
 # Check with ISG if you need a whitelisted local mail relay on it
@@ -149,3 +203,4 @@ sudo systemctl start fits-service_ingest_queue1
 sudo systemctl enable fits-service_ingest_queue1
 # Same for 2 if you want it
 # Repeat for export queue and api
+
