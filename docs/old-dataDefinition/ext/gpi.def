@@ -1,8 +1,0 @@
-provides:         valid
-conditions:
-  - is gpi
-  - not matching:
-    - EXTNAME:    SCI
-
-keywords:
-  - DATASEC

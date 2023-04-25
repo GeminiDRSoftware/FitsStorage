@@ -1,5 +1,0 @@
-provides:         valid
-conditions:
-  - is gnirs
-  - matching:
-    - XTENSION:   IMAGE

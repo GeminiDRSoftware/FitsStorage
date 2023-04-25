@@ -1,7 +1,0 @@
-provides:         valid
-conditions:
-  - is flamingos
-  - matching:
-    - XTENSION:   IMAGE
-
-# include files:    wcs
