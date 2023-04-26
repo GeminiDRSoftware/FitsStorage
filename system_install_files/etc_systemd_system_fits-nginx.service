@@ -1,7 +1,5 @@
-# This is a modified Centos7 httpd.service
-
 [Unit]
-Description=The NGINX FitsService Process
+Description=The NGINX FitsStorage Process
 After=network.target remote-fs.target nss-lookup.target
 
 [Service]

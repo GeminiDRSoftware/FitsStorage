@@ -1,7 +1,5 @@
-# This is a modified Centos7 httpd.service
-
 [Unit]
-Description=The UWSGI FitsService Process
+Description=The UWSGI FitsStorage Process
 After=network.target remote-fs.target nss-lookup.target
 
 [Service]
