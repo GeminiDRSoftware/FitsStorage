@@ -3,9 +3,9 @@ Description=Fits Storage API Backend
 After=syslog.target network.target
 
 [Service]
-Environment=PYTHONPATH=/opt/FitsStorage
+EnvironmentFile=/etc/systemd/system/fits-environment.txt
 User=fitsdata
-ExecStart=python3 /opt/FitsStorage/fits_storage/scripts/api_backend.py --demon
+ExecStart=/opt/FitsStorage/fits_storage/scripts/api_backend.py --demon
 Restart=always
 # This will force the system to wait 10 seconds before respawning
 RestartSec=10

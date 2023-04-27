@@ -3,10 +3,10 @@ Description=Fits Copy From Visiting Instrument CPO
 After=syslog.target network.target postgresql.service
 
 [Service]
-Environment=PYTHONPATH=/opt/FitsStorage
+EnvironmentFile=/etc/systemd/system/fits-environment.txt
 User=fitsdata
 Group=geminidata
-ExecStart=python /opt/FitsStorage/fits_storage/scripts/copy_from_visiting_instrument.py --debug --demon --zorro
+ExecStart=/opt/FitsStorage/fits_storage/scripts/copy_from_visiting_instrument.py --debug --demon --zorro
 Restart=always
 # This will force the system to wait 10 seconds before respawning
 RestartSec=10
