@@ -3,10 +3,10 @@ Description=Fits Copy From DHS
 After=syslog.target network.target postgresql.service
 
 [Service]
-Environment=PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/GeminiObsDB:/opt/GeminiCalMgr
+Environment=PYTHONPATH=/opt/FitsStorage
 User=fitsdata
 Group=geminidata
-ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/copy_from_dhs.py --debug --demon 
+ExecStart=python3 /opt/FitsStorage/fits_storage/scripts/copy_from_dhs.py --debug --demon
 Restart=always
 # This will force the system to wait 10 seconds before respawning
 RestartSec=10
