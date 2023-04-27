@@ -6,7 +6,7 @@ After=network.target remote-fs.target nss-lookup.target
 # Use common env variables for regular HTTP
 # Be careful with this! Change to another file if needed
 TimeoutStartSec=10
-User=fitsdata
+User=fitsweb
 ExecStart=uwsgi --ini /opt/uwsgi/fitsservice.ini
 
 [Install]

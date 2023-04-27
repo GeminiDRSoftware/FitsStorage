@@ -1,0 +1,9 @@
+# As root. The getent command just echoes the entry from the single sign on server
+getent passwd gem-fitsweb
+echo 'fitsweb:*:5180:513:FITS Web User:/home/fitsweb:/bin/bash' >> /etc/passwd
+echo 'fitsdata:x:5179:5179:FITS Data User:/home/fitsdata:/bin/bash' >> /etc/passwd
+echo 'fitsdata:x:5179:fitsdata' >> /etc/group
+echo 'geminidata:x:502:fitsdata' >> /etc/group
+#
+# edit /etc/group and add fitsdata and fitsweb to local-users. Needed to do this for anaconda permissions. Might not be necessary depending on final way we install anaconda and/or python3.10
+#
