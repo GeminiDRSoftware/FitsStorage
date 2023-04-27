@@ -1,0 +1,2 @@
+PYTHONPATH=/opt/FitsStorage
+PATH=/opt/anaconda3/envs/dragons/bin
