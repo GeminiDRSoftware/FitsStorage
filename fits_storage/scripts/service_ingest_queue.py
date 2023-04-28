@@ -51,7 +51,6 @@ if __name__ == "__main__":
                         help="Run as background demon, do not generate stdout")
 
     parser.add_argument("--name", action="store", dest="name",
-                        default="",
                         help="Name for this instance of this task. "
                              "Used in logfile and lockfile")
 
@@ -72,10 +71,8 @@ if __name__ == "__main__":
     setdebug(options.debug)
     setdemon(options.demon)
 
-    taskname = 'service_ingest_queue'
-    if options.name:
-        taskname += '-' + options.name
-        setlogfilesuffix(taskname)
+    if options.name is not None:
+        setlogfilesuffix(options.name)
 
     # Need to set up the global loop variable before we define the signal
     # handlers This is the loop forever variable later, allowing us to stop
@@ -111,7 +108,7 @@ if __name__ == "__main__":
                 f"{datetime.datetime.now()}")
 
     try:
-        with PidFile(taskname, logger, dummy=not options.lockfile) as pidfile, \
+        with PidFile(logger, name=options.name, dummy=not options.lockfile) as pidfile, \
                 session_scope() as session:
 
             ingest_queue = IngestQueue(session, logger)

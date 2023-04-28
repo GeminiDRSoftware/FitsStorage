@@ -16,6 +16,7 @@ leaves us open to a race condition if multiple processes check the same pid
 file simultaneously. This doesn't get used in rapid-fire situations, so this
 is unlikely to be a problem.
 """
+import sys
 import os
 from fits_storage.config import get_config
 
@@ -27,10 +28,11 @@ class PidFileError(Exception):
 
 
 class PidFile(object):
-    def __init__(self, name, logger, dummy=False):
-        if name is None:
-            name = 'unknown_name'
-        self.filename = os.path.join(fsc.lockfile_dir, name + '.lock')
+    def __init__(self, logger, name=None, dummy=False):
+        filename = sys.argv[0]
+        if name is not None:
+            filename += "-%s" % name
+        self.filename = os.path.join(fsc.lockfile_dir, filename + '.lock')
         self.logger = logger
         self.dummy = dummy
 

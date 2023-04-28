@@ -31,7 +31,6 @@ if __name__ == "__main__":
     parser.add_option("--demon", action="store_true", dest="demon",
                       default=False, help="Run as a background demon, do not generate stdout")
     parser.add_option("--name", action="store", dest="name",
-                      default="service_calcache_queue",
                       help="Name for this process. Used in logfile and lockfile")
     parser.add_option("--lockfile", action="store_true", dest="lockfile",
                       help="Use a lockfile to limit instances")
@@ -43,10 +42,8 @@ if __name__ == "__main__":
     setdebug(options.debug)
     setdemon(options.demon)
 
-    taskname = 'service_calcache_queue'
     if options.name:
-        taskname += '-' + options.name
-        setlogfilesuffix(taskname)
+        setlogfilesuffix(options.name)
 
     # Need to set up the global loop variable before we define the signal
     # handlers. This is the loop forever variable later, allowing us to stop
@@ -81,7 +78,7 @@ if __name__ == "__main__":
                 datetime.datetime.now())
 
     try:
-        with PidFile(taskname, logger, dummy=not options.lockfile) as pidfile, \
+        with PidFile(logger, name=options.name, dummy=not options.lockfile) as pidfile, \
                 session_scope() as session:
 
             # Loop forever. loop is a global variable defined up top
