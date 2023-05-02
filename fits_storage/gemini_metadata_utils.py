@@ -836,6 +836,18 @@ def gmos_gratingname(string: str) -> str:
     """
     return string if string in gmos_gratings else ''
 
+def gmos_dispersion(string: str) -> float:
+    """
+    Returns an estimate of the gmos dispersion in um/pix given a grating name.
+    Note, this is not exact, it is an approximation that is used primarily for
+    estimating a sensible central wavelength tolerance on calibration matches.
+    """
+    grating = gmos_gratingname(str)
+    if grating == '' or grating == 'MIRROR':
+        return None
+    lmm = float(grating.strip('BR'))
+    dispersion = 0.03/lmm
+    return dispersion
 
 gmosfpmaskcre = re.compile(r'^G[NS]?(20\d\d)[ABFDLWVSX](.)(\d\d\d)-(\d\d)$')
 gmos_facility_plane_masks = (

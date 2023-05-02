@@ -17,6 +17,7 @@ from .calibration import not_imaging
 from .calibration import not_processed
 from .calibration import not_spectroscopy
 
+from fits_storage.gemini_metadata_utils import gmos_dispersion
 
 class CalibrationGMOS(Calibration):
     """
@@ -970,12 +971,10 @@ class CalibrationGMOS(Calibration):
         float : suggested wavelength tolerance in um
         """
         # Find the dispersion, assume worst case if we can't match it
-        n = 1200.0
-        disperser_values = ['1200', '600', '831', '400', '150']
-        for dv in disperser_values:
-            if dv in self.descriptors['disperser']:
-                n = float(dv)
-        dispersion = 0.03/n
+        dispersion = gmos_dispersion(self.descriptors['disperser'])
+        if dispersion is None:
+            dispersion = 0.03/1200.0
+    
         # Note, dispersion here is the approximate um/pixel.
 
         # Replace with this if we start storing dispersion in the gmos table
