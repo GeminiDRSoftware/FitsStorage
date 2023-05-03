@@ -141,25 +141,3 @@ class IngestQueueEntry(OrmQueueMixin, Base):
 
         return message
 
-    def seterror(self, message):
-        """
-        Convenience function to call when an ingestqueueentry has an
-        error during processing. Appends to the error message, sets failed
-        to be true and inprogress to be false.
-        Note - this method does not commit the session, the caller must do that.
-
-        Parameters
-        ----------
-        message - error message to record
-
-        Returns
-        -------
-        Nothing
-        """
-        if self.error is None:
-            self.error = message
-        else:
-            self.error += '\n\n' + message
-
-        self.inprogress = False
-        self.failed = True
