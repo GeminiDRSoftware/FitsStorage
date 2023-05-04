@@ -6,6 +6,7 @@ data, but not the other way round, which is what we're doing here.
 """
 
 import bz2
+import hashlib
 
 class StreamBz2Compressor(object):
     """
@@ -21,9 +22,12 @@ class StreamBz2Compressor(object):
     source data after bz2 compressing it. The only file-like method this class
     supports is .read(size).
 
-    This class provides one extra property: bytes_output which gives the
-    number of bytes that have been read from the class. This is useful
-    after-the-fact to know the size of the compressed data.
+    This class provides two extra properties:
+        * bytes_output which gives the number of bytes that have been read
+        from the class so far.
+        * md5sum_output which gives the md5sum of the data output so far.
+    These update as data is read from the class, they are most useful after
+    all the data have been read of course.
     """
     def __init__(self, src, chunksize=1000000):
         """
@@ -37,6 +41,7 @@ class StreamBz2Compressor(object):
         self.done = False
         self.chunksize = chunksize
         self._bytes_output = 0
+        self.hashobj = hashlib.md5()
 
     def _fill_buffer(self, request_size):
         """
@@ -77,8 +82,13 @@ class StreamBz2Compressor(object):
         self.output_buffer = self.output_buffer[n:]
 
         self._bytes_output += len(ret)
+        self.hashobj.update(ret)
         return ret
 
     @property
     def bytes_output(self):
         return self._bytes_output
+
+    @property
+    def md5sum_output(self):
+        return self.hashobj.hexdigest()
