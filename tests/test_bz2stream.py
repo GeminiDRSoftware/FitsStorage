@@ -20,6 +20,7 @@ def do_test(datasize=1, chunksize=1, readsize=1):
         comp_data += data
 
     assert comp_data == check_data
+    assert sbc.bytes_output == len(check_data)
 
 # Walk through combinations of sizes being bigger or smaller than eachother
 
@@ -37,3 +38,4 @@ def test_4():
 
 def test_5():
     do_test(datasize=5000000, chunksize=1000000, readsize=1000)
+

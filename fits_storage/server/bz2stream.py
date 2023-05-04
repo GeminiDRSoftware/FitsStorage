@@ -20,6 +20,10 @@ class StreamBz2Compressor(object):
     You can then call .read(size) on this object and that will return the
     source data after bz2 compressing it. The only file-like method this class
     supports is .read(size).
+
+    This class provides one extra property: bytes_output which gives the
+    number of bytes that have been read from the class. This is useful
+    after-the-fact to know the size of the compressed data.
     """
     def __init__(self, src, chunksize=1000000):
         """
@@ -32,6 +36,7 @@ class StreamBz2Compressor(object):
         self.output_buffer = bytes(0)
         self.done = False
         self.chunksize = chunksize
+        self._bytes_output = 0
 
     def _fill_buffer(self, request_size):
         """
@@ -71,4 +76,9 @@ class StreamBz2Compressor(object):
         ret = self.output_buffer[:n]
         self.output_buffer = self.output_buffer[n:]
 
+        self._bytes_output += len(ret)
         return ret
+
+    @property
+    def bytes_output(self):
+        return self._bytes_output
