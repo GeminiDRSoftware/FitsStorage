@@ -59,8 +59,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--empty", action="store_true", dest="empty",
                         default=False,
-                        help="This flag indicates that service_ingest_queue "
-                             "should exit once the queue is empty.")
+                        help="Exit once the queue is empty.")
 
     parser.add_argument("--oneshot", action="store_true", dest="oneshot",
                         default=False, help="Process only one file then exit")
@@ -83,11 +82,11 @@ if __name__ == "__main__":
     # a signal. These need to be defined after logger is set up as there is no
     # way to pass the logger as an argument to these.
     def handler(signum, frame):
-        logger.error(f"Received signal: {signum}. Crashing out.")
+        logger.error("Received signal: %d. Crashing out.", signum)
         raise KeyboardInterrupt('Signal', signum)
 
     def nicehandler(signum, frame):
-        logger.error(f"Received signal: {signum}. Attempting to stop nicely.")
+        logger.error("Received signal: %d. Attempting to stop nicely.", signum)
         global loop
         loop = False
 
@@ -104,18 +103,18 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, nicehandler)
 
     # Announce startup
-    logger.info("***    service_ingest_queue.py - starting up at "
-                f"{datetime.datetime.now()}")
+    logger.info("***   service_ingest_queue.py - starting up at %s",
+                datetime.datetime.now())
 
     try:
         with PidFile(logger, name=options.name, dummy=not options.lockfile) as pidfile, \
                 session_scope() as session:
 
             ingest_queue = IngestQueue(session, logger)
-
-            # Loop forever. loop is a global variable defined up top
             ingester = Ingester(session, logger, skip_fv=options.skip_fv,
                                 skip_md=options.skip_md)
+
+            # Loop forever. loop is a global variable defined up top
             while loop:
                 try:
                     # Request a queue entry. The returned entry is marked
@@ -137,12 +136,12 @@ if __name__ == "__main__":
 
                     # Don't query queue length in fast_rebuild mode
                     if options.fast_rebuild:
-                        logger.info(f"Ingesting {iqe.filename} - "
-                                    f"id {iqe.id}")
+                        logger.info("Ingesting %s - %s" %
+                                    (iqe.filename, iqe.id))
                     else:
-                        logger.info(f"Ingesting {iqe.filename} - "
-                                    f"id {iqe.id} "
-                                    f" ({ingest_queue.length()} in queue)")
+                        logger.info("Ingesting %s - %s (%d on queue)" %
+                                    (iqe.filename, iqe.id,
+                                     ingest_queue.length()))
 
                     # Check if the file was very recently modified or is
                     # locked, defer ingestion if so
