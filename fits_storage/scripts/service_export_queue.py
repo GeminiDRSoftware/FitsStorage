@@ -1,7 +1,7 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
+
 import signal
 import sys
-import os
 import datetime
 import time
 import traceback
@@ -12,63 +12,54 @@ from requests import RequestException
 from sqlalchemy.exc import OperationalError, IntegrityError
 from optparse import OptionParser
 
-from fits_storage.orm.exportqueue import ExportQueue
-from fits_storage.utils.exportqueue import ExportQueueUtil
+from fits_storage.queues.queue.exportqueue import ExportQueue
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
-from fits_storage.fits_storage_config import fits_lockfile_dir
-from fits_storage.utils.pidfile import PidFile, PidFileError
-
-from gemini_obs_db.db import session_scope
-
+from fits_storage.server.pidfile import PidFile, PidFileError
+from fits_storage.db import session_scope
 
 
 if __name__ == "__main__":
 
     parser = OptionParser()
-    parser.add_option("--retry_mins", action="store", dest="retry_mins", type="float", default=5.0, help="Minimum number of minutes to wait before retries")
-    parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
-    parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
-    parser.add_option("--name", action="store", default="service_export_queue", dest="name", help="Name for this process. Used in logfile and lockfile")
-    parser.add_option("--lockfile", action="store_true", dest="lockfile", help="Use a lockfile to limit instances")
-    parser.add_option("--empty", action="store_true", default=False, dest="empty", help="This flag indicates that service ingest queue should empty the current queue and then exit.")
+    parser.add_option("--debug", action="store_true", dest="debug",
+                      default=False, help="Increase log level to debug")
+    parser.add_option("--demon", action="store_true", dest="demon",
+                      default=False,
+                      help="Run as a background demon, do not generate stdout")
+    parser.add_option("--name", action="store", dest="name",
+                      help="Name for this process. "
+                           "Used in logfile and lockfile")
+    parser.add_option("--lockfile", action="store_true", dest="lockfile",
+                      help="Use a lockfile to limit instances")
+    parser.add_option("--empty", action="store_true", default=False,
+                      dest="empty", help="Exit once the queue is empty.")
+    parser.add_argument("--oneshot", action="store_true", dest="oneshot",
+                        default=False, help="Process only one file then exit")
     (options, args) = parser.parse_args()
 
     # Logging level to debug? Include stdio log?
     setdebug(options.debug)
     setdemon(options.demon)
-    if options.name:
+
+    if options.name is not None:
         setlogfilesuffix(options.name)
 
-    # Need to set up the global loop variable before we define the signal handlers
-    # This is the loop forever variable later, allowing us to stop cleanly via kill
-    global loop
+    # Need to set up the global loop variable before we define the signal
+    # handlers This is the loop forever variable later, allowing us to stop
+    # cleanly via kill
     loop = True
 
-    # Define signal handlers. This allows us to bail out neatly if we get a signal
+    # Define signal handlers. This allows us to bail out cleanly e.g. if we get
+    # a signal. These need to be defined after logger is set up as there is no
+    # way to pass the logger as an argument to these.
     def handler(signum, frame):
         logger.error("Received signal: %d. Crashing out. ", signum)
         raise KeyboardInterrupt('Signal', signum)
 
     def nicehandler(signum, frame):
-        logger.error("Received signal: %d. Attempting to stop nicely ", signum)
+        logger.error("Received signal: %d. Attempting to stop nicely.", signum)
         global loop
         loop = False
-
-    class Throttle(object):
-        def __init__(self, cap = 60):
-            self.cap = cap
-            self.reset()
-
-        def reset(self):
-            self.t1 = 1
-            self.t2 = 1
-
-        def wait(self):
-            slp = min(self.t1 + self.t2, self.cap)
-            logger.info("* Throttling: will sleep for %d seconds" % slp)
-            time.sleep(slp)
-            if slp < self.cap:
-                self.t1, self.t2 = self.t2, self.t1 + self.t2
 
     # Set handlers for the signals we want to handle
     # Cannot trap SIGKILL or SIGSTOP, all others are fair game
@@ -83,48 +74,57 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, nicehandler)
 
     # Annouce startup
-    logger.info("*********    service_export_queue.py - starting up at %s", datetime.datetime.now())
-
-    throttle = Throttle()
+    logger.info("***   service_export_queue.py - starting up at %s",
+                datetime.datetime.now())
 
     try:
-        with PidFile(logger, options.name, dummy=not options.lockfile) as pidfile, session_scope() as session:
-            # retry interval option has a default so should always be defined
-            interval = datetime.timedelta(minutes=options.retry_mins)
-            eq = None
+        with PidFile(logger, options.name, dummy=not options.lockfile) as pidfile, \
+                session_scope() as session:
 
-            # Set a flag so that we can get exactly one "Nothing on queue" message in the info log
-            # This is really useful to see that the last transfer completed, without endlessly
-            # repeating the log message
-            nothing = False
+            export_queue = ExportQueue(session, logger=logger)
 
-            export_queue = ExportQueueUtil(session, logger)
             # Loop forever. loop is a global variable defined up top
             while loop:
                 try:
-                    # Request a queue entry
-                    logger.debug("Requesting an exportqueue entry")
-                    eq = export_queue.pop()
+                    # Request a queue entry. The returned entry is marked
+                    # as inprogress and committed to the session.
+                    eqe = export_queue.pop()
 
-                    if eq is None:
+                    if eqe is None:
                         if options.empty:
-                            logger.info("Nothing on queue and --empty flag set, exiting")
+                            logger.info("Nothing on queue and "
+                                        "--empty flag set, exiting")
                             break
                         else:
-                            if not nothing:
-                                logger.info("Nothing on Queue... Waiting")
-                            nothing = True
-                        time.sleep(2)
+                            logger.info("Nothing on Queue... Waiting")
+                            time.sleep(2)
+                            # Mark any old failures for retry
+                            export_queue.retry_failures(interval)
+                            continue
 
-                        # Mark any old failures for retry
-                        export_queue.retry_failures(interval)
+                    if options.oneshot:
+                        loop = False
 
+                    # Don't query queue length in fast_rebuild mode
+                    if options.fast_rebuild:
+                        logger.info("Exporting %s - %s" %
+                                    (eqe.filename, eqe.id))
                     else:
-                        nothing = False
-                        logger.info("Exporting %s, (%d in queue)", eq.filename, export_queue.length())
+                        logger.info("Exporting %s - %d (%d on queue)" %
+                                    (eqe.filename, eqe.id,
+                                     export_queue.length()))
 
-                        try:
-                            success, details = export_queue.export_file(eq.filename, eq.path, eq.destination,
+                    # Go ahead and export the file. At this point, eqe is
+                    # marked as inprogress and is committed to the database.
+                    # export_file(eqe) should handle everything from here -
+                    # including deleting the eqe if it successfully exports
+                    # it, setting the status and error messages in eqe and
+                    # outputting appropriate log messages if there's a failure.
+
+                    exporter.export_file(eqe)
+
+                    try:
+                        success, details = export_queue.export_file(eq.filename, eq.path, eq.destination,
                                                                header_fields=eq.header_fields,
                                                                md5_before_header=eq.md5_before_header,
                                                                md5_after_header=eq.md5_after_header,
