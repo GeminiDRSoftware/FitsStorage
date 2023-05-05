@@ -8,15 +8,14 @@ import traceback
 import sys
 from requests import RequestException
 
-from .null_logger import EmptyLogger
+from fits_storage.logger import DummyLogger
 
-##########################################################################################
-#
+
 # Frontend bits
-#
 
 class ApiProxyError(Exception):
     pass
+
 
 class ApiProxy(object):
     def __init__(self, server, prefix=''):
@@ -26,8 +25,8 @@ class ApiProxy(object):
             port = '80'
 
         self.server = server
-        self.port   = int(port)
-        self.pref   = prefix
+        self.port = int(port)
+        self.pref = prefix
 
     def __getattr__(self, attribute):
         return partial(self.__invoke, attribute)
@@ -50,46 +49,50 @@ class ApiProxy(object):
                 raise ApiProxyError("Invalid response: lacking 'result'")
             return response['result']
         except TypeError:
-            raise ApiProxyError("The response message is not valid: {!r}".format(response))
+            raise ApiProxyError("The response message is not valid: {!r}"
+                                .format(response))
         except RequestException as e:
             raise ApiProxyError("HTTP error when connecting to {}".format(path))
 
-##########################################################################################
-#
 # Backend bits
-#
 
-HTTP_OK            = 200
-BAD_REQUEST        = 400
-FORBIDDEN          = 403
-NOT_FOUND          = 404
+
+HTTP_OK = 200
+BAD_REQUEST = 400
+FORBIDDEN = 403
+NOT_FOUND = 404
 METHOD_NOT_ALLOWED = 405
-INTERNAL_ERROR     = 500
+INTERNAL_ERROR = 500
 
 status_text = {
-    HTTP_OK           : "OK",
-    BAD_REQUEST       : "Bad Request",
-    FORBIDDEN         : "Forbidden",
-    NOT_FOUND         : "Not Found",
+    HTTP_OK: "OK",
+    BAD_REQUEST: "Bad Request",
+    FORBIDDEN: "Forbidden",
+    NOT_FOUND: "Not Found",
     METHOD_NOT_ALLOWED: "Method not Allowed",
-    INTERNAL_ERROR    : "Internal Error",
+    INTERNAL_ERROR: "Internal Error",
     }
+
 
 def get_status_text(status):
     return "{} {}".format(status, status_text[status])
 
+
 class NewCardsIncluded(Exception):
     pass
 
+
 class WSGIError(Exception):
-    def __init__(self, message, status=HTTP_OK, content_type = 'application/json', error_object = None):
-        self.status  = status
-        self.ct      = content_type
+    def __init__(self, message, status=HTTP_OK,
+                 content_type='application/json', error_object=None):
+        self.status = status
+        self.ct = content_type
         self.message = message
-        self.eobj    = error_object
+        self.eobj = error_object
 
     def response(self, environ, start_response):
-        start_response(get_status_text(self.status), [('Content-Type', self.ct)])
+        start_response(get_status_text(self.status),
+                       [('Content-Type', self.ct)])
         message = {'error': self.message}
         if self.eobj:
             cls = self.eobj.__class__
@@ -100,11 +103,13 @@ class WSGIError(Exception):
             }
         return [json.dumps(message)]
 
+
 def get_post_data(environ):
     try:
         return environ['wsgi.input'].read(int(environ.get('CONTENT_LENGTH', 0)))
     except ValueError:
         return ''
+
 
 def get_arguments(environ):
     data = "__unset__"
@@ -118,42 +123,49 @@ def get_arguments(environ):
     except ValueError:
         raise WSGIError(f"The data for this query: {data} is not valid JSON")
 
+
 class ApiCall(object):
     def __init__(self, call, logger):
-        self._call  = call
+        self._call = call
         self.__doc__ = call.__doc__
-        self.log     = logger
+        self.log = logger
 
     def __call__(self, environ, start_response):
         query = get_arguments(environ)
         try:
-            self.log.info("Calling %s with arguments %s", self._call.__name__, query)
+            self.log.info("Calling %s with arguments %s", self._call.__name__,
+                          query)
             ret = self._call(**query)
         except TypeError as e:
             args, _, _, defaults = inspect.getargspec(self._call)
-            non_default = set(args if defaults is None else args[:-len(defaults)])
-            passed      = set(query)
+            non_default = set(args if defaults is None else
+                              args[:-len(defaults)])
+            passed = set(query)
             missing = non_default - passed
-            extra   = passed - non_default
+            extra = passed - non_default
             if missing:
-                raise WSGIError("Missing argument(s): {}".format(', '. join(missing)))
+                raise WSGIError("Missing argument(s): {}"
+                                .format(', '. join(missing)))
             elif extra:
-                raise WSGIError("Unexpected argument(s): {}".format(', '. join(extra)))
+                raise WSGIError("Unexpected argument(s): {}"
+                                .format(', '. join(extra)))
             raise WSGIError(str(e))
         except Exception as e:
-            string = ''.join(traceback.format_tb(sys.exc_info()[2])) + '\n\n' + str(e)
+            string = ''.join(traceback.format_tb(sys.exc_info()[2])) \
+                     + '\n\n' + str(e)
             raise WSGIError(string)
 
         try:
             result = json.dumps({'result': ret})
         except TypeError:
-            raise WSGIError("Error when trying to prepare the result to be returned",
+            raise WSGIError("Error when preparing the result to be returned",
                             status=INTERNAL_ERROR)
 
         start_response("200 OK", [('Content-Type', 'application/json')])
         return [result.encode('utf8')]
 
+
 def json_api_call(logger=None):
     def wrapper(fn):
-        return wraps(fn)(ApiCall(fn, logger or EmptyLogger()))
+        return wraps(fn)(ApiCall(fn, logger or DummyLogger()))
     return wrapper
