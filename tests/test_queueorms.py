@@ -7,6 +7,7 @@ from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
 from fits_storage.queues.orm.calcachequeueentry import CalCacheQueueEntry
 from fits_storage.queues.orm.previewqueueentry import PreviewQueueEntry
+from fits_storage.queues.orm.fileopsqueueentry import FileopsQueueEntry
 
 
 def test_basiceqe():
@@ -94,6 +95,14 @@ def test_basicccqe():
     assert ccqe.inprogress is False
     assert ccqe.failed is False
 
+
+def test_basicfqe():
+    fqe = FileopsQueueEntry('[]')
+    assert fqe.request == '[]'
+    assert fqe.response is None
+    assert fqe.added is not None
+    assert fqe.sortkey is not None
+    
 
 class FakeDiskFile(object):
     id = 1
