@@ -85,3 +85,18 @@ the client could use inotify or similar for efficiency.
 
 Initial thoughts are that 1 or 3 are the best options. suggest we try 1, and it 
 should be simple to refactor to switch if needed.
+
+## Code structure
+
+* service_fileops_queue.py:
+  * instantiate a FileOpser class, storing session and logger in it.
+  * pops the queue (sets inprogress=True)
+  * passes the fileopsqueueentry to fileopser.do_fileop()
+
+* FileOpser class (analogous to Exporter and Importer) - stores the session
+and logger instances.
+  * do_fileop():
+    * Decodes the request 
+    * calls the python function to actually do the work
+    * Puts the return values in the response 
+    * commits the database.

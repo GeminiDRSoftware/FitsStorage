@@ -38,3 +38,29 @@ class FileopsQueue(Queue):
                               f"to Fileops Queue. Silently rolling back.")
             self.session.rollback()
             return False
+
+class FileOpsResponse(object):
+    """Fileops response object. Stores values and (de)serializes as required"""
+    ok = False
+    error = None
+    value = None
+
+    def __init__(self, ok=False, error='', value=''):
+        self.ok = ok
+        self.error = error
+        self.value = value
+
+    def dict(self):
+        return {'ok': self.ok,
+                'error': self.error,
+                'value': self.value}
+
+    def json(self):
+        return json.dumps(self.dict())
+
+    def loads(self, jsondoc):
+        """Load a json document string, parse the values"""
+        resp = json.loads(jsondoc)
+        self.ok = resp['ok']
+        self.error = resp['error']
+        self.value = resp['value']
