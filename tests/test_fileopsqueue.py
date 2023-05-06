@@ -33,4 +33,3 @@ def test_for_loads_json():
 
     assert r.dict() == ref_dict
     assert r.json() == ref_json
-    
