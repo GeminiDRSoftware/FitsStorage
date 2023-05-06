@@ -8,12 +8,14 @@ ref_dict = {'ok': True,
 
 ref_json = '{"ok": true, "error": "Nope", "value": "Hello, world"}'
 
+
 def test_for_init():
     r = FileOpsResponse()
 
     assert r.ok is False
     assert r.error == ''
     assert r.value == ''
+
 
 def test_for_dict_json():
     r = FileOpsResponse()
@@ -24,9 +26,11 @@ def test_for_dict_json():
     assert r.dict() == ref_dict
     assert r.json() == ref_json
 
+
 def test_for_loads_json():
     r = FileOpsResponse()
     r.loads(ref_json)
 
     assert r.dict() == ref_dict
     assert r.json() == ref_json
+    
