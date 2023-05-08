@@ -1,6 +1,8 @@
 """FileopsQueue housekeeping class. Note that this is not the ORM class."""
-
+import datetime
 import json
+import time
+
 from sqlalchemy.exc import IntegrityError
 
 from .queue import Queue
@@ -11,7 +13,7 @@ class FileopsQueue(Queue):
     def __init__(self, session, logger=None):
         super().__init__(session, ormclass=FileopsQueueEntry, logger=logger)
 
-    def add(self, request, after=None):
+    def add(self, fo_reqest, after=None):
         """
         Add an entry to the fileops queue. This instantiates a FileopsQueueEntry
         object using the arguments passed, and adds it to the database.
@@ -23,21 +25,54 @@ class FileopsQueue(Queue):
 
         Returns
         -------
-        False on error
-        True on success
+        fileops queue entry added. None on failure.
         """
 
-        fqe = FileopsQueueEntry(request, after=after)
+        fqe = FileopsQueueEntry(fo_reqest.json(), after=after)
 
         self.session.add(fqe)
         try:
             self.session.commit()
-            return True
+            return fqe
         except IntegrityError:
-            self.logger.debug(f"Integrity error adding request {request} "
-                              f"to Fileops Queue. Silently rolling back.")
+            self.logger.debug("Integrity error adding request "
+                              f"{fo_reqest.json()} to Fileops Queue. "
+                              "Rolling back.")
             self.session.rollback()
-            return False
+            return None
+
+
+    def poll_for_response(self, id, timeout=10):
+        """
+        Poll filequeue entry id until response is not null. Timeout value
+        is in seconds.
+        If we find a response, delete the queueentry and return a response
+        instance for it.
+        """
+        now = datetime.datetime.utcnow()
+        then = now + datetime.timedelta(seconds=timeout)
+
+        query = self.session.query(FileopsQueueEntry).\
+            filter(FileopsQueueEntry.id == id).\
+            filter(FileopsQueueEntry.inprogress == True).\
+            filter(FileopsQueueEntry.response != None)
+
+        fqe = None
+        while (datetime.datetime.utcnow() < then) and fqe is None:
+            self.logger.debug("Polling fqe id %d", id)
+            fqe = query.first()
+            time.sleep(1)
+
+        if fqe:
+            self.session.refresh(fqe)
+            self.logger.debug("Found FQE with response: %s", fqe.response)
+            fo_resp = FileOpsResponse(json=fqe.response)
+            self.session.delete(fqe)
+            self.session.commit()
+            return fo_resp
+        else:
+            self.logger.debug("Did not find FQE with response - timed out")
+            return None
 
 class FileOpsResponse(object):
     """Fileops response object. Stores values and (de)serializes as required"""
@@ -45,10 +80,13 @@ class FileOpsResponse(object):
     error = None
     value = None
 
-    def __init__(self, ok=False, error='', value=''):
+    def __init__(self, ok=False, error='', value='', json=None):
         self.ok = ok
         self.error = error
         self.value = value
+
+        if json is not None:
+            self.loads(json)
 
     def dict(self):
         return {'ok': self.ok,
@@ -64,3 +102,25 @@ class FileOpsResponse(object):
         self.ok = resp['ok']
         self.error = resp['error']
         self.value = resp['value']
+
+class FileOpsRequest(object):
+    """Fileops request object. Stores values and (de)serializes as required"""
+    request = None
+    args = None
+
+    def __init__(self, request='', args={}):
+        self.request = request
+        self.args = args
+
+    def dict(self):
+        return {'request': self.request,
+                'args': self.args}
+    def json(self):
+        return json.dumps(self.dict())
+
+    def loads(self, jsondoc):
+        """Load a json document string, parse the values"""
+        resp = json.loads(jsondoc)
+        self.request = resp['request']
+        self.args = resp['args']
+

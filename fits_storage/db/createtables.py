@@ -31,6 +31,7 @@ if fsc.is_server:
     from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
     from fits_storage.queues.orm.previewqueueentry import PreviewQueueEntry
     from fits_storage.queues.orm.calcachequeueentry import CalCacheQueueEntry
+    from fits_storage.queues.orm.fileopsqueueentry import FileopsQueueEntry
 
 # Calcache table
 if fsc.is_archive:

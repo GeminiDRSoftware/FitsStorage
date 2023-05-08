@@ -21,14 +21,14 @@ class FileopsQueueEntry(OrmQueueMixin, Base):
     __tablename__ = 'fileopsqueue'
 
     id = Column(Integer, primary_key=True)
-    filename = Column(Text, nullable=False, index=True)
+    filename = Column(Text)
     inprogress = Column(Boolean, index=True)
     fail_dt = Column(DateTime, index=True)
     added = Column(DateTime)
     after = Column(DateTime)
     sortkey = Column(DateTime, index=True)
     error = Column(Text)
-    request = Column(Text)
+    request = Column(Text, nullable=False)
     response = Column(Text)
 
     def __init__(self, request, after=None):

@@ -34,7 +34,7 @@ class Queue(object):
 
             return query.count()
 
-    def pop(self):
+    def pop(self, use_inprogress_filenames=True):
         """
         Pop an entry from the queue. We use select-for-update to ensure that
         this works correctly with multiple clients attempting to pop the
@@ -75,14 +75,18 @@ class Queue(object):
             # exclude. Note, this does not execute this query, that's done
             # within the main query under the select-for-update lock.
 
-            inprogress_filenames = session.query(ormclass.filename).\
-                filter(ormclass.fail_dt == ormclass.fail_dt_false).\
-                filter(ormclass.inprogress == True)
+            if use_inprogress_filenames:
+                inprogress_filenames = session.query(ormclass.filename).\
+                    filter(ormclass.fail_dt == ormclass.fail_dt_false).\
+                    filter(ormclass.inprogress == True)
 
             query = session.query(ormclass).\
                 filter(ormclass.inprogress == False).\
-                filter(ormclass.fail_dt == ormclass.fail_dt_false). \
-                filter(~ormclass.filename.in_(inprogress_filenames))
+                filter(ormclass.fail_dt == ormclass.fail_dt_false)
+
+            if use_inprogress_filenames:
+                query = query.\
+                    filter(~ormclass.filename.in_(inprogress_filenames))
 
             if hasattr(ormclass, 'after'):
                 query = query.filter(ormclass.after <
