@@ -1,7 +1,6 @@
 import os
 import hashlib
 import datetime
-import errno
 
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
@@ -10,8 +9,7 @@ from fits_storage.server.orm.fileuploadlog import FileUploadLog
 
 from .user import needs_login
 
-from fits_storage.queues.queue.fileopsqueue import FileopsQueue, \
-    FileOpsResponse, FileOpsRequest
+from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsRequest
 
 from fits_storage.logger import DummyLogger
 
@@ -48,37 +46,42 @@ def upload_file(filename, processed_cal=False):
         ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
         return
 
-    # It's brute force to read all the data in one chunk,
-    # but that's fine, files are never more than a few hundred MB...
-    fileuploadlog.ut_transfer_start = datetime.datetime.utcnow()
-    clientdata = ctx.raw_data
-
-    fileuploadlog.ut_transfer_complete = datetime.datetime.utcnow()
+    # Stream the data into the upload_staging file.
+    # Calculate the md5 and size as we do it
+    m = hashlib.md5()
+    size = 0
+    chunksize = 1000000  # 1MB
     fullfilename = os.path.join(fsc.upload_staging_dir, filename)
-
+    # Content Length may or may not be defined. It's not required and if the
+    # exporter is compressing on-the-fly, it won't know the length of the
+    # compressed data ahead of time. Still, it's useful to log it.
+    content_length = ctx.env['CONTENT_LENGTH']
+    content_length = int(content_length) if content_length else None
+    fileuploadlog.add_note(f"Content_Length header gave: {content_length}")
+    # Python's wsgiref.simple_server has a bug with .read() that causes the
+    # read to hang in certain situations. We can work around this if
+    # content-length is set, but not if not. This is what bytes_left does.
+    # https://github.com/python/cpython/issues/66077
     try:
         with open(fullfilename, 'wb') as f:
-            f.write(clientdata)
-    except IOError as e:
-        if e.errno in (errno.EPERM, errno.EACCES):
-            ctx.resp.client_error(Return.HTTP_FORBIDDEN,
-                                  "Could not store the file in the server "
-                                  "due to lack of permissions")
-        elif e.errno == errno.ENOENT:
-            ctx.resp.client_error(Return.HTTP_NOT_FOUND,
-                                  "Could not store the file. "
-                                  "The staging directory seems to be missing")
+            fileuploadlog.ut_transfer_start = datetime.datetime.utcnow()
+            while chunk := ctx.input.read(chunksize):
+                size += len(chunk)
+                m.update(chunk)
+                f.write(chunk)
+                # Work around simple_server bug if content_length is set.
+                bytes_left = content_length - size if content_length else None
+                if content_length and (bytes_left < chunksize):
+                    chunksize = bytes_left
+            fileuploadlog.ut_transfer_complete = datetime.datetime.utcnow()
+    except IOError:
+        fileuploadlog.add_note("IO Error writing upload_staging file")
+        ctx.resp.client_error(Return.HTTP_INTERNAL_SERVER_ERROR,
+                              "Could not store the file in the server")
 
-    # compute the md5 and size while we still have the buffer in memory
-    m = hashlib.md5()
-    m.update(clientdata)
     md5 = m.hexdigest()
-    size = len(clientdata)
     fileuploadlog.size = size
     fileuploadlog.md5 = md5
-
-    # Free up memory
-    clientdata = None
 
     # Construct the verification dictionary and json encode it
     verification = {'filename': filename, 'size': size, 'md5': md5}
@@ -95,5 +98,3 @@ def upload_file(filename, processed_cal=False):
                                   "fileuploadlog_id": fileuploadlog.id})
 
     fq.add(fo_req, filename=filename, response_required=False)
-
-
