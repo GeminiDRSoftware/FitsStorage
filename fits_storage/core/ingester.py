@@ -119,7 +119,7 @@ class Ingester(object):
         if there's a failure.
         """
 
-        self.l.info(f"Considering file for ingest: {iqe.filename}")
+        self.l.debug(f"Considering file for ingest: {iqe.filename}")
 
         # First, check if the file actually exists. If it doesn't, bail out.
         # Do not attempt to make the file as not present in the database.
