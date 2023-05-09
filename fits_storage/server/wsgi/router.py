@@ -38,6 +38,8 @@ from fits_storage.web.tapestuff import tape, tapewrite, tapefile, \
 
 from fits_storage.web.calmgr import xmlcalmgr, jsoncalmgr
 
+from fits_storage.web.upload_file import upload_file
+
 from .routing import SequenceConverter, SelectionConverter
 
 from fits_storage.config import get_config
@@ -169,11 +171,9 @@ url_map = Map([
     #      methods=['POST']),
     #
     # Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
-    # Rule('/upload_file/<filename>', upload_file,                    # The generic upload_file server
-    #      methods=['POST']),
-    # Rule('/upload_processed_cal/<filename>',                        # The processed_cal upload server
-    #      partial(upload_file, processed_cal=True),
-    #      methods=['POST']),
+    Rule('/upload_file/<filename>', upload_file, methods=['POST']),   # The generic upload_file server
+    Rule('/upload_processed_cal/<filename>',                        # The processed_cal upload server
+        partial(upload_file, processed_cal=True), methods=['POST']),
     #
 
     #

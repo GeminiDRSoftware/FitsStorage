@@ -20,14 +20,16 @@ dictionary as follows:
 If there is an error, the error message will be in 'error' and 'value' may
 contain debugging or further information. If there was no error, 'error' will
 be an empty string, and 'value' will contain the result.
+
+This module contains the infrastructure, the functions providing the actual
+functionality are imported from server.fileops
 """
 
 import json
 from fits_storage.queues.queue.fileopsqueue import FileOpsResponse
 
-
-def echo(args):
-    return args['echo']
+from .fileops import echo
+from .fileops import ingest_upload
 
 
 class FileOpser(object):
@@ -54,7 +56,8 @@ class FileOpser(object):
         # Each worker function must accept a single argument which is a
         # dict of actual arguments
         self.workers = {
-            'echo': echo
+            'echo': echo,
+            'ingest_upload': ingest_upload
         }
 
         # These are per-operation values stored centrally for convenience.
@@ -85,6 +88,13 @@ class FileOpser(object):
         Take a FileopsQueueEntry, decode the request, call the function to do
         the request, put the return value in the response and commit the
         database.
+
+        If this is a response_required=True entry, then don't delete it from
+        the queue when we're done - the "caller" - ie the thing that put it
+        on the queue is responsible for that in this case.
+
+        If this is a response_required=False entry, delete the queue entry
+        if we complete successfully.
         """
         self.fqe = fqe
 
@@ -126,7 +136,7 @@ class FileOpser(object):
 
         # Call the worker function!
         try:
-            self.response.value = self.worker(self.request_args)
+            self.response.value = self.worker(self.request_args, self.s, self.l)
         except Exception:
             self.doerror("Exception calling worker function for "
                          f"{self.request_name}", exc_info=True)
@@ -135,5 +145,9 @@ class FileOpser(object):
         # It worked!
         self.response.ok = True
         fqe.response = self.response.json()
+
+        if fqe.response_required is False:
+            self.s.delete(fqe)
+
         self.s.commit()
         return

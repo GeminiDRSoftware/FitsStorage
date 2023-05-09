@@ -1,27 +1,31 @@
 import os
-import json
 import hashlib
-import subprocess
 import datetime
 import errno
 
-from ..fits_storage_config import upload_staging_path, upload_auth_cookie, api_backend_location
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
 
-from ..utils.api import ApiProxy, ApiProxyError
-from ..utils.web import get_context, Return
-
-from ..orm.fileuploadlog import FileUploadLog
+from fits_storage.server.orm.fileuploadlog import FileUploadLog
 
 from .user import needs_login
 
+from fits_storage.queues.queue.fileopsqueue import FileopsQueue, \
+    FileOpsResponse, FileOpsRequest
 
-@needs_login(only_magic=True, magic_cookies=[('gemini_fits_upload_auth', upload_auth_cookie)], annotate=FileUploadLog)
+from fits_storage.logger import DummyLogger
+
+from fits_storage.config import get_config
+fsc = get_config()
+
+
+@needs_login(only_magic=True, magic_cookies=[
+    ('gemini_fits_upload_auth', fsc.upload_auth_cookie)],
+             annotate=FileUploadLog)
 def upload_file(filename, processed_cal=False):
     """
-    This handles uploading files including processed calibrations.
+    This handles uploading files, including processed calibrations.
     It has to be called via a POST request with a binary data payload
-    We drop the data in a staging area, then call a (setuid) script to
-    copy it into place and trigger the ingest.
 
     If upload authentication is enabled, the request must contain
     the authentication cookie for the request to be processed.
@@ -39,29 +43,33 @@ def upload_file(filename, processed_cal=False):
     session.add(fileuploadlog)
     session.commit()
 
-#    if ctx.env.method != 'POST':
-#        fileuploadlog.add_note("Aborted - not HTTP POST")
-#        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
-#        return
+    if ctx.env.method != 'POST':
+        fileuploadlog.add_note("Aborted - not HTTP POST")
+        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
+        return
 
-    # It's a bit brute force to read all the data in one chunk,
+    # It's brute force to read all the data in one chunk,
     # but that's fine, files are never more than a few hundred MB...
     fileuploadlog.ut_transfer_start = datetime.datetime.utcnow()
     clientdata = ctx.raw_data
 
     fileuploadlog.ut_transfer_complete = datetime.datetime.utcnow()
-    fullfilename = os.path.join(upload_staging_path, filename)
+    fullfilename = os.path.join(fsc.upload_staging_dir, filename)
 
     try:
         with open(fullfilename, 'wb') as f:
             f.write(clientdata)
     except IOError as e:
         if e.errno in (errno.EPERM, errno.EACCES):
-            ctx.resp.client_error(Return.HTTP_FORBIDDEN, "Could not store the file in the server due to lack of permissions")
+            ctx.resp.client_error(Return.HTTP_FORBIDDEN,
+                                  "Could not store the file in the server "
+                                  "due to lack of permissions")
         elif e.errno == errno.ENOENT:
-            ctx.resp.client_error(Return.HTTP_NOT_FOUND, "Could not store the file. The staging directory seems to be missing")
+            ctx.resp.client_error(Return.HTTP_NOT_FOUND,
+                                  "Could not store the file. "
+                                  "The staging directory seems to be missing")
 
-    # compute the md5  and size while we still have the buffer in memory
+    # compute the md5 and size while we still have the buffer in memory
     m = hashlib.md5()
     m.update(clientdata)
     md5 = m.hexdigest()
@@ -77,34 +85,15 @@ def upload_file(filename, processed_cal=False):
     # And write that back to the client
     ctx.resp.append_json([verification])
 
-    # Now invoke the backend to ingest the file
-    proxy = ApiProxy(api_backend_location)
-    try:
-        result = proxy.ingest_upload(filename=filename,
-                                     processed_cal=bool(processed_cal),
-                                     fileuploadlog_id = fileuploadlog.id)
-    except ApiProxyError as e:
-        # TODO: Actually log this and tell someone about it...
-        # response.append(error_response("An internal error ocurred and your query could not be performed. It has been logged"))
-        ctx.resp.status = Return.HTTP_SERVICE_UNAVAILABLE
+    # Put the ingest_upload request on the fileops queue. We trust fileops to
+    # do its thing asynchronously and do not wait for a response here.
+    fq = FileopsQueue(session, logger=DummyLogger())
 
-#        # Now invoke the setuid ingest program
-#        command = ["/opt/FitsStorage/fits_storage/scripts/invoke",
-#                   "/opt/FitsStorage/fits_storage/scripts/ingest_uploaded_file.py", "--filename=%s" % filename,
-#                   "--demon",
-#                   "--processed_cal=%s" % processed_cal,
-#                   "--fileuploadlog_id=%d" % fileuploadlog.id]
-#
-#        #ret = subprocess.call(command)
-#        subp_p = subprocess.Popen(command)
-#        subp_p.wait()
-#
-#        ret = subp_p.returncode
-#        fileuploadlog.invoke_pid = subp_p.pid
-#        fileuploadlog.invoke_status = subp_p.returncode
-#
-#        # Because invoke calls execv(), which in turn replaces the process image of the invoke process with that of
-#        # python running ingest_uploaded_calibration.py, the return value we get acutally comes from that script, not invoke
-#
-#        if ret != 0:
-#            ctx.resp.status = HTTP_SERVICE_UNAVAILABLE
+    fo_req = FileOpsRequest(request="ingest_upload",
+                            args={"filename": filename,
+                                  "processed_cal": processed_cal,
+                                  "fileuploadlog_id": fileuploadlog.id})
+
+    fq.add(fo_req, filename=filename, response_required=False)
+
+
