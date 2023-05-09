@@ -18,8 +18,8 @@ is unlikely to be a problem.
 """
 import sys
 import os
-from fits_storage.config import get_config
 
+from fits_storage.config import get_config
 fsc = get_config()
 
 
@@ -29,7 +29,7 @@ class PidFileError(Exception):
 
 class PidFile(object):
     def __init__(self, logger, name=None, dummy=False):
-        filename = sys.argv[0]
+        filename = os.path.basename(sys.argv[0])
         if name is not None:
             filename += "-%s" % name
         self.filename = os.path.join(fsc.lockfile_dir, filename + '.lock')
