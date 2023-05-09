@@ -100,3 +100,9 @@ and logger instances.
     * calls the python function to actually do the work
     * Puts the return values in the response 
     * commits the database.
+
+Turns out at least some (maybe even most) if the uses cases for this don't 
+actually require feedback to the "caller". So in those cases we set
+response_required to False and then those queue entries get handled just like
+the other queues and do_fileop() deletes the queue entry when it has done
+the work.
