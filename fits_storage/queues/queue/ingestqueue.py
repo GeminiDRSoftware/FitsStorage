@@ -40,8 +40,8 @@ class IngestQueue(Queue):
 
         Returns
         -------
-        False on error
-        True on success
+        None on error
+        IngestQueueEntry added on success
         """
 
         # If we're getting a header update dict, store it as JSON.
@@ -57,10 +57,10 @@ class IngestQueue(Queue):
         self.session.add(iqe)
         try:
             self.session.commit()
-            return True
+            return iqe
         except IntegrityError:
             self.logger.debug(f"Integrity error adding file {filename} "
                               f"to Ingest Queue. Most likely, file is already"
                               f"on queue. Silently rolling back.")
             self.session.rollback()
-            return False
+            return None
