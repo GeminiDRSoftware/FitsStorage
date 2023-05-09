@@ -11,7 +11,7 @@ from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.server.pidfile import PidFile, PidFileError
 
 from fits_storage.db import session_scope
-from fits_storage.queues.queue.fileopsqueue import FileopsQueue
+from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsResponse
 
 from fits_storage.server.fileopser import FileOpser
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
                 try:
                     # Request a queue entry. The returned entry is marked
                     # as inprogress and committed to the session.
-                    fqe = fileops_queue.pop(use_inprogress_filenames=False)
+                    fqe = fileops_queue.pop()
 
                     if fqe is None:
                         if options.empty:
@@ -107,12 +107,9 @@ if __name__ == "__main__":
                     if options.oneshot:
                         loop = False
 
-                    # Process the queue entry. No need to check status here,
-                    # and unlike the other queues, we don't delete it from the
-                    # queue here - the "caller" - ie the thing that put it on
-                    # the queue is responsible for that for this queue.
-                    # .fileop() will have set the status in the fqe and
-                    # committed the session.
+                    # Process the queue entry.
+                    # .fileop() is basically responsible for everything else
+                    # from here
                     fileopser.fileop(fqe)
 
                 except (KeyboardInterrupt, OperationalError):

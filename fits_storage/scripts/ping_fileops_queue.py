@@ -9,12 +9,14 @@ from fits_storage.queues.queue.fileopsqueue import FileopsQueue, \
     FileOpsRequest, FileOpsResponse
 
 """
-This script "pings" the fileops queue. The fileops queue isn't like the other
-queues where you add stuff to the queue in a fire-and-forget manner. With
-fileops, the result gets written back to the queue entry, and it's up to the
-code that added it to the queue to read the resonse, check the status and
-delete the queue entry when complete. This script exercises the fileops
-queue by doing that with an "echo" command.
+This script "pings" the fileops queue, with a "response_required=True" entry.
+With response_required, the fileops queue isn't like the other queues where 
+you add stuff to the queue in a fire-and-forget manner. With 
+response_required=True, the result gets written back to the queue entry, 
+and it's up to the code that added it to the queue to read the resonse, 
+check the status and delete the queue entry when complete. This script 
+exercises the fileops queue with response_required by doing that with an 
+"echo" command.
 """
 
 if __name__ == "__main__":
@@ -43,7 +45,7 @@ if __name__ == "__main__":
 
         logger.info("Adding Request to Fileops Queue")
         fo_req = FileOpsRequest("echo", {"echo": "Hello, world"})
-        fqe = fq.add(fo_req)
+        fqe = fq.add(fo_req, response_required=True)
         if fqe is None:
             logger.error("Could not add fileops queue entry. Exiting")
             sys.exit(1)

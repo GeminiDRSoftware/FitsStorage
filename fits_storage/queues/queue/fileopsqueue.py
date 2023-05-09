@@ -13,22 +13,26 @@ class FileopsQueue(Queue):
     def __init__(self, session, logger=None):
         super().__init__(session, ormclass=FileopsQueueEntry, logger=logger)
 
-    def add(self, fo_reqest, after=None):
+    def add(self, fo_reqest, filename=None, after=None,
+            response_required=False):
         """
         Add an entry to the fileops queue. This instantiates a FileopsQueueEntry
         object using the arguments passed, and adds it to the database.
 
         Parameters
         ----------
-        request
+        fo_reqest - FileopsRequest object
+        filename (can be None)
         after
-
+        response_required (Boolean)
         Returns
         -------
         fileops queue entry added. None on failure.
         """
 
-        fqe = FileopsQueueEntry(fo_reqest.json(), after=after)
+        fqe = FileopsQueueEntry(fo_reqest.json(), filename=filename,
+                                after=after,
+                                response_required=response_required)
 
         self.session.add(fqe)
         try:
@@ -48,6 +52,8 @@ class FileopsQueue(Queue):
         is in seconds.
         If we find a response, delete the queueentry and return a response
         instance for it.
+        This is called by "clients" which add queue entries with
+        response_required = True
         """
         now = datetime.datetime.utcnow()
         then = now + datetime.timedelta(seconds=timeout)
