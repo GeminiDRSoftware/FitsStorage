@@ -38,6 +38,7 @@ if __name__ == "__main__":
     # Announce startup
     logger.info("***   ping_fileops_queue.py - starting up at %s"
                 % datetime.datetime.now())
+    logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
 
 
     with session_scope() as session:

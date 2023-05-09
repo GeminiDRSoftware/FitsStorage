@@ -36,6 +36,7 @@ if __name__ == "__main__":
     # Announce startup
     logger.info("*********  ingest_standards.py - starting up at %s" %
                 datetime.datetime.now())
+    logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
 
     if options.filename:
         filename = options.filename

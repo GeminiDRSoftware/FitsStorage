@@ -105,6 +105,7 @@ if __name__ == "__main__":
     # Announce startup
     logger.info("***   service_ingest_queue.py - starting up at %s",
                 datetime.datetime.now())
+    logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
 
     try:
         with PidFile(logger, name=options.name, dummy=not options.lockfile) as pidfile, \

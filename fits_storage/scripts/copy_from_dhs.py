@@ -304,6 +304,7 @@ if __name__ == "__main__":
 
     # Annouce startup
     logger.info("*********  copy_from_dhs.py - starting up at %s" % datetime.datetime.now())
+    logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
 
     if fsc.using_s3:
         logger.info("This should not be used with S3 storage. Exiting")

@@ -100,6 +100,7 @@ if __name__ == "__main__":
     # Announce startup
     logger.info("*** add_to_ingest_queue.py - starting up at {}"
                 .format(datetime.datetime.now()))
+    logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
 
     if options.filename:
         # Just add a single filename
