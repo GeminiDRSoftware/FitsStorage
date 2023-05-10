@@ -3,20 +3,11 @@ import os
 import fcntl
 
 from time import strptime
-from glob import iglob
 
 from sqlalchemy.exc import NoResultFound
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
 
-from fits_storage.server.orm.program import Program
-from fits_storage.server.orm.programpublication import ProgramPublication
-from fits_storage.server.orm.publication import Publication
-from fits_storage.server.orm.obslog_comment import ObslogComment
-
-from ..utils.ingestqueue import IngestQueueUtil, IngestError
-from ..utils.api import ApiProxy, ApiProxyError, NewCardsIncluded
-from ..utils.null_logger import EmptyLogger
 from ..utils.web import get_context, Return
 
 from .user import needs_login
@@ -35,21 +26,6 @@ class ItemError(Exception):
     def __init__(self, message, label=None):
         super(ItemError, self).__init__(message)
         self.label = label
-
-
-class DummyLogger(object):
-    def __getattr__(self, attr):
-        return self
-
-    def __call__(self, *args, **kw):
-        return
-
-
-def locked_file(path):
-    fd = open(fullpath, "r+")
-    fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    yield fd
-    fd.close()
 
 
 def get_json_data():
@@ -296,180 +272,3 @@ def update_headers():
     except TypeError:
         resp.append_json(error_response("This looks like a malformed request. Expected a dictionary or a list of queries. Instead I got {}".format(type(data))))
         resp.status = Return.HTTP_BAD_REQUEST
-
-
-def ingest_files():
-    ctx = get_context()
-    resp = ctx.resp
-    resp.content_type = 'application/json'
-
-    try:
-        arguments = ctx.json
-        file_pre  = arguments['filepre']
-        path      = arguments['path']
-        force     = arguments['force']
-        force_md5 = arguments['force_md5']
-    except ValueError:
-        resp.append_json(error_response('Invalid information sent to the server'))
-        return
-    except KeyError as e:
-        resp.append_json(error_response('Missing argument: {}'.format(e.args[0])))
-        return
-
-    # Assume that we're working on the local directory. There's no need for this
-    # API entry in the S3 machine
-    pattern = os.path.join(storage_root, path, file_pre)
-    added = []
-
-    logger = EmptyLogger()
-
-    iq = IngestQueueUtil(ctx.session, logger)
-    for i, entry in enumerate(iglob(pattern + '*'), 1):
-        filename = os.path.basename(entry)
-        iq.add_to_queue(filename, path, force=force, force_md5=force_md5)
-        added.append(filename)
-
-    if not added:
-        resp.append_json(error_response('Could not find any file with prefix: {}*'.format(file_pre)))
-    else:
-        resp.append_json(dict(result=True, added=sorted(added)))
-
-
-# TODO: "Only_magic" is a temporary thing. Check if it can stay
-@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_server_cookie)], only_magic=True, content_type='json')
-def ingest_programs():
-    ctx = get_context()
-    resp = ctx.resp
-    resp.content_type = 'application/json'
-    fields = ['reference', 'title', 'contactScientistEmail', 'abstrakt', 'piEmail', 'coIEmails', 'observations',
-              'investigatorNames', 'too']
-    try:
-        programs = ctx.json
-        if not isinstance(programs, list):
-            programs = [programs, ]
-    except ValueError:
-        resp.append_json(error_response('Invalid information sent to the server'))
-        return
-
-    session = ctx.session
-
-    for program in programs:
-        prog_obj = session.query(Program).filter(Program.program_id == program['reference']).first()
-        if prog_obj is None:
-            prog_obj = Program(program['reference'])
-            session.add(prog_obj)
-
-        pairs = (('title', 'title'),
-                 ('abstrakt', 'abstract'),
-                 ('piEmail', 'piemail'),
-                 ('coIEmails', 'coiemail'),
-                 ('investigatorNames', 'pi_coi_names'))
-
-        for remote, local in pairs:
-            try:
-                setattr(prog_obj, local, program[remote])
-            except KeyError:
-                # Just ignore any non-existing associationsfield
-                pass
-        if 'too' in program and program['too'].lower() in ('standard', 'rapid'):
-            prog_obj.too = True
-            print(f"Set TOO to True for {program['reference']}")
-        else:
-            prog_obj.too = False
-
-        for obs in program['observations']:
-            lcomms = session.query(ObslogComment).filter(ObslogComment.data_label == obs['label']).first()
-            if lcomms is None:
-                lcomms = ObslogComment(program['reference'], obs['label'], obs['comment'])
-                session.add(lcomms)
-            else:
-                lcomms.program_id = program['reference']
-                lcomms.comment = obs['comment']
-
-    session.commit()
-
-    resp.append_json(dict(result=True))
-
-
-def process_publication(pub_data):
-    bibcode = pub_data['bibcode']
-
-    ctx = get_context()
-    session = ctx.session
-
-    pub = session.query(Publication)\
-                 .filter(Publication.bibcode == bibcode)\
-                 .first()
-    if pub is None:
-        pub = Publication(bibcode)
-        session.add(pub)
-
-    pub_fields = ('author', 'title', 'year', 'journal', 'telescope',
-                  'instrument', 'country', 'wavelength', 'mode', 'too',
-                  'partner')
-
-    for field in pub_fields:
-        setattr(pub, field, pub_data.get(field))
-
-    for bfield in ('gstaff', 'gsa', 'golden'):
-        value = pub_data.get(bfield)
-        if str(value).upper() in 'YN':
-            setattr(pub, bfield, value.upper() == 'Y')
-        else:
-            setattr(pub, bfield, None)
-
-    prog_dict = dict((pp.program_text_id, pp) for pp in pub.publication_programs)
-    cur_programs = set(prog_dict)
-    sent_programs = set(pub_data.get('programs', []))
-
-    # Remove existing associations with programs that are not in sent set
-    for progid in (cur_programs - sent_programs):
-        session.delete(prog_dict[progid])
-
-    # Create new associations
-    for progid in (sent_programs - cur_programs):
-        prog = session.query(Program)\
-                      .filter(Program.program_id == progid)\
-                      .first()
-        if prog is None:
-            prog_pub = ProgramPublication(program=None,
-                                          publication=pub,
-                                          program_text_id=progid)
-        else:
-            prog_pub = ProgramPublication(program=prog,
-                                          publication=pub)
-        session.add(prog_pub)
-
-    session.commit()
-
-
-@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_server_cookie)], only_magic=True, content_type='json')
-def ingest_publications():
-    ctx = get_context()
-    ctx.resp.set_content_type('application/json')
-
-    try:
-        arguments = ctx.json
-    except ValueError:
-        ctx.resp.append_json(error_response('Invalid information sent to the server'))
-        return
-
-    if arguments['single']:
-        try:
-            process_publication(arguments['payload'])
-        except KeyError:
-            ctx.resp.append_json(error_response('Missing bibcode!'))
-        ctx.resp.append_json(dict(result=True))
-    else:
-        collect_res = []
-        for pub in arguments['payload']:
-            try:
-                process_publication(pub)
-            except KeyError:
-                collect_res
-        if all(collect_res):
-            ctx.resp.append_json(dict(result=True))
-        else:
-            ret = error_response('Missing bibcode!')
-            ret['pubs'] = collect_res
-            ctx.resp.append_json(ret)
