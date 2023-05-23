@@ -205,7 +205,7 @@ class DiskFile(Base):
             self._logger = DummyLogger()
         return self._logger
 
-    def get_uncompressed_file(self):
+    def get_uncompressed_file(self, compute_values=True):
         if self.uncompressed_cache_file is not None:
             return self.uncompressed_cache_file
 
@@ -224,7 +224,7 @@ class DiskFile(Base):
                               f"{self.uncompressed_cache_file} for "
                               f"{self.filename}")
 
-            # And while we're at it, we calculate the data_size and data_md5
+            # By default, we calculate the data_size and data_md5
             data_size = 0
             hashobj = hashlib.md5()
             with bz2.open(self.fullpath, mode='rb') as ifp:
@@ -235,11 +235,13 @@ class DiskFile(Base):
                     if not chunk:
                         break
                     tmpfile.write(chunk)
-                    data_size += len(chunk)
-                    hashobj.update(chunk)
+                    if compute_values:
+                        data_size += len(chunk)
+                        hashobj.update(chunk)
             tmpfile.close()  # Note it's created with delete=False
-            self.data_size = data_size
-            self.data_md5 = hashobj.hexdigest()
+            if compute_values:
+                self.data_size = data_size
+                self.data_md5 = hashobj.hexdigest()
 
         except:
             # Failed to create the unzipped cache file
