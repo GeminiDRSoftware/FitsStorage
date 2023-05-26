@@ -10,7 +10,8 @@ __all__ = ['get_config', 'FitsStorageConfig']
 _CONFIG = None
 
 
-def get_config(configfile=None, configstring=None, builtin=True, reload=False):
+def get_config(configfile=None, configstring=None, builtin=True,
+               builtinonly=False, reload=False):
     """
     Instantiates (if it doesn't already exist) a singleton FitsStorageConfig
     object, and returns it.
@@ -31,6 +32,7 @@ def get_config(configfile=None, configstring=None, builtin=True, reload=False):
     configfile: argument passed to FitsStorageConfig
     configstring: argument passed to FitsStorageConfig
     builtin: argument passed to FitsStorageConfig
+    buildinonly: argument passed to FitsStorageConfig
     reload: force reloading the configuration
 
     Returns
@@ -42,6 +44,7 @@ def get_config(configfile=None, configstring=None, builtin=True, reload=False):
     if _CONFIG is None or reload is True:
         _CONFIG = FitsStorageConfig(configfile=configfile,
                                     configstring=configstring,
-                                    builtin=builtin)
+                                    builtin=builtin,
+                                    builtinonly=builtinonly)
 
     return _CONFIG

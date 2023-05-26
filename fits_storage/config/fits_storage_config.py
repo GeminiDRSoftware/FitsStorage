@@ -37,8 +37,7 @@ class FitsStorageConfig(dict):
     configuration file read. If configfile is an empty string, no other
     configuration files will be read.
 
-
-    Otherwise, the following are read in this order:
+    If builtinonly is not True, the following are read in this order:
     * /etc/fits_storage.conf
     * ~/.fits_storage.conf
 
@@ -57,13 +56,15 @@ class FitsStorageConfig(dict):
              'fits_closed_result_limit']
     _lists = ['blocked_urls']
 
-    def __init__(self, configfile=None, configstring=None, builtin=True):
+    def __init__(self, configfile=None, configstring=None,
+                 builtin=True, builtinonly=False):
         super().__init__()
 
 
         self._readfiles(configfile=configfile,
                         configstring=configstring,
-                        builtin=builtin)
+                        builtin=builtin,
+                        builtinonly=builtinonly)
 
         # Some parameters can be over-ridden by environment variables
         self._env_overrides()
@@ -71,7 +72,8 @@ class FitsStorageConfig(dict):
         # Some values are calculated from config file values
         self._calculate_values()
 
-    def _readfiles(self, configfile=None, configstring=None, builtin=True):
+    def _readfiles(self, configfile=None, configstring=None,
+                   builtin=True, builtinonly=False):
         """
         Read in the prescribed configuration files or strings
         Parameters
@@ -79,6 +81,7 @@ class FitsStorageConfig(dict):
         configfile: config file to read. See class documentation
         configstring: config file to read. See class documentation
         builtin: whether to read the built-in minimal configuration file.
+        builtinonly: whether to skip reading config files from /etc and ~
 
         Returns
         -------
@@ -112,7 +115,7 @@ class FitsStorageConfig(dict):
             if configfile != '':
                 self._config.read(configfile)
                 self.configfiles_used.append(configfile)
-        else:
+        elif builtinonly is not True:
             self.configfiles_used.extend(self._config.read(self._configfiles))
 
         # If the config we read has a section for this hostname, point to
