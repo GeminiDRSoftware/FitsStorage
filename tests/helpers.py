@@ -8,6 +8,11 @@ import requests
 from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
 
+from fits_storage.db import sessionfactory
+from fits_storage.db.createtables import create_tables
+
+from fits_storage.config import get_config
+
 def fetch_file(filename, dest_dir):
     """
     Fetch a file from the test data directory if it exists there,
@@ -32,11 +37,16 @@ def fetch_file(filename, dest_dir):
         with open(destination, 'wb') as f:
             f.write(r.content)
 
+
 def make_diskfile(filename, tmpdir):
     """
     A helper to build a diskfile object as many tests of the orm classes
     require one. This function will set up directories inside the tmpdir,
     will fetch the file, and will instantiate File and DiskFile objects.
+
+    Note, this function does not create or use a database or sqlalchemy
+    session, it instantiates and configures some ORM objects but
+    never adds them to a session.
 
     Parameters
     ----------
@@ -68,3 +78,46 @@ def make_diskfile(filename, tmpdir):
                         s3_staging_dir=s3_staging_dir)
 
     return diskfile
+
+def make_empty_testing_db_env(tmpdir):
+    """
+    Make a testing environment consisting an empty in memory sqlite database
+    ready for use, and a tmpdir populated with storage_root and staging
+    directories, the locations of which are pushed into the fits storage
+    config system.
+
+    Parameters
+    ----------
+
+    tmpdir : str or Path
+        generally the tmp_dir from pytest. Inside this directory, we will
+        create empty staging directories.
+
+    Returns
+    -------
+    Nothing. Relevant values are stored in the fits storage config
+    global object
+    """
+
+    storage_root = os.path.join(tmpdir, "storage_root")
+    z_staging_dir = os.path.join(tmpdir, "z_staging")
+    s3_staging_dir = os.path.join(tmpdir, "s3_staging")
+    upload_staging_dir = os.path.join(tmpdir, "upload_staging")
+
+    os.mkdir(storage_root)
+    os.mkdir(z_staging_dir)
+    os.mkdir(s3_staging_dir)
+    os.mkdir(upload_staging_dir)
+
+    configstring = f"""
+        [DEFAULT]
+        storage_root = {storage_root}
+        z_staging_dir = {z_staging_dir}
+        s3_staging_dir = {s3_staging_dir}
+        upload_staging_dir = {upload_staging_dir}
+        database_url = sqlite:///:memory:
+        """
+    fsc = get_config(configstring=configstring, builtinonly=True, reload=True)
+
+    session = sessionfactory()
+    create_tables(session)
