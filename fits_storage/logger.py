@@ -97,7 +97,14 @@ class DummyLogger(object):
     """
     def noop(self, *args, **kwargs):
         pass
-    info = noop
-    error = noop
-    debug = noop
-    warning = noop
+
+    def justprint(self, *args, **kwargs):
+        print(*args)
+
+    def __init__(self, print=False):
+        f = self.justprint if print else self.noop
+
+        self.info = f
+        self.error = f
+        self.debug = f
+        self.warning = f
