@@ -9,14 +9,12 @@ from sqlalchemy.sql.sqltypes import NullType
 
 from fits_storage.config import get_config
 
-fsc = get_config()
-
 _saved_engine = None
 _saved_database_url = None
 _saved_sessionfactory = None
 
 
-def sessionfactory():
+def sessionfactory(reload=False):
     """
     Retrieves a singleton session factory.
 
@@ -32,7 +30,9 @@ def sessionfactory():
     global _saved_database_url
     global _saved_sessionfactory
 
-    if _saved_database_url is None:
+    fsc = get_config()
+
+    if _saved_database_url is None or reload:
         _saved_database_url = fsc.database_url
         if _saved_database_url.startswith('postgresql://'):
             args = {'pool_size': fsc.postgres_database_pool_size,

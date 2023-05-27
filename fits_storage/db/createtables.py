@@ -49,6 +49,8 @@ def create_tables(session: Session):
         Session to create tables in
     """
 
+    fsc = get_config()
+
     # Create the tables. You only need to call create_all on one orm object,
     # and all tables for all imported ORM classes will be created.
     Header.metadata.create_all(bind=db._saved_engine)
