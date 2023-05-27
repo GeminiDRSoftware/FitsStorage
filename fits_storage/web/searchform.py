@@ -25,7 +25,6 @@ from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
 
 from fits_storage.config import get_config
-fsc = get_config()
 
 # ------------------------------------------------------------------------------
 @templating.templated("search_and_summary/searchform.html", with_generator=True)
@@ -146,6 +145,7 @@ def searchform(things, orderby):
                 # ok if we fail, this is a nice to have
                 pass
 
+    fsc = get_config()
     template_args = dict(
         server_title   = fsc.fits_server_title,
         title_suffix   = title_suffix,

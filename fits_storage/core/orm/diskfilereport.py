@@ -6,7 +6,6 @@ from ...fits_verify import fitsverify
 
 from fits_storage.logger import DummyLogger
 from fits_storage.config import get_config
-fsc = get_config()
 
 from . import Base
 
@@ -38,8 +37,8 @@ class DiskFileReport(Base):
     mdstatus = Column(STATUS_ENUM, index=True)
 
     def __init__(self, diskfile, skip_fv, skip_md, logger=DummyLogger(),
-                 using_fitsverify=fsc.using_fitsverify,
-                 fitsverify_path=fsc.fitsverify_path):
+                 using_fitsverify=None,
+                 fitsverify_path=None):
         """
         Create a :class:`~DiskFileReport` for the given :class:`~DiskFile`
         by running the FITS and metadata checks.
@@ -55,6 +54,12 @@ class DiskFileReport(Base):
         """
         self.diskfile_id = diskfile.id
         self.logger = logger
+
+        fsc = get_config()
+        using_fitsverify = using_fitsverify if using_fitsverify is not None \
+            else fsc.using_fitsverify
+        fitsverify_path = fitsverify_path if fitsverify_path is not None \
+            else fsc.fitsverify_path
 
         if skip_fv or not using_fitsverify:
             logger.debug("Skipping fits_verify")

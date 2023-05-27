@@ -108,6 +108,7 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
     headers = list_headers(selection, orderby, full_query=True, add_previews=True)
     num_headers = len(headers)
 
+    fsc = get_config()
     hit_open_limit = num_headers == fsc.fits_open_result_limit
     hit_closed_limit = num_headers == fsc.fits_closed_result_limit
 

@@ -17,7 +17,6 @@ from fits_storage.server.bz2stream import StreamBz2Compressor
 from fits_storage.core.hashes import md5sum
 
 from fits_storage.config import get_config
-fsc = get_config()
 
 
 class Exporter(object):
@@ -45,7 +44,7 @@ class Exporter(object):
         logger - Fits Storage Logger
         timeout = timeout value to pass to requests. Default 10s.
         """
-
+        fsc = get_config()
         self.s = session
         self.l = logger
         self.timeout = timeout
@@ -190,7 +189,7 @@ class Exporter(object):
         If successful, delete the eqe instance and commit the session.
         On failure, set status in the equ and commit the session.
         """
-
+        fsc = get_config()
         # For convenience
         filename = self.eqe.filename
         path = self.eqe.path

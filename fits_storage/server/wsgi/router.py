@@ -40,6 +40,8 @@ from fits_storage.web.calmgr import xmlcalmgr, jsoncalmgr
 
 from fits_storage.web.upload_file import upload_file
 
+from fits_storage.web.update_headers import update_headers
+
 from .routing import SequenceConverter, SelectionConverter
 
 from fits_storage.config import get_config
@@ -155,7 +157,7 @@ url_map = Map([
     # Rule('/import_odb_notifications', import_odb_notifications, methods=['POST']),
 
 
-    # Rule('/update_headers', update_headers, methods=['POST']),
+    Rule('/update_headers', update_headers, methods=['POST']),
     # Rule('/ingest_files', ingest_files, methods=['POST']),
     # Rule('/ingest_programs', ingest_programs, methods=['POST']),
 

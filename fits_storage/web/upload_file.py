@@ -51,6 +51,7 @@ def upload_file(filename, processed_cal=False):
     m = hashlib.md5()
     size = 0
     chunksize = 1000000  # 1MB
+    fsc = get_config()
     fullfilename = os.path.join(fsc.upload_staging_dir, filename)
     # Content Length may or may not be defined. It's not required and if the
     # exporter is compressing on-the-fly, it won't know the length of the

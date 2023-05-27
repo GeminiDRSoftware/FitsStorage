@@ -8,7 +8,6 @@ from urllib.request import pathname2url
 from urllib.parse import unquote
 
 from fits_storage.config import get_config
-fsc = get_config()
 
 from fits_storage.core.hashes import md5sum
 from contextlib import contextmanager
@@ -48,13 +47,16 @@ def generate_ranges(size):
         c = n
 
 class Boto3Helper(object):
-    def __init__(self, bucket_name=fsc.s3_bucket_name, logger=None):
+    def __init__(self, bucket_name=None, logger=None):
+        fsc = get_config()
         self.l = logger
         self.b = None
-        self.b_name = bucket_name
+        self.b_name = bucket_name if bucket_name is not None else \
+            fsc.s3_bucket_name
 
     @property
     def session(self):
+        fsc = get_config()
         if boto3.DEFAULT_SESSION is None:
             boto3.setup_default_session(aws_access_key_id=fsc.aws_access_key,
                                         aws_secret_access_key=fsc.aws_secret_key)
@@ -180,7 +182,7 @@ class Boto3Helper(object):
         Do some validation, and re-try as appropriate
         Return True if succeeded, False otherwise
         """
-
+        fsc = get_config()
         if not fullpath:
             fullpath = os.path.join(fsc.storage_root, keyname)
 
@@ -229,6 +231,7 @@ class Boto3Helper(object):
 
     @contextmanager
     def fetch_temporary(self, keyname, **kwarg):
+        fsc = get_config()
         _, fullpath = mkstemp(dir=fsc.s3_staging_area)
         try:
             if not self.fetch_to_staging(keyname, fullpath, **kwarg):

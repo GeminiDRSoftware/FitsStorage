@@ -117,6 +117,7 @@ def download(selection, associated_calibrations):
     This is the download server. Given a selection, it will send a tarball of the
     files from the selection that you have access to to the client.
     """
+    fsc = get_config()
 
 #    # First check if this is an associated_calibrations download
 #    if 'associated_calibrations' in things:
@@ -480,7 +481,7 @@ def sendonefile(diskfile, content_type=None, filenamegiven=None):
     givebn filename extension (.bz2 for compressed).  If no given filename is
     passed, the filename is taken from the diskfile entry.
     """
-
+    fsc = get_config()
     ctx = get_context()
     resp = ctx.resp
 

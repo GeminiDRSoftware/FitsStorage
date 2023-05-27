@@ -17,7 +17,6 @@ from sqlalchemy import asc, desc, func, nullslast
 from fits_storage.server.wsgi.context import get_context
 
 from fits_storage.config import get_config
-fsc = get_config()
 
 def list_headers(selection, orderby, full_query=False, add_previews=False,
                  session=None, unlimit=False):
@@ -99,6 +98,7 @@ def list_headers(selection, orderby, full_query=False, add_previews=False,
     query = query.order_by(*order_criteria)
 
     # If this is an open query, we should limit the number of responses
+    fsc = get_config()
     if not unlimit:
         if is_openquery:
             query = query.limit(fsc.fits_open_result_limit)

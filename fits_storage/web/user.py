@@ -27,7 +27,7 @@ from fits_storage.server.wsgi.returnobj import Return
 from . import templating
 
 from fits_storage.config import get_config
-fsc = get_config()
+# fsc = get_config()
 
 
 bad_password_msg = "Bad password - must be at least 14 characters long, and " \
@@ -177,6 +177,7 @@ minutes, so please do that promptly.</p>
     fullname = user.fullname
     token = user.generate_reset_token()
 
+    fsc = get_config()
     url = "https://%s/password_reset/%d/%s" % (fsc.fits_servername,
                                                userid, token)
 
@@ -878,7 +879,7 @@ def whoami(things):
     links
     """
     # Find out who we are if logged in
-
+    fsc = get_config()
     template_args = {'orcid_enabled': fsc.orcid_enabled}
 
     user = get_context().user
@@ -1077,6 +1078,7 @@ def needs_login(magic_cookies=(), only_magic=False, staff=False,
                     except KeyError:
                         pass
 
+            fsc = get_config()
             if archive_only and not fsc.use_as_archive:
                 # Bypass protection - archive_only and not the archive
                 got_magic = True
@@ -1120,6 +1122,7 @@ def orcid(code):
     login page.
     """
 
+    fsc = get_config()
     if not fsc.orcid_enabled:
         return dict(
             notification_message="",

@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from .orm.preview import Preview
 
 from fits_storage.config import get_config
-fsc = get_config()
+#fsc = get_config()
 
 if fsc.using_s3:
     from .aws_s3 import get_helper
@@ -53,7 +53,7 @@ def make_preview(self, diskfile, force=False):
             If True, force (re)creation of the preview even if one already
             exists
     """
-
+    fsc = get_config()
     # Generate the path to store the preview files to
 
     if fsc.using_s3:

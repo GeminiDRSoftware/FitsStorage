@@ -11,7 +11,6 @@ from fits_storage.core.orm import Base
 from .ormqueuemixin import OrmQueueMixin
 
 from fits_storage.config import get_config
-fsc = get_config()
 
 
 class IngestQueueEntry(OrmQueueMixin, Base):
@@ -40,7 +39,7 @@ class IngestQueueEntry(OrmQueueMixin, Base):
 
     # Store these configuration items in the class to allow manipulating
     # them for testing and debugging
-    storage_root = fsc.storage_root
+    storage_root = None
 
     def __init__(self, filename, path, force=False, force_md5=False,
                  after=None, header_update=None,
@@ -86,6 +85,9 @@ class IngestQueueEntry(OrmQueueMixin, Base):
         self.md5_before_header_update = md5_before_header_update
         self.md5_after_header_update = md5_after_header_update
 
+        fsc = get_config()
+        self.storage_root = fsc.storage_root
+
     def __repr__(self):
         """
         Build a string representation of this :class:`~IngestQueueEntry` record
@@ -114,11 +116,12 @@ class IngestQueueEntry(OrmQueueMixin, Base):
         deferred
         - None otherwise
 
-        Note that if the file should be deferred, we set the 'after' value of the
-        object to reflect the appropriate delay, but we do not commit the
+        Note that if the file should be deferred, we set the 'after' value of
+        the object to reflect the appropriate delay, but we do not commit the
         object to the session, it is up to the caller to do that.
         """
 
+        fsc = get_config()
         if fsc.defer_threshold == 0:
             return None
 
@@ -140,4 +143,3 @@ class IngestQueueEntry(OrmQueueMixin, Base):
             self.after = datetime.datetime.utcnow() + delay
 
         return message
-

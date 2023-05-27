@@ -8,7 +8,6 @@ from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 
 from fits_storage.config import get_config
-fsc = get_config()
 
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
@@ -116,6 +115,7 @@ included_extensions = [
 
 
 def get_env():
+    fsc = get_config()
     """Create a Jinja environment that includes our customizations"""
     jinja_env = Environment(loader=FileSystemLoader(fsc.template_root),
                             extensions=included_extensions,

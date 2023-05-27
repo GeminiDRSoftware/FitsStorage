@@ -10,7 +10,6 @@ from fits_storage.gemini_metadata_utils import GeminiDataLabel, \
 from fits_storage.server.access_control_utils import canhave_header, canhave_coords
 
 from fits_storage.config import get_config
-fsc = get_config()
 
 # The following dictionary maps column key names as used in the summary
 # template with a pair of values (column name, compressed name). The column
@@ -631,6 +630,7 @@ class SummaryGenerator(object):
                           path=diskfile.path, filename=diskfile.filename):
             ret = dict(name=file.name)
             # Preview link
+            fsc = get_config()
             if fsc.using_previews and preview is not None:
                 ret['prev'] = True
 

@@ -12,7 +12,6 @@ from .cookies import Cookies
 from fits_storage.server.orm.user import User
 
 from fits_storage.config import get_config
-fsc = get_config()
 
 
 # The context storage is a threading local-variable container. Each thread
@@ -93,6 +92,7 @@ class Context(object):
         cookie, ``False`` otherwise.
         """
 
+        fsc = get_config()
         if fsc.magic_download_cookie is None:
             return False
 

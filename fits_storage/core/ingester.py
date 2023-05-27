@@ -119,6 +119,7 @@ class Ingester(object):
         Note that we do set the iqe status, and commit the session
         if there's a failure.
         """
+        fsc = get_config()
 
         self.l.debug(f"Considering file for ingest: {iqe.filename}")
 

@@ -17,12 +17,13 @@ from fits_storage.server.wsgi.context import get_context
 from . import templating
 
 from fits_storage.config import get_config
-fsc = get_config()
+
 
 class Result(object):
     def __init__(self, **kw):
         for key, value in list(kw.items()):
             setattr(self, key, value)
+
 
 class WrappedCals(object):
     def __init__(self, applicable):
@@ -43,6 +44,7 @@ class WrappedCals(object):
     @property
     def applicable(self):
         return self._applic
+
 
 class WrapperObject(object):
     def __init__(self, header, counter, caloption, caltype):
@@ -251,6 +253,7 @@ def calibrations(selection):
     This is mostly used by the Gemini SOSs to detect missing calibrations, and it defaults to the 
     SOS required calibrations policy.
     """
+    fsc = get_config()
     counter = {
         'warnings': 0,
         'missings': 0,

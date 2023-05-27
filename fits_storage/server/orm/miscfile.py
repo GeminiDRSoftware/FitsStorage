@@ -18,9 +18,10 @@ import io
 from base64 import urlsafe_b64encode as encode_string
 from base64 import urlsafe_b64decode as decode_string
 
-# ------------------------------------------------------------------------------
+
 class FileClash(Exception):
     pass
+
 
 MISCFILE_PREFIX = 'miscfile_'
 
@@ -58,6 +59,7 @@ def miscfile_meta_path(path):
     -------
     str : path to JSON metadata file
     """
+    fsc = get_config()
     return os.path.join(fsc.upload_staging_dir, path + '.json')
 
 
@@ -74,6 +76,7 @@ def is_miscfile(path):
     -------
     bool : True if file is a `miscfile`
     """
+    fsc = get_config()
     if os.path.exists(miscfile_meta_path(path)):
         return True
     elif fsc.using_s3:
@@ -121,6 +124,7 @@ def miscfile_meta(path, urlencode=False):
     -------
     dict : Metadata dictionary
     """
+    fsc = get_config()
     try:
         meta = json.load(io.open(miscfile_meta_path(path), encoding='utf-8'))
         if urlencode:

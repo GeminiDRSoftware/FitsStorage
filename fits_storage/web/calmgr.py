@@ -35,9 +35,6 @@ from . import templating
 from .templating import SkipTemplateError
 
 from fits_storage.config import get_config
-fsc = get_config()
-
-
 
 no_func = lambda x: None
 
@@ -161,6 +158,7 @@ def _cal_eval(str):
 
 
 def generate_post_calmgr(selection, caltype, procmode=None):
+    fsc = get_config()
     # OK, get the details from the POST data
     ctx = get_context()
     clientdata = ctx.raw_data

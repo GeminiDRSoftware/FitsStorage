@@ -31,7 +31,7 @@ from .user import needs_login
 from . import templating
 
 from fits_storage.config import get_config
-fsc = get_config()
+#fsc = get_config()
 
 def logs(session, filter_func = None):
     aQueryLog = session.query(QueryLog, func.row_number().over(QueryLog.usagelog_id).label('row_number'))
@@ -383,6 +383,7 @@ def build_query(session, period, since=None):
        provide this data quickly.  If that fails, the call falls back to the older brute
        force query (which is slow).
        """
+    fsc = get_config()
     if fsc.logreports_use_materialized_view:
         try:
             partial = False

@@ -70,7 +70,7 @@ def process_publication(pub_data):
     session.commit()
 
 
-@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_server_cookie)], only_magic=True, content_type='json')
+@needs_login(magic_cookies=[('gemini_api_authorization', fsc.magic_api_server_cookie)], only_magic=True, content_type='json')
 def ingest_publications():
     ctx = get_context()
     ctx.resp.set_content_type('application/json')

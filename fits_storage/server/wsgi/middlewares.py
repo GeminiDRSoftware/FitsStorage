@@ -3,7 +3,7 @@ This module contains the various middleware layers in our WSGI stack.
 
 ArchiveContextMiddleware
 
-StaticServer serves static files (such as CSS files, help pages etc). We
+StaticServer serves static files (such as CSS files, help pages etc.). We
 include this here so that the site is fully function if run through a purely
 WSGI system such as the wsgiref.simple_server. In real-world deployments, the
 web server would ideally be taking care of serving static pages directly
@@ -22,7 +22,6 @@ from .request import Request
 from .response import Response
 
 from fits_storage.config import get_config
-fsc = get_config()
 
 
 class ContextResponseIterator(object):
@@ -54,6 +53,7 @@ class ContextResponseIterator(object):
             finally:
                 self._cls()
                 self._closed = True
+
 
 class ArchiveContextMiddleware(object):
     """
@@ -128,17 +128,19 @@ class ArchiveContextMiddleware(object):
 
 class StaticServer(object):
     """
-    Middleware class. An instance of StaticServer will intercept /static queries and
-    return the static file (relative to certain root directory).
+    Middleware class. An instance of StaticServer will intercept /static
+    queries and return the static file (relative to certain root directory).
 
-    Ideally, /static will be dealt with at a higher level. In that case, this doesn't
-    introduce a significative overhead.
+    Ideally, /static will be dealt with at a higher level. In that case,
+    this doesn't introduce a significant overhead.
     """
     def __init__(self, application):
-        self.app  = application
+        fsc = get_config()
+        self.app = application
         self.root = fsc.htmldocroot
 
     def __call__(self, environ, start_response):
+        fsc = get_config()
         ctx = get_context()
 
         uri = list(filter(len, ctx.req.env.uri.split('/')))
