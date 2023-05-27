@@ -31,7 +31,7 @@ not mean it has been completed. The actual process for completing the change
 is somewhat asynchronous, and if there are a lot of updates requested, it could
 take some time for them all to complete, so we do not hold the http connection 
 open while that happens; we do some sanity checking of the request, and if it
-looks good, we reply that we're accepting the request and close the connection.
+_looks good, we reply that we're accepting the request and close the connection._
 
 Once the server accepts the request, the process is somewhat asynchronous. An
 entry is added to the fileops queue. When that entry queue entry gets serviced,
@@ -118,8 +118,10 @@ where reject_new = True means that we should refuse to insert new header
 keywords and only modify existing ones. This is intended as a protection against
 typos in the keyword names
 
-and the values value is a dictionary containing one or more of the following:
+and the values dict is a dictionary containing one or more of the following:
 'qa_state': 'Pass' / 'Fail' / 'Usable' / etc
 'raw_site': 'iqany' / etc
 'release': 'yyyy-mm-dd'
 'generic': list of tuples [('KEYWORD', 'VALUE')]
+
+question - how do you specify multiple raw_site updates in the same request?

@@ -15,7 +15,6 @@ from . import Base
 from .file import File
 
 from fits_storage.config import get_config
-fsc = get_config()
 
 __all__ = ["DiskFile"]
 
@@ -116,6 +115,12 @@ class DiskFile(Base):
     # the ORM layer, or pulled in as a relation
     ad_object = None
 
+    # We store some fsc values to allow poking for testing etc.
+    # Declare them here, set in __init__ or as needed
+    _storage_root = None
+    _z_staging_dir = None
+    _s3_staging_dir = None
+
     def __init__(self, given_file: File, given_filename: str, given_path: str,
                  compressed=None, logger=DummyLogger(),
                  storage_root=None, z_staging_dir=None, s3_staging_dir=None):
@@ -141,7 +146,7 @@ class DiskFile(Base):
             testing and debugging. They default to None which causes them
             to take the values from the configuration system.
         """
-
+        fsc = get_config()
         # We store the items we use from the configuration system in the class
         # for convenience and to allow us to manipulate them for testing.
         self._storage_root = storage_root if storage_root is not None \
@@ -183,19 +188,22 @@ class DiskFile(Base):
     # of this class returned by the sqlalchemy layer do not get __init__ed.
     @property
     def storage_root(self):
-        if not hasattr(self, '_storage_root'):
+        if self._storage_root is None:
+            fsc = get_config()
             self._storage_root = fsc.storage_root
         return self._storage_root
 
     @property
     def z_staging_dir(self):
-        if not hasattr(self, '_z_staging_dir'):
+        if self._z_staging_dir is None:
+            fsc = get_config()
             self._z_staging_dir = fsc.z_staging_dir
         return self._z_staging_dir
 
     @property
     def s3_staging_dir(self):
-        if not hasattr(self, '_s3_staging_dir'):
+        if self._s3_staging_dir is None:
+            fsc = get_config()
             self._s3_staging_dir = fsc.s3_staging_dir
         return self._s3_staging_dir
 

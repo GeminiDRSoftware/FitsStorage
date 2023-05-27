@@ -4,6 +4,9 @@ These are called by the fileopser module.
 
 These functions all take an 'args' argument which is a dictionary of actual
 arguments, and also session and  logger arguments.
+
+These functions can raise FileOpsError('message') to indicate a failure
+that should be recorded in the fileopsqueue entry.
 """
 
 import os.path
@@ -20,8 +23,17 @@ from fits_storage.server.orm.miscfile import is_miscfile, miscfile_meta, \
 
 from fits_storage.server.aws_s3 import get_helper
 
+from fits_storage.server.fitseditor import FitsEditor
+
 from fits_storage.config import get_config
-fsc = get_config()
+
+
+class FileOpsError(Exception):
+    """
+    Worker functions can raise this exception with a string argument if they
+    want to indicate failure.
+    """
+    pass
 
 
 def echo(args, session, logger):
@@ -39,7 +51,7 @@ def ingest_upload(args, session, logger):
 
     Return True on success, False on failure.
     """
-
+    fsc = get_config()
     try:
         filename = args['filename']
         fileuploadlog_id = args['fileuploadlog_id']
@@ -117,3 +129,58 @@ def ingest_upload(args, session, logger):
     fileuploadlog.ingestqueue_id = iqe.id
     session.commit()
     return True
+
+
+def update_headers(args, session, logger):
+    """
+    Update headers on a fits file. The args dictionary must contain either a
+    'filename' or 'data_label' key to tell us which file to updates, and also
+    can contain other keys, as follows:
+    'qa_state': 'Pass', 'Fail', etc...
+    'rawsite': 'iqany', etc. # How do we pass multiple values?
+    'release': 'YYYY-MM-DD' release date
+    'generic': {'KEYWORD1': 'value1', ...}
+    'reject_new': Bool - if True, then refuse to insert new keywords.
+    """
+
+    if 'filename' in args:
+        logger.debug("Instantiating FitsEditor on filename %s",
+                     args['filename'])
+        fe = FitsEditor(filename=args['filename'],
+                        session=session, logger=logger)
+    elif 'data_label' in args:
+        logger.debug("Instantiating FitsEditor on data_label %s",
+                     args['data_label'])
+        fe = FitsEditor(datalabel=args['data_label'],
+                        session=session, logger=logger)
+    else:
+        logger.error('No Filename or data_label in update_header request')
+        raise FileOpsError('No filename or data_label in update_header request')
+
+    if 'qa_state' in args:
+        logger.debug("Updating qa_state: %s", args['qa_state'])
+        fe.set_qa_state(args['qa_state'])
+    if 'rawsite' in args:
+        # TODO: Is this how multiple values are supposed to work?
+        rawsites = args['rawsite'] if isinstance(args['rawsite'], list) \
+            else [args['rawsite']]
+        for rawsite in rawsites:
+            logger.debug("Updating raw site: %s", rawsite)
+            fe.set_rawsite(rawsite)
+    if 'release' in args:
+        logger.debug("Updating Release date: %s", args['release'])
+        fe.set_release(args['release'])
+    if 'generic' in args:
+        reject_new = args.get('reject_new', False)
+        for keyword in args['generic'].keys():
+            logger.debug("Updating keyword: %s", keyword)
+            fe.set_header(keyword, args['generic'][keyword],
+                          reject_new=reject_new)
+    filename = fe.diskfile.filename
+    path = fe.diskfile.path
+    fe.close()
+
+    logger.info("Queueing %s for Ingest", filename)
+    iq = IngestQueue(session, logger)
+    iq.add(filename, path)
+    session.commit()

@@ -4,13 +4,11 @@ from time import strptime
 
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
-from fits_storage.db import sessionfactory
 from fits_storage.logger import DummyLogger
 from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
 from fits_storage.config import get_config
-fsc = get_config()
 
 qa_states = {
     'undefined': {'RAWGEMQA': 'UNKNOWN', 'RAWPIREQ': 'UNKNOWN'},
@@ -56,10 +54,11 @@ class FitsEditor(object):
     localfile = None
     hdulist = None
 
-    def __init__(self, filename=None, datalabel=None, logger=DummyLogger(),
-                 do_setup=True):
+    def __init__(self, filename=None, datalabel=None, session=None,
+                 logger=DummyLogger(), do_setup=True):
         self.filename = filename
         self.datalabel = datalabel
+        self.session = session
         self.logger = logger
         if filename is None and datalabel is None:
             self.error = True
@@ -68,7 +67,6 @@ class FitsEditor(object):
 
         # This is here to support alternate setups for testing.
         if do_setup:
-            self.session = sessionfactory()
             self._find_diskfile()
             self._get_localfile()
             self._get_hdulist()
@@ -90,7 +88,10 @@ class FitsEditor(object):
             query = query.filter(Header.data_label == self.datalabel)
 
         try:
-            self.diskfile = query.one()
+            self.file = query.one()
+            self.diskfile = self.session.query(DiskFile)\
+                .filter(DiskFile.file_id == self.file.id)\
+                .filter(DiskFile.present == True).one()
         except NoResultFound:
             self.error = True
             self.message = 'No results searching for target file'
@@ -102,6 +103,8 @@ class FitsEditor(object):
             self.message = 'Target diskffile is not present'
 
     def _get_localfile(self):
+        fsc = get_config()
+
         if self.error is True:
             return
         if fsc.using_s3:
@@ -145,6 +148,8 @@ class FitsEditor(object):
             self.message = 'Error opening file with astropy.io.fits'
 
     def close(self):
+        fsc = get_config()
+
         if self.hdulist is None:
             return
 

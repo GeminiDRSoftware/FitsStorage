@@ -9,7 +9,7 @@ from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
 
 from fits_storage.db import sessionfactory
-from fits_storage.db.createtables import create_tables
+from fits_storage.db.createtables import create_tables, drop_tables
 
 from fits_storage.config import get_config
 
@@ -103,6 +103,7 @@ def make_empty_testing_db_env(tmpdir):
     z_staging_dir = os.path.join(tmpdir, "z_staging")
     s3_staging_dir = os.path.join(tmpdir, "s3_staging")
     upload_staging_dir = os.path.join(tmpdir, "upload_staging")
+    dbfile = os.path.join(tmpdir, "sqlite.db")
 
     os.mkdir(storage_root)
     os.mkdir(z_staging_dir)
@@ -115,9 +116,11 @@ def make_empty_testing_db_env(tmpdir):
         z_staging_dir = {z_staging_dir}
         s3_staging_dir = {s3_staging_dir}
         upload_staging_dir = {upload_staging_dir}
-        database_url = sqlite:///:memory:
+        database_url = sqlite:///{dbfile}
+        is_server = True
         """
     fsc = get_config(configstring=configstring, builtinonly=True, reload=True)
 
-    session = sessionfactory()
+    session = sessionfactory(reload=True)
+    drop_tables(session)
     create_tables(session)

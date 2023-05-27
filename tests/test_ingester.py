@@ -10,7 +10,7 @@ from fits_storage.core.ingester import Ingester
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
 
-def test_importer(tmp_path):
+def test_ingester(tmp_path):
     make_empty_testing_db_env(tmp_path)
     fsc = get_config()
     session = sessionfactory()

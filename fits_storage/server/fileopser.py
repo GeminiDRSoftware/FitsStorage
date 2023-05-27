@@ -27,9 +27,10 @@ functionality are imported from server.fileops
 
 import json
 from fits_storage.queues.queue.fileopsqueue import FileOpsResponse
+from fits_storage.server.fileops import FileOpsError
 
 from .fileops import echo
-from .fileops import ingest_upload
+from .fileops import ingest_upload, update_headers
 
 
 class FileOpser(object):
@@ -57,7 +58,8 @@ class FileOpser(object):
         # dict of actual arguments
         self.workers = {
             'echo': echo,
-            'ingest_upload': ingest_upload
+            'ingest_upload': ingest_upload,
+            'update_headers': update_headers
         }
 
         # These are per-operation values stored centrally for convenience.
@@ -137,13 +139,16 @@ class FileOpser(object):
         # Call the worker function!
         try:
             self.response.value = self.worker(self.request_args, self.s, self.l)
+            self.response.ok = True
+        except FileOpsError as foe:
+            self.doerror(str(foe))
+            self.response.ok = False
         except Exception:
             self.doerror("Exception calling worker function for "
                          f"{self.request_name}", exc_info=True)
             return
 
         # It worked!
-        self.response.ok = True
         fqe.response = self.response.json()
 
         if fqe.response_required is False:

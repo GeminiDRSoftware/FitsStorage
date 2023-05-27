@@ -40,11 +40,15 @@ class UsageLog(Base):
             The context for this web session
         """
         self.utdatetime = datetime.datetime.utcnow()
-        self.ip_address = ctx.env.remote_ip
-        self.user_agent = ctx.req.env.user_agent
-        self.referer = ctx.req.env.referrer
-        self.method = ctx.env.method
-        self.uri = ctx.env.unparsed_uri
+
+        # We pass None for some testing context where we just need to
+        # instantiate the object with no real content.
+        if ctx is not None:
+            self.ip_address = ctx.env.remote_ip
+            self.user_agent = ctx.req.env.user_agent
+            self.referer = ctx.req.env.referrer
+            self.method = ctx.env.method
+            self.uri = ctx.env.unparsed_uri
 
     def set_finals(self, ctx):
         """

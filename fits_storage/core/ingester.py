@@ -70,6 +70,7 @@ class Ingester(object):
 
         # We pull these configuration values into the local namespace for
         # convenience and to allow poking them for testing
+        fsc = get_config()
         self.storage_root = fsc.storage_root
         self.using_s3 = fsc.using_s3
         self.using_previews = fsc.using_previews
