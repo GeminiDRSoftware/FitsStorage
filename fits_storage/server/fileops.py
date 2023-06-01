@@ -24,6 +24,7 @@ from fits_storage.server.orm.miscfile import is_miscfile, miscfile_meta, \
 from fits_storage.server.aws_s3 import get_helper
 
 from fits_storage.server.fitseditor import FitsEditor
+from fits_storage.core.hashes import md5sum
 
 from fits_storage.config import get_config
 
@@ -141,6 +142,11 @@ def update_headers(args, session, logger):
     'release': 'YYYY-MM-DD' release date
     'generic': {'KEYWORD1': 'value1', ...}
     'reject_new': Bool - if True, then refuse to insert new keywords.
+
+    We return the md5sum of the updated fits file. This goes into the 'value'
+    field of the FileOpsResponse instance and is used when we export a file
+    using update headers to avoid retransferring the entire file. If there's
+    an error, we raise FileOpsError.
     """
 
     if 'filename' in args:
@@ -179,8 +185,11 @@ def update_headers(args, session, logger):
     filename = fe.diskfile.filename
     path = fe.diskfile.path
     fe.close()
+    md5 = md5sum(fe.diskfile.fullpath)
 
     logger.info("Queueing %s for Ingest", filename)
     iq = IngestQueue(session, logger)
     iq.add(filename, path)
     session.commit()
+
+    return md5

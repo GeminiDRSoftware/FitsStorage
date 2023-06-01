@@ -186,7 +186,7 @@ def test_update_headers(tmp_path):
 
     assert fo.response.ok is True
     assert fo.response.error == ''
-    assert fo.response.value is None
+    assert fo.response.value == '200fe14594d3c9287cb9ac4d6ee34da7'
 
     fqe_fetch = session.query(FileopsQueueEntry).one()
     resp_fetch = FileOpsResponse()
@@ -194,7 +194,7 @@ def test_update_headers(tmp_path):
 
     assert resp_fetch.ok is True
     assert resp_fetch.error == ''
-    assert resp_fetch.value is None
+    assert resp_fetch.value == '200fe14594d3c9287cb9ac4d6ee34da7'
 
 
     # Check final headers
