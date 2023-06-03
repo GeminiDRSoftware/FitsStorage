@@ -21,6 +21,7 @@ from fits_storage.config import get_config
 
 from fits_storage.db import sessionfactory
 
+
 class DummySession(object):
     def __init__(self):
         self.com = False
@@ -54,9 +55,9 @@ def test_echo_nodb():
     assert fo.response.error == ''
     assert fo.response.value == 'Hello, world'
 
+
 def test_echo(tmp_path):
     make_empty_testing_db_env(tmp_path)
-    fsc = get_config()
     session = sessionfactory()
     logger = DummyLogger()
 
@@ -137,6 +138,7 @@ def test_ingest_upload(tmp_path):
     assert iqe.added > before_ut
     assert iqe.added < after_ut
 
+
 def test_update_headers(tmp_path):
     make_empty_testing_db_env(tmp_path)
     fsc = get_config()
@@ -186,7 +188,7 @@ def test_update_headers(tmp_path):
 
     assert fo.response.ok is True
     assert fo.response.error == ''
-    assert fo.response.value == '200fe14594d3c9287cb9ac4d6ee34da7'
+    assert fo.response.value is None
 
     fqe_fetch = session.query(FileopsQueueEntry).one()
     resp_fetch = FileOpsResponse()
@@ -194,8 +196,7 @@ def test_update_headers(tmp_path):
 
     assert resp_fetch.ok is True
     assert resp_fetch.error == ''
-    assert resp_fetch.value == '200fe14594d3c9287cb9ac4d6ee34da7'
-
+    assert resp_fetch.value is None
 
     # Check final headers
     ad = astrodata.open(df.fullpath)

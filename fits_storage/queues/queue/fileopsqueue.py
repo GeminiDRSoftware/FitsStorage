@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from .queue import Queue
 from ..orm.fileopsqueueentry import FileopsQueueEntry
 
+
 class FileopsQueue(Queue):
 
     def __init__(self, session, logger=None):
@@ -45,7 +46,6 @@ class FileopsQueue(Queue):
             self.session.rollback()
             return None
 
-
     def poll_for_response(self, id, timeout=10):
         """
         Poll filequeue entry id until response is not null. Timeout value
@@ -80,6 +80,7 @@ class FileopsQueue(Queue):
             self.logger.debug("Did not find FQE with response - timed out")
             return None
 
+
 class FileOpsResponse(object):
     """Fileops response object. Stores values and (de)serializes as required"""
     ok = False
@@ -109,6 +110,7 @@ class FileOpsResponse(object):
         self.error = resp['error']
         self.value = resp['value']
 
+
 class FileOpsRequest(object):
     """Fileops request object. Stores values and (de)serializes as required"""
     request = None
@@ -121,6 +123,7 @@ class FileOpsRequest(object):
     def dict(self):
         return {'request': self.request,
                 'args': self.args}
+
     def json(self):
         return json.dumps(self.dict())
 
@@ -129,4 +132,3 @@ class FileOpsRequest(object):
         resp = json.loads(jsondoc)
         self.request = resp['request']
         self.args = resp['args']
-

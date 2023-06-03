@@ -151,7 +151,7 @@ class Ingester(object):
             self.s.add(fileobj)
             self.s.commit()
 
-        # At this point, 'fileobj' should by a valid DB  object.
+        # At this point, 'fileobj' should be a valid DB  object.
 
         if self.need_to_add_diskfile(iqe, fileobj) or iqe.force:
             diskfile = self.add_diskfile_entry(fileobj, iqe)
@@ -249,7 +249,7 @@ class Ingester(object):
             # There is a subtlety regarding timezones here.
             if diskfile.lastmod.replace(tzinfo=None) == \
                     diskfile.get_file_lastmod():
-                # lastmod matches and we're not forcing and md5 check
+                # lastmod matches and we're not forcing an md5 check
                 if iqe.force_md5 is True:
                     self.l.debug("Diskfile lastmod indicates file unchanged, "
                                  "but force_md5 was specified")

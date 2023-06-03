@@ -63,6 +63,7 @@ class FitsEditor(object):
         if filename is None and datalabel is None:
             self.error = True
             self.message = "Must provide either filename or datalabel"
+            self.logger.error(self.message)
             return
 
         # This is here to support alternate setups for testing.
@@ -95,12 +96,15 @@ class FitsEditor(object):
         except NoResultFound:
             self.error = True
             self.message = 'No results searching for target file'
+            self.logger.error(self.message)
         except MultipleResultsFound:
             self.error = True
             self.message = 'Multiple results searching for target file'
+            self.logger.error(self.message)
         if self.diskfile.present is False:
             self.error = True
             self.message = 'Target diskffile is not present'
+            self.logger.error(self.message)
 
     def _get_localfile(self):
         fsc = get_config()
@@ -110,6 +114,7 @@ class FitsEditor(object):
         if fsc.using_s3:
             self.error = True
             self.message = 'S3 header updates not implemented yet'
+            self.logger.error(self.message)
             return
 
         # Use the existing diskfile infrastructure to provide us an
@@ -136,6 +141,7 @@ class FitsEditor(object):
         if self.localfile is None:
             self.error = True
             self.message = "Failed to create local uncompressed cache file"
+            self.logger.error(self.message)
 
     def _get_hdulist(self):
         if self.error is True:
@@ -146,6 +152,7 @@ class FitsEditor(object):
         except Exception:
             self.error = True
             self.message = 'Error opening file with astropy.io.fits'
+            self.logger.error(self.message, exc_info=True)
 
     def close(self):
         fsc = get_config()
@@ -171,6 +178,7 @@ class FitsEditor(object):
                 qa_states.keys():
             self.error = True
             self.message = 'Invalid QA state'
+            self.logger.error(self.message)
             return False
         for keyword in qa_states[qa_state]:
             self.hdulist[0].header[keyword] = qa_states[qa_state][keyword]

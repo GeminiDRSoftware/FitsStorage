@@ -23,6 +23,8 @@ def test_fitseditor(tmp_path):
     diskfile = make_diskfile('N20200127S0023.fits.bz2', tmp_path)
     df_fp = diskfile.fullpath
 
+    orig_lastmod = diskfile.get_file_lastmod()
+
     # Get values from fits file and verify initial values
     ff = get_from_file(df_fp)
     assert ff['qa_state'] == 'Usable'
@@ -54,6 +56,9 @@ def test_fitseditor(tmp_path):
 
     # Close (and write) the file
     fe.close()
+
+    new_lastmod = diskfile.get_file_lastmod()
+    assert new_lastmod > orig_lastmod
 
     # Verify new values in file
     ff = get_from_file(df_fp, headers=['SSA', 'FELINE', 'KANGAROO'])

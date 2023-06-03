@@ -218,6 +218,7 @@ class DiskFile(Base):
             return self.uncompressed_cache_file
 
         if self.compressed is False:
+            self.uncompressed_cache_file = self.fullpath
             return self.fullpath
 
         try:
@@ -275,7 +276,9 @@ class DiskFile(Base):
             # self.ad_object.close()
             self.ad_object = None
 
-        if self.uncompressed_cache_file is not None:
+        if self.uncompressed_cache_file is not None and \
+                self.uncompressed_cache_file != \
+                os.path.join(self._storage_root, self.path, self.filename):
             self.logger.debug("Deleting uncompressed_cache_file "
                               f"{self.uncompressed_cache_file}")
             try:

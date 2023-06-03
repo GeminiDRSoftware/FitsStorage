@@ -15,6 +15,8 @@ from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsResponse
 
 from fits_storage.server.fileopser import FileOpser
 
+from fits_storage.config import get_config
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--debug", action="store_true", dest="debug",
@@ -77,6 +79,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, nicehandler)
 
     # Announce startup
+    fsc = get_config()
     logger.info("***   service_fileops_queue.py - starting up at %s",
                 datetime.datetime.now())
     logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))

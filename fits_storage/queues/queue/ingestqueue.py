@@ -15,7 +15,7 @@ class IngestQueue(Queue):
         super().__init__(session, ormclass=IngestQueueEntry, logger=logger)
 
     def add(self, filename, path, force_md5=False, force=False, after=None,
-            header_update=None, md5_before_header_update=None,
+            no_defer=False, header_update=None, md5_before_header_update=None,
             md5_after_header_update=None):
         """
         Add an entry to the ingest queue. This instantiates an IngestQueueEntry
@@ -34,6 +34,7 @@ class IngestQueue(Queue):
         force_md5
         force
         after
+        no_defer
         header_update
         md5_before_header_update
         md5_after_header_update
@@ -50,7 +51,8 @@ class IngestQueue(Queue):
             header_update = json.dumps(header_update)
 
         iqe = IngestQueueEntry(filename, path, force=force, force_md5=force_md5,
-                               after=after, header_update=header_update,
+                               after=after, no_defer=no_defer,
+                               header_update=header_update,
                                md5_before_header_update=md5_before_header_update,
                                md5_after_header_update=md5_after_header_update)
 

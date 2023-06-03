@@ -24,7 +24,7 @@ def error_response(message, id=None):
 def update_headers():
     ctx = get_context()
     resp = ctx.resp
-    resp.set_content_type('application/json')
+    resp.content_type = 'application/json'
 
     try:
         message = ctx.json
@@ -41,28 +41,42 @@ def update_headers():
         # Instantiate a FileOps Queue helper object
         fq = FileopsQueue(session=ctx.session, logger=DummyLogger())
 
-        # We need to keep track of the queue entry IDs to check the responses
-        fqids = []
+        # Loop through all the requests in the payload and  add them to the
+        # fileops queue. We queue these as response_required = False as the
+        # ingest is always asynchronous anyway, so there's little value to
+        # the caller in getting a confirmation that the fileops update_header
+        # succeeded as they're going to have to basically poll to check it
+        # ingested or just assume success anyway. We don't need to add the
+        # file to the ingest queue here, the fileops update_headers method
+        # takes care of that.
 
-        # Loop through all the requests in the payload, add them to the fileops
-        # queue and record the queue entry IDs.
-        for args in payload:
+        for update in payload:
+            fn = update.get('filename')
+            dl = update.get('data_label')
+            values = update.get('values')
+            args = {}
+            if fn:
+                args['filename']= fn
+            elif dl:
+                args['data_label'] = dl
+            for key in values:
+                args[key] = values[key]
+
+            if fn is None and dl is None:
+                response = {'result': False, 'value': 'No filename or datalabel given'}
+                resp.append_json(response)
+                resp.status = Return.HTTP_BAD_REQUEST
+                return
+
+            # TODO - check that the filename or datalable exists,
+            # return a bad status if not.
+
             fqrq = FileOpsRequest(request='update_headers', args=args)
-            fqe = fq.add(fqrq, response_required=True)
-            fqids.append(fqe.id)
+            fq.add(fqrq, filename=fn, response_required=False)
+            response = {'result': True, 'value': True}
+            response['id'] = fn if fn else dl
+            resp.append_json(response)
 
-        # At this point, we basically wait for the service_fileops_queue
-        # scripts to actually update the files. The queue entries may not
-        # complete in order, but that doesn't matter, we just work through the
-        # list regardless, the poll will return instantly if the response is
-        # already waiting.
-        #
-        # We don't need to add the file to the ingest queue here, the fileops
-        # update_headers method takes care of that.
-
-        for id in fqids:
-            foresp = fq.poll_for_response(id)
-            resp.append_json(foresp.json())
         resp.status = Return.HTTP_OK
 
     except KeyError as e:
@@ -71,4 +85,3 @@ def update_headers():
     except Exception as e:
         resp.append_json(error_response(e))
         resp.status = Return.HTTP_INTERNAL_SERVER_ERROR
-

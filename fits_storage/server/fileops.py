@@ -24,7 +24,6 @@ from fits_storage.server.orm.miscfile import is_miscfile, miscfile_meta, \
 from fits_storage.server.aws_s3 import get_helper
 
 from fits_storage.server.fitseditor import FitsEditor
-from fits_storage.core.hashes import md5sum
 
 from fits_storage.config import get_config
 
@@ -110,22 +109,25 @@ def ingest_upload(args, session, logger):
             if is_miscfile(src):
                 srcmeta = miscfile_meta_path(src)
                 dstmeta = miscfile_meta_path(dst)
-                shutil.copy(srcmeta, dstmeta)
+                logger.debug("Copying %s to %s" % (srcmeta, dstmeta))
+                shutil.move(srcmeta, dstmeta)
             # We can't use os.rename as that keeps the old permissions and
             # ownership, which we specifically want to avoid
             # Instead, we copy the file and the remove it.
-            # TODO - can we os.rename then os.chown and os.chmod ?
             # Given that it's probably cross filesystem anyway, never mind.
-            shutil.copy(src, dst)
-            os.unlink(src)
+            result = shutil.move(src, dst)
+            if result != dst:
+                logger.error("shutil.move failed, returned %s", result)
             fileuploadlog.file_ok = True
         except (IOError, OSError):
             logger.error("Error copying file to storage_root.", exc_info=True)
             return False
 
+    # Queue it for ingest. We can pass no_defer=True here as we know that
+    # the file is complete and ready to go.
     logger.info("Queueing %s for Ingest", filename)
     iq = IngestQueue(session, logger)
-    iqe = iq.add(filename, path)
+    iqe = iq.add(filename, path, no_defer=True)
 
     fileuploadlog.ingestqueue_id = iqe.id
     session.commit()
@@ -138,7 +140,7 @@ def update_headers(args, session, logger):
     'filename' or 'data_label' key to tell us which file to updates, and also
     can contain other keys, as follows:
     'qa_state': 'Pass', 'Fail', etc...
-    'rawsite': 'iqany', etc. # How do we pass multiple values?
+    'raw_site': 'iqany', etc. # How do we pass multiple values?
     'release': 'YYYY-MM-DD' release date
     'generic': {'KEYWORD1': 'value1', ...}
     'reject_new': Bool - if True, then refuse to insert new keywords.
@@ -166,10 +168,10 @@ def update_headers(args, session, logger):
     if 'qa_state' in args:
         logger.debug("Updating qa_state: %s", args['qa_state'])
         fe.set_qa_state(args['qa_state'])
-    if 'rawsite' in args:
+    if 'raw_site' in args:
         # TODO: Is this how multiple values are supposed to work?
-        rawsites = args['rawsite'] if isinstance(args['rawsite'], list) \
-            else [args['rawsite']]
+        rawsites = args['raw_site'] if isinstance(args['raw_site'], list) \
+            else [args['raw_site']]
         for rawsite in rawsites:
             logger.debug("Updating raw site: %s", rawsite)
             fe.set_rawsite(rawsite)
@@ -185,11 +187,10 @@ def update_headers(args, session, logger):
     filename = fe.diskfile.filename
     path = fe.diskfile.path
     fe.close()
-    md5 = md5sum(fe.diskfile.fullpath)
 
+    # Queue the file for ingest. Pass no_defer=True as we know the file is
+    # complete and not still being modified
     logger.info("Queueing %s for Ingest", filename)
     iq = IngestQueue(session, logger)
-    iq.add(filename, path)
+    iq.add(filename, path, no_defer=True)
     session.commit()
-
-    return md5

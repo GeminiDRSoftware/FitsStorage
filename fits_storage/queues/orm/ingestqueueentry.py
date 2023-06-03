@@ -31,6 +31,7 @@ class IngestQueueEntry(OrmQueueMixin, Base):
     force_md5 = Column(Boolean)
     force = Column(Boolean)
     after = Column(DateTime)
+    no_defer = Column(Boolean)
     sortkey = Column(Text, index=True)
     error = Column(Text)
     md5_before_header_update = Column(Text)
@@ -42,7 +43,7 @@ class IngestQueueEntry(OrmQueueMixin, Base):
     storage_root = None
 
     def __init__(self, filename, path, force=False, force_md5=False,
-                 after=None, header_update=None,
+                 after=None, no_defer=False, header_update=None,
                  md5_before_header_update=None,
                  md5_after_header_update=None):
         """
@@ -62,6 +63,9 @@ class IngestQueueEntry(OrmQueueMixin, Base):
             lastmod timestamp on the filesystem in deciding whether to reingest
         after: datetime.datetime
             Do not ingest this file until after this timestamp.
+        no_defer: bool
+            If set to true, do not defer ingesting this file even if it was
+            recently modified.
         header_update: dict
             Header updates from a call to the update_headers API that resulted
             in this request for ingest. We pass this on to the export queue
@@ -79,6 +83,7 @@ class IngestQueueEntry(OrmQueueMixin, Base):
         self.force_md5 = force_md5
         self.force = force
         self.after = after if after is not None else self.added
+        self.no_defer = no_defer
         self.fail_dt = self.fail_dt_false  # See note in OrmQueueMixin
         self.sortkey = self.sortkey_from_filename()
         self.header_update = header_update
@@ -120,6 +125,8 @@ class IngestQueueEntry(OrmQueueMixin, Base):
         the object to reflect the appropriate delay, but we do not commit the
         object to the session, it is up to the caller to do that.
         """
+        if self.no_defer:
+            return None
 
         fsc = get_config()
         if fsc.defer_threshold == 0:

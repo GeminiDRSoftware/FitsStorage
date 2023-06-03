@@ -7,7 +7,7 @@ import os
 import fcntl
 
 from fits_storage.gemini_metadata_utils import sortkey_regex_dict
-
+from fits_storage.config import get_config
 
 class OrmQueueMixin:
     def sortkey_from_filename(self, filename=None):
@@ -99,6 +99,10 @@ class OrmQueueMixin:
         -------
         The full path filename of the filename for this queue entry
         """
+        fsc = get_config()
+        self.path = '' if self.path is None else self.path
+        self.storage_root = fsc.storage_root if self.storage_root is None \
+            else self.storage_root
         return os.path.join(self.storage_root, self.path, self.filename)
 
 
