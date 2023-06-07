@@ -10,10 +10,10 @@ import re
 from abc import ABC, abstractmethod
 
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.scripts.header_fixer2 import fix_and_copy
-from fits_storage.utils.ingestqueue import IngestQueueUtil
+from fits_storage.server.header_fixer2 import fix_and_copy
+from fits_storage.queues.queue.ingestqueue import IngestQueue
 
-from fits_storage.fits_storage_config import using_s3, storage_root
+from fits_storage.config import get_config
 
 from gemini_obs_db.db import session_scope
 from gemini_obs_db.orm.diskfile import DiskFile
@@ -80,9 +80,13 @@ class VisitingInstrumentABC(ABC):
     This provides the common framework/structure and the
     implementations handle the peculiarities of each.
     """
-    def __init__(self, base_path, apply_fixes, storage_root=storage_root):
+    def __init__(self, base_path, apply_fixes, storage_root=None):
         self.base_path = base_path
         self.apply_fixes = apply_fixes
+
+        fsc = get_config()
+        if storage_root is None:
+            storage_root = fsc.storage_root
         self.storage_root = storage_root
     
     def check_filename(self, filename):
@@ -280,7 +284,7 @@ class VisitingInstrumentABC(ABC):
                 if success:
                     logger.info("Adding %s to IngestQueue", filename)
                     file_in_progress = None  # reset file so we don't accidentally "clean" it up if we exit now
-                    iq.add_to_queue(dst_filename, dst_path, force=False, force_md5=False, after=None)
+                    iq.add(dst_filename, dst_path, force=False, force_md5=False, after=None)
         except:
             logger.error("Problem copying %s to %s", src, self.storage_root)
             logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
@@ -299,7 +303,7 @@ class AlopekeZorroABC(VisitingInstrumentABC):
     are still some peculiarities we want broken out into
     the final implementations later.
     """
-    def __init__(self, instr, path, apply_fixes, storage_root=storage_root):
+    def __init__(self, instr, path, apply_fixes, storage_root=None):
         """
         Initialize the class with the given settings.
 
@@ -392,7 +396,7 @@ class IGRINS(VisitingInstrumentABC):
     """
     IGRINS implementation for copying visiting instrument data.
     """
-    def __init__(self, base_path="/net/cpostonfs-nv1/tier2/ins/sto/igrins/DATA", storage_root=storage_root):
+    def __init__(self, base_path="/net/cpostonfs-nv1/tier2/ins/sto/igrins/DATA", storage_root=None):
         """
         Create IGRINS visiting instrument data copier
         """
@@ -530,7 +534,8 @@ if __name__ == "__main__":
     signal.signal(signal.SIGPIPE, handler)
     signal.signal(signal.SIGTERM, nicehandler)
 
-    if using_s3:
+    fsc = get_config()
+    if fsc.using_s3:
         logger.info("This should not be used with S3 storage. Exiting")
         sys.exit(1)
     if options.demon and options.force:
@@ -557,8 +562,8 @@ if __name__ == "__main__":
                     dir_list = set(ingester.get_files(date_pre))
                     logger.info("... found %d files", len(dir_list))
 
-                    logger.debug("Instantiating IngestQueueUtil object")
-                    iq = IngestQueueUtil(session, logger)
+                    logger.debug("Instantiating IngestQueue object")
+                    iq = IngestQueue(session, logger)
 
                     # logger.info("Starting looping...")
                     # while True:

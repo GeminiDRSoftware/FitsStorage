@@ -6,8 +6,6 @@ import os
 from argparse import ArgumentParser
 from datetime import datetime, timedelta
 
-from fits_storage.scripts.emailutils import sendmail
-
 
 """
 Utilities for cleaning up headers from unreliable sources.
@@ -22,7 +20,8 @@ Eventually, the hope is these methods would see perfect
 datafiles and not have to make any changes.
 """
 
-from fits_storage.fits_storage_config import z_staging_area, smtp_server
+from fits_storage.config import get_config
+from fits_storage.server.emailutils import sendmail
 
 _missing_end_files = list()
 
@@ -302,13 +301,14 @@ def fix_and_copy(src_dir, dest_dir, fn, compress=True, mailfrom=None, mailto=Non
 
     path = os.path.join(src_dir, fn)
     tmppath = None
+    fsc = get_config()
     if fn.endswith('.bz2'):
-        tmppath = os.path.join(z_staging_area, fn[:-4])
+        tmppath = os.path.join(fsc.z_staging_dir, fn[:-4])
         os.system('bzcat -s %s > %s' % (path, tmppath))
 
     if tmppath and not check_end(tmppath):
         _missing_end_files.append(fn)
-        if smtp_server:
+        if fsc.smtp_server:
             # First time it fails, send an email error message
             # we don't want to continually spam it and we will be retrying...
             subject = "ERROR - header_fixer2 saw no END keyword for file %s, will ignore" % fn
@@ -321,7 +321,7 @@ def fix_and_copy(src_dir, dest_dir, fn, compress=True, mailfrom=None, mailto=Non
                                                       "this file again until the copy from visiting instrument "
                                                       "service is restarted." % fn)
 
-            server = smtplib.SMTP(smtp_server)
+            server = smtplib.SMTP(fsc.smtp_server)
             server.sendmail(mailfrom, mailto, message)
             server.quit()
         os.unlink(tmppath)

@@ -1,7 +1,6 @@
 import smtplib
 
-from fits_storage.fits_storage_config import smtp_server
-
+from fits_storage.config import get_config
 
 def sendmail(subject, mailfrom, mailto, msglines):
     """
@@ -24,12 +23,14 @@ def sendmail(subject, mailfrom, mailto, msglines):
         List of text messages to combine into the message (for instance, a list of error messages)
     """
 
+    fsc = get_config()
+
     # make sure we have a list of strings
     if isinstance(msglines, str):
         msglines = [msglines,]
     message = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (
               mailfrom, ", ".join(mailto), subject, '\n'.join(msglines))
 
-    server = smtplib.SMTP(smtp_server)
+    server = smtplib.SMTP(fsc.smtp_server)
     server.sendmail(mailfrom, mailto, message)
     server.quit()
