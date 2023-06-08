@@ -39,6 +39,7 @@ class FitsStorageConfig(dict):
 
     If builtinonly is not True, the following are read in this order:
     * /etc/fits_storage.conf
+    * /opt/FitsStorageConfig/fits_storage.conf
     * ~/.fits_storage.conf
 
     When reading configuration values from multiple places, any values read
@@ -50,7 +51,7 @@ class FitsStorageConfig(dict):
     # to another type automatically as they are requested
     _bools = ['using_sqlite', 'database_debug', 'use_utc', 'is_server',
               'is_archive', 'using_s3', 'using_previews', 'using_fitsverify',
-              'logreports_use_materialized_view', 'ordid_enabled']
+              'logreports_use_materialized_view', 'orcid_enabled']
     _ints = ['postgres_database_pool_size', 'postgres_database_max_overflow',
              'defer_threshold', 'defer_delay', 'fits_open_result_limit',
              'fits_closed_result_limit']
@@ -59,7 +60,6 @@ class FitsStorageConfig(dict):
     def __init__(self, configfile=None, configstring=None,
                  builtin=True, builtinonly=False):
         super().__init__()
-
 
         self._readfiles(configfile=configfile,
                         configstring=configstring,
@@ -95,6 +95,7 @@ class FitsStorageConfig(dict):
 
         # Places to look for config files. Later ones take precedence
         self._configfiles = ['/etc/fits_storage.conf',
+                             '/opt/FitsStorageConfig/fits_storage.conf',
                              os.path.expanduser('~/.fits_storage.conf')]
 
         # This can be read back to see which config files were actually used.
@@ -180,7 +181,7 @@ class FitsStorageConfig(dict):
         """
         If not set, default to the value of is_server
         """
-        if self.config['using_fitsverify'] == '' :
+        if self.config['using_fitsverify'] == '':
             self.config['using_fitsverify'] = self.config['is_server']
 
     def _getlist(self, key):
@@ -190,8 +191,8 @@ class FitsStorageConfig(dict):
 
         This uses ast.literal_eval and the only error checking is that we end
         up with a list - if not, we raise a ValueError. If there are any other
-        errors, we just let the exception rise, as there's liklely little we
-        can do about it and we do not want to continue with missing config
+        errors, we just let the exception rise, as there's likely little we
+        can do about it, and we do not want to continue with missing config
         items due to a typo in the config file.
 
         Parameters
