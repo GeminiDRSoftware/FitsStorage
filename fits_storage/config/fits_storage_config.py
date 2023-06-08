@@ -131,7 +131,7 @@ class FitsStorageConfig(dict):
         if hostname in self._config.sections():
             self.config = self._config[hostname]
         elif shorthostname and shorthostname in self._config.sections():
-            self.config - self._config[shorthostname]
+            self.config = self._config[shorthostname]
         else:
             self.config = self._config['DEFAULT']
 
