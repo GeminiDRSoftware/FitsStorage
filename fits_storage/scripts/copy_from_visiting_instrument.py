@@ -15,9 +15,8 @@ from fits_storage.queues.queue.ingestqueue import IngestQueue
 
 from fits_storage.config import get_config
 
-from gemini_obs_db.db import session_scope
-from gemini_obs_db.orm.diskfile import DiskFile
-
+from fits_storage.db import session_scope
+from fits_storage.core.orm.diskfile import DiskFile
 
 """
 Script to copy files from the various Visting Instrument staging areas into Dataflow.
@@ -499,7 +498,7 @@ if __name__ == "__main__":
     date_pre = None
     if options.datepre:
         date_pre = options.datepre
-    if date_pre and len(date_pre < 8):
+    if date_pre and len(date_pre) < 8:
         date_pre = f'{date_pre}\\d{{{8-len(date_pre)}}}'
 
     # Annouce startup
