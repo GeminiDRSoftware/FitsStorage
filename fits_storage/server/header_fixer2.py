@@ -81,14 +81,12 @@ def check_end(filename):
                     return False
                 endcheck = endcheck + char
                 if endcheck == 'END':
-                    print("Found at byte: %s" % idx)
                     return True
                 else:
                     if endcheck != 'EN' and endcheck != 'E':
                         endcheck = ''
                 idx = idx + 1
             except UnicodeDecodeError:
-                print("Entered data block without seeing END")
                 return False
     finally:
         f.close()
@@ -174,7 +172,8 @@ def fix_zorro_or_alopeke(fits, instr, telescope):
             else:
                 pheader['RELEASE'] = (dt + timedelta(days=365)).strftime('%Y-%m-%d')
         except Exception as e:
-            print("Unable to determine release date, continuing")
+                #print("Unable to determine release date, continuing")
+                pass
     return retval
 
 
@@ -240,7 +239,7 @@ def fix_igrins(fits):
         pheader['TELESCOP'] = 'Gemini-South'
         retval = True
     if 'OBSERVAT' not in pheader or pheader['OBSERVAT'] is None:
-        print("fixing OBSERVAT")
+        #print("fixing OBSERVAT")
         pheader['OBSERVAT'] = "Gemini-South"
         retval = True
     progid = None
@@ -269,9 +268,11 @@ def fix_igrins(fits):
                 pheader['RELEASE'] = (dt + timedelta(days=365)).strftime('%Y-%m-%d')
                 retval = True
             else:
-                print("RELEASE not set and DATE-OBS in unrecognized format")
+                #print("RELEASE not set and DATE-OBS in unrecognized format")
+                pass
         except Exception as e:
-            print("Unable to determine release date, continuing")
+            #print("Unable to determine release date, continuing")
+            pass
     return retval
 
 
@@ -361,7 +362,7 @@ def fix_and_copy(src_dir, dest_dir, fn, compress=True, mailfrom=None, mailto=Non
                        "(from %s to %s)" % (src_dir, dest_dir)]
             sendmail("ERROR - Unable to import visiting instrument file %s" % fn,
                      mailfrom, mailto, message)
-        print('{0} >> {1}'.format(fn, e))
+        #print('{0} >> {1}'.format(fn, e))
         if os.path.exists(df):
             os.unlink(df)
         if os.path.exists('%s.bz2' % df):
