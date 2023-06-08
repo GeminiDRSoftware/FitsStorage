@@ -123,8 +123,15 @@ class FitsStorageConfig(dict):
         # that directly. It will inherit anything not specified there from the
         # default section. If not, point directly to the default section.
         hostname = socket.gethostname()
+        shorthostname = None
+        try:
+            shorthostname = hostname.split('.')[0]
+        except (AttributeError, TypeError):
+            pass
         if hostname in self._config.sections():
             self.config = self._config[hostname]
+        elif shorthostname and shorthostname in self._config.sections():
+            self.config - self._config[shorthostname]
         else:
             self.config = self._config['DEFAULT']
 
