@@ -44,6 +44,8 @@ from fits_storage.web.update_headers import update_headers
 
 from fits_storage.web.qastuff import qareport, qametrics, qaforgui
 
+from fits_storage.web.notification import notification, import_odb_notifications
+
 from .routing import SequenceConverter, SelectionConverter
 
 from fits_storage.config import get_config
@@ -155,8 +157,8 @@ url_map = Map([
     Rule('/qaforgui/<date>', qaforgui),
 
     # Notifications
-    # Rule('/notification', notification),
-    # Rule('/import_odb_notifications', import_odb_notifications, methods=['POST']),
+    Rule('/notification', notification),
+    Rule('/import_odb_notifications', import_odb_notifications, methods=['POST']),
 
 
     Rule('/update_headers', update_headers, methods=['POST']),

@@ -1,17 +1,20 @@
 """
 This module contains the notification html generator function, and odb import via web function
 """
-from ..orm.notification import Notification
-from ..fits_storage_config import use_as_archive, magic_download_cookie
+from fits_storage.server.orm.notification import Notification
 
 from ..utils.notifications import ingest_odb_xml
-from ..utils.web import get_context, Return
+
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
 
 from .user import needs_login
 
 from . import templating
 
 from xml.parsers.expat import ExpatError
+
+from fits_storage.config import get_config
 
 @needs_login(staffer=True)
 @templating.templated("notification.html")

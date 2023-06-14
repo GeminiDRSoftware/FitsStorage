@@ -3,7 +3,7 @@ Notifications utils - add / update notification table entries from ODB XML
 """
 
 from xml.dom.minidom import parseString
-from ..orm.notification import Notification
+from fits_storage.server.orm.notification import Notification
 from . import programs
 
 from gemini_obs_db.utils.gemini_metadata_utils import GeminiProgram

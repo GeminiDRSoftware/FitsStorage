@@ -3,12 +3,11 @@ from sqlalchemy import Integer, Text, Boolean
 
 from fits_storage.core.orm import Base
 
-# ------------------------------------------------------------------------------
+
 class Notification(Base):
     """
     This is the ORM class for the table holding the email notification list for
     this server.
-
     """
     __tablename__ = 'notification'
 
@@ -22,7 +21,7 @@ class Notification(Base):
 
     def __init__(self, label):
         """
-        Create a motification with the given label
+        Create a notification with the given label
 
         Parameters
         ----------
@@ -30,5 +29,3 @@ class Notification(Base):
             Label to use for :class:`~Notification`
         """
         self.label = label
-
-
