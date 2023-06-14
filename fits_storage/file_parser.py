@@ -688,20 +688,6 @@ class AlopekeZorroFileParser(AstroDataFileParser):
             return observation_type
         return 'OBJECT'
 
-    def release(self) -> Union[date, None]:
-        # per Andrew S, we always update the RELEASE keyword, it was not reliably being set
-        if 'DATE-OBS' in self.ad.phu and self.ad.phu['DATE-OBS'] is not None:
-            try:
-                dateobs = self.ad.phu['DATE-OBS']
-                dt = datetime.strptime(dateobs, '%Y-%m-%d')
-                if 'CAL' in self.observation_id():
-                    return dt.strftime('%Y-%m-%d')
-                elif '-FT-' in self.observation_id():
-                    return (dt + timedelta(days=183)).strftime('%Y-%m-%d')
-                else:
-                    return (dt + timedelta(days=365)).strftime('%Y-%m-%d')
-            except Exception as e:
-                print("Unable to determine release date, continuing")
 
     def telescope(self) -> str:
         telescope = super().telescope()
