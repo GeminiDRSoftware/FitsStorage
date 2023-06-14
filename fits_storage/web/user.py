@@ -27,7 +27,6 @@ from fits_storage.server.wsgi.returnobj import Return
 from . import templating
 
 from fits_storage.config import get_config
-# fsc = get_config()
 
 
 bad_password_msg = "Bad password - must be at least 14 characters long, and " \
@@ -119,7 +118,7 @@ def request_account(things):
             session.add(newuser)
             session.commit()
             template_args['emailed'] = send_password_reset_email(newuser.id)
-        except:
+        except Exception:
             template_args['error'] = True
 
     return template_args
@@ -198,7 +197,7 @@ minutes, so please do that promptly.</p>
     try:
         smtp = smtplib.SMTP(fsc.smtp_server)
         smtp.sendmail(fromaddr, tolist, msg.as_string())
-    except:
+    except Exception:
         return False
 
     return True
@@ -221,7 +220,7 @@ def password_reset(userid, token):
 
     try:
         userid = int(userid)
-    except:
+    except Exception:
         return template_args
 
     if len(token) != 56:
@@ -290,7 +289,7 @@ def password_reset(userid, token):
 @templating.templated("user/change_email.html")
 def change_email(things):
     """
-    Handles a logged in user wanting to change their email.
+    Handles a logged-in user wanting to change their email.
     """
     # Present and process a change email form. User must be logged in.
 
@@ -352,7 +351,7 @@ def change_email(things):
 @templating.templated("user/change_password.html")
 def change_password(things):
     """
-    Handles a logged in user wanting to change their password.
+    Handles a logged-in user wanting to change their password.
     """
     # Present and process a change password form. User must be logged in,
     # and know their current password.
@@ -425,7 +424,7 @@ def request_password_reset():
 
     ctx = get_context()
 
-    # Process the form data first if thre is any
+    # Process the form data first if there is any
     formdata = ctx.get_form_data()
     request_valid = None
 
@@ -521,6 +520,10 @@ def staff_access():
             elif action == "Revoke":
                 action_name = 'Revoking'
                 user.gemini_staff = False
+            else:
+                # This shouldn't happen.
+                action_name = None
+                user = None
             template_args['action_name'] = action_name
             template_args['action_user'] = user
         except NoResultFound:
@@ -677,8 +680,7 @@ def admin_file_permissions():
     template_args = dict(allowed=True)
 
     if delete:
-        up = ctx.session.query(UserProgram)\
-            .filter(UserProgram.id == delete).delete()
+        ctx.session.query(UserProgram).filter(UserProgram.id == delete).delete()
 
     # If we got an action, do it
     if item:
@@ -690,7 +692,7 @@ def admin_file_permissions():
                     if not obscheck.valid:
                         warnings.append(f'Observation ID <b>{itemx}</b> '
                                         'has invalid format, adding anyway')
-                except Exception as e:
+                except Exception:
                     warnings.append(f'Observation ID <b>{itemx}</b> '
                                     'has invalid format, adding anyway')
 
@@ -727,7 +729,7 @@ def admin_file_permissions():
     q = ctx.session.query(UserProgram, User)\
         .filter(and_(UserProgram.observation_id != None,
                      UserProgram.observation_id != ''),
-                     User.id == UserProgram.user_id)
+                User.id == UserProgram.user_id)
     if filter:
         q = q.filter(or_(UserProgram.observation_id == filter,
                          User.username == filter))
@@ -1013,7 +1015,7 @@ def needs_login(magic_cookies=(), only_magic=False, staff=False,
     ``only_magic=(False|True)``
         This relates to the **EXPECTED** value of a cookie (the one provided
         in ``magic_cookie``). If any of the expected cookie pairs has an
-        empty (eg. ``None``) value, then the behaviour of ``needs_login`` is
+        empty (e.g. ``None``) value, then the behaviour of ``needs_login`` is
         the following:
 
          * If ``only_magic`` is ``False``, then we revert to the standard
@@ -1072,7 +1074,9 @@ def needs_login(magic_cookies=(), only_magic=False, staff=False,
                                 pass
                             return False
 
-                        if content is not None and cookie_match(ctx.cookies[cookie], content):  # ctx.cookies[cookie] == content:
+                        # if ctx.cookies[cookie] == content:
+                        if content is not None and \
+                                cookie_match(ctx.cookies[cookie], content):
                             got_magic = True
                             break
                     except KeyError:
@@ -1102,7 +1106,7 @@ def needs_login(magic_cookies=(), only_magic=False, staff=False,
                                         "Staff member to access this resource")
                 if misc_upload is True and (not user.misc_upload and not user.superuser):
                     raise_error(message="You need to be logged in with misc "
-                                        "upload permission or as a supersuer "
+                                        "upload permission or as a supersuser "
                                         "to access this service")
             return fn(*args, **kw)
 
@@ -1177,7 +1181,7 @@ def orcid(code):
         else:
             reason_bad = "Error communicating with ORCID service"
     else:
-        # Send them to ORCID, which will callback here with their token
+        # Send them to ORCID, which will call back here with their token
         orcid_url = f'https://{fsc.orcid_server}/oauth/authorize?client_id=' \
                     f'{fsc.orcid_client_id}' \
                     f'&response_type=code&scope=/authenticate' \
