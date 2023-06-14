@@ -10,9 +10,9 @@ import json
 # ------------------------------------------------------------------------------
 def float_or_None(val):
     """
-    Data cleanup utility - converts the given str value to a float or returns None
-    for invalid values.  Wraps the kinds of conversion errors we would see from
-    bad data.
+    Data cleanup utility - converts the given str value to a float or returns
+    None for invalid values.  Wraps the kinds of conversion errors we would
+    see from bad data.
 
     Parameters
     ----------
@@ -21,7 +21,8 @@ def float_or_None(val):
 
     Returns
     -------
-    float : float value of string if it can convert, None if it is not a valid float.
+    float : float value of string if it can convert, None if it is not a valid
+            float.
     """
     try:
         return float(val)
@@ -191,7 +192,7 @@ class QAmetricIQ(Base, MetricDictMixin):
         iq.percentile_band = iq_dict.get('percentile_band')
         iq.comment = ", ".join(iq_dict.get('comment'))
         iq.ao_seeing = iq_dict.get('ao_seeing')
-        iq.adaptive_optics = iq_dict.get('adaptive_optics')
+        iq.adaptive_optics = bool(iq_dict.get('adaptive_optics'))
         iq.strehl = iq_dict.get('strehl')
         iq.strehl_std = iq_dict.get('strehl_std')
 

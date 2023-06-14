@@ -42,6 +42,8 @@ from fits_storage.web.upload_file import upload_file
 
 from fits_storage.web.update_headers import update_headers
 
+from fits_storage.web.qastuff import qareport, qametrics, qaforgui
+
 from .routing import SequenceConverter, SelectionConverter
 
 from fits_storage.config import get_config
@@ -148,9 +150,9 @@ url_map = Map([
     # Rule('/num_previews/<filenamegiven>', num_previews),
 
     # QA metrics
-    # Rule('/qareport', qareport, methods=['POST']),
-    # Rule('/qametrics/<seq_of(iq,zq,sb,pe):metrics>', qametrics),
-    # Rule('/qaforgui/<date>', qaforgui),
+    Rule('/qareport', qareport, methods=['POST']),
+    Rule('/qametrics/<seq_of(iq,zq,sb,pe):metrics>', qametrics),
+    Rule('/qaforgui/<date>', qaforgui),
 
     # Notifications
     # Rule('/notification', notification),

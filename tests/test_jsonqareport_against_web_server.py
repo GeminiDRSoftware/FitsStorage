@@ -1,7 +1,15 @@
+# These tests test against a running web server. You should stand up a
+# fits storage server with a web server running and an empty database
+# then run these tests pointing at it.
+
+base_url = 'http://localhost:8000/'
+
 import requests
+import http
+from urllib.parse import quote
 
 
-if __name__ == "__main__":
+def test_jsonqareport():
     json = [
         {
             "hostname": "myhost.gemini.edu",
@@ -65,7 +73,19 @@ if __name__ == "__main__":
         }
     ]
 
-    url = "http://mkofits-lv1/qareport"
+    url = f"{base_url}/qareport"
     r = requests.post(url, json=json)
-    print(r.text)
-    print(r.status_code)
+
+    assert r.status_code == http.HTTPStatus.OK
+    assert r.text == ''
+
+def test_qareport():
+    xml = "<qareport> </qareport>"
+    postdata = quote(xml)
+
+    url = f"{base_url}/qareport"
+    r = requests.post(url, data=postdata)
+
+    # We don't support xml anymore, only json.
+    assert r.status_code == http.HTTPStatus.BAD_REQUEST
+    assert r.text == ''

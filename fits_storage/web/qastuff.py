@@ -4,20 +4,22 @@ This module contains the QA metric database interface
 
 from sqlalchemy import desc, or_
 import datetime
-import time
 import json
-import math
-import dateutil.parser
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_date, get_date_offset, gemini_daterange
 
-from ..orm.qastuff import QAreport, QAmetricSB, QAmetricIQ, QAmetricZP, QAmetricPE
-from ..orm.qastuff import evaluate_bg_from_metrics, evaluate_cc_from_metrics
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.header import Header
+from fits_storage.gemini_metadata_utils import gemini_date, get_date_offset, \
+    gemini_daterange
 
-from ..utils.web import get_context, Return
+from fits_storage.server.orm.qastuff import QAreport, QAmetricSB, QAmetricIQ, \
+    QAmetricZP, QAmetricPE, evaluate_bg_from_metrics, evaluate_cc_from_metrics
+
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.header import Header
+
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
 
 from . import templating
+
 
 def qareport():
     """
@@ -29,7 +31,7 @@ def qareport():
     clientdata = ctx.raw_data
     if clientdata:
         clientdata = clientdata.decode('utf-8', errors='ignore')
-    #ctx.log("QAreport clientdata: %s" % clientdata)
+        #ctx.log("QAreport clientdata: %s" % clientdata)
 
     # We make here some reasonable assumptions about the input format
     if clientdata.startswith('['):
