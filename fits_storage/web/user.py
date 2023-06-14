@@ -993,7 +993,7 @@ def bad_password(candidate):
 
 def needs_login(magic_cookies=(), only_magic=False, staff=False,
                 misc_upload=False, superuser=False, content_type='html',
-                annotate=None, archive_only=False):
+                annotate=None):
     """
     Decorator for functions that need a user to be logged in, or some sort of
     cookie to be set. The basic use is (notice the decorator parenthesis,
@@ -1024,20 +1024,16 @@ def needs_login(magic_cookies=(), only_magic=False, staff=False,
          * If ``only_magic`` is ``True``, and one of the expected values is
          None, then we allow access always
 
-       ``staff=(False|True)``
+    ``staff=(False|True)``
          If ``True``, the user must be staff
 
-       ``superuser=(False|True)``
+    ``superuser=(False|True)``
          If ``True``, the user must be a superuser
 
-       ``content_type='...'``
+    ``content_type='...'``
          Can be set to ``'html'`` (the default) or ``'json'``, depending on
          the kind of answer we want to provide, in case that the access is
          forbidden
-
-       ``archive_only=(False|True)``
-         If ``True``, authentication is only required if this is an archive
-         server
     """
 
     def decorator(fn):
@@ -1082,10 +1078,6 @@ def needs_login(magic_cookies=(), only_magic=False, staff=False,
                     except KeyError:
                         pass
 
-            fsc = get_config()
-            if archive_only and not fsc.use_as_archive:
-                # Bypass protection - archive_only and not the archive
-                got_magic = True
             if not got_magic:
                 raise_error = functools.partial(ctx.resp.client_error,
                                                 code=Return.HTTP_FORBIDDEN,
