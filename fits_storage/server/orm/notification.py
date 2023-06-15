@@ -29,3 +29,18 @@ class Notification(Base):
             Label to use for :class:`~Notification`
         """
         self.label = label
+
+    @property
+    def emailto(self):
+        return self.piemail
+
+    @property
+    def emailcc(self):
+        if self.ngoemail is None and self.csemail is None:
+            return None
+        elif self.ngoemail is None:
+            return str(self.csemail)
+        elif self.csemail is None:
+            return str(self.ngoemail)
+        else:
+            return ', '.join([str(self.ngoemail), str(self.csemail)])

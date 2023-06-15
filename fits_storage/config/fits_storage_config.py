@@ -157,6 +157,7 @@ class FitsStorageConfig(dict):
         self._calculate_using_sqlite()
         self._calculate_using_s3()
         self._calculate_using_fitsverify()
+        self._calculate_fits_server_name()
 
     def _calculate_database_url(self):
         """
@@ -191,6 +192,13 @@ class FitsStorageConfig(dict):
         """
         if self.config['using_fitsverify'] == '':
             self.config['using_fitsverify'] = self.config['is_server']
+
+    def _calculate_fits_server_name(self):
+        """
+        If not set, default to the system hostname
+        """
+        if self.config['fits_server_name'] == '':
+            self.config['fits_server_name'] = socket.gethostname()
 
     def _getlist(self, key):
         """
