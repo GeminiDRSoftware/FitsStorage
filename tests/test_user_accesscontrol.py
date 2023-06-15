@@ -2,6 +2,8 @@ import pytest
 
 from fits_storage.web.user import needs_login, needs_cookie
 
+from fits_storage.config import get_config
+
 badcookie_message = "This resource can only be accessed by providing a valid " \
                     "magic cookie, which this request did not."
 
@@ -46,7 +48,7 @@ def test_cookie_access_good():
     fakectx = FakeCtx(cookies={'good_cookie_name': 'magic_value'})
 
     @needs_cookie(magic_cookies=[('good_cookie_name', 'magic_value')],
-                  context=fakectx)
+                  context=fakectx, fsconfig=get_config(builtinonly=True))
     def thefunction():
         return "OK"
 
@@ -57,7 +59,7 @@ def test_cookie_access_badvalue():
     fakectx = FakeCtx(cookies={'good_cookie_name': 'bad_value'})
 
     @needs_cookie(magic_cookies=[('good_cookie_name', 'magic_value')],
-                  context=fakectx)
+                  context=fakectx, fsconfig=get_config(builtinonly=True))
     def thefunction():
         return "OK"
 
@@ -70,7 +72,7 @@ def test_cookie_access_badcookie():
     fakectx = FakeCtx(cookies={'bad_cookie_name': 'magic_value'})
 
     @needs_cookie(magic_cookies=[('good_cookie_name', 'magic_value')],
-                  context=fakectx)
+                  context=fakectx, fsconfig=get_config(builtinonly=True))
     def thefunction():
         return "OK"
 
@@ -83,7 +85,7 @@ def test_login_access_nouser():
     fakeuser = None
     fakectx = FakeCtx(user=fakeuser)
 
-    @needs_login(context=fakectx)
+    @needs_login(context=fakectx, fsconfig=get_config(builtinonly=True))
     def thefunction():
         return "OK"
 
@@ -96,7 +98,7 @@ def test_login_access_user():
     fakeuser = FakeUser()
     fakectx = FakeCtx(user=fakeuser)
 
-    @needs_login(context=fakectx)
+    @needs_login(context=fakectx, fsconfig=get_config(builtinonly=True))
     def thefunction():
         return "OK"
 
@@ -106,7 +108,8 @@ def test_login_access_notstaff():
     fakeuser = FakeUser()
     fakectx = FakeCtx(user=fakeuser)
 
-    @needs_login(staff=True, context=fakectx)
+    @needs_login(staff=True, context=fakectx,
+                 fsconfig=get_config(builtinonly=True))
     def thefunction():
         return "OK"
 
@@ -118,8 +121,68 @@ def test_login_access_staff():
     fakeuser = FakeUser(staff=True)
     fakectx = FakeCtx(user=fakeuser)
 
-    @needs_login(staff=True, context=fakectx)
+    @needs_login(staff=True, context=fakectx,
+                 fsconfig=get_config(builtinonly=True))
     def thefunction():
         return "OK"
 
     assert thefunction() == "OK"
+
+
+def test_login_bypass_false():
+    configtext = """
+        [DEFAULT]
+        fits_system_status: development
+        development_bypass_auth: False
+        """
+    fakeuser = None
+    fakectx = FakeCtx(user=fakeuser)
+
+    fsc = get_config(reload=True, configstring=configtext)
+    assert fsc.fits_system_status == 'development'
+    assert fsc.development_bypass_auth is False
+
+    @needs_login(context=fakectx, fsconfig=fsc)
+    def thefunction():
+        return "OK"
+
+    with pytest.raises(Exception) as e:
+        thefunction()
+    assert e.value.args[0] == notloggedin_message
+
+def test_login_bypass_true():
+    configtext = """
+        [DEFAULT]
+        fits_system_status: development
+        development_bypass_auth: True
+        """
+    fsc = get_config(reload=True, configstring=configtext)
+    assert fsc.fits_system_status == "development"
+    assert fsc.development_bypass_auth is True
+
+    fakeuser = None
+    fakectx = FakeCtx(user=fakeuser)
+
+    @needs_login(context=fakectx, fsconfig=fsc)
+    def thefunction():
+        return "OK"
+
+    assert thefunction() == 'OK'
+
+def test_cookie_bypass_true():
+    configtext = """
+        [DEFAULT]
+        fits_system_status: development
+        development_bypass_auth: True
+        """
+    fsc = get_config(reload=True, configstring=configtext)
+    assert fsc.fits_system_status == "development"
+    assert fsc.development_bypass_auth is True
+
+    fakectx = FakeCtx()
+
+    @needs_cookie(context=fakectx, fsconfig=fsc)
+    def thefunction():
+        return "OK"
+
+    assert thefunction() == 'OK'

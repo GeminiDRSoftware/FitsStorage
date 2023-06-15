@@ -992,7 +992,7 @@ def bad_password(candidate):
 
 
 def needs_cookie(magic_cookies=(), content_type='text/html', annotate=None,
-                 context=None):
+                 context=None, fsconfig=None):
     """
     Decorator for functions that need a magic cookie value to be passed with the
     request. The basic use is (notice the decorator parenthesis, they're
@@ -1020,6 +1020,13 @@ def needs_cookie(magic_cookies=(), content_type='text/html', annotate=None,
 
             ctype = 'application/json' if content_type == 'json' \
                 else 'text/html'
+
+            # Is this a development server with authentication bypassed?
+            # fsc is passable as an argument to facilitate testing
+            fsc = fsconfig if fsconfig is not None else get_config()
+            if fsc.fits_system_status == 'development' \
+                    and fsc.development_bypass_auth:
+                return fn(*args, **kw)
 
             # Did we get a valid magic cookie?
             got_magic = False
@@ -1068,7 +1075,8 @@ def cookie_match(value, reference):
 
 
 def needs_login(staff=False, misc_upload=False, superuser=False,
-                content_type='text/html', annotate=None, context=None):
+                content_type='text/html', annotate=None,
+                context=None, fsconfig=None):
     """
     Decorator for functions that need a user to be logged in.
     The basic use is (notice the decorator parenthesis, they're important)::
@@ -1102,6 +1110,13 @@ def needs_login(staff=False, misc_upload=False, superuser=False,
 
             ctype = 'application/json' if content_type == 'json' \
                 else 'text/html'
+
+            # Is this a development server with authentication bypassed?
+            # fsc is passable as an argument to facilitate testing
+            fsc = fsconfig if fsconfig is not None else get_config()
+            if fsc.fits_system_status == 'development' \
+                    and fsc.development_bypass_auth:
+                return fn(*args, **kw)
 
             user = ctx.user
 
