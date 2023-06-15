@@ -2,7 +2,9 @@
 Utilities to deal with ODB data regarding science programs, and also for
 handling fits server notifications based on such.
 """
+from xml.dom.minidom import parseString
 
+from fits_storage.server.orm.notification import Notification
 from fits_storage.gemini_metadata_utils import GeminiProgram
 
 
@@ -17,11 +19,13 @@ def extract_data(node, replace=True):
     node : :class:`xml.dom.Node`
         XML node to work with
     replace : bool
-        True if we need to fix the data, for email addresses where we need to change ; separators to ,
+        True if we need to fix the data, for email addresses where we need to
+        change ; separators to ,
 
     Returns
     -------
-    str : The contents of the data in the first child, with corrections for email lists if requested.
+    str : The contents of the data in the first child, with corrections for
+          email lists if requested.
     """
     ret = node.childNodes[0].data
     if replace:
@@ -32,7 +36,7 @@ def extract_data(node, replace=True):
 
 def extract_element_by_tag_name(root, tag_name, default_val='', replace=True):
     """
-    Get the element under a root by it's tag name and get the data.
+    Get the element under a root by its tag name and get the data.
 
     Parameters
     ----------
@@ -43,7 +47,8 @@ def extract_element_by_tag_name(root, tag_name, default_val='', replace=True):
     default_val : str, optional
         Value to use in case the element is not found
     replace : bool
-        If true, perform corrections as needed.  In particular, this fixed lists of emails to be , delimited
+        If true, perform corrections as needed.  In particular, this fixed
+        lists of emails to be , delimited
     """
     try:
         return extract_data(root.getElementsByTagName(tag_name)[0], replace)
@@ -89,7 +94,7 @@ class Program(object):
         """
         Return
         ------
-        tuple: (<str>, <str>); investigator names, piEmail. By definitiion, the
+        tuple: (<str>, <str>); investigator names, piEmail. By definition, the
             *first* name in the investigator names string is the PI. 
 
         E.g., return
@@ -99,10 +104,12 @@ class Program(object):
         Raises
         ------
         NoInfoError
-            If there were no investigators and this was not an eng, sv or cal program
+            If there were no investigators and this was not an eng, sv or cal
+            program
         """
-        # catch-all setting for eventual return, just in case it hits the edge case with no piEmail
-        # may refactor, but for now not keen to alter the functional logic that was here already
+        # catch-all setting for eventual return, just in case it hits the edge
+        # case with no piEmail. may refactor, but for now not keen to alter the
+        # functional logic that was here already - OO / RC?
         inames = ''
         piEmail = ''
         investigatorNames = []
@@ -110,9 +117,11 @@ class Program(object):
         if all(len(iname.childNodes) == 0 for iname in investigator_sections):
             gp = GeminiProgram(self.get_reference()) # reference is 'program id'
             if not gp.is_eng and not gp.is_sv and not gp.is_cal:
-                raise NoInfoError("There are no investigators listed for {}".format(self.get_reference()))
+                raise NoInfoError("There are no investigators listed for {}"
+                                  .format(self.get_reference()))
             else:
-                # eng and sv programs can have no investigators, setting defaults for returns
+                # eng and sv programs can have no investigators, setting
+                # defaults for returns
                 inames = ''
                 piEmail = ''
 
@@ -132,8 +141,8 @@ class Program(object):
         """
         Return
         ------
-        <list>: [ {}, {} , ... ], a list of dictionaries containing the datalabel
-            and comments associated with that datalabel.
+        <list>: [ {}, {} , ... ], a list of dictionaries containing the
+            datalabel and comments associated with that datalabel.
 
         E.g.,
 
@@ -149,9 +158,11 @@ class Program(object):
             for olog in obs.getElementsByTagName('obsLog'):
                 for dset in olog.getElementsByTagName('dataset'):
                     did = extract_element_by_tag_name(dset, 'id')
-                    comments = [extract_data(record) for record in dset.getElementsByTagName('record')]
+                    comments = [extract_data(record) for record in
+                                dset.getElementsByTagName('record')]
                     comment_string = ", ".join(c for c in comments)
-                    logcomments.append({"label": did, "comment": comment_string})
+                    logcomments.append({"label": did,
+                                        "comment": comment_string})
         return logcomments
 
     def get_ngo_email(self):
@@ -170,10 +181,12 @@ class Program(object):
         return extract_element_by_tag_name(self.root, 'tooStatus')
 
     def get_abstract(self):
-        return extract_element_by_tag_name(self.root, 'abstrakt', default_val="No abstract")
+        return extract_element_by_tag_name(self.root, 'abstrakt',
+                                           default_val="No abstract")
 
     def get_notify(self):
-        return extract_element_by_tag_name(self.root, "notifyPi", default_val="No", replace=False)
+        return extract_element_by_tag_name(self.root, "notifyPi",
+                                           default_val="No", replace=False)
 
 
 def build_odbdata(programs):
@@ -201,7 +214,8 @@ def build_odbdata(programs):
             odb_data['contactScientistEmail'] = program.get_contact()
             odb_data['too'] = program.get_too()
             odb_data['abstrakt'] = program.get_abstract()
-            odb_data['investigatorNames'], odb_data['piEmail'] = program.get_investigators()
+            odb_data['investigatorNames'], odb_data['piEmail'] = \
+                program.get_investigators()
             odb_data['observations'] = program.get_obslog_comms()
             semester_data.append(odb_data)
         except NoInfoError as exception:
@@ -212,12 +226,6 @@ def build_odbdata(programs):
 """
 Notifications utils - add / update notification table entries from ODB XML
 """
-
-from xml.dom.minidom import parseString
-from fits_storage.server.orm.notification import Notification
-from . import programs
-
-from gemini_obs_db.utils.gemini_metadata_utils import GeminiProgram
 
 
 def ingest_odb_xml(session, xml):
@@ -233,12 +241,12 @@ def ingest_odb_xml(session, xml):
 
     Returns
     -------
-    array of str : List of text messages describing the changes that were applied
+    array of str : List of text messages describing the changes applied
     """
     report = []
     nprogs = 0
     dom = parseString(xml)
-    for pe in programs.get_programs(dom):
+    for pe in get_programs(dom):
         nprogs += 1
         try:
             progid = pe.get_reference()
@@ -249,7 +257,8 @@ def ingest_odb_xml(session, xml):
         _, piEmail = pe.get_investigators()
         ngoEmail = pe.get_ngo_email()
         csEmail = pe.get_contact()
-        # Default notifications off. Should be turned on by xml for valid programs.
+        # Default notifications off. Should be turned on by xml for valid
+        # programs.
         notifyPi = pe.get_notify()
 
         # Search for this program ID in notification table
@@ -270,7 +279,8 @@ def ingest_odb_xml(session, xml):
                 session.commit()
             else:
                 if not gp.valid:
-                    report.append("Did not add %s as %s is not a valid program ID" % (label, progid))
+                    report.append("Did not add %s as %s is not a "
+                                  "valid program ID" % (label, progid))
                 if notifyPi != 'Yes':
                     report.append("Did not add %s as notifyPi is No" % label)
         else:
@@ -288,7 +298,7 @@ def ingest_odb_xml(session, xml):
                 n.csemail = csEmail
 
             session.commit()
-            # If notifyPi is No, delete it from the noficiation table
+            # If notifyPi is No, delete it from the notification table
             if notifyPi == 'No':
                 report.append("Deleting %s: notifyPi set to No")
                 session.delete(n)
