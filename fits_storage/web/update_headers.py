@@ -1,7 +1,7 @@
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
 
-from .user import needs_login
+from .user import needs_cookie
 from fits_storage.logger import DummyLogger
 
 from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsRequest
@@ -18,9 +18,9 @@ def error_response(message, id=None):
     return response
 
 
-@needs_login(magic_cookies=[
-    ('gemini_api_authorization', fsc.magic_api_server_cookie)],
-    only_magic=True, content_type='json')
+@needs_cookie(magic_cookies=
+    [('gemini_api_authorization', fsc.magic_api_server_cookie)],
+    content_type='json')
 def update_headers():
     ctx = get_context()
     resp = ctx.resp

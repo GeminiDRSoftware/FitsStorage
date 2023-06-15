@@ -7,7 +7,7 @@ from fits_storage.server.wsgi.returnobj import Return
 
 from fits_storage.server.orm.fileuploadlog import FileUploadLog
 
-from .user import needs_login
+from .user import needs_cookie
 
 from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsRequest
 
@@ -17,9 +17,9 @@ from fits_storage.config import get_config
 fsc = get_config()
 
 
-@needs_login(only_magic=True, magic_cookies=[
-    ('gemini_fits_upload_auth', fsc.upload_auth_cookie)],
-             annotate=FileUploadLog)
+@needs_cookie(magic_cookies=
+    [('gemini_fits_upload_auth', fsc.upload_auth_cookie)],
+              annotate=FileUploadLog)
 def upload_file(filename, processed_cal=False):
     """
     This handles uploading files, including processed calibrations.

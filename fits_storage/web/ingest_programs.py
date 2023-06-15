@@ -5,7 +5,7 @@ from fits_storage.server.orm.obslog_comment import ObslogComment
 
 from fits_storage.server.wsgi.context import get_context
 
-from .user import needs_login
+from .user import needs_cookie
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -19,7 +19,9 @@ def error_response(message, id=None):
 
 
 # TODO: "Only_magic" is a temporary thing. Check if it can stay
-@needs_login(magic_cookies=[('gemini_api_authorization', fsc.magic_api_server_cookie)], only_magic=True, content_type='json')
+@needs_cookie(magic_cookies=
+              [('gemini_api_authorization', fsc.magic_api_server_cookie)],
+              content_type='json')
 def ingest_programs():
     ctx = get_context()
     resp = ctx.resp

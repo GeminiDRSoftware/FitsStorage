@@ -991,13 +991,87 @@ def bad_password(candidate):
     return True
 
 
-def needs_login(magic_cookies=(), only_magic=False, staff=False,
-                misc_upload=False, superuser=False, content_type='html',
-                annotate=None):
+def needs_cookie(magic_cookies=(), content_type='text/html', annotate=None,
+                 context=None):
     """
-    Decorator for functions that need a user to be logged in, or some sort of
-    cookie to be set. The basic use is (notice the decorator parenthesis,
-    they're important)::
+    Decorator for functions that need a magic cookie value to be passed with the
+    request. The basic use is (notice the decorator parenthesis, they're
+    important)::
+
+       @needs_cookie()
+       def decorated_function():
+           ...
+
+    Which rejects access if no valid magic cookie value was supplied with the
+    request.
+
+    If the required cookie value is None, we reject the request irrespective
+    of the supplied value (ie setting the required value to None disables
+    access using that cookie)
+
+    See also: needs_login()
+    """
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(*args, **kw):
+
+            # This is to allow passing in a fake context object for testing
+            ctx = context if context is not None else get_context()
+
+            ctype = 'application/json' if content_type == 'json' \
+                else 'text/html'
+
+            # Did we get a valid magic cookie?
+            got_magic = False
+            for cookiename, magicvalue in magic_cookies:
+                if magicvalue is None:
+                    continue
+                try:
+                    if cookie_match(ctx.cookies[cookiename], magicvalue):
+                        got_magic = True
+                        break
+                except KeyError:
+                    pass
+
+            if not got_magic:
+                raise_error = functools.partial(ctx.resp.client_error,
+                                                code=Return.HTTP_FORBIDDEN,
+                                                content_type=ctype,
+                                                annotate=annotate)
+                raise_error(message="This resource can only be accessed by "
+                                    "providing a valid magic cookie, "
+                                    "which this request did not.")
+
+            return fn(*args, **kw)
+
+        return wrapper
+
+    return decorator
+
+
+# Helper function - return True if the value matches the reference value,
+# or if the reference value is a json list, if the value matches any value
+# in the list - makes value migration easier
+def cookie_match(value, reference):
+    if value == reference:
+        return True
+    try:
+        references = json.loads(reference)
+        if isinstance(references, list):
+            for ref in references:
+                if value == ref:
+                    return True
+    except Exception:
+        # was not a json list
+        pass
+    return False
+
+
+def needs_login(staff=False, misc_upload=False, superuser=False,
+                content_type='text/html', annotate=None, context=None):
+    """
+    Decorator for functions that need a user to be logged in.
+    The basic use is (notice the decorator parenthesis, they're important)::
 
            @needs_login()
            def decorated_function():
@@ -1005,24 +1079,7 @@ def needs_login(magic_cookies=(), only_magic=False, staff=False,
 
     Which rejects access if the user is not logged in. The decorator accepts
     a number of keyword arguments. The most restrictive is the one that
-    applies, except for magic cookies:
-
-    ``magic_cookie=[...]``
-        A list of cookie ``(name, expected_value)`` pairs. If the query provides
-        a pair that matches any of the included ones, even non-logged in users
-        will have granted access. Useful for scripts, etc.
-
-    ``only_magic=(False|True)``
-        This relates to the **EXPECTED** value of a cookie (the one provided
-        in ``magic_cookie``). If any of the expected cookie pairs has an
-        empty (e.g. ``None``) value, then the behaviour of ``needs_login`` is
-        the following:
-
-         * If ``only_magic`` is ``False``, then we revert to the standard
-         auth protocol (we don't check for magic cookies at all)
-
-         * If ``only_magic`` is ``True``, and one of the expected values is
-         None, then we allow access always
+    applies:
 
     ``staff=(False|True)``
          If ``True``, the user must be staff
@@ -1039,67 +1096,31 @@ def needs_login(magic_cookies=(), only_magic=False, staff=False,
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(*args, **kw):
-            ctx = get_context()
 
-            ctype = 'application/json' \
-                if content_type == 'json' else 'text/html'
+            # This is used to inject a fake context for testing
+            ctx = context if context is not None else get_context()
 
-            disabled_cookies = \
-                any(not expected for cookie, expected in magic_cookies)
+            ctype = 'application/json' if content_type == 'json' \
+                else 'text/html'
 
-            got_magic = False
-            if disabled_cookies and only_magic:
-                got_magic = True
-            elif not disabled_cookies:
-                for cookie, content in magic_cookies:
-                    try:
-                        # Helper function will return True if the cookie
-                        # matches the value or, if the value is a json list,
-                        # we can match any value (makes value migration easier)
-                        def cookie_match(ck, check):
-                            if ck == check:
-                                return True
-                            try:
-                                checks = json.loads(check)
-                                if isinstance(checks, list):
-                                    for chk in checks:
-                                        if ck == chk:
-                                            return True
-                            except:
-                                # ok, was not a json list
-                                pass
-                            return False
+            user = ctx.user
 
-                        # if ctx.cookies[cookie] == content:
-                        if content is not None and \
-                                cookie_match(ctx.cookies[cookie], content):
-                            got_magic = True
-                            break
-                    except KeyError:
-                        pass
-
-            if not got_magic:
-                raise_error = functools.partial(ctx.resp.client_error,
-                                                code=Return.HTTP_FORBIDDEN,
-                                                content_type=ctype,
-                                                annotate=annotate)
-                if only_magic:
-                    raise_error(message="Could not find a proper magic "
-                                        "cookie for a cookie-only service")
-                user = ctx.user
-                if not user:
-                    raise_error(message="You need to be logged in to access "
-                                        "this resource")
-                if superuser is True and not user.superuser:
-                    raise_error(message="You need to be logged in as a "
-                                        "superuser to access this resource")
-                if staff is True and not user.gemini_staff:
-                    raise_error(message="You need to be logged in as Gemini "
-                                        "Staff member to access this resource")
-                if misc_upload is True and (not user.misc_upload and not user.superuser):
-                    raise_error(message="You need to be logged in with misc "
-                                        "upload permission or as a supersuser "
-                                        "to access this service")
+            raise_error = functools.partial(ctx.resp.client_error,
+                                            code=Return.HTTP_FORBIDDEN,
+                                            content_type=ctype,
+                                            annotate=annotate)
+            if not user:
+                raise_error(message="You need to be logged in to access "
+                                    "this resource")
+            if superuser is True and not user.superuser:
+                raise_error(message="You need to be logged in as a "
+                                    "superuser to access this resource")
+            if staff is True and not user.gemini_staff:
+                raise_error(message="You need to be logged in as Gemini "
+                                    "Staff member to access this resource")
+            if misc_upload is True and not user.misc_upload:
+                raise_error(message="You need to be logged in with misc "
+                                    "upload permission to access this resource")
             return fn(*args, **kw)
 
         return wrapper
@@ -1165,8 +1186,7 @@ def orcid(code):
                     session.commit()
 
             cookie = user.log_in()
-            exp = datetime.datetime.utcnow() + \
-                  datetime.timedelta(seconds=31536000)
+            exp = datetime.datetime.utcnow() + datetime.timedelta(days=365)
             ctx.cookies.set('gemini_archive_session', cookie,
                             expires=exp, path="/")
             ctx.resp.redirect_to('/searchform')
