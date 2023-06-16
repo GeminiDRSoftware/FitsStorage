@@ -1,38 +1,20 @@
 """
 This module contains the gmoscal html generator function.
 """
-import sqlalchemy
-from sqlalchemy.sql.expression import cast
-from sqlalchemy import func, join, desc
-from gemini_obs_db.orm.gmos import Gmos
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
-
-from ..utils.web import get_context, Return, with_content_type
-
-from .selection import sayselection, queryselection
-from .calibrations import interval_hours
-from gemini_calmgr.cal import get_cal_object
-from ..fits_storage_config import using_sqlite, fits_system_status, das_calproc_path
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
 
 from . import templating
 
-from math import fabs
-
-import os
-import copy
 import datetime
 from datetime import timedelta
-import time
-import re
-import dateutil.parser
+
 import json
-from collections import defaultdict, namedtuple
 
+from fits_storage.config import get_config
 
-# Set this True to enable cache.  Adam Smith says we want the results to be live after all
+# Set this True to enable cache.  Adam Smith says we want the results to be
+# live after all
 _cache_results = False
 _cached_twilight_results = None
 _cached_twilight_date = None
@@ -41,19 +23,23 @@ _cached_twilight_date = None
 @templating.templated("gmoscaltwilightdetails.html")
 def gmoscaltwilightdetails():
     """
-    This generates a GMOS imaging twilight flat, bias and nod and shuffle darks report.
-    If no date or daterange is given, tries to find last processing date
+    This generates a GMOS imaging twilight flat, bias and nod and shuffle
+    darks report. If no date or daterange is given, tries to find last
+    processing date
     """
+    fsc = get_config()
 
-    # -- check our cached results
-    # if we ever come up with a single query for the below, may consider materialized view (also after we upgrade
-    # all servers to CentOS 8)
+    # -- check our cached results if we ever come up with a single query for
+    # the below, may consider materialized view (also after we upgrade all
+    # servers to CentOS 8)
     global _cached_twilight_date
     global _cached_twilight_results
 
     fromdt = datetime.date.today() - timedelta(days=180)
 
-    if _cached_twilight_results is not None and _cached_twilight_date is not None and _cached_twilight_date == fromdt:
+    if _cached_twilight_results is not None \
+            and _cached_twilight_date is not None \
+            and _cached_twilight_date == fromdt:
         return _cached_twilight_results
 
     _cached_twilight_date = fromdt
@@ -61,10 +47,10 @@ def gmoscaltwilightdetails():
     # -- end cache check
 
     result = dict(
-        is_development = fits_system_status == 'development',
+        is_development = fsc.fits_system_status == 'development',
         )
 
-    if using_sqlite:
+    if fsc.using_sqlite:
         result['using_sqlite'] = True
         return Return.HTTP_NOT_IMPLEMENTED, result
 
@@ -95,8 +81,8 @@ def gmoscaltwilightdetails():
         binning = row["binning"]
 
         key = "%s-%s" % (filter, binning)
-        counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": binning,
-                       "dt": dt.strftime('%Y-%m-%d'),
+        counts[key] = {"science": 0, "twilights": 0, "filter": filter,
+                       "bin": binning, "dt": dt.strftime('%Y-%m-%d'),
                        "filename": "none"}
 
         if dt != fromdt:
@@ -217,14 +203,16 @@ def gmoscaltwilightfiles():
     """
     This generates a GMOS imaging twilight flat, bias and nod and shuffle darks file list.
     """
+    fsc = get_config()
+
     fromdt = datetime.date.today() - timedelta(days=180)
 
     result = dict(
         file_list = list(),
-        is_development = fits_system_status == 'development',
+        is_development = fsc.fits_system_status == 'development',
     )
 
-    if using_sqlite:
+    if fsc.using_sqlite:
         result['using_sqlite'] = True
         return Return.HTTP_NOT_IMPLEMENTED, result
 

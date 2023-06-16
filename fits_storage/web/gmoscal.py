@@ -1,31 +1,32 @@
 """
 This module contains the gmoscal html generator function.
 """
+from . import templating
+from math import fabs
+import os
+import datetime
+import time
+from collections import defaultdict, namedtuple
 import sqlalchemy
 from sqlalchemy.sql.expression import cast
 from sqlalchemy import func, join, desc
-from gemini_obs_db.orm.gmos import Gmos
-from gemini_obs_db.orm.header import Header
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
 
-from ..utils.web import get_context, Return
+from fits_storage.cal.orm.gmos import Gmos
+from fits_storage.core.orm.header import Header
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.file import File
+
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
 
 from .selection import sayselection, queryselection
 from .calibrations import interval_hours
-from gemini_calmgr.cal import get_cal_object
-from ..fits_storage_config import using_sqlite, fits_system_status, das_calproc_path
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
+from fits_storage.cal.calibration import get_cal_object
+from fits_storage.gemini_metadata_utils import gemini_time_period_from_range, \
+    ONEDAY_OFFSET
 
-from . import templating
+from fits_storage.config import get_config
 
-from math import fabs
-
-import os
-import datetime
-from datetime import timedelta
-import time
-from collections import defaultdict, namedtuple
 
 @templating.templated("gmoscal.html")
 def gmoscal_html(selection):
@@ -51,29 +52,34 @@ def gmoscal_json(selection):
 
     get_context().resp.send_json([result], indent=4)
 
+
 def gmoscal(selection):
     """
-    This generates a GMOS imaging twilight flat, bias and nod and shuffle darks report.
-    If no date or daterange is given, tries to find last processing date
+    This generates a GMOS imaging twilight flat, bias and nod and shuffle
+    darks report. If no date or daterange is given, tries to find last
+    processing date
     """
+    fsc = get_config()
 
     result = dict(
-        said_selection = sayselection(selection),
-        is_development = fits_system_status == 'development',
+        said_selection=sayselection(selection),
+        is_development=fsc.fits_system_status == 'development',
         )
 
-    if using_sqlite:
+    if fsc.using_sqlite:
         result['using_sqlite'] = True
         return Return.HTTP_NOT_IMPLEMENTED, result
 
     session = get_context().session
 
     # Was a date provided by user?
-    datenotprovided = ('date' not in selection) and ('daterange' not in selection)
-    # If no date or daterange, look on endor or josie to get the last processing date
+    datenotprovided = ('date' not in selection) and \
+                      ('daterange' not in selection)
+    # If no date or daterange, look on endor or josie to get the last
+    # processing date
 
     def autodetect_range(checkfile, selection):
-        base_dir = das_calproc_path
+        base_dir = fsc.das_calproc_path
         enddate = datetime.datetime.now().date()
         date = enddate
         found = -1000
@@ -92,7 +98,8 @@ def gmoscal(selection):
             if startdate:
                 # Start the day after the last reduction
                 startdate += ONEDAY_OFFSET
-                ret = "%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
+                ret = "%s-%s" % (startdate.strftime("%Y%m%d"),
+                                 enddate.strftime("%Y%m%d"))
                 selection['daterange'] = ret
 
         return ret
@@ -102,15 +109,17 @@ def gmoscal(selection):
         if res:
             result['flat_autodetected_range'] = res
 
-    # We do this twice, first for the science data, then for the twilight flat data
-    # These are differentiated by being science or dayCal
+    # We do this twice, first for the science data, then for the twilight
+    # flat data These are differentiated by being science or dayCal
 
     twilight = {}
-    # Put the results into dictionaries, which we can then combine into one html table or json items
+    # Put the results into dictionaries, which we can then combine into one
+    # html table or json items
     for observation_class in ('science', 'dayCal'):
         # The basic query for this
         query = (
-            session.query(func.count(1), Header.filter_name, Header.detector_binning)
+            session.query(func.count(1), Header.filter_name,
+                          Header.detector_binning)
                 .select_from(join(join(DiskFile, File), Header))
                 .filter(DiskFile.canonical == True)
             )
@@ -132,13 +141,15 @@ def gmoscal(selection):
         query = queryselection(query, selection)
 
         # Knock out ENG programs
-        query = query.filter(Header.engineering == False).filter(Header.science_verification == False)
+        query = query.filter(Header.engineering == False).\
+            filter(Header.science_verification == False)
 
         # Group by clause
-        query = query.group_by(Header.filter_name, Header.detector_binning).order_by(Header.detector_binning, Header.filter_name)
+        query = query.group_by(Header.filter_name, Header.detector_binning)\
+            .order_by(Header.detector_binning, Header.filter_name)
 
         # Populate the dictionary
-        # as {'i-2x2':[10, 'i', '2x2'], ...}    ie [number, filter_name, binning]
+        # as {'i-2x2':[10, 'i', '2x2'], ...}  ie [number, filter_name, binning]
 
         for cnt, filt, binn in query:
             # row[0] = count, [1] = filter, [2] = binning
@@ -162,26 +173,33 @@ def gmoscal(selection):
         if res:
             result['bias_autodetected_range'] = res
 
-    tzoffset = timedelta(seconds=(time.altzone if time.daylight else time.timezone))
+    tzoffset = datetime.timedelta(seconds=(time.altzone if time.daylight else
+                                           time.timezone))
 
-    offset = sqlalchemy.sql.expression.literal(tzoffset - ONEDAY_OFFSET, sqlalchemy.types.Interval)
+    offset = sqlalchemy.sql.expression.literal(tzoffset - ONEDAY_OFFSET,
+                                               sqlalchemy.types.Interval)
     query = (
-        session.query(func.count(1), cast((Header.ut_datetime + offset), sqlalchemy.types.DATE).label('utdate'), Header.detector_binning, Header.detector_roi_setting)
-            .select_from(join(join(DiskFile, File), Header))
-            .filter(DiskFile.canonical == True)
-        )
+        session.query(
+            func.count(1),
+            cast((Header.ut_datetime + offset),
+                 sqlalchemy.types.DATE).label('utdate'),
+            Header.detector_binning, Header.detector_roi_setting)
+        .select_from(join(join(DiskFile, File), Header))
+        .filter(DiskFile.canonical == True)
+    )
 
-    # Fudge and add the selection criteria
-    # Keep the same selection from the flats above, but drop the spectroscopy specifier and add some others
+    # Fudge and add the selection criteria Keep the same selection from the
+    # flats above, but drop the spectroscopy specifier and add some others
     selection.pop('spectroscopy')
     selection['observation_type'] = 'BIAS'
     selection['inst'] = 'GMOS'
     selection['qa_state'] = 'NotFail'
-    query = (
-        queryselection(query, selection)
-            .group_by('utdate', Header.detector_binning, Header.detector_roi_setting)
-            .order_by('utdate', Header.detector_binning, Header.detector_roi_setting)
-        )
+    query = (queryselection(query, selection)
+             .group_by('utdate', Header.detector_binning,
+                       Header.detector_roi_setting)
+             .order_by('utdate', Header.detector_binning,
+                       Header.detector_roi_setting)
+             )
 
     # OK, re-organise results into tally table dict
     # dict is: {utdate: {binning: {roi: Number}}
@@ -197,13 +215,15 @@ def gmoscal(selection):
 
         total_bias['%s-%s' % (binning, roi)] += num
 
-    # OK, find if there were dates for which there were no biases...
-    # Can only do this if we got a daterange selection, otherwise it's broken if there's none on the first or last day
-    # utdates is a reverse sorted list for which there were biases.
+    # OK, find if there were dates for which there were no biases... Can only
+    # do this if we got a daterange selection, otherwise it's broken if
+    # there's none on the first or last day utdates is a reverse sorted list
+    # for which there were biases.
     nobiases = []
     if 'daterange' in selection:
         # Parse the date to start and end datetime objects
-        date, enddate = gemini_time_period_from_range(selection['daterange'], as_date=True)
+        date, enddate = gemini_time_period_from_range(selection['daterange'],
+                                                      as_date=True)
 
         while date <= enddate:
             if date not in bias:
@@ -217,7 +237,8 @@ def gmoscal(selection):
     # The basic query for this
     def nod_and_shuffle(selection):
         session = get_context().session
-        query = session.query(Header).select_from(join(join(Header, DiskFile), Gmos))
+        query = session.query(Header).\
+            select_from(join(join(Header, DiskFile), Gmos))
 
         # Fudge and add the selection criteria
         selection = {}
@@ -233,18 +254,21 @@ def gmoscal(selection):
         query = query.filter(Gmos.nodandshuffle == True)
 
         # Knock out ENG programs and SV programs
-        query = query.filter(Header.engineering == False).filter(Header.science_verification == False)
+        query = query.filter(Header.engineering == False)\
+            .filter(Header.science_verification == False)
 
         # Limit to things within 1 year
         now = datetime.datetime.now()
-        year = timedelta(days=366)
+        year = datetime.timedelta(days=366)
         then = now - year
         query = query.filter(Header.ut_datetime > then)
 
-        query = query.order_by(desc(Header.observation_id), desc(Header.ut_datetime))
+        query = query.order_by(desc(Header.observation_id),
+                               desc(Header.ut_datetime))
 
-        # OK, we're going to build the results table as a list of dictionaries first, so that we can group the obsIDs together
-        # when we display the HTML.
+        # OK, we're going to build the results table as a list of
+        # dictionaries first, so that we can group the obsIDs together when
+        # we display the HTML.
 
         NAndD = namedtuple("NAndD", "observation_id count young age")
 
@@ -266,7 +290,8 @@ def gmoscal(selection):
                 if fabs(age) > fabs(oldest):
                     oldest = age
 
-            entry = NAndD(l.observation_id, count, young, int(round(oldest/720, 1)))
+            entry = NAndD(l.observation_id, count, young,
+                          int(round(oldest/720, 1)))
             if entry not in done:
                 done.add(entry)
                 yield entry

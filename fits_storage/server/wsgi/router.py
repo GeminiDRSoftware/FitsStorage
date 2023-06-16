@@ -36,8 +36,6 @@ from fits_storage.web.userprogram import my_programs
 from fits_storage.web.tapestuff import tape, tapewrite, tapefile, \
     jsontapefilelist, taperead, fileontape
 
-from fits_storage.web.calmgr import xmlcalmgr, jsoncalmgr
-
 from fits_storage.web.upload_file import upload_file
 
 from fits_storage.web.update_headers import update_headers
@@ -48,7 +46,10 @@ from fits_storage.web.notification import notification, import_odb_notifications
 
 from fits_storage.web.calmgr import xmlcalmgr, jsoncalmgr
 from fits_storage.web.calibrations import calibrations
-#from fits_storage.web.gmoscal import gmoscal_html
+from fits_storage.web.gmoscal import gmoscal_html, gmoscal_json
+from fits_storage.web.gmoscaltwilightdetails import gmoscaltwilightdetails, \
+    gmoscaltwilightfiles
+from fits_storage.web.gmoscalfilelist import gmoscalbiasfiles
 
 from .routing import SequenceConverter, SelectionConverter
 
@@ -192,10 +193,10 @@ url_map = Map([
     Rule('/calmgr/<selection:selection>', xmlcalmgr),               # The calmgr handler, returning xml (legacy url)
     Rule('/xmlcalmgr/<selection:selection>', xmlcalmgr),            # The calmgr handler, returning xml
     Rule('/jsoncalmgr/<selection:selection>', jsoncalmgr),          # The calmgr handler, returning json
-    #Rule('/gmoscal/<selection:selection>', gmoscal_html),           # The GMOS twilight flat and bias report
-    #Rule('/gmoscaltwilightdetails', gmoscaltwilightdetails),        # The GMOS twilight flat and bias report
-    #Rule('/gmoscaltwilightfiles', gmoscaltwilightfiles),            # The GMOS twilight flat list of files
-    #Rule('/gmoscalbiasfiles/<selection:selection>', gmoscalbiasfiles),  # The GMOS bias list of files
+    Rule('/gmoscal/<selection:selection>', gmoscal_html),           # The GMOS twilight flat and bias report
+    Rule('/gmoscaltwilightdetails', gmoscaltwilightdetails),        # The GMOS twilight flat and bias report
+    Rule('/gmoscaltwilightfiles', gmoscaltwilightfiles),            # The GMOS twilight flat list of files
+    Rule('/gmoscalbiasfiles/<selection:selection>', gmoscalbiasfiles),  # The GMOS bias list of files
 
     #
     # # Group of URIs dealing with program/publication
@@ -213,7 +214,7 @@ url_map = Map([
     # # The GMOS twilight flat and bias report (JSON result)
     # # The function here is the same as for 'gmoscal'. We're using partial for
     # # the same reason as with obslogs (see above)
-    # Rule('/gmoscaljson/<selection:selection>', gmoscal_json),
+    Rule('/gmoscaljson/<selection:selection>', gmoscal_json),
     #
 
     # # ORCID login handling/account setup
