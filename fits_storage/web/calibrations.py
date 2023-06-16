@@ -48,7 +48,6 @@ class WrappedCals(object):
 
 class WrapperObject(object):
     def __init__(self, header, counter, caloption, caltype):
-#        self.s         = session
         self.header    = header
         self._counter  = counter
         self._copt     = caloption
@@ -211,47 +210,14 @@ class WrapperObject(object):
 
         return wrap
 
-# NOTE: As of September 2015 (when the code was refactored for templates), the following comment about not
-#       showing processed calibrations still applies
-#
-#            # For now (March 2013) we don't want the SOS calibrations page to whine about processed cals at all.
-#            #if('processed_bias' in c.applicable and (caltype=='all' or caltype=='processed_bias')):
-#                #requires=True
-#                #processed_bias = c.bias(processed=True)
-#                #if(processed_bias):
-#                    #html += "<H4>PROCESSED_BIAS: %s - %s</H4>" % (processed_bias.diskfile.file.name, processed_bias.data_label)
-#                #else:
-#                    #html += '<H3><FONT COLOR="Red">NO PROCESSED_BIAS FOUND!</FONT></H3>'
-#                    #warning = True
-#                    #missing = True
-#
-#            #if('processed_flat' in c.applicable and (caltype=='all' or caltype=='processed_flat')):
-#                #requires=True
-#                #processed_flat = c.flat(processed=True)
-#                #if(processed_flat):
-#                    #html += "<H4>PROCESSED_FLAT: %s - %s</H4>" % (processed_flat.diskfile.file.name, processed_flat.data_label)
-#                #else:
-#                    #html += '<H3><FONT COLOR="Red">NO PROCESSED_FLAT FOUND!</FONT></H3>'
-#                    #warning = True
-#                    #missing = True
-#
-#            #if('processed_fringe' in c.applicable and (caltype=='all' or caltype=='processed_fringe')):
-#                #requires=True
-#                #processed_fringe = c.processed_fringe()
-#                #if(processed_fringe):
-#                    #html += "<H4>PROCESSED_FRINGE: %s - %s</H4>" % (
-#                                #processed_fringe.diskfile.file.name, processed_fringe.data_label)
-#                #else:
-#                    #html += '<H3><FONT COLOR="Red">NO PROCESSED_FRINGE FOUND!</FONT></H3>'
-#                    #warning = True
-#                    #missing = True
 
 @templating.templated("calibrations.html", with_generator=True)
 def calibrations(selection):
     """
-    This is the calibrations generator. It implements a human readable calibration association server.
-    This is mostly used by the Gemini SOSs to detect missing calibrations, and it defaults to the 
-    SOS required calibrations policy.
+    This is the calibrations generator. It implements a human-readable
+    calibration association server. This is mostly used by the Gemini SOSs to
+    detect missing calibrations, and it defaults to the SOS required
+    calibrations policy.
     """
     fsc = get_config()
     counter = {
@@ -260,8 +226,8 @@ def calibrations(selection):
     }
 
     template_args = dict(
-        fits_server    = fsc.fits_servername,
-        secure         = fsc.use_as_archive,
+        fits_server    = fsc.fits_server_name,
+        secure         = fsc.is_archive,
         say_selection  = sayselection(selection),
         is_development = fsc.fits_system_status == "development",
         counter        = counter,

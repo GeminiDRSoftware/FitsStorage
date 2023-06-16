@@ -46,6 +46,10 @@ from fits_storage.web.qastuff import qareport, qametrics, qaforgui
 
 from fits_storage.web.notification import notification, import_odb_notifications
 
+from fits_storage.web.calmgr import xmlcalmgr, jsoncalmgr
+from fits_storage.web.calibrations import calibrations
+#from fits_storage.web.gmoscal import gmoscal_html
+
 from .routing import SequenceConverter, SelectionConverter
 
 from fits_storage.config import get_config
@@ -183,15 +187,15 @@ url_map = Map([
     #
 
     #
-    # Rule('/calibrations/<selection:selection>', calibrations),      # The calibrations handler
+    Rule('/calibrations/<selection:selection>', calibrations),      # The calibrations handler
 
     Rule('/calmgr/<selection:selection>', xmlcalmgr),               # The calmgr handler, returning xml (legacy url)
     Rule('/xmlcalmgr/<selection:selection>', xmlcalmgr),            # The calmgr handler, returning xml
     Rule('/jsoncalmgr/<selection:selection>', jsoncalmgr),          # The calmgr handler, returning json
-    # Rule('/gmoscal/<selection:selection>', gmoscal_html),           # The GMOS twilight flat and bias report
-    # Rule('/gmoscaltwilightdetails', gmoscaltwilightdetails),        # The GMOS twilight flat and bias report
-    # Rule('/gmoscaltwilightfiles', gmoscaltwilightfiles),            # The GMOS twilight flat list of files
-    # Rule('/gmoscalbiasfiles/<selection:selection>', gmoscalbiasfiles),  # The GMOS bias list of files
+    #Rule('/gmoscal/<selection:selection>', gmoscal_html),           # The GMOS twilight flat and bias report
+    #Rule('/gmoscaltwilightdetails', gmoscaltwilightdetails),        # The GMOS twilight flat and bias report
+    #Rule('/gmoscaltwilightfiles', gmoscaltwilightfiles),            # The GMOS twilight flat list of files
+    #Rule('/gmoscalbiasfiles/<selection:selection>', gmoscalbiasfiles),  # The GMOS bias list of files
 
     #
     # # Group of URIs dealing with program/publication
