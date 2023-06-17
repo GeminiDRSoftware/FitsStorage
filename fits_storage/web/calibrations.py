@@ -5,7 +5,8 @@ import datetime
 from sqlalchemy import join, desc
 
 from fits_storage.gemini_metadata_utils import gemini_date
-from .selection import sayselection, queryselection, openquery, selection_to_URL
+from fits_storage.db.selection import sayselection, queryselection, openquery, \
+    selection_to_URL
 from fits_storage.cal.calibration import get_cal_object
 
 from fits_storage.core.orm.header import Header

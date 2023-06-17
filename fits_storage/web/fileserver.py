@@ -23,8 +23,8 @@ from fits_storage.server.wsgi.returnobj import Return
 
 from fits_storage.server.access_control_utils import icanhave
 
-from .selection import openquery, selection_to_URL
-from .summary import list_headers
+from fits_storage.db.selection import openquery, selection_to_URL
+from fits_storage.db.list_headers import list_headers
 
 from fits_storage.config import get_config
 fsc = get_config()

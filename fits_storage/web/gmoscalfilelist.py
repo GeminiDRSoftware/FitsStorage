@@ -18,7 +18,7 @@ from fits_storage.core.orm.file import File
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
 
-from .selection import queryselection
+from fits_storage.db.selection import queryselection
 from fits_storage.gemini_metadata_utils import ONEDAY_OFFSET
 
 from fits_storage.config import get_config

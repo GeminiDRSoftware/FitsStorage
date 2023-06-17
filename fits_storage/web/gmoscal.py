@@ -19,7 +19,7 @@ from fits_storage.core.orm.file import File
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
 
-from .selection import sayselection, queryselection
+from fits_storage.db.selection import sayselection, queryselection
 from .calibrations import interval_hours
 from fits_storage.cal.calibration import get_cal_object
 from fits_storage.gemini_metadata_utils import gemini_time_period_from_range, \

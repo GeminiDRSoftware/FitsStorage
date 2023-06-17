@@ -4,7 +4,7 @@ from fits_storage.server.wsgi.returnobj import Return
 
 from urllib.parse import parse_qs
 
-from fits_storage.web.selection import getselection
+from fits_storage.db.selection import getselection
 
 # This rule regular expressions is copied from werkzeug's, as we intend to make it
 # syntax-compatible

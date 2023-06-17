@@ -16,7 +16,7 @@ from . import templating
 from fits_storage.gemini_metadata_utils import GeminiDataLabel, \
     GeminiObservation, gemini_date
 
-from .selection import getselection, selection_to_URL
+from fits_storage.db.selection import getselection, selection_to_URL
 from .summary import summary_body
 from .summary_generator import selection_to_column_names, selection_to_form_indices
 from .summary_generator import formdata_to_compressed, search_col_mapping

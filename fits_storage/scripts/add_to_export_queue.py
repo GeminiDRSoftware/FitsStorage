@@ -5,8 +5,8 @@ import datetime
 
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.queues.queue.exportqueue import ExportQueue
-from fits_storage.web.list_headers import list_headers
-from fits_storage.web.selection import getselection, openquery
+from fits_storage.db.list_headers import list_headers
+from fits_storage.db.selection import getselection, openquery
 from fits_storage.db import session_scope
 
 """

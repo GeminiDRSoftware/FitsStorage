@@ -6,7 +6,7 @@ summaries.
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.file import File
-from .selection import sayselection, queryselection
+from fits_storage.db.selection import sayselection, queryselection
 from . import templating
 from sqlalchemy import join, not_, func
 import datetime

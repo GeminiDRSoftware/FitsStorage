@@ -1,7 +1,7 @@
 """
 This module contains the programs web summary code.
 """
-from .list_headers import list_programs
+from fits_storage.db.list_headers import list_programs
 
 from . import templating
 

@@ -22,7 +22,7 @@ from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
 
-from .selection import queryselection, openquery
+from fits_storage.db.selection import queryselection, openquery
 
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
