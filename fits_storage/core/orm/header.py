@@ -2,6 +2,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy import Numeric, Boolean, Date
 from sqlalchemy import Time, BigInteger, Enum
+from sqlalchemy import Index, desc, nullslast
 
 from sqlalchemy.orm import relation
 from . import Base
@@ -113,6 +114,9 @@ class Header(Base):
     phot_standard = Column(Boolean)
     proprietary_coordinates = Column(Boolean)
     pre_image = Column(Boolean)
+
+    __table__args__ = (Index('ix_header_ut_datetime_desc_nullslast',
+                             nullslast(desc(ut_datetime))))
 
     def __init__(self, diskfile, logger=DummyLogger()):
         self.diskfile_id = diskfile.id

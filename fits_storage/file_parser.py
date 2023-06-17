@@ -575,10 +575,11 @@ class AstroDataFileParser(FileParser):
 
     def ut_datetime_secs(self) -> Union[int, None]:
         ut_datetime = self.ut_datetime()
-        if ut_datetime:
+        if ut_datetime is not None:
             delta = ut_datetime - UT_DATETIME_SECS_EPOCH
             return int(delta.total_seconds())
         else:
+            # ut_datetime is None, make ut_datetime_secs None too.
             return None
 
     def wavefront_sensor(self):
