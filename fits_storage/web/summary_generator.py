@@ -336,7 +336,7 @@ class SummaryGenerator(object):
         for colkey, col in ((x, self.columns[x]) for x in self.wanted):
             yield ColWrapper(self, colkey, col)
 
-    def table_row(self, header, diskfile, file, comment=None, preview=None):
+    def table_row(self, header, comment=None, preview=None):
         """
         Returns a row object for c for columns as configured, pulling data from the
         header object given.
@@ -390,8 +390,8 @@ class SummaryGenerator(object):
                 #if diskfile.previews:
                 #    preview = diskfile.previews[0]
                 value = getattr(self, col.summary_func)(header=header,
-                                                        diskfile=diskfile,
-                                                        file=file,
+                                                        diskfile=header.diskfile,
+                                                        file=header.diskfile.file,
                                                         preview=preview,
                                                         comment=comment)
                 if colkey == 'download' and 'downloadable' in value:

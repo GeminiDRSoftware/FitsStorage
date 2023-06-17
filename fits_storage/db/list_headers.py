@@ -11,15 +11,16 @@ from fits_storage.server.orm.program import Program
 from fits_storage.server.orm.obslog import Obslog
 from fits_storage.server.orm.obslog_comment import ObslogComment
 from .selection import queryselection, openquery
-from fits_storage.gemini_metadata_utils import gemini_date, gemini_time_period_from_range
+from fits_storage.gemini_metadata_utils import gemini_date, \
+    gemini_time_period_from_range
 from sqlalchemy import asc, desc, func, nullslast
 
 from fits_storage.server.wsgi.context import get_context
 
 from fits_storage.config import get_config
 
-def list_headers(selection, orderby, full_query=False, add_previews=False,
-                 session=None, unlimit=False):
+
+def list_headers(selection, orderby, session=None, unlimit=False):
     """
     This function queries the database for a list of header table
     entries that satisfy the selection criteria.
@@ -31,25 +32,12 @@ def list_headers(selection, orderby, full_query=False, add_previews=False,
     """
 
     if session is None:
-      session = get_context().session
+        session = get_context().session
 
     # The basic query...
-    if full_query:
-        if add_previews:
-            query = session.query(Header, DiskFile, File, ObslogComment)\
-                .join(DiskFile, Header.diskfile_id == DiskFile.id)\
-                .join(File, DiskFile.file_id == File.id)\
-                .filter(Header.diskfile_id == DiskFile.id)\
-                .outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label)\
-                .outerjoin(Preview, Preview.diskfile_id == DiskFile.id)
-        else:
-            query = session.query(Header, DiskFile, File, ObslogComment)\
-                .join(DiskFile, Header.diskfile_id == DiskFile.id)\
-                .join(File, DiskFile.file_id == File.id)\
-                .filter(Header.diskfile_id == DiskFile.id)\
-                .outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label)
-    else:
-        query = session.query(Header).join(DiskFile).join(File)
+    query = session.query(Header).join(DiskFile).join(File)
+
+    # Add the selection...
     query = queryselection(query, selection)
 
 
@@ -88,12 +76,17 @@ def list_headers(selection, orderby, full_query=False, add_previews=False,
 
     # Default sorting by ascending date if closed query, desc date if open query
     if is_openquery:
-        # TODO - this comment about custom indexes scares me.
-        # This makes the query extremely slow on ops - I think we have the custom index needed for 2022-1
-        order_criteria.append(nullslast(desc(Header.ut_datetime)))
+        # On postgres, nulls default last on asc, and ordering by
+        # nullslast(desc()) is very slow, *unless* there is an index
+        # specifically to support it. There's a __table_args__ entry in the
+        # Header ORM definition that adds this specific index.
+        # We want NULLs to be last in *both* cases here.
+
         # order_criteria.append(desc(Header.ut_datetime))
+        order_criteria.append(nullslast(desc(Header.ut_datetime)))
     else:
-        order_criteria.append(asc(Header.ut_datetime))
+        # order_criteria.append(asc(Header.ut_datetime))
+        order_criteria.append(nullslast(asc(Header.ut_datetime)))
 
     query = query.order_by(*order_criteria)
 

@@ -21,8 +21,7 @@ mapping = {
     }
 
 
-def associate_cals(session, headers, caltype="all", recurse_level=0,
-                   full_query=False):
+def associate_cals(session, headers, caltype="all", recurse_level=0):
     """
     This function takes a list of headers from a search result and
     generates a list of the associated calibration headers
@@ -44,25 +43,18 @@ def associate_cals(session, headers, caltype="all", recurse_level=0,
     recurse_level : int, defaults to 0
         The current depth of the query, should initally be passed in as 0.
 
-    full_query : bool, defaults to False
-        If True, query pulls in DiskFile and File records as well
-
     Returns
     -------
 
     list of :class:`~gemini_obs_db.orm.header.Header` calibration records or,
-    if `full_query`, list of tuples of
-    :class:`~gemini_obs_db.orm.header.Header`,
-    :class:`~gemini_obs_db.orm.diskfile.DiskFile`,
-    :class:`~gemini_obs_db.orm.file.File`
+
     """
 
     calheaders = []
 
     for header in headers:
         # Get a calibration object on this science header
-        calobj = get_cal_object(session, None, header=header,
-                                full_query=full_query)
+        calobj = get_cal_object(session, None, header=header)
 
         # Go through the calibration types. For now we just look for both
         # raw and processed versions of each.
@@ -77,27 +69,23 @@ def associate_cals(session, headers, caltype="all", recurse_level=0,
     # Now loop through the calheaders list and remove duplicates.
     ids = set()
     shortlist = []
-    for result in calheaders:
-        if full_query:
-            calheader, df, fl = result
-        else:
-            calheader = result
+    for calheader in calheaders:
         if calheader.id not in ids:
             ids.add(calheader.id)
-            # if recurse_level == 0:
-            #     calheader.is_primary_cal = True
-            # else:
-            #     calheader.is_primary_cal = False
-            shortlist.append(result)
+            shortlist.append(calheader)
 
     # Now we have to recurse to find the calibrations for the calibrations...
     # We only do this for caltype all. Keep digging deeper until we don't
     # find any extras, or we hit too many recurse levels
 
     if caltype == 'all' and recurse_level < 1 and len(shortlist) > 0:
-        down_list = (shortlist if not full_query else (x[0] for x in shortlist))
-        for cal in associate_cals(session, down_list, caltype=caltype, recurse_level=recurse_level + 1, full_query=full_query):
-            if (cal.id if not full_query else cal[0].id) not in ids:
+        down_list = shortlist
+        for cal in associate_cals(session, down_list, caltype=caltype, recurse_level=recurse_level + 1):
+            if cal.id not in ids:
+                if recurse_level == 0:
+                    cal.is_primary_cal = True
+                else:
+                    cal.is_primary_cal = False
                 shortlist.append(cal)
 
     def sort_cal_fn(a):
@@ -114,7 +102,7 @@ def associate_cals(session, headers, caltype="all", recurse_level=0,
 
 
 # TODO does this get called any more?!
-def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0, full_query=False):
+def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
     """
     This function takes a list of :class:`fits_storage.orm.header.Header`
     from a search result and generates a list of the associated calibration
@@ -140,17 +128,10 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0, 
     recurse_level : int, defaults to 0
         The current depth of the query, should initally be passed in as 0.
 
-    full_query : bool, defaults to False
-        If True, query pulls in DiskFile and File records as well
-
     Returns
     -------
 
-    list of :class:`~gemini_obs_db.orm.header.Header` calibration records or,
-    if ``full_query``, list of tuples of
-    :class:`~gemini_obs_db.orm.header.Header`,
-    :class:`~gemini_obs_db.orm.diskfile.DiskFile`,
-    :class:`~gemini_obs_db.orm.file.File`
+    list of :class:`~gemini_obs_db.orm.header.Header` calibration records
 
     """
     # We can do this a bit more efficiently than the non-cache version,
@@ -162,15 +143,7 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0, 
     for header in headers:
         obs_hids.append(header.id)
 
-    if not full_query:
-        query = session.query(Header).join(CalCache,
-                                           Header.id == CalCache.cal_hid)
-    else:
-        query = (session.query(Header, DiskFile, File)
-                        .select_from(CalCache, Header, DiskFile, File)
-                        .filter(Header.id == CalCache.cal_hid)
-                        .filter(DiskFile.id == Header.diskfile_id)
-                        .filter(File.id == DiskFile.file_id))
+    query = session.query(Header).join(CalCache, Header.id == CalCache.cal_hid)
     query = query.filter(CalCache.obs_hid.in_(obs_hids))
     if caltype != 'all':
         query = query.filter(CalCache.caltype == caltype)
@@ -180,16 +153,16 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0, 
     calheaders = query.all()
     # for cal in calheaders:
     #     cal.is_primary_cal = True
-    ids = set((calh.id if not full_query else calh[0].id) for calh in calheaders)
+    ids = set(calh.id for calh in calheaders)
 
     # Now we have to recurse to find the calibrations for the calibrations...
     # We only do this for caltype all. Keep digging deeper until we don't
     # find any extras, or we hit too many recurse levels
 
     if caltype == 'all' and recurse_level < 4 and len(calheaders) > 0:
-        down_list = (calheaders if not full_query else (x[0] for x in calheaders))
-        for cal in associate_cals_from_cache(session, down_list, caltype=caltype, recurse_level=recurse_level + 1, full_query=full_query):
-            if (cal.id if not full_query else cal[0].id) not in ids:
+        down_list = calheaders
+        for cal in associate_cals_from_cache(session, down_list, caltype=caltype, recurse_level=recurse_level + 1):
+            if cal.id not in ids:
                 # cal.is_primary_cal = False
                 calheaders.append(cal)
 

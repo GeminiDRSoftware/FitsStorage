@@ -1,11 +1,11 @@
 """
 This module deals with the 'selection' concept.
-Functions in this module are only used within FitsStorageWebSummary.
-
 """
+
 import re
 import math
-import urllib.parse, urllib.error
+import urllib.parse
+import urllib.error
 
 from sqlalchemy import or_, func
 

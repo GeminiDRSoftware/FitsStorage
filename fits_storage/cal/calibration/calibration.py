@@ -101,14 +101,7 @@ class CalQuery(object):
     associated to the relevant instrument (`instrClass`), and a list of the
     possible `descriptors` accepted by the instrument.
 
-    If `full_query ` is ``True``, the query will return tuples of the form,
-
-        (Header, DiskFile, File)
-
-    If it is ``False`` (default), it will return ``(Header,)`` tuples.
-
-    Activate the full query if it will need access to the ``DiskFile/File``
-    associated with a Header.
+    it will return ``(Header,)`` tuples.
 
     `include_engineering` is used if we don't want to exclude files
     marked as engineering.  This is mainly for bpm support as existing
@@ -116,28 +109,21 @@ class CalQuery(object):
 
     """
     def __init__(self, session, instrClass, descriptors, procmode=None,
-                 full_query=False, include_engineering=False):
+                 include_engineering=False):
         # Keep a copy of the instrument descriptors and start the query with
         # some common filters
         self.procmode = procmode
         self.descr = descriptors
-        if full_query:
-            query = (session.query(Header, DiskFile, File)
-                            .select_from(join(join(join(instrClass, Header),
-                                                   DiskFile), File))
-                            .filter(DiskFile.id == Header.diskfile_id)
-                            .filter(File.id == DiskFile.file_id))
-        else:
-            query = (session.query(Header)
-                            .select_from(join(join(instrClass, Header),
-                                              DiskFile)))
+
+        query = session.query(Header)\
+            .select_from(join(join(instrClass, Header), DiskFile))
+
         if procmode == 'sq':
             query = query.filter(Header.procmode == procmode)
-        # elif procmode == 'ql':
-        #     query = query.filter(Header.procmode.in_(['ql', 'sq']))
 
         query = query.filter(DiskFile.canonical == True) \
                      .filter(Header.qa_state != 'Fail')
+
         if not include_engineering:
             query = query.filter(Header.engineering == False)
         self.query = query
@@ -556,8 +542,7 @@ class Calibration(object):
     instrClass = None
     instrDescriptors = ()
 
-    def __init__(self, session, header, descriptors, types, procmode=None,
-                 full_query=False):
+    def __init__(self, session, header, descriptors, types, procmode=None):
         """
         Initialize a calibration manager for a given header object (ie data
         file) Need to pass in an sqlalchemy session that should already be
@@ -570,7 +555,6 @@ class Calibration(object):
         self.types = types
         self.from_descriptors = False
         self.procmode = procmode
-        self.full_query = full_query
 
         # Populate the descriptors dictionary for header
         if self.descriptors is None and self.instrClass is not None:
@@ -636,7 +620,7 @@ class Calibration(object):
 
         """
         return CalQuery(self.session, self.instrClass, self.descriptors,
-                        procmode=self.procmode, full_query=self.full_query,
+                        procmode=self.procmode,
                         include_engineering=include_engineering)
 
     def set_applicable(self):

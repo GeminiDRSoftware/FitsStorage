@@ -1,9 +1,3 @@
-"""
-This is the Fits Storage Web Summary module. It provides the functions
-which query the database and generate html for the web header
-summaries.
-"""
-
 from decimal import Decimal
 from datetime import datetime, date, time
 from sqlalchemy import Integer, Text, DateTime, Numeric, Date, Time, \
@@ -12,8 +6,8 @@ from sqlalchemy import Integer, Text, DateTime, Numeric, Date, Time, \
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.file import File
-from .selection import queryselection, openquery
-from .summary import list_headers
+from fits_storage.db.selection import queryselection, openquery
+from fits_storage.db.list_headers import list_headers
 from .standards import get_standard_obs
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
 
@@ -23,14 +17,10 @@ from fits_storage.server.wsgi.context import get_context
 
 from . import templating
 
-# from ..logger import logger
-# from datetime import datetime
-
 
 diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
                    'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready',
                    'entrytime')
-
 
 @templating.templated("filelist/filelist.xml", content_type='text/xml',
                       with_generator=True)
@@ -41,10 +31,8 @@ def xmlfilelist(selection):
 
     def generate_headers(selection):
         orderby = ['filename_asc']
-        for header, diskfile, file, obslogcomm in list_headers(selection,
-                                                               orderby,
-                                                               full_query=True):
-            ret = (header, diskfile, file)
+        for header in list_headers(selection, orderby):
+            ret = (header, header.diskfile, header.diskfile.file)
             if header.phot_standard:
                 yield ret + (get_standard_obs(header.id),)
             else:

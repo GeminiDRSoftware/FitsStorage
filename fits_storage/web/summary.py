@@ -6,8 +6,8 @@ import json
 
 from fits_storage.server.wsgi.context import get_context
 
-from .selection import sayselection, openquery, selection_to_URL
-from .list_headers import list_headers
+from fits_storage.db.selection import sayselection, openquery, selection_to_URL
+from fits_storage.db.list_headers import list_headers
 
 from .summary_generator import SummaryGenerator, NO_LINKS, FILENAME_LINKS, \
     ALL_LINKS, selection_to_column_names
@@ -30,6 +30,7 @@ from .userprogram import get_permissions_list
 
 from fits_storage.server.orm.querylog import QueryLog
 
+
 def summary(sumtype, selection, orderby, links=True, body_only=False):
     """
     This is the main summary generator.
@@ -44,16 +45,18 @@ def summary(sumtype, selection, orderby, links=True, body_only=False):
     else:
         return full_page_summary(sumtype, selection, orderby, links)
 
+
 @templating.templated("search_and_summary/summary.html", with_generator=True)
 def full_page_summary(sumtype, selection, orderby, links):
     template_args = summary_body(sumtype, selection, orderby, links)
 
     template_args.update({
-        'sumtype'      : sumtype,
-        'sayselection' : sayselection(selection)
+        'sumtype': sumtype,
+        'sayselection': sayselection(selection)
         })
 
     return template_args
+
 
 @templating.templated("search_and_summary/summary_body.html", with_generator=True)
 def embeddable_summary(sumtype, selection, orderby, links):
@@ -63,9 +66,11 @@ def embeddable_summary(sumtype, selection, orderby, links):
         additional_columns = ()
     return summary_body(sumtype, selection, orderby, links, additional_columns=additional_columns)
 
+
 @templating.templated("search_and_summary/summary.json", content_type="text/json", with_generator=True)
 def json_summary(sumtype, selection, orderby, links):
     return summary_body(sumtype, selection, orderby, links)
+
 
 def summary_body(sumtype, selection, orderby, links=True, additional_columns=()):
     """
@@ -83,7 +88,6 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
     session = ctx.session
     sumlinks = ALL_LINKS if links else NO_LINKS
 
-    files_list = None
     if ctx.env.method == 'POST':
         # extract list of files from request
         raw_data = get_context().req.raw_data
@@ -105,7 +109,7 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
     querylog.selection = str(selection)
     querylog.query_started = datetime.datetime.utcnow()
 
-    headers = list_headers(selection, orderby, full_query=True, add_previews=True)
+    headers = list_headers(selection, orderby)
     num_headers = len(headers)
 
     fsc = get_config()
@@ -129,7 +133,7 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
     # If this is associated_cals, we do the association here
     if sumtype == 'associated_cals':
         querylog.add_note("Associated Cals")
-        headers = associate_cals(session, (x[0] for x in headers), full_query=True)
+        headers = associate_cals(session, headers)
 
         querylog.cals_completed = datetime.datetime.utcnow()
         querylog.numcalresults = len(headers)
@@ -192,7 +196,6 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
         uri = uri.replace("searchresults", "searchform")
         uri = uri.replace("customsearch", "searchform")
 
-
     url_prefix = "/download"
     if sumtype == 'associated_cals':
         url_prefix += '/associated_calibrations'
@@ -250,17 +253,14 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
         def __next__(self):
             "Obtain the next row of data and keep some stats about it."
             header = next(self.headers)
-            row = sumgen.table_row(*header)
+            row = sumgen.table_row(header)
             # add row "type" to support tab-differentiation in our template
             row.sumtype = self.sumtype
             self.total = self.total + 1
             if row.can_download:
                 self.down    = self.down + 1
-                self.bcount += header[1].file_size
+                self.bcount += header.diskfile.file_size
             return row
-
-        # For future Python 3 compliance
-        #__next__ = next
 
     template_args = dict(
         clickable        = sumtype in {'searchresults', 'customsearch', 'associated_cals'},

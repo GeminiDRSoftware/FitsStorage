@@ -149,18 +149,21 @@ class InterruptedError(Exception):
     pass
 
 
-# This is a decorator for functions that use templates. Simplifies some use cases,
-# making it easy to return from the function at any point without having to care
-# about repeating the content generation at every single exit point.
-def templated(template_name, content_type="text/html", with_generator=False, default_status=Return.HTTP_OK, at_end_hook=None):
+# This is a decorator for functions that use templates. Simplifies some use
+# cases, making it easy to return from the function at any point without
+# having to care about repeating the content generation at every single exit
+# point.
+def templated(template_name, content_type="text/html", with_generator=False,
+              default_status=Return.HTTP_OK, at_end_hook=None):
     """
-    'template_name' is the path to the template file, relative to the 'template_root'.
+    'template_name' is the path to the template file, relative to the
+    'template_root'.
 
-    If 'with_generator' is 'True', Jinja2 will be instructed to try to chunk the output,
-    sending info back to the client as soon as possible.
+    If 'with_generator' is 'True', Jinja2 will be instructed to try to chunk
+    the output, sending info back to the client as soon as possible.
 
-    If 'at_end_hook' is defined, it has to be a callable object with no arguments. It
-    will be invoked after the template has generated all the text.
+    If 'at_end_hook' is defined, it has to be a callable object with no
+    arguments. It will be invoked after the template has generated all the text.
 
     """
     def template_decorator(fn):

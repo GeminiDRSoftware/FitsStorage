@@ -39,7 +39,7 @@ inst_class = {
 
 
 def get_cal_object(session, filename, header=None, procmode=None,
-                   descriptors=None, types=None, full_query=False):
+                   descriptors=None, types=None):
     """
     This function returns an appropriate calibration object for the given
     dataset. Need to pass in a sqlalchemy session that should already be
@@ -63,9 +63,6 @@ def get_cal_object(session, filename, header=None, procmode=None,
 
     types : list of string, optional
         The types of this data, such as `MOS`
-
-    full_query :boolean, defaults to `False` If `True`, query will pull in
-    the `DiskFile` and `File` records as well as the `Header`
 
     procmode : str, defaults to None Either 'sq', 'ql', or None to indicate
     the proc mode.  'ql' will also accept 'sq' calibrations as matches
@@ -91,7 +88,6 @@ def get_cal_object(session, filename, header=None, procmode=None,
         instrument = descriptors['instrument']
 
     cal_class = inst_class.get(instrument, Calibration)
-    cal = cal_class(session, header, descriptors, types, procmode=procmode,
-                    full_query=full_query)
+    cal = cal_class(session, header, descriptors, types, procmode=procmode)
 
     return cal
