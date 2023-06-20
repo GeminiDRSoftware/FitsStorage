@@ -38,8 +38,7 @@ def summary(sumtype, selection, orderby, links=True, body_only=False):
     This function just wraps that in the relevant html
     tags to make it a page in its own right.
     """
-    if sumtype == 'associated_cals_json':
-        return json_summary(sumtype, selection, orderby, links)
+
     if body_only:
         return embeddable_summary(sumtype, selection, orderby, links)
     else:
@@ -65,11 +64,6 @@ def embeddable_summary(sumtype, selection, orderby, links):
     else:
         additional_columns = ()
     return summary_body(sumtype, selection, orderby, links, additional_columns=additional_columns)
-
-
-@templating.templated("search_and_summary/summary.json", content_type="text/json", with_generator=True)
-def json_summary(sumtype, selection, orderby, links):
-    return summary_body(sumtype, selection, orderby, links)
 
 
 def summary_body(sumtype, selection, orderby, links=True, additional_columns=()):
@@ -160,7 +154,7 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
     # Add and commit the querylog
     session.add(querylog)
 
-    return dict(
+    template_args =  dict(
         got_results      = sumtable_data,
         dev_system       = (sumtype not in {'searchresults', 'customsearch', 'associated_cals'}) and fsc.fits_system_status == 'development',
         open_query       = openquery(selection),
@@ -173,6 +167,7 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
         **sumtable_data
         )
 
+    return template_args
 
 def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_progid_list=None, user_obsid_list=None,
                   user_file_list=None, additional_columns=()):
@@ -200,8 +195,6 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
     if sumtype == 'associated_cals':
         url_prefix += '/associated_calibrations'
 
-    if sumtype == 'associated_cals_json':
-        sumtype = 'associated_cals'
     sumgen = SummaryGenerator(sumtype, links, uri, user, user_progid_list, user_obsid_list, user_file_list,
                               additional_columns)
 

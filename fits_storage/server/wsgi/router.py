@@ -129,10 +129,6 @@ url_map = Map([
         '/associated_cals/<selection(SEL,NOLNK,BONLY):selection,links,body_only>',
         partial(summary, 'associated_cals'),
         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
-    Rule(
-        '/associated_cals_json/<selection(SEL,NOLNK,BONLY):selection,links,body_only>',
-        partial(summary, 'associated_cals_json'),
-        collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
 
     Rule('/nameresolver/<resolver>/<target>', nameresolver),
     Rule('/xmlfilelist/<selection:selection>', xmlfilelist),
