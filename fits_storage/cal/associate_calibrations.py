@@ -5,8 +5,6 @@ results of a search
 """
 from fits_storage.cal.calibration import get_cal_object
 from fits_storage.gemini_metadata_utils import cal_types
-from fits_storage.core.orm.file import File
-from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
 from fits_storage.cal.orm.calcache import CalCache
 
@@ -33,8 +31,7 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
     session : :class:`~sqlalchemy.orm.Session`
         The open session to use for querying data
 
-
-    header : list of :class:`~gemini_obs_db.orm.header.Header`
+    headers : list of :class:`Header`
         A list of headers to get the appropriate calibration objects for
 
     caltype : str, defaults to "all"
@@ -46,7 +43,7 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
     Returns
     -------
 
-    list of :class:`~gemini_obs_db.orm.header.Header` calibration records or,
+    list of :class:`Header` calibration records
 
     """
 
@@ -101,7 +98,6 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
     return shortlist
 
 
-# TODO does this get called any more?!
 def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
     """
     This function takes a list of :class:`fits_storage.orm.header.Header`
@@ -110,7 +106,7 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
     best first) list
 
     This is the same interface as associate_cals above, but this version
-    queries the :class:`~gemini_obs_db.orm.calcache.CalCache` table rather
+    queries the :class:`~CalCache` table rather
     than actually doing the association.
 
     Parameters
@@ -119,7 +115,7 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
     session : :class:`sqlalchemy.orm.Session`
         The open session to use for querying data
 
-    headers : list of :class:`gemini_obs_db.orm.header.Header`
+    headers : list of :class:`Header`
         A list of headers to get the appropriate calibration objects for
 
     caltype : str, defaults to "all"
@@ -131,7 +127,7 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
     Returns
     -------
 
-    list of :class:`~gemini_obs_db.orm.header.Header` calibration records
+    list of :class:`Header` calibration records
 
     """
     # We can do this a bit more efficiently than the non-cache version,

@@ -19,12 +19,8 @@ from urllib.parse import quote_plus
 from fits_storage.config import get_config
 fsc = get_config()
 
-# We assume that archive servers use a calibration association cache table
-if fsc.is_archive:
-    from fits_storage.cal.associate_calibrations \
-        import associate_cals_from_cache as associate_cals
-else:
-    from fits_storage.cal.associate_calibrations import associate_cals
+from fits_storage.cal.associate_calibrations \
+        import associate_cals_from_cache, associate_cals
 
 from .userprogram import get_permissions_list
 
@@ -57,16 +53,19 @@ def full_page_summary(sumtype, selection, orderby, links):
     return template_args
 
 
-@templating.templated("search_and_summary/summary_body.html", with_generator=True)
+@templating.templated("search_and_summary/summary_body.html",
+                      with_generator=True)
 def embeddable_summary(sumtype, selection, orderby, links):
     if selection:
         additional_columns = selection_to_column_names(selection)
     else:
         additional_columns = ()
-    return summary_body(sumtype, selection, orderby, links, additional_columns=additional_columns)
+    return summary_body(sumtype, selection, orderby, links,
+                        additional_columns=additional_columns)
 
 
-def summary_body(sumtype, selection, orderby, links=True, additional_columns=()):
+def summary_body(sumtype, selection, orderby, links=True,
+                 additional_columns=()):
     """
     This is the main summary generator. sumtype is the summary type required.
     selection is an array of items to select on, simply passed through to the
@@ -117,7 +116,8 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
         querylog.add_note("Selection Warning: {}".format(selection['warning']))
     # Note any notrecognised in the querylog
     if 'notrecognised' in list(selection.keys()):
-        querylog.add_note("Selection NotRecognised: %s" % selection['notrecognised'])
+        querylog.add_note("Selection NotRecognised: %s" %
+                          selection['notrecognised'])
     # Note in the log if we hit limits
     if hit_open_limit:
         querylog.add_note("Hit Open search result limit")
@@ -127,7 +127,11 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
     # If this is associated_cals, we do the association here
     if sumtype == 'associated_cals':
         querylog.add_note("Associated Cals")
-        headers = associate_cals(session, headers)
+        if fsc.using_calcache:
+            headers = associate_cals_from_cache(session, headers)
+        else:
+            headers = associate_cals(session, headers)
+
 
         querylog.cals_completed = datetime.datetime.utcnow()
         querylog.numcalresults = len(headers)
@@ -142,7 +146,8 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
         # list to pass down the chain to use figure out whether to display
         # download links
         user = ctx.user
-        user_progid_list, user_obsid_list, user_file_list = get_permissions_list(user)
+        user_progid_list, user_obsid_list, user_file_list = \
+            get_permissions_list(user)
         sumtable_data = summary_table(sumtype, headers, selection, sumlinks,
                                       user, user_progid_list, user_obsid_list,
                                       user_file_list, additional_columns)

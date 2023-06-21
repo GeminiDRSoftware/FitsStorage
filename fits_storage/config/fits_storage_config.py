@@ -52,7 +52,7 @@ class FitsStorageConfig(dict):
     _bools = ['using_sqlite', 'database_debug', 'use_utc', 'is_server',
               'is_archive', 'using_s3', 'using_previews', 'using_fitsverify',
               'logreports_use_materialized_view', 'orcid_enabled',
-              'development_bypass_auth']
+              'development_bypass_auth', 'using_calcache']
     _ints = ['postgres_database_pool_size', 'postgres_database_max_overflow',
              'defer_threshold', 'defer_delay', 'fits_open_result_limit',
              'fits_closed_result_limit']
@@ -158,6 +158,7 @@ class FitsStorageConfig(dict):
         self._calculate_using_s3()
         self._calculate_using_fitsverify()
         self._calculate_fits_server_name()
+        self._calculate_using_calcache()
 
     def _calculate_database_url(self):
         """
@@ -185,6 +186,13 @@ class FitsStorageConfig(dict):
         """
         if 'using_s3' not in self.config:
             self.config['using_s3'] = self.config['is_archive']
+
+    def _calculate_using_calcache(self):
+        """
+        If not set, default to is_archive
+        """
+        if 'using_calcache' not in self.config:
+            self.config['using_calcache'] = self.config['is_archive']
 
     def _calculate_using_fitsverify(self):
         """
