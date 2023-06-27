@@ -296,4 +296,3 @@ class TapeDrive(object):
             self.cleanup()
             if fail:
                 raise
-            
