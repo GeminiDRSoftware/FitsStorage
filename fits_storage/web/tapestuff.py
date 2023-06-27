@@ -16,20 +16,6 @@ import datetime
 from .file_list import _for_json
 
 
-def bzornot(thing):
-    """
-    Given a filename thing, which may or may not end in .bz2, return a list of
-    two filenames, that do and do not end in .bz2
-    """
-    retval = [thing]
-    if thing.endswith(".bz2"):
-        retval.append(thing[:-4])
-    else:
-        retval.append(thing+".bz2")
-
-    return retval
-
-
 def jsontapefilelist(filepre):
     """
     This generates a JSON list of tapefiles where the filename starts with
@@ -44,7 +30,7 @@ def jsontapefilelist(filepre):
     for tf in tfs:
         thelist.append({'filename': _for_json(tf.filename),
                         'size': _for_json(tf.size),
-                        'md5': _for_json(tf.size),
+                        'md5': _for_json(tf.md5),
                         'tape_id': _for_json(tf.tapewrite.tape.id),
                         'tape_set': _for_json(tf.tapewrite.tape.set),
                         'data_size': _for_json(tf.data_size),
@@ -52,27 +38,6 @@ def jsontapefilelist(filepre):
                         })
 
     get_context().resp.send_json(thelist)
-
-
-@templating.templated("tapestuff/fileontape.xml", content_type='text/xml',
-                      with_generator=True)
-def fileontape(filename):
-    """
-    Outputs xml describing the tapes that the specified file is on
-    """
-
-    filenames = bzornot(filename)
-
-    query = (
-        get_context().session.query(TapeFile)
-        .select_from(join(TapeFile, join(TapeWrite, Tape)))
-        .filter(Tape.active == True).filter(TapeWrite.suceeded == True)
-        .filter(TapeFile.filename.in_(filenames))
-        )
-
-    return dict(
-        filelist=query
-        )
 
 
 @templating.templated("tapestuff/tape.html", with_generator=True)

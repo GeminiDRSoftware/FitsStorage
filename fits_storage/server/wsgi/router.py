@@ -34,7 +34,7 @@ from fits_storage.web.user import whoami, login, logout, request_account, \
 from fits_storage.web.userprogram import my_programs
 
 from fits_storage.web.tapestuff import tape, tapewrite, tapefile, \
-    jsontapefilelist, taperead, fileontape
+    jsontapefilelist, taperead
 
 from fits_storage.web.upload_file import upload_file
 
@@ -98,7 +98,6 @@ url_map = Map([
     Rule('/tapefile/<int:tapewrite_id>', tapefile),
     Rule('/jsontapefile/<filepre>', jsontapefilelist),
     Rule('/taperead', taperead),
-    Rule('/fileontape/<filename>', fileontape),
 
     # Diskfile Reports - you can give these either a diskfile_id or a filename
     Rule('/fitsverify/<thing>', report),

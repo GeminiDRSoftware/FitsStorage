@@ -1,6 +1,0 @@
-<?xml version="1.0" ?>
-<file_list>
-{%- for tf in filelist %}
-<file><filename>{{ tf.filename }}</filename><size>{{ tf.size }}</size><data_size>{{ tf.data_size }}</data_size><md5>{{ tf.md5 }}</md5><data_md5>{{ tf.data_md5 }}</data_md5><compressed>{{ tf.compressed }}</compressed><ccrc>{{ tf.ccrc }}</ccrc><lastmod>{{ tf.lastmod }}</lastmod><tapeid>{{ tf.tapewrite.tape.id }}</tapeid><tapeset>{{ tf.tapewrite.tape.set }}</tapeset></file>
-{%- endfor %}
-</file_list>
