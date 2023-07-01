@@ -1,357 +1,234 @@
+#!/usr/bin/env python3
 
 import sys
 import datetime
-import requests
-from xml.dom.minidom import parseString
 import os
 import smtplib
-from sqlalchemy import join, desc
-import re
-
-from fits_storage.orm.exportqueue import ExportQueue
-from fits_storage.fits_storage_config import storage_root, target_max_files, target_gb_free, delete_min_days_age, \
-    smtp_server, tape_server
-from fits_storage.logger import logger, setdebug, setdemon
-
-from gemini_obs_db.db import session_scope
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
-
-# Option Parsing
+from sqlalchemy import desc
 from optparse import OptionParser
 
+from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
+from fits_storage.logger import logger, setdebug, setdemon
 
-msglines = []
-errmsglines = None
+from fits_storage.db import session_scope
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.server.tapeutils import FileOnTapeHelper
 
+from fits_storage.config import get_config
+fsc = get_config()
 
-def add_to_msg(log, msg):
-    """
-    Log the given message and add it to the array of messages to email.
+parser = OptionParser()
+parser.add_option("--tapeserver", action="store", type="string",
+                  dest="tapeserver", default=fsc.tape_server,
+                  help="FitsStorage Tape server to check the files are on tape")
+parser.add_option("--path", action="store", type="string", dest="path",
+                  default="", help="Path within the storage root")
+parser.add_option("--pathcontains", action="store", type="string",
+                  dest="pathcontains", default="",
+                  help="Path within the storage root contains string")
+parser.add_option("--file-pre", action="store", type="string", dest="filepre",
+                  help="File prefix to operate on, eg N20090130, N200812 etc")
+parser.add_option("--maxnum", type="int", action="store", dest="maxnum",
+                  help="Delete at most X files.")
+parser.add_option("--maxgb", type="float", action="store", dest="maxgb",
+                  help="Delete at most X GB of files")
+parser.add_option("--auto", action="store_true", dest="auto",
+                  help="Delete old files to get to pre-defined free space")
+parser.add_option("--olderthan", type="int", action="store", dest="olderthan",
+                  help="Only delete files listed in database as older than this"
+                       " number of days")
+parser.add_option("--oldbyfilename", action="store_true", dest="oldbyfilename",
+                  help="Sort by filename to determine oldest files. Default"
+                       "is to sort by lastmod time from the database")
+parser.add_option("--numbystat", action="store_true", dest="numbystat",
+                  default=False, help="Use statvfs rather than database to "
+                                      "determine number of files on the disk")
+parser.add_option("--yesimsure", action="store_true", dest="yesimsure",
+                  help="Needed when file count is large")
+parser.add_option("--notpresent", action="store_true", dest="notpresent",
+                  help="Include files that are marked as not present")
+parser.add_option("--minage", type="int", action="store", dest="minage",
+                  help="Minimum days old a file must be to be deleted")
+parser.add_option("--mintapes", action="store", type="int", dest="mintapes",
+                  default=2, help="Minimum number of tapes file must be on to "
+                                  "be eligible for deletion")
+parser.add_option("--skip-md5", action="store_true", dest="skipmd5",
+                  help="Do not bother to verify the md5 of the file on disk")
+parser.add_option("--dryrun", action="store_true", dest="dryrun",
+                  help="Dry Run - do not actually do anything")
+parser.add_option("--emailto", action="store", type="string", dest="emailto",
+                  help="Email address to send message to")
+parser.add_option("--debug", action="store_true", dest="debug",
+                  help="Increase log level to debug")
+parser.add_option("--demon", action="store_true", dest="demon",
+                  help="Run as a background demon, do not generate stdout")
+(options, args) = parser.parse_args()
 
-    Parameters
-    ----------
+# Logging level to debug? Include stdio log?
+setdebug(options.debug)
+setdemon(options.demon)
 
-    log : `logging.logger.Logger`
-        log to write message to
-    msg : str
-        Message to log and to save for emailing
-    """
-    log(msg)
-    msglines.append(msg)
+# Announce startup
+logger.info("***   delete_files.py - starting up at %s",
+            datetime.datetime.now())
 
+logger.error("This script hasn't been operationally tested since the"
+             "great refactor of 2023. Please test...")
+sys.exit(0)
 
-def add_to_errmsg(log, msg):
-    """
-    Log the given message and add it to the array of messages to an error email.
+with session_scope() as session:
+    query = session.query(DiskFile).filter(DiskFile.canonical == True)
 
-    Parameters
-    ----------
-
-    log : `logging.logger.Logger`
-        log to write message to
-    msg : str
-        Message to log and to save for emailing with any other errors
-    """
-    global errmsglines
-    # pass log=None if we logged it via add_to_msg
-    if log is not None:
-        log(msg)
-    if errmsglines is None:
-        errmsglines = list()
-    errmsglines.append(msg)
-
-
-_max_datetime = None
-_filename_datetime_regex = re.compile(r'[NS](\d{8})')
-
-
-def check_old_enough_to_delete(fname):
-    """
-    Utility method to see if the given file is old enough to be safely deleted.
-
-    This helps avoid deleting recent data just because we are low in space on
-    dataflow.  I had a bad interaction with the filesystem snapshots and a large
-    free space quota that led to very recent files being cleared out.  This is
-    an attempt to mitigate that.
-
-    File ages are inferred by matching a regex to extract the encoded date from
-    the filename.  We are not using FITS header keywords or file timestamps.
-
-    Parameters
-    ----------
-
-    fname : str
-        Filename to check the age of
-    """
-    if delete_min_days_age:
-        global _max_datetime
-        if _max_datetime is None:
-            # lazy init
-            _max_datetime = datetime.datetime.now() - datetime.timedelta(days=delete_min_days_age)
-        match = _filename_datetime_regex.match(fname)
-        if match:
-            dtstr = match.groups(1)[0]
-            filedt = datetime.datetime.strptime(dtstr, '%Y%m%d')
-            if filedt > _max_datetime:
-                return False
-    return True
-
-
-def check_not_on_export_queue(session, fname):
-    """
-    Double check the file is not on the export queue.
-
-    We want to avoid deleting files that are pending export.
-
-    Parameters
-    ----------
-
-    session : `sqlalchemy.orm.session.Session`
-        session to query
-    fname : str
-        Filename to check for
-
-    Returns
-    -------
-    bool : True if not on export queue
-    """
-    query = session.query(ExportQueue).filter(ExportQueue.filename == fname)
-    return query.first() is None
-
-
-if __name__ == "__main__":
-
-    # Annouce startup
-    logger.info("*********    delete_files.py - starting up at %s" % datetime.datetime.now())
-
-    parser = OptionParser()
-    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default=tape_server,
-                      help="The Fits Storage Tape server to use to check the files are on tape")
-    parser.add_option("--path", action="store", type="string", dest="path", default="",
-                      help="Path within the storage root")
-    parser.add_option("--pathcontains", action="store", type="string", dest="pathcontains", default="",
-                      help="Path within the storage root contains the string provided")
-    parser.add_option("--file-pre", action="store", type="string", dest="filepre",
-                      help="File prefix to operate on, eg N20090130, N200812 etc")
-    parser.add_option("--maxnum", type="int", action="store", dest="maxnum", help="Delete at most X files.")
-    parser.add_option("--maxgb", type="float", action="store", dest="maxgb", help="Delete at most X GB of files")
-    parser.add_option("--auto", action="store_true", dest="auto",
-                      help="Delete old files to get to pre-defined free space")
-    parser.add_option("--olderthan", type="int", action="store", dest="olderthan",
-                      help="Delete files listed in database as older than this number of days")
-    parser.add_option("--oldbyfilename", action="store_true", dest="oldbyfilename",
-                      help="Sort by filename to determine oldest files")
-    parser.add_option("--oldbylastmod", action="store_true", dest="oldbylastmod",
-                      help="Sort by lastmod to determine oldest files")
-    parser.add_option("--oldbytimestamp", action="store_true", dest="oldbytimestamp",
-                      help="Sort by the datafile_timestamp column to determine oldest files")
-    parser.add_option("--numbystat", action="store_true", dest="numbystat", default=False,
-                      help="Use statvfs rather than database to determine number of files on the disk")
-    parser.add_option("--yesimsure", action="store_true", dest="yesimsure", help="Needed when file count is large")
-    parser.add_option("--notpresent", action="store_true", dest="notpresent",
-                      help="Include files that are marked as not present")
-    parser.add_option("--mintapes", action="store", type="int", dest="mintapes", default=2,
-                      help="Minimum number of tapes file must be on to be eligable for deletion")
-    parser.add_option("--skip-md5", action="store_true", dest="skipmd5",
-                      help="Do not bother to verify the md5 of the file on disk")
-    parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
-    parser.add_option("--emailto", action="store", type="string", dest="emailto",
-                      help="Email address to send message to")
-    parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
-    parser.add_option("--demon", action="store_true", dest="demon",
-                      help="Run as a background demon, do not generate stdout")
-
-    (options, args) = parser.parse_args()
-
-    # Logging level to debug? Include stdio log?
-    setdebug(options.debug)
-    setdemon(options.demon)
-
-    with session_scope() as session:
-        query = session.query(DiskFile).select_from(join(File, DiskFile)).filter(DiskFile.canonical==True)
-
-        if options.auto:
-            # chdir to the storage root to kick the automounter
-            cwd = os.getcwd()
-            os.chdir(storage_root)
-            s = os.statvfs(storage_root)
-            os.chdir(cwd)
-            gbavail = s.f_bsize * s.f_bavail / (1024 * 1024 * 1024)
-            if options.numbystat:
-                numfiles = s.f_files - s.f_favail
-            else:
-                numfiles = session.query(DiskFile).filter(DiskFile.present == True).count()
-            logger.debug("Disk has %d files present and %.2f GB available" % (numfiles, gbavail))
-            numtodelete = numfiles - target_max_files
-            if numtodelete > 0:
-                add_to_msg(logger.info, "Need to delete at least %d files" % numtodelete)
-
-            gbtodelete = target_gb_free - gbavail
-            if gbtodelete > 0:
-                add_to_msg(logger.info, "Need to delete at least %.2f GB" % gbtodelete)
-
-            if numtodelete <= 0 and gbtodelete <= 0:
-                logger.info("In Auto mode and nothing needs deleting. Exiting")
-                sys.exit(0)
-
-        if options.filepre:
-            likestr = "%s%%" % options.filepre
-            query = query.filter(File.name.like(likestr))
-
-        if not options.notpresent:
-            query = query.filter(DiskFile.present == True)
-
-        if options.path:
-            query = query.filter(DiskFile.path == options.path)
-
-        if options.pathcontains:
-            query = query.filter(DiskFile.path.contains(options.pathcontains))
-
-        if options.olderthan and options.olderthan > 0:
-            dt = datetime.datetime.now()
-            dt = dt - datetime.timedelta(days=options.olderthan)
-            query = query.filter(DiskFile.datafile_timestamp < dt)
-
-        if options.oldbylastmod:
-            query = query.order_by(desc(DiskFile.lastmod))
-        elif options.oldbytimestamp:
-            query = query.order_by(DiskFile.datafile_timestamp)
+    if options.auto:
+        # chdir to the storage root to kick the automounter
+        cwd = os.getcwd()
+        os.chdir(fsc.storage_root)
+        s = os.statvfs(fsc.storage_root)
+        os.chdir(cwd)
+        gbavail = s.f_bsize * s.f_bavail / (1024 * 1024 * 1024)
+        if options.numbystat:
+            numfiles = s.f_files - s.f_favail
         else:
-            query = query.order_by(File.name)
+            numfiles = session.query(DiskFile)\
+                .filter(DiskFile.present == True).count()
+        logger.debug("Disk has %d files present and %.2f GB available",
+                     (numfiles, gbavail))
+        numtodelete = numfiles - fsc.target_max_files
+        if numtodelete > 0:
+            logger.info("Need to delete at least %d files", numtodelete)
 
-        if options.maxnum:
-            query = query.limit(options.maxnum)
-        cnt = query.count()
+        gbtodelete = fsc.target_gb_free - gbavail
+        if gbtodelete > 0:
+            logger.info("Need to delete at least %.2f GB", gbtodelete)
 
-
-        if cnt == 0:
-            logger.info("No Files found matching file-pre. Exiting")
+        if numtodelete <= 0 and gbtodelete <= 0:
+            logger.info("In Auto mode and nothing needs deleting. Exiting")
             sys.exit(0)
 
-        logger.info("Got %d files to consider for deletion" % cnt)
-        if cnt > 2000 and not options.yesimsure:
-            logger.error("To proceed with this many files, you must say --yesimsure")
-            sys.exit(1)
+    if options.filepre:
+        query = query.filter(DiskFile.filename.startswith(options.filepre))
 
-        sumbytes = 0
-        sumfiles = 0
-        sumgb = 0
+    if not options.notpresent:
+        query = query.filter(DiskFile.present == True)
 
-        for diskfile in query:
-            badmd5 = False
+    if options.path:
+        query = query.filter(DiskFile.path == options.path)
 
-            fullpath = diskfile.fullpath()
-            dbmd5 = diskfile.file_md5
-            dbdatamd5 = diskfile.data_md5
-            dbfilename = diskfile.filename
+    if options.pathcontains:
+        query = query.filter(DiskFile.path.contains(options.pathcontains))
 
-            logger.debug("Full path filename: %s" % fullpath)
-            if not diskfile.exists():
-                logger.error("Cannot access file %s" % fullpath)
-            else:
+    oldby = DiskFile.lastmod
+    if options.oldbyfilename:
+        oldby = DiskFile.filename
 
-                if not options.skipmd5:
-                    filemd5 = diskfile.get_file_md5()
-                    logger.debug("Actual File MD5 and canonical database diskfile MD5 are: %s and %s" % (filemd5, dbmd5))
-                    if filemd5 != dbmd5:
-                        logger.error("File: %s has an md5sum mismatch between the database and the actual file. Skipping" % dbfilename)
-                        badmd5 = True
-                else:
-                    filemd5 = dbmd5
+    if options.olderthan and options.olderthan > 0:
+        dt = datetime.datetime.now() - \
+             datetime.timedelta(days=options.olderthan)
+        query = query.filter(oldby < dt)
 
-                if not badmd5:
-                    url = "http://%s/fileontape/%s" % (options.tapeserver, dbfilename)
-                    logger.debug("Querying tape server DB at %s" % url)
+    query = query.order_by(desc(oldby))
 
-                    try:
-                        r = requests.get(url)
-                        xml = r.text
-                        dom = parseString(xml)
-                        fileelements = dom.getElementsByTagName("file")
+    if options.maxnum:
+        query = query.limit(options.maxnum)
+    cnt = query.count()
 
-                        tapeids = []
-                        for fe in fileelements:
-                            filename = fe.getElementsByTagName("filename")[0].childNodes[0].data
-                            datamd5 = fe.getElementsByTagName("data_md5")[0].childNodes[0].data
-                            tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
-                            logger.debug("Filename: %s; data_md5=%s, tapeid=%d" % (filename, datamd5, tapeid))
+    if cnt == 0:
+        logger.info("No Files found matching file-pre. Exiting")
+        sys.exit(0)
 
-                            filename_clean = filename
-                            if filename_clean.endswith(".bz2"):
-                                filename_clean = filename_clean[:-4]
-                            dbfilename_clean = dbfilename
-                            if dbfilename_clean.endswith(".bz2"):
-                                dbfilename_clean = dbfilename_clean[:-4]
+    logger.info("Got %d files to consider for deletion", cnt)
+    if cnt > 2000 and not options.yesimsure:
+        logger.error("To proceed with this many files, "
+                     "you must say --yesimsure")
+        sys.exit(1)
 
-                            found = (filename_clean == dbfilename_clean) and (tapeid not in tapeids)
-                            if not options.skipmd5:
-                                found = found and (datamd5 == dbdatamd5)
+    # We use the FileOnTapeHelper class here which provides caching..
+    foth = FileOnTapeHelper(tapeserver=options.tapeserver)
 
-                            if found:
-                                logger.debug("Found it on tape id %d" % tapeid)
-                                tapeids.append(tapeid)
+    if options.filepre:
+        logger.info("Pre-populating tape server results cache from filepre")
+        foth.populate_cache(options.filepre)
 
-                        if len(tapeids) >= options.mintapes:
-                            sumbytes += diskfile.file_size
-                            sumgb = sumbytes / 1.0E9
-                            sumfiles += 1
-                            if options.dryrun:
-                                add_to_msg(
-                                    logger.info,
-                                    "Dry run - not actually deleting File %s - %s which is on %d tapes: %s" % (fullpath, filemd5, len(tapeids), tapeids)
-                                    )
-                            else:
-                                add_to_msg(
-                                    logger.info,
-                                    "Deleting File %s - %s which is on %d tapes: %s" % (fullpath, filemd5, len(tapeids), tapeids)
-                                    )
-                                try:
-                                    os.unlink(fullpath)
-                                    logger.debug("Marking diskfile id %d as not present" % diskfile.id)
-                                    diskfile.present = False
-                                    session.commit()
-                                except:
-                                    add_to_msg(
-                                        logger.error,
-                                        "Could not unlink file %s: %s - %s" % (fullpath, sys.exc_info()[0], sys.exc_info()[1])
-                                        )
-                                    add_to_errmsg(
-                                        None,
-                                        "Could not unlink file %s: %s - %s" % (fullpath, sys.exc_info()[0],
-                                                                               sys.exc_info()[1]))
-                        else:
-                            add_to_msg(
-                                logger.info,
-                                "File %s is not on sufficient tapes to be elligable for deletion" % dbfilename
-                                )
-                    except (ConnectionError, ConnectionResetError, ConnectionAbortedError, ConnectionRefusedError):
-                        add_to_msg(logger.info, "Unable to check %s against tape server xml service, skipping"
-                                   % dbfilename)
-                if not check_old_enough_to_delete(dbfilename):
-                    add_to_msg(logger.info, "File is too young to delete: %s" % dbfilename)
-                    add_to_errmsg(None, "File is too young to delete: %s" % dbfilename)
-                    continue
-                if options.maxgb:
-                    if sumgb>options.maxgb:
-                        add_to_msg(logger.info, "Already deleted %.2f GB - stopping now" % sumgb)
-                        break
-                if not check_not_on_export_queue(session, dbfilename):
-                    add_to_msg(logger.info, "File is in export queue, skipping: %s" % dbfilename)
-                    continue
-                if options.auto:
-                    if (numtodelete > 0) and (sumfiles >= numtodelete):
-                        add_to_msg(
-                            logger.info,
-                            "Have now deleted the necessary number of files: %d Stopping now" % sumfiles
-                            )
-                        break
-                    if (gbtodelete > 0) and (sumgb >= gbtodelete):
-                        add_to_msg(
-                            logger.info,
-                            "Have now deleted the necessary number of GB: %.2f Stopping now" % sumgb
-                            )
-                        break
+    sumbytes = 0
+    sumfiles = 0
+    firstfile = None
+    lastfile = None
+
+    for diskfile in query:
+        logger.debug("Full path filename: %s", diskfile.fullpath)
+        if not diskfile.exists():
+            logger.error("Cannot access file %s", diskfile.fullpath)
+            continue
+
+        # Check if it is on the exportqueue
+        neq = session.query(ExportQueueEntry)\
+            .filter(ExportQueueEntry.filename == diskfile.filename)\
+            .count()
+        if neq:
+            logger.info("File %s is on the Export Queue - skipping",
+                        diskfile.filename)
+            continue
+
+        if options.skipmd5:
+            logger.debug("Skipping md5 check")
+            filemd5 = None
+        else:
+            filemd5 = diskfile.get_file_md5()
+            logger.debug("Actual File MD5 and canonical database diskfile "
+                         "MD5 are: %s and %s", (filemd5, diskfile.file_md5))
+            if filemd5 != diskfile.file_md5:
+                logger.error("File: %s has an md5sum mismatch between the "
+                             "database and the actual file. Skipping",
+                             diskfile.filename)
+                continue
+
+        # If we got here, either the md5 matches or was skipped.
+        # If it was skipped, the filemd5 value is None
+        # - we are using options.skipmd5 to skip *both* the check that the
+        # file on disk actually matches the local database, and that that's
+        # the same as the file on tape.
+
+        # Check if it's on tape.
+        tape_ids = foth.check_file(diskfile.file_size, filemd5)
+        if len(tape_ids) < options.mintapes:
+            logger.info("File %s is only on %d tapes (%s), not deleting",
+                        (diskfile.filename, len(tape_ids), str(tape_ids)))
+            continue
+
+        firstfile = diskfile.filename if firstfile is None else firstfile
+        lastfile = diskfile.filename
+        if options.dryrun:
+            logger.info("Dryrun: not actually deleting file %s",
+                        diskfile.fullpath)
+        else:
+            try:
+                os.unlink(diskfile.fullpath)
+                logger.debug("Marking diskfile id %d as not present",
+                             diskfile.id)
+                diskfile.present = False
+                session.commit()
+            except Exception:
+                logger.error("Could not delete %s", diskfile.fullpath,
+                             exc_info=True)
+
+        sumbytes += diskfile.file_size
+        numfiles += 1
+        if options.maxnum and numfiles >= options.maxnum:
+            logger.info("Have deleted %d files. Stopping per maxnum", numfiles)
+            break
+        if options.maxgbs and sumbytes*1E9 >= options.maxgbs:
+            logger.info("Have deleted %.2f GBs. Stopping per maxgbs",
+                        sumbytes*1E9)
+            break
+
+        if options.auto and numfiles >= numtodelete:
+            logger.info("In auto mode and have deleted required number of"
+                        "files, stopping")
+            break
+        if options.auto and sumbytes >= gbtodelete*1E9:
+            logger.info("In auto mode and have deleted required number of"
+                        "GBs, stopping")
+            break
 
     if options.emailto:
         if options.dryrun:
@@ -362,15 +239,18 @@ if __name__ == "__main__":
         mailfrom = 'fitsdata@gemini.edu'
         mailto = [options.emailto]
 
-        message = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (mailfrom, ", ".join(mailto), subject, '\n'.join(msglines))
+        msglines = [
+            "Deleted %d files totalling %.2f GB" % (numfiles, sumbytes/1E9),
+            "First file was: %s" % firstfile,
+            "Last file was: %s" % lastfile,
+        ]
 
-        errmessage = None
-        if errmsglines:
-            message = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (
-            mailfrom, ", ".join(mailto), "ERRORS - %s" % subject, '\n'.join(errmsglines))
+        message = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % \
+                  (mailfrom, ", ".join(mailto), subject, '\n'.join(msglines))
 
-        server = smtplib.SMTP(smtp_server)
+        server = smtplib.SMTP(fsc.smtp_server)
         server.sendmail(mailfrom, mailto, message)
         server.quit()
 
-    logger.info("**delete_files.py exiting normally")
+    logger.info("***   delete_files.py exiting normally at %s",
+                datetime.datetime.now())

@@ -1,13 +1,18 @@
 """
-This module provides a tape handling class
+This module provides a tape drive handling class, and some utility classes to
+help with the tapeserver api.
 """
-
+import http
 import sys
 import os
 import shutil
 import subprocess
 import tarfile
 import re
+
+import requests
+
+from fits_storage.config import get_config
 
 
 class TapeDrive(object):
@@ -296,3 +301,117 @@ class TapeDrive(object):
             self.cleanup()
             if fail:
                 raise
+
+
+class FileOnTapeHelper(object):
+    """
+    This class streamlines querying if a file is on tape via the API. It
+    provides a certain amount of local caching to reduce the number of
+    times you need to hit the API.
+
+    You should instantiate this class once before looping through files, then
+    call the methods on it as appropriate for each file. Be aware if using this
+    in long-running processes that the cache can grow huge.
+    """
+    tapeserver = None
+    _cache = None
+    _queried = None
+    reqses = None
+
+    def __init__(self, tapeserver=None):
+        fsc = get_config()
+        self.reqses = requests.Session()
+        self.tapeserver = fsc.tapeserver if tapeserver is None else tapeserver
+        self._cache = []
+        self._queried = []
+
+    def query_api(self, filepre):
+        """
+        Query the server and return a list of dictionaries in the same format
+        as the cache. The cache is a list of dictionaries. This may not be most
+        efficient, but it's simple and robust.
+        [{'filename': 'file.fits.bz2', 'trimmed_filename': 'file.fits',
+        'data_md5': abc123, 'tape_id': 123, 'tape_set': 321}, ...]
+        """
+        results = []
+        self._queried.append(filepre)
+        url = f"http://{self.tapeserver}/jsontapefile/{filepre}"
+        req = self.reqses.get(url)
+        if req.status_code != http.HTTPStatus.OK:
+            return None
+        for i in req.json():
+            # We add a trimmed_filename to each entry now for efficiency
+            i['trimmed_filename'] = i['filename'].removesuffix(".bz2")
+            results.append(i)
+        return results
+
+    def populate_cache(self, filepre):
+        results = self.query_api(filepre)
+        if results:
+            self._cache.extend(results)
+            return True
+        else:
+            return False
+
+    def make_filepre(self, filename):
+        """
+        This generates a filepre from a filename, to trigger a certain
+        amount of read-ahead when we query for a specific file. ie if we're
+        looking for N20201122S1234.fits, we'll actually query all of
+        N20201122 so that subsequent queries for files on the same night will
+        be in the cache.
+        """
+        if filename.startswith('N20') or filename.startswith('S20'):
+            return filename[:9]
+        if filename.startswith('GN20') or filename.startswith('GS20') or \
+                filename.startswith('gN20') or filename.startswith('gS20'):
+            return filename[:8]
+        if filename.startswith('img_20'):
+            return filename[:12]
+        if filename.startswith('mrg'):
+            return filename[:10]
+        if filename.startswith('SDC'):
+            return filename[:13]
+        return filename
+
+    def check_results(self, filename, data_md5=None, api_results=None):
+        """
+        Check of a filename / data_md5 combination in a list of api results
+        that is in the cache format. If api_results is None, we use the
+        cache. If data_md5 is None, we don't match on md5.
+        Returns a set containing the tape_ids the file is on.
+        """
+        tape_ids = set()
+        api_results = api_results if api_results else self._cache
+        tfilename = filename.removesuffix('.bz2')
+
+        for item in api_results:
+            if item['trimmed_filename'] == tfilename:
+                if (data_md5 is None)\
+                        or (data_md5 == item['data_md5']):
+                    tape_ids.add(item['tape_id'])
+        return tape_ids
+
+    def check_file(self, filename, data_md5=None):
+        """
+        Check if a file is on tape. First check the cache. If cache miss,
+        form a filepre for a direct query and check if we queried it already.
+        If not, query it, check those results, and add them to the cache.
+        Return the set of tape_ids the file is on.
+        """
+
+        # Check the cache
+        cache_results = self.check_results(filename, data_md5)
+        if cache_results:
+            return cache_results
+
+        # Cache miss, get a filepre and query it
+        filepre = self.make_filepre(filename)
+        if filepre in self._queried:
+            # Already checked, there is none
+            return set()
+        else:
+            api_results = self.query_api(filepre)
+            new_results = self.check_results(filename, data_md5, api_results)
+            self._cache.extend(api_results)
+            return new_results
