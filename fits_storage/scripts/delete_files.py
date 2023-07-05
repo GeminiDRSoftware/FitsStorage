@@ -189,7 +189,7 @@ with session_scope() as session:
         # the same as the file on tape.
 
         # Check if it's on tape.
-        tape_ids = foth.check_file(diskfile.file_size, filemd5)
+        tape_ids = foth.check_file(diskfile.filename, filemd5)
         if len(tape_ids) < options.mintapes:
             logger.info("File %s is only on %d tapes (%s), not deleting",
                         (diskfile.filename, len(tape_ids), str(tape_ids)))
