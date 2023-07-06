@@ -258,6 +258,12 @@ class CalQuery(object):
         ordering logic and will simply add .order_by(order_by) to the
         sqlalchemy query
 
+        Finally, this will add a .order_by(desc(Diskfile.entrytime)) to the
+        end of the query, which provides a most-recent first fail-safe in the
+        case where for example there are multiple processed cals from the same
+        raw cal in which case they will all have identical metadata and this
+        at least provides a defined ordering...
+
         Examples:
 
         # Returns up to 5 objects, applying only the default order
@@ -293,6 +299,8 @@ class CalQuery(object):
 
         # if os.getenv("CAL_QUERY_DEBUG", False):
         #     print("Query: %s" % render_query(self.query))
+
+        self.query = self.query.order_by(desc(DiskFile.entrytime))
 
         return self.query.limit(limit).all()
 
