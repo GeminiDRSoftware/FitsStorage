@@ -1,2 +1,2 @@
-PYTHONPATH=/opt/FitsStorage
+PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/GHOSTDR
 PATH=/opt/anaconda3/envs/dragons/bin

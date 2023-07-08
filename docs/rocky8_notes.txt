@@ -1,6 +1,7 @@
 # Update
 sudo dnf update
 sudo dnf autoremove
+sudo dnf install nginx
 
 # As you
 wget https://repo.anaconda.com/archive/Anaconda3-2023.03-1-Linux-x86_64.sh
@@ -9,37 +10,28 @@ install location /opt/anaconda3
 do not activate
 sudo chgrp -R local-users /opt/anaconda3
 sudo chmod -R g+w /opt/anaconda3
-conda init
 
 # As fitsdata
-# copy the conda stuff from your .bashrc into fitsdata .bashrc
-# Log out and back in
 eval "$(/opt/anaconda3/bin/conda shell.bash hook)"
 conda init
-# log out and back in?
-conda update -n base -c defaults conda
-conda create -n fits python=3.10
-conda activate fits
-pip3 install astropy
-pip3 install requests
-pip3 install "sqlalchemy<2.0.0"
-pip3 install python-dateutil
-pip3 install asdf
-pip3 install gWCS
-pip3 install psycopg2-binary
+# log out and back in
+conda config --add channels conda-forge
+conda config --add channels http://astroconda.gemini.edu/public
+conda create -n dragons python=3.10 dragons ds9 bokeh=2.4.3
 
 # In bash profile, add:
 export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/GHOSTDR
 
 # At end of bashrc, add:
-conda activate fits
+conda activate dragons
 
 # As you
 cd /opt
-sudo mkdir DRAGONS GHOSTDR FitsStorage FitsStorageConfig
-sudo chown fitsdata DRAGONS GHOSTDR FitsStorage FitsStorageConfig
+sudo mkdir DRAGONS GHOSTDR FitsStorage FitsStorageConfigurations
+sudo chown fitsdata DRAGONS GHOSTDR FitsStorage FitsStorageConfigurations
 
 # As fitsdata
+pip3 install psycopg2-binary
 cd /opt/DRAGONS
 git clone https://github.com/GeminiDRSoftware/DRAGONS .
 git fetch
