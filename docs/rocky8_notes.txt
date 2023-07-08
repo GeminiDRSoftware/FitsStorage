@@ -48,11 +48,17 @@ git clone git@gitlab.gemini.edu:DRSoftware/FitsStorageConfigurations.git .
 
 
 # As you
+# Add to end of /etc/passwd: fitsweb:*:5180:513:gem-fitsweb:/home/fitsweb:/bin/bash
+# Add fitsweb to fitsdata group
 sudo ln -s /opt/FitsStorageConfigurations/fits_storage.conf /etc/fits_storage.conf
 sudo cp /opt/FitsStorage/system_install_files/etc_systemd_system/* /etc/systemd/system
 sudo mkdir /opt/uwsgi
 sudo chown fitsweb:fitsdata /opt/uwsgi
 sudo cp /opt/FitsStorage/system_install_files/fitsservice.ini /opt/uwsgi
+sudo cp /opt/FitsStorage/system_install_files/nginx-fits /etc/nginx/nginx.conf
+sudo systemctl start fits-nginx
+sudo systemctl start fits-uwsgi
+# Try and hit the web server. If you get error, look in /opt/uwsgi/fits.log
 
 
 
