@@ -24,6 +24,8 @@ export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/GHOSTDR
 
 # At end of bashrc, add:
 conda activate dragons
+export PATH="/opt/FitsStorage/fits_storage/scripts:$PATH"
+
 
 # As you
 cd /opt
