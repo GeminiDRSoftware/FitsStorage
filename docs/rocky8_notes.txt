@@ -61,6 +61,15 @@ sudo cp /opt/FitsStorage/system_install_files/nginx-fits /etc/nginx/nginx.conf
 sudo systemctl start fits-nginx
 sudo systemctl start fits-uwsgi
 # Try and hit the web server. If you get error, look in /opt/uwsgi/fits.log
+S=/opt/FitsStorage/system_install_files/etc_systemd_system
+D=/etc/systemd/system
+sudo cp $S/fits-environment.txt $D
+sudo cp $S/fits-*.service $D
+sudo systemctl start fits-service_service_ingest_queue1
+sudo systemctl enable fits-service_service_ingest_queue1
+sudo systemctl start fits-service_fileops_queue1
+sudo systemctl enable fits-service_fileops_queue1
+# Same for other queues, if appropriate
 
 
 
