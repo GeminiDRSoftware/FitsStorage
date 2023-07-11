@@ -21,11 +21,13 @@ from fits_storage.queues.queue.ingestqueue import IngestQueue
 from fits_storage.server.orm.miscfile import is_miscfile, miscfile_meta, \
     miscfile_meta_path
 
-from fits_storage.server.aws_s3 import get_helper
 
 from fits_storage.server.fitseditor import FitsEditor
 
 from fits_storage.config import get_config
+
+if get_config().using_s3:
+    from fits_storage.server.aws_s3 import get_helper
 
 
 class FileOpsError(Exception):
