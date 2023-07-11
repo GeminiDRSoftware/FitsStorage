@@ -4,10 +4,9 @@ Currently, the only hash function we use is md5sum
 
 """
 import hashlib
-import bz2
 
 
-__all__ = ["md5sum"]
+__all__ = ["md5sum", "md5sum_size_fp"]
 
 
 def md5sum(filename):
@@ -34,3 +33,22 @@ def md5sum(filename):
             hashobj.update(data)
 
         return hashobj.hexdigest()
+
+
+def md5sum_size_fp(fp):
+    """
+    Given an existing open file-like object fp, read data until EOF and
+    calculate the size and md5sum. We do this in one pass for efficiency.
+    Returns (size, md5sum)
+    """
+    block = 1000000  # 1MB
+    size = 0
+    hashobj = hashlib.md5()
+    while True:
+        data = fp.read(block)
+        if not data:
+            break
+        size += len(data)
+        hashobj.update(data)
+
+    return size, hashobj.hexdigest()
