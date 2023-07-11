@@ -160,7 +160,7 @@ with session_scope() as session:
         for df in diskfiles:
             numtapes = session.query(Tape)\
                 .select_from(join(TapeFile, join(TapeWrite, Tape)))\
-                .filter(Tape.active == True).filter(TapeWrite.suceeded == True)\
+                .filter(Tape.active == True).filter(TapeWrite.succeeded == True)\
                 .filter(TapeFile.filename == df.filename)\
                 .filter(TapeFile.md5 == df.file_md5)\
                 .filter(Tape.id in tapeids)\
@@ -183,7 +183,7 @@ with session_scope() as session:
         for df in diskfiles:
             num = session.query(TapeFile)\
                 .select_from(join(TapeFile, join(TapeWrite, Tape)))\
-                .filter(Tape.active == True).filter(TapeWrite.suceeded == True)\
+                .filter(Tape.active == True).filter(TapeWrite.succeeded == True)\
                 .filter(TapeFile.filename == df.filename)\
                 .filter(TapeFile.md5 == df.file_md5)\
                 .count()
@@ -283,7 +283,7 @@ with session_scope() as session:
             tw.startdate = datetime.datetime.utcnow()
             tw.hostname = os.uname()[1]
             tw.tapedrive = td.dev
-            tw.suceeded = False
+            tw.succeeded = False
             session.commit()
 
             # Write the tape.
@@ -355,7 +355,7 @@ with session_scope() as session:
             logger.debug("Updating tapewrite record")
             tw.enddate = datetime.datetime.utcnow()
             logger.debug("Succeeded: %s" % tarok)
-            tw.suceeded = tarok
+            tw.succeeded = tarok
             tw.afterstatus = td.status()
             tw.size = bytecount
             session.commit()

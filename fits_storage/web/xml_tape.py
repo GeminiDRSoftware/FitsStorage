@@ -33,7 +33,7 @@ class TapeWrapper(object):
     def tapewrites(self):
         q = (get_context().session.query(TapeWrite)
                     .filter(TapeWrite.tape_id == self.o.id)
-                    .filter(TapeWrite.suceeded == True)
+                    .filter(TapeWrite.succeeded == True)
                     .order_by(TapeWrite.id))
         return QueryWrapper(q, TapeWriterWrapper)
 

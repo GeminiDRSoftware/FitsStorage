@@ -60,7 +60,7 @@ query = session.query(TapeFile.filename)\
     .select_from(Tape, TapeWrite, TapeFile)\
     .filter(Tape.id == TapeWrite.tape_id)\
     .filter(TapeWrite.id == TapeFile.tapewrite_id)\
-    .filter(Tape.active == True).filter(TapeWrite.suceeded == True)
+    .filter(Tape.active == True).filter(TapeWrite.succeeded == True)
 
 # Match against the given filere
 if options.filere:
@@ -87,7 +87,7 @@ for filename in filenames:
     query = session.query(TapeFile.md5).select_from(Tape, TapeWrite, TapeFile)\
         .filter(Tape.id == TapeWrite.tape_id)\
         .filter(TapeWrite.id == TapeFile.tapewrite_id)\
-        .filter(TapeWrite.suceeded == True).filter(Tape.active == True)\
+        .filter(TapeWrite.succeeded == True).filter(Tape.active == True)\
         .filter(Tape.set == options.from_set)\
         .filter(TapeFile.filename == filename)\
         .order_by(desc(TapeFile.lastmod))
@@ -100,7 +100,7 @@ for filename in filenames:
     newquery = session.query(Tape).select_from(Tape, TapeWrite, TapeFile)\
         .filter(Tape.id == TapeWrite.tape_id)\
         .filter(TapeWrite.id == TapeFile.tapewrite_id)\
-        .filter(TapeWrite.suceeded == True).filter(Tape.active == True)\
+        .filter(TapeWrite.succeeded == True).filter(Tape.active == True)\
         .filter(Tape.set == options.to_set)\
         .filter(TapeFile.filename == filename).filter(TapeFile.md5 == md5)\
         .distinct()

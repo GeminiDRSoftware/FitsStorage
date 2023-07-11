@@ -91,7 +91,7 @@ with session_scope() as session:
                 .select_from(join(join(TapeFile, TapeWrite), Tape))\
                 .filter(TapeFile.filename == diskfile.filename)\
                 .filter(TapeFile.md5 == diskfile.file_md5) \
-                .filter(TapeWrite.suceeded == True).filter(Tape.active == True)\
+                .filter(TapeWrite.succeeded == True).filter(Tape.active == True)\
                 .filter(Tape.set == ts)\
                 .all()
 

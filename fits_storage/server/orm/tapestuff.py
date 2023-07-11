@@ -58,7 +58,7 @@ class TapeWrite(Base):
     filenum = Column(Integer, index=True)
     startdate = Column(DateTime(timezone=False))
     enddate = Column(DateTime(timezone=False))
-    suceeded = Column(Boolean, index=True)
+    succeeded = Column(Boolean, index=True)
     size = Column(BigInteger)
     beforestatus = Column(Text)
     afterstatus = Column(Text)

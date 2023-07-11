@@ -77,7 +77,7 @@ else:
 
     # Other housekeeping checks - if the write never succeeded, we probably
     # don't care about it
-    query = query.filter(TapeWrite.suceeded == True)
+    query = query.filter(TapeWrite.succeeded == True)
 
 query = query.distinct()
 
@@ -91,7 +91,7 @@ for filename in filenames:
         .select_from(Tape, TapeWrite, TapeFile)\
         .filter(Tape.id == TapeWrite.tape_id)\
         .filter(TapeWrite.id == TapeFile.tapewrite_id)\
-        .filter(TapeWrite.suceeded == True).filter(Tape.active == True)\
+        .filter(TapeWrite.succeeded == True).filter(Tape.active == True)\
         .filter(TapeFile.filename == filename[0])\
         .order_by(desc(TapeFile.lastmod))
 

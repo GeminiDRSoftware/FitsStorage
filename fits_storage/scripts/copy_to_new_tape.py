@@ -91,7 +91,7 @@ if __name__ == "__main__":
         .select_from(Tape, TapeWrite, TapeFile, TapeRead)\
         .filter(Tape.id == TapeWrite.tape_id)\
         .filter(TapeWrite.id == TapeFile.tapewrite_id)\
-        .filter(Tape.active == True).filter(TapeWrite.suceeded == True)\
+        .filter(Tape.active == True).filter(TapeWrite.succeeded == True)\
         .filter(TapeFile.filename == TapeRead.filename)\
         .filter(TapeFile.md5 == TapeRead.md5)
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
             .select_from(Tape, TapeWrite, TapeFile, TapeRead)\
             .filter(Tape.id == TapeWrite.tape_id)\
             .filter(TapeWrite.id == TapeFile.tapewrite_id)\
-            .filter(Tape.active == True).filter(TapeWrite.suceeded == True)\
+            .filter(Tape.active == True).filter(TapeWrite.succeeded == True)\
             .filter(TapeFile.filename == TapeRead.filename)\
             .filter(TapeFile.md5 == TapeRead.md5)\
             .filter(Tape.label == tape.label)\
@@ -163,7 +163,7 @@ if __name__ == "__main__":
             .select_from(Tape, TapeWrite, TapeFile, TapeRead)\
             .filter(Tape.id == TapeWrite.tape_id)\
             .filter(TapeWrite.id == TapeFile.tapewrite_id)\
-            .filter(Tape.active == True).filter(TapeWrite.suceeded == True)\
+            .filter(Tape.active == True).filter(TapeWrite.succeeded == True)\
             .filter(TapeFile.filename == TapeRead.filename)\
             .filter(TapeFile.md5 == TapeRead.md5)\
             .filter(Tape.label == fromlabel)\
@@ -194,7 +194,7 @@ if __name__ == "__main__":
                 .filter(Tape.id == TapeWrite.tape_id)\
                 .filter(TapeWrite.id == TapeFile.tapewrite_id)\
                 .filter(Tape.active == True)\
-                .filter(TapeWrite.suceeded == True)\
+                .filter(TapeWrite.succeeded == True)\
                 .filter(TapeFile.filename == TapeRead.filename)\
                 .filter(TapeFile.md5 == TapeRead.md5)\
                 .filter(Tape.label == fromlabel)\
@@ -232,7 +232,7 @@ if __name__ == "__main__":
             tw.startdate = datetime.datetime.utcnow()
             tw.hostname = os.uname()[1]
             tw.tapedrive = totd.dev
-            tw.suceeded = False
+            tw.succeeded = False
             session.commit()
             logger.debug("... TapeWrite id=%d, filenum=%d", (tw.id, tw.filenum))
 
@@ -401,7 +401,7 @@ if __name__ == "__main__":
             logger.debug("Updating tapewrite record")
             tw.enddate = datetime.datetime.utcnow()
             logger.debug("Succeeded: %s", totarok)
-            tw.suceeded = totarok
+            tw.succeeded = totarok
             tw.afterstatus = totd.status()
             tw.size = bytecount
             session.commit()

@@ -62,7 +62,7 @@ if options.list_tapes:
         .select_from(Tape, TapeWrite, TapeFile, TapeRead)\
         .filter(Tape.id == TapeWrite.tape_id)\
         .filter(TapeWrite.id == TapeFile.tapewrite_id)\
-        .filter(Tape.active == True).filter(TapeWrite.suceeded == True)\
+        .filter(Tape.active == True).filter(TapeWrite.succeeded == True)\
         .filter(TapeFile.filename == TapeRead.filename)\
         .filter(TapeFile.md5 == TapeRead.md5)
 
@@ -83,7 +83,7 @@ if options.list_tapes:
                 .filter(Tape.id == TapeWrite.tape_id)\
                 .filter(TapeWrite.id == TapeFile.tapewrite_id)\
                 .filter(Tape.active == True)\
-                .filter(TapeWrite.suceeded == True)\
+                .filter(TapeWrite.succeeded == True)\
                 .filter(TapeFile.filename == TapeRead.filename)\
                 .filter(TapeFile.md5 == TapeRead.md5)\
                 .filter(Tape.label == l)
@@ -105,7 +105,7 @@ try:
         .select_from(Tape, TapeWrite, TapeFile, TapeRead)\
         .filter(Tape.id == TapeWrite.tape_id)\
         .filter(TapeWrite.id == TapeFile.tapewrite_id)\
-        .filter(Tape.active == True).filter(TapeWrite.suceeded == True)\
+        .filter(Tape.active == True).filter(TapeWrite.succeeded == True)\
         .filter(TapeFile.filename == TapeRead.filename)\
         .filter(TapeFile.md5 == TapeRead.md5)\
         .filter(Tape.label == label)\
@@ -141,7 +141,7 @@ try:
             .select_from(Tape, TapeWrite, TapeFile, TapeRead)\
             .filter(Tape.id == TapeWrite.tape_id)\
             .filter(TapeWrite.id == TapeFile.tapewrite_id)\
-            .filter(Tape.active == True).filter(TapeWrite.suceeded == True)\
+            .filter(Tape.active == True).filter(TapeWrite.succeeded == True)\
             .filter(TapeFile.filename == TapeRead.filename)\
             .filter(TapeFile.md5 == TapeRead.md5)\
             .filter(Tape.label == label)\

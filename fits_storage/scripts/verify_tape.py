@@ -47,20 +47,21 @@ with session_scope() as session:
     td = TapeDrive(options.tapedrive, fsc.fits_tape_scratchdir)
     td.setblk0()
     label = td.readlabel()
+    logger.debug('Read tape label: %s', label)
 
     # Find the tape in the DB
     try:
         tape = session.query(Tape).filter(Tape.active==True)\
             .filter(Tape.label==label).one()
     except NoResultFound:
-        logger.error("The tape %s was not found in the DB." % label)
+        logger.error("The tape %s was not found in the DB.", label)
         sys.exit(1)
 
     # A flag so that we can say at the end you need to look back at the logfile.
     error_happened = False
 
     # Find all the tapewrite objects for it, loop through them in filenum order
-    tw_list = session.query(TapeWrite).filter(TapeWrite.suceeded==True)\
+    tw_list = session.query(TapeWrite).filter(TapeWrite.succeeded == True)\
         .filter(TapeWrite.tape_id==tape.id).order_by(TapeWrite.filenum).all()
     for tw in tw_list:
         errors_this_file = False
@@ -121,7 +122,7 @@ with session_scope() as session:
                 # Calculate the md5 of the data on tape
                 f = tar.extractfile(tar_info)
                 try:
-                    (md5, size) = md5sum_size_fp(f)
+                    md5, size = md5sum_size_fp(f)
                 except Exception:
                     logger.error("Error reading data from tar file. Likely this"
                                  " is a tape error. Filename: %s in filenum %d",
@@ -132,11 +133,15 @@ with session_scope() as session:
 
                 if size != tf.size:
                     logger.error("Size mismatch between tape and DB for file: "
-                                 "%s, in filenum: %d", tf.filename, tw.filenum)
+                                 "%s, in filenum: %d. On-tape size: %d, "
+                                 "db-size: %d", tf.filename, tw.filenum,
+                                 size, tf.size)
                     errors_this_file = True
                 if md5 != tf.md5:
                     logger.error("md5 mismatch between tape and DB for file: "
-                                 "%s, in filenum: %d", tf.filename, tw.filenum)
+                                 "%s, in filenum: %d. On tape md5: %s, "
+                                 "db md5: %s", tf.filename, tw.filenum,
+                                 md5, tf.md5)
                     errors_this_file = True
             tar.close()
 
