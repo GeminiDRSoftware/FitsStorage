@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import signal
 import datetime
 import tarfile
 from sqlalchemy.exc import NoResultFound
@@ -39,6 +40,15 @@ setdemon(options.demon)
 
 # Make separate log files per tape drive
 setlogfilesuffix(options.tapedrive.split('/')[-1])
+
+
+# Define signal handlers. This allows us to ingore some signals in demon mode.
+# These need to be defined after logger is set up as there is no way to pass
+# the logger as an argument to these.
+def handler(signum, frame):
+    logger.warning("Received signal: %d. Ignoring...", signum)
+if options.demon:
+    signal.signal(signal.SIGHUP, handler)
 
 # Announce startup
 logger.info("***   verify_tape.py - starting up at %s", datetime.datetime.now())
