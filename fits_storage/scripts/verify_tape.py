@@ -122,7 +122,7 @@ with session_scope() as session:
                 # Calculate the md5 of the data on tape
                 f = tar.extractfile(tar_info)
                 try:
-                    md5, size = md5sum_size_fp(f)
+                    size, md5 = md5sum_size_fp(f)
                 except Exception:
                     logger.error("Error reading data from tar file. Likely this"
                                  " is a tape error. Filename: %s in filenum %d",
