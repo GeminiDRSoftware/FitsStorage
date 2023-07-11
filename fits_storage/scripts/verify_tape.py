@@ -159,7 +159,7 @@ with session_scope() as session:
             else:
                 # Check whether we read everything in the DB
                 files_in_DB = session.query(TapeFile)\
-                    .filter(TapeWrite.tapewrite_id==tw.id)\
+                    .filter(TapeFile.tapewrite_id==tw.id)\
                     .order_by(TapeFile.filename).all()
                 for dbfile in files_in_DB:
                     if dbfile.filename not in files_on_tape:
