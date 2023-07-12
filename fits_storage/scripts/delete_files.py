@@ -30,7 +30,7 @@ parser.add_option("--file-pre", action="store", type="string", dest="filepre",
                   help="File prefix to operate on, eg N20090130, N200812 etc")
 parser.add_option("--maxnum", type="int", action="store", dest="maxnum",
                   help="Delete at most X files.")
-parser.add_option("--maxgb", type="float", action="store", dest="maxgb",
+parser.add_option("--maxgbs", type="float", action="store", dest="maxgbs",
                   help="Delete at most X GB of files")
 parser.add_option("--auto", action="store_true", dest="auto",
                   help="Delete old files to get to pre-defined free space")
@@ -72,10 +72,6 @@ setdemon(options.demon)
 logger.info("***   delete_files.py - starting up at %s",
             datetime.datetime.now())
 
-logger.error("This script hasn't been operationally tested since the"
-             "great refactor of 2023. Please test...")
-sys.exit(0)
-
 with session_scope() as session:
     query = session.query(DiskFile).filter(DiskFile.canonical == True)
 
@@ -92,7 +88,7 @@ with session_scope() as session:
             numfiles = session.query(DiskFile)\
                 .filter(DiskFile.present == True).count()
         logger.debug("Disk has %d files present and %.2f GB available",
-                     (numfiles, gbavail))
+                     numfiles, gbavail)
         numtodelete = numfiles - fsc.target_max_files
         if numtodelete > 0:
             logger.info("Need to delete at least %d files", numtodelete)
@@ -126,7 +122,7 @@ with session_scope() as session:
              datetime.timedelta(days=options.olderthan)
         query = query.filter(oldby < dt)
 
-    query = query.order_by(desc(oldby))
+    query = query.order_by(oldby)
 
     if options.maxnum:
         query = query.limit(options.maxnum)
@@ -150,13 +146,13 @@ with session_scope() as session:
         foth.populate_cache(options.filepre)
 
     sumbytes = 0
-    sumfiles = 0
+    numfiles = 0
     firstfile = None
     lastfile = None
 
     for diskfile in query:
         logger.debug("Full path filename: %s", diskfile.fullpath)
-        if not diskfile.exists():
+        if not diskfile.file_exists():
             logger.error("Cannot access file %s", diskfile.fullpath)
             continue
 
@@ -175,7 +171,7 @@ with session_scope() as session:
         else:
             filemd5 = diskfile.get_file_md5()
             logger.debug("Actual File MD5 and canonical database diskfile "
-                         "MD5 are: %s and %s", (filemd5, diskfile.file_md5))
+                         "MD5 are: %s and %s", filemd5, diskfile.file_md5)
             if filemd5 != diskfile.file_md5:
                 logger.error("File: %s has an md5sum mismatch between the "
                              "database and the actual file. Skipping",
@@ -192,7 +188,7 @@ with session_scope() as session:
         tape_ids = foth.check_file(diskfile.filename, filemd5)
         if len(tape_ids) < options.mintapes:
             logger.info("File %s is only on %d tapes (%s), not deleting",
-                        (diskfile.filename, len(tape_ids), str(tape_ids)))
+                        diskfile.filename, len(tape_ids), str(tape_ids))
             continue
 
         firstfile = diskfile.filename if firstfile is None else firstfile
@@ -214,11 +210,12 @@ with session_scope() as session:
         sumbytes += diskfile.file_size
         numfiles += 1
         if options.maxnum and numfiles >= options.maxnum:
-            logger.info("Have deleted %d files. Stopping per maxnum", numfiles)
+            logger.info("Have deleted %d files (%.2f GB). Stopping per maxnum",
+                        numfiles, sumbytes/1E9)
             break
-        if options.maxgbs and sumbytes*1E9 >= options.maxgbs:
-            logger.info("Have deleted %.2f GBs. Stopping per maxgbs",
-                        sumbytes*1E9)
+        if options.maxgbs and sumbytes/1E9 >= options.maxgbs:
+            logger.info("Have deleted %.2f GBs (%d files) Stopping per maxgbs",
+                        sumbytes/1E9, numfiles)
             break
 
         if options.auto and numfiles >= numtodelete:
