@@ -403,7 +403,7 @@ class SummaryGenerator(object):
             elif col.header_attr:
                 c.text = getattr(header, col.header_attr)
             elif col.diskfile_attr:
-                c.text = getattr(diskfile, col.diskfile_attr)
+                c.text = getattr(header.diskfile, col.diskfile_attr)
             else:
                 c.text = "Error: Not Defined in SummaryGenerator!"
             row.add(c)
