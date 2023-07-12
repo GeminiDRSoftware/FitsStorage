@@ -8,6 +8,53 @@ import fits_storage.db as db
 from fits_storage.config import get_config
 fsc = get_config()
 
+# This is a little helper class that makes dealing with database permissions
+# a lot more tidy further down
+
+
+class GrantHelper(object):
+    _select = []
+    _insert = []
+    _update = []
+    _delete = []
+
+    def grant(self, perm, thing):
+        if isinstance(thing, list):
+            perm.extend(thing)
+        else:
+            perm.append(thing)
+
+    def select(self, thing):
+        self.grant(self._select, thing)
+
+    def insert(self, thing):
+        self.grant(self._insert, thing)
+
+    def update(self, thing):
+        self.grant(self._update, thing)
+
+    def delete(self, thing):
+        self.grant(self._delete, thing)
+
+    @property
+    def select_string(self):
+        return ', '.join(self._select)
+
+    @property
+    def insert_string(self):
+        return ', '.join(self._insert)
+
+    @property
+    def delete_string(self):
+        return ', '.join(self._delete)
+
+    @property
+    def update_string(self):
+        # We need to grant update on the _id_seq of any table we grant insert on
+        id_seqs = [t + '_id_seq' for t in self._insert]
+        return ', '.join(self._update + id_seqs)
+
+
 # Importing orm classes here (or even within imports that get called from
 # here) will cause those tables to be created even though there is no
 # reference to the orm class and it looks like the import is unused. When the
@@ -36,6 +83,68 @@ if fsc.is_server:
 # Calcache table
 if fsc.is_archive:
     from fits_storage.cal.orm.calcache import CalCache
+
+def get_fitsweb_granthelper():
+    # Define server database permissions here for clarity. Using helper class
+    grant = GrantHelper()
+
+    # Things that the fitsweb role needs select on for basic queries:
+    grant.select(
+        ['file', 'diskfile', 'diskfilereport', 'header', 'fulltextheader',
+         'gmos', 'niri', 'michelle', 'gnirs', 'gpi', 'nifs', 'f2', 'gsaoi',
+         'nici', 'ghost', 'photstandard', 'photstandardobs', 'footprint',
+         'preview', 'obslog', 'miscfile', 'obslog_comment', 'program',
+         'publication', 'programpublication'])
+
+    # For the notification system:
+    grant.select('notification')
+    grant.insert('notification')
+    grant.update('notification')
+    grant.delete('notification')
+
+    # For log reporting:
+    log_tables = ['usagelog', 'querylog', 'downloadlog', 'filedownloadlog',
+                  'fileuploadlog']
+    grant.select(log_tables)
+    grant.insert(log_tables)
+    grant.update(log_tables)
+
+    # For the queue status page:
+    grant.select(['ingestqueue', 'exportqueue', 'fileopsqueue', 'previewqueue',
+                  'calcachequeue'])
+
+    # For the qametric system:
+    qametric_tables = ['qareport', 'qametriciq', 'qametriczp', 'qametricsb',
+                       'qametricpe']
+    grant.select(qametric_tables)
+    grant.insert(qametric_tables)
+    grant.update(qametric_tables)
+
+    # For the tape system web interface:
+    grant.select(['tape', 'tape_id_seq', 'tapewrite', 'taperead', 'tapefile'])
+    grant.insert('tape')
+    grant.update('tape')
+
+    # For user management:
+    user_tables = ['users', 'userprogram']
+    grant.select(user_tables)
+    grant.insert(user_tables)
+    grant.update(user_tables)
+
+    # For miscfiles
+    grant.insert('miscfile')
+    grant.update('miscfile')
+
+    # For file upload
+    grant.insert('fileopsqueue')
+
+    # For stuff from the ODB and for publications
+    odb_tables = ['obslog_comment', 'program', 'publication',
+                  'programpublication']
+    grant.insert(odb_tables)
+    grant.update(odb_tables)
+
+    return grant
 
 def create_tables(session: Session):
     """
@@ -66,13 +175,15 @@ def create_tables(session: Session):
     # Grant access to server tables for the unprivileged user that runs the
     # wsgi code for the web server (ie 'fitsweb')
     if fsc.is_server and not fsc.using_sqlite:
-        db._saved_engine.execute("GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, gpi, nifs, f2, gsaoi, nici, tape, tape_id_seq, tapewrite, taperead, tapefile, notification, photstandard, photstandardobs, footprint, qareport, qametriciq, qametriczp, qametricsb, qametricpe, ingestqueue, exportqueue, fileopsqueue, users, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog, preview, obslog, miscfile, ingestqueue, exportqueue, previewqueue, calcachequeue, obslog_comment, program, publication, programpublication TO fitsweb;")
-        db._saved_engine.execute("GRANT INSERT,UPDATE ON tape, notification, qareport, qametriciq, qametriczp, qametricsb, qametricpe, users, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog, miscfile, ingestqueue, fileopsqueue, obslog_comment, program, publication, programpublication TO fitsweb;")
-        db._saved_engine.execute("GRANT UPDATE ON tape_id_seq, notification_id_seq, qareport_id_seq, qametriciq_id_seq, qametriczp_id_seq, qametricsb_id_seq, qametricpe_id_seq, users_id_seq, userprogram_id_seq, usagelog_id_seq, querylog_id_seq, downloadlog_id_seq, filedownloadlog_id_seq, fileuploadlog_id_seq, ingestqueue_id_seq, fileopsqueue_id_seq, obslog_comment_id_seq, program_id_seq, publication_id_seq, programpublication_id_seq TO fitsweb;")
-        db._saved_engine.execute("GRANT DELETE ON notification TO fitsweb;")
+        grant = get_fitsweb_granthelper()
+        db._saved_engine.execute(f"GRANT SELECT ON {grant.select_string} TO fitsweb;")
+        db._saved_engine.execute(f"GRANT INSERT ON {grant.insert_string} TO fitsweb;")
+        db._saved_engine.execute(f"GRANT UPDATE ON {grant.update_string} TO fitsweb;")
+        db._saved_engine.execute(f"GRANT DELETE ON {grant.delete_string} TO fitsweb;")
 
     if fsc.is_archive and not fsc.using_sqlite:
         db._saved_engine.execute("GRANT SELECT ON calcache TO fitsweb;")
+
 
 def drop_tables(session: Session):
     """
