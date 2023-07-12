@@ -73,7 +73,7 @@ with session_scope() as session:
             exists = s3.exists_key(df.filename)
         else:
             # Does the file actually exist?
-            exists = df.exists()
+            exists = df.file_exists()
 
         if exists is False:
             df.present = False
