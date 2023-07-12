@@ -1,16 +1,17 @@
-from sqlalchemy import join
+#!/usr/bin/env python3
+
 import datetime
 from optparse import OptionParser
 
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.fits_storage_config import using_s3
-if using_s3:
-    from fits_storage.utils.aws_s3 import get_helper
 
-from gemini_obs_db.db import session_scope
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.diskfile import DiskFile
+from fits_storage.db import session_scope
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.config import get_config
+fsc = get_config()
 
+if fsc.using_s3:
+    from fits_storage.server.aws_s3 import get_helper
 
 """
 Utility for validating `~DiskFile`s as being present.
@@ -21,73 +22,74 @@ a system where you mark all canonical `~DiskFile`s present and run this to
 clear out the ones that are no longer on disk.
 """
 
-if __name__ == "__main__":
+parser = OptionParser()
+parser.add_option("--limit", action="store", type="int",
+                  help="specify a limit on the number of files to examine. The "
+                       "list is sorted by lastmod time before the limit is "
+                       "applied")
+parser.add_option("--file-pre", action="store", type="string", dest="filepre",
+                  help="File prefix to check (omit for all)")
+parser.add_option("--debug", action="store_true", dest="debug",
+                  help="Increase log level to debug")
+parser.add_option("--demon", action="store_true", dest="demon",
+                  help="Run as a background demon, do not generate stdout")
+(options, args) = parser.parse_args()
 
-    parser = OptionParser()
-    parser.add_option("--limit", action="store", type="int", help="specify a limit on the number of files to examine. The list is sorted by lastmod time before the limit is applied")
-    parser.add_option("--file-pre", action="store", type="string", dest="filepre", help="File prefix to check (omit for all)")
-    parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
-    parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+# Logging level to debug? Include stdio log?
+setdebug(options.debug)
+setdemon(options.demon)
 
-    (options, args) = parser.parse_args()
+# Announce startup
+logger.info("***   rollcall.py - starting up at %s", datetime.datetime.now())
 
-    # Logging level to debug? Include stdio log?
-    setdebug(options.debug)
-    setdemon(options.demon)
+# Get a database session
+with session_scope() as session:
+    # Get a list of all diskfiles marked as present
+    query = session.query(DiskFile).filter(DiskFile.present == True)\
+        .order_by(DiskFile.lastmod)
 
+    if options.filepre:
+        query = query.filter(DiskFile.filename.startswith(options.filepre))
 
-    # Annouce startup
-    logger.info("*********    rollcall.py - starting up at %s" % datetime.datetime.now())
+    # Did we get a limit option?
+    if options.limit:
+        query = query.limit(options.limit)
 
-    # Get a database session
-    with session_scope() as session:
-        # Get a list of all diskfile_ids marked as present
-        query = session.query(DiskFile.id).select_from(join(DiskFile, File)).filter(DiskFile.present == True).order_by(DiskFile.lastmod)
+    logger.info("evaluating number of rows...")
+    n = query.count()
+    logger.info("%d files to check", n)
 
-        if(options.filepre):
-            likestr = "%s%%" % options.filepre
-            query = query.filter(File.name.like(likestr))
+    logger.info("Starting checking...")
 
-        # Did we get a limit option?
-        if(options.limit):
-            query = query.limit(options.limit)
+    if fsc.using_s3:
+        logger.debug("Connecting to s3")
+        s3 = get_helper()
 
-        logger.info("evaluating number of rows...")
-        n = query.count()
-        logger.info("%d files to check" % n)
-
-        logger.info("Starting checking...")
-
-        if using_s3:
-            logger.debug("Connecting to s3")
-            s3 = get_helper()
-
-        i = 0
-        j = 0
-        missingfiles = []
-        for dfid in query:
-            df = session.query(DiskFile).get(dfid[0])
-            if using_s3:
-                logger.debug("Getting s3 key for %s" % df.filename)
-                exists = s3.exists_key(df.filename)
-            else:
-                # Make it false if this one doesn't actually exist
-                exists = df.exists()
-
-            if(exists == False):
-                df.present = False
-                j += 1
-                logger.info("File %d/%d: Marking file %s (diskfile id %d) as not present" % (i, n, df.filename, df.id))
-                missingfiles.append(df.filename)
-                session.commit()
-            else:
-                if ((i % 1000) == 0):
-                    logger.info("File %d/%d: present and correct" % (i, n))
-            i += 1
-
-        if(j > 0):
-            logger.warning("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
+    i = 0
+    missingfiles = []
+    for df in query:
+        if fsc.using_s3:
+            logger.debug("Getting s3 key for %s", df.filename)
+            exists = s3.exists_key(df.filename)
         else:
-            logger.info("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
+            # Does the file actually exist?
+            exists = df.exists()
 
-    logger.info("*** rollcall.py exiting normally at %s" % datetime.datetime.now())
+        if exists is False:
+            df.present = False
+            logger.info("File %d/%d: Marking file %s (diskfile id %d) as not "
+                        "present", i, n, df.filename, df.id)
+            missingfiles.append(df.filename)
+            session.commit()
+        else:
+            if (i % 1000) == 0:
+                logger.info("File %d/%d: present and correct", i, n)
+        i += 1
+
+    if len(missingfiles):
+        logger.warning("\nMarked %d files as no longer present\n%s\n",
+                       len(missingfiles), missingfiles)
+    else:
+        logger.info("All files present")
+
+logger.info("*** rollcall.py exiting normally at %s" % datetime.datetime.now())
