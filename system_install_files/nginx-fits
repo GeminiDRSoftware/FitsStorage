@@ -14,6 +14,8 @@ http {
         location / {
             include         uwsgi_params;
             uwsgi_pass      unix:/opt/uwsgi/fits.sock;
+            client_max_body_size 100G;
+
         }
 
         location /static/ {
