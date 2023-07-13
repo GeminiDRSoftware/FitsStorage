@@ -13,6 +13,7 @@ import re
 import requests
 
 from fits_storage.config import get_config
+from fits_storage.logger import DummyLogger
 
 
 class TapeDrive(object):
@@ -318,12 +319,13 @@ class FileOnTapeHelper(object):
     _queried = None
     reqses = None
 
-    def __init__(self, tapeserver=None):
+    def __init__(self, tapeserver=None, logger=None):
         fsc = get_config()
         self.reqses = requests.Session()
         self.tapeserver = fsc.tapeserver if tapeserver is None else tapeserver
         self._cache = []
         self._queried = []
+        self.logger = DummyLogger() if logger is None else logger
 
     def query_api(self, filepre):
         """
@@ -334,10 +336,13 @@ class FileOnTapeHelper(object):
         'data_md5': abc123, 'tape_id': 123, 'tape_set': 321}, ...]
         """
         results = []
+        self.logger.debug("Querying API for %s", filepre)
         self._queried.append(filepre)
         url = f"http://{self.tapeserver}/jsontapefile/{filepre}"
         req = self.reqses.get(url)
         if req.status_code != http.HTTPStatus.OK:
+            self.logger.warning("Got HTTP status %d from tapeserver",
+                                req.status_code)
             return None
         for i in req.json():
             # We add a trimmed_filename to each entry now for efficiency
@@ -348,9 +353,11 @@ class FileOnTapeHelper(object):
     def populate_cache(self, filepre):
         results = self.query_api(filepre)
         if results:
+            self.logger.debug("Extending cache by %d results", len(results))
             self._cache.extend(results)
             return True
         else:
+            self.logger.debug("Got no results to cache")
             return False
 
     def make_filepre(self, filename):
@@ -403,12 +410,15 @@ class FileOnTapeHelper(object):
         # Check the cache
         cache_results = self.check_results(filename, data_md5)
         if cache_results:
+            self.logger.debug("Cache hit for %s", filename)
             return cache_results
 
         # Cache miss, get a filepre and query it
+        self.logger.debug("Cache miss for %s", filename)
         filepre = self.make_filepre(filename)
         if filepre in self._queried:
             # Already checked, there is none
+            self.logger.debug("Filepre %s already checked, no results", filepre)
             return set()
         else:
             api_results = self.query_api(filepre)
