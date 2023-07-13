@@ -139,7 +139,7 @@ with session_scope() as session:
         sys.exit(1)
 
     # We use the FileOnTapeHelper class here which provides caching..
-    foth = FileOnTapeHelper(tapeserver=options.tapeserver)
+    foth = FileOnTapeHelper(tapeserver=options.tapeserver, logger=logger)
 
     if options.filepre:
         logger.info("Pre-populating tape server results cache from filepre")
@@ -170,13 +170,14 @@ with session_scope() as session:
             filemd5 = None
         else:
             filemd5 = diskfile.get_file_md5()
-            logger.debug("Actual File MD5 and canonical database diskfile "
-                         "MD5 are: %s and %s", filemd5, diskfile.file_md5)
             if filemd5 != diskfile.file_md5:
                 logger.error("File: %s has an md5sum mismatch between the "
                              "database and the actual file. Skipping",
                              diskfile.filename)
                 continue
+            else:
+                logger.debug("Actual File MD5 and canonical database diskfile "
+                             "MD5 match: %s", filemd5)
 
         # If we got here, either the md5 matches or was skipped.
         # If it was skipped, the filemd5 value is None
@@ -185,7 +186,8 @@ with session_scope() as session:
         # the same as the file on tape.
 
         # Check if it's on tape.
-        tape_ids = foth.check_file(diskfile.filename, filemd5)
+        data_md5 = None if options.skipmd5 else diskfile.data_md5
+        tape_ids = foth.check_file(diskfile.filename, data_md5)
         if len(tape_ids) < options.mintapes:
             logger.info("File %s is only on %d tapes (%s), not deleting",
                         diskfile.filename, len(tape_ids), str(tape_ids))
