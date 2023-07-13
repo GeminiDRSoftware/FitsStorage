@@ -200,6 +200,7 @@ with session_scope() as session:
                         diskfile.fullpath)
         else:
             try:
+                logger.debug("Deleting file %s", diskfile.fullpath)
                 os.unlink(diskfile.fullpath)
                 logger.debug("Marking diskfile id %d as not present",
                              diskfile.id)
@@ -229,6 +230,10 @@ with session_scope() as session:
                         "GBs, stopping")
             break
 
+    logger.info("Deleted %d files totalling %.2f GB", numfiles, sumbytes/1E9)
+    logger.info("First file was: %s", firstfile)
+    logger.info("Last file was: %s", lastfile)
+    
     if options.emailto:
         if options.dryrun:
             subject = "Dry run file delete report"
