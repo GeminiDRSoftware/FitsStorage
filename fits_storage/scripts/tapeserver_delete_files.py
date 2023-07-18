@@ -55,20 +55,20 @@ with session_scope() as session:
         logger.info("No Files found matching file-pre. Exiting")
         sys.exit(0)
 
-    logger.info("Got %d files to consider for deletion" % cnt)
+    logger.info("Got %d files to consider for deletion", cnt)
 
     numdel = 0
     numskip = 0
     for diskfile in query:
-        logger.debug("Full path filename: %s" % diskfile.fullpath)
+        logger.debug("Full path filename: %s", diskfile.fullpath)
         if not diskfile.file_exists():
-            logger.error("Cannot access file %s" % diskfile.fullpath)
+            logger.error("Cannot access file %s", diskfile.fullpath)
             continue
         if not options.skipmd5:
             filemd5 = diskfile.get_file_md5()
             dbmd5 = diskfile.file_md5
             logger.debug("Actual File MD5 and database MD5 are: %s and %s",
-                         (filemd5, dbmd5))
+                         filemd5, dbmd5)
             if filemd5 != dbmd5:
                 logger.error("File: %s has an md5sum mismatch between the "
                              "database and the actual file. Skipping",
