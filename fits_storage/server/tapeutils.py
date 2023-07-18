@@ -289,7 +289,7 @@ class TapeDrive(object):
             f = open('tapelabel', 'w')
             f.write(label)
             f.close()
-            tar = tarfile.open(name=self.dev(), mode='w|')
+            tar = tarfile.open(name=self.dev, mode='w|')
             tar.add('tapelabel')
             tar.close()
             os.unlink('tapelabel')

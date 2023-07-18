@@ -38,10 +38,6 @@ setdemon(options.demon)
 logger.info("***   tapeserver_delete_files.py - starting up at %s",
             datetime.datetime.now())
 
-logger.error("This script hasn't been tested since the great refactor of 2023."
-             "Please test it...")
-sys.exit(0)
-
 if options.tapeset is None:
     logger.error("Must supply a tapeset to use this")
     exit(1)
@@ -65,7 +61,7 @@ with session_scope() as session:
     numskip = 0
     for diskfile in query:
         logger.debug("Full path filename: %s" % diskfile.fullpath)
-        if not diskfile.exists():
+        if not diskfile.file_exists():
             logger.error("Cannot access file %s" % diskfile.fullpath)
             continue
         if not options.skipmd5:
