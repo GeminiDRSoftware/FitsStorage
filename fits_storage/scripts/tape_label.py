@@ -21,7 +21,10 @@ parser.add_option("--force", action="store_true", dest="force",
                   help="Normally, --label will refuse to label a tape that "
                        "already contains a tapelabel. "
                        "This option forces it to do so.")
-
+parser.add_option("--debug", action="store_true", dest="debug",
+                  help="Increase log level to debug")
+parser.add_option("--demon", action="store_true", dest="demon",
+                  help="Run as a background demon, do not generate stdout")
 options, args = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
@@ -34,16 +37,11 @@ if not (options.read or options.label):
     logger.error("You must supply either the --read or the --label option")
     sys.exit(1)
 
-logger.error("This script hasn't been tested properly since the great refactor"
-             " of 2023. Please test before using")
-sys.exit(0)
-
-td = TapeDrive(options.tapedrive, fsc.fits_tape_scratchdir)
+td = TapeDrive(options.tapedrive, fsc.fits_tape_scratchdir, logger=logger)
 
 if options.read:
     logger.info(td.readlabel(fail=False))
     sys.exit(0)
-
 
 if options.label:
     oldlabel = td.readlabel(fail=False)

@@ -28,7 +28,7 @@ class TapeDrive(object):
     origdir = None
     filenum = None
 
-    def __init__(self, device, scratchdir):
+    def __init__(self, device, scratchdir, logger=None):
         """
         dev is the tape drive device, scratchdir is a directory we can use
         for scratch space. This class will create a subdir in scratchdir with
@@ -37,12 +37,18 @@ class TapeDrive(object):
         """
         self.dev = device
         self.scratchdir = scratchdir
+        self.logger = DummyLogger() if logger is None else logger
 
     def mkworkingdir(self):
         pid = str(os.getpid())
         self.workingdir = os.path.join(self.scratchdir, pid)
         if not os.path.exists(self.workingdir):
-            os.mkdir(self.workingdir)
+            self.logger.debug("Creating Tape Workingdir %s", self.workingdir)
+            try:
+                os.mkdir(self.workingdir)
+            except Exception:
+                self.logger.error("Unable to create tape workingdir %s",
+                                  self.workingdir, exc_info=True)
 
     def cdworkingdir(self):
         if self.workingdir is None:
@@ -71,16 +77,17 @@ class TapeDrive(object):
         cmd = ['/bin/mt', '-f', self.dev, mtcmd]
         if mtarg:
             cmd.append(mtarg)
+        self.logger.debug("Running mt -f %s %s %s", self.dev, mtcmd, mtarg)
         sp = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE)
         (stdoutstring, stderrstring) = sp.communicate()
         retval = sp.returncode
 
         if retval and fail:
-            print('"mt -f %s %s %s" failed with exit value %d:' %
-                  (self.dev, mtcmd, mtarg, retval))
-            print(stdoutstring)
-            print(stderrstring)
+            self.logger.error('"mt -f %s %s %s" failed with exit value %d:',
+                              self.dev, mtcmd, mtarg, retval)
+            self.logger.error(stdoutstring)
+            self.logger.error(stderrstring)
             sys.exit(retval)
 
         return [retval, stdoutstring, stderrstring]
@@ -244,11 +251,13 @@ class TapeDrive(object):
         try:
             self.rewind()
             self.setblk0()
+            self.logger.debug("Looking for tapelabel in tar file...")
             tar = tarfile.open(name=self.dev, mode='r|')
             tarnames = tar.getnames()
             tar.close()
             self.rewind()
             if tarnames == ['tapelabel']:
+                self.logger.debug("Reading tapelabel tar file...")
                 tar = tarfile.open(name=self.dev, mode='r|')
                 self.cdworkingdir()
                 tar.extractall()
@@ -256,11 +265,15 @@ class TapeDrive(object):
                 self.rewind()
                 labfile = open('tapelabel', 'r')
                 retval = labfile.readline().strip()
+                self.logger.debug("Read Label: %s", retval)
                 labfile.close()
                 os.unlink('tapelabel')
                 self.cdback()
                 self.cleanup()
+            else:
+                self.logger.debug("Did not find tapelabel in tar file")
         except Exception:
+            self.logger.debug("Error reading tar file", exc_info=True)
             self.rewind()
             if fail:
                 raise
