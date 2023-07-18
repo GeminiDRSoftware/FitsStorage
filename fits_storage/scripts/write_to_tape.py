@@ -223,7 +223,7 @@ with session_scope() as session:
                 session.close()
                 sys.exit(1)
             logger.info("OK - found tape in drive %s with label: %s",
-                        (td.dev, thislabel))
+                        td.dev, thislabel)
 
     # check md5s match what's on disk.
     logger.info("Verifying md5s")
