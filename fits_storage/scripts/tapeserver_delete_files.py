@@ -81,41 +81,45 @@ with session_scope() as session:
             logger.debug("Skipping md5sum check for file %s", diskfile.filename)
 
         # File exists on disk and md5 matches or check has been skipped.
-        # Check if the file is actually on tape in any of the tapesets given
+        # Check if the file is actually on tape in all the tapesets given
+        onall=True
         for ts in options.tapeset:
             tfs = session.query(TapeFile)\
                 .select_from(join(join(TapeFile, TapeWrite), Tape))\
                 .filter(TapeFile.filename == diskfile.filename)\
                 .filter(TapeFile.md5 == diskfile.file_md5) \
-                .filter(TapeWrite.succeeded == True).filter(Tape.active == True)\
+                .filter(TapeWrite.succeeded == True)\
+                .filter(Tape.active == True)\
                 .filter(Tape.set == ts)\
-                .all()
+                .count()
 
             logger.debug("Found %d tapefiles for %s on tapeset %d",
-                         len(tfs), diskfile.filename, ts)
+                         tfs, diskfile.filename, ts)
 
-            if len(tfs):
-                # It's on the tapeset...
-                if options.dryrun:
-                    logger.info("Dry run - not actually deleting %s",
-                                diskfile.filename)
-                else:
-                    # Actually delete it
-                    try:
-                        logger.info("Deleting %s", diskfile.filename)
-                        os.unlink(diskfile.fullpath)
-                        logger.debug("Marking diskfile id %d as not present",
-                                     diskfile.id)
-                        diskfile.present = False
-                        session.commit()
-                    except Exception:
-                        logger.error("Error deleting %s", diskfile.fullpath,
-                                     exc_info=True)
-            else:
+            if tfs == 0:
+                # It's not on this tapeset
+                onall = False
                 logger.info("%s not found on tapeset %d - skipping",
                             diskfile.filename, ts)
-                ontape = False
                 break
+
+        if onall:
+            # It's on all the tapesets...
+            if options.dryrun:
+                logger.info("Dry run - not actually deleting %s",
+                            diskfile.filename)
+            else:
+                # Actually delete it
+                try:
+                    logger.info("Deleting %s", diskfile.filename)
+                    os.unlink(diskfile.fullpath)
+                    logger.debug("Marking diskfile id %d as not present",
+                                 diskfile.id)
+                    diskfile.present = False
+                    session.commit()
+                except Exception:
+                    logger.error("Error deleting %s", diskfile.fullpath,
+                                 exc_info=True)
 
 logger.info("***   tapeserver_delete_files.py exiting normally at %s",
             datetime.datetime.now())
