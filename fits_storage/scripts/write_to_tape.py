@@ -62,13 +62,10 @@ setdebug(options.debug)
 setdemon(options.demon)
 
 # Announce startup
-logger.info("***   write_to_tape.py - starting up at %s" %
+logger.info("***   write_to_tape.py - starting up at %s",
             datetime.datetime.now())
 fsc = get_config()
 
-logger.error("This script hasn't been tested since the great refactor of 2023."
-             "Please test it on a test tape before going live. Kthxbye.")
-sys.exit(1)
 
 if (not options.selection) and (not options.auto):
     logger.error("You must specify a file selection")
@@ -104,8 +101,8 @@ logger.info("TapeDrive: %s; TapeLabel: %s",
 logger.info("Building the file list")
 things = options.selection.split('/')
 selection = getselection(things)
-logger.info("Selection: %s" % selection)
-logger.info("Selection is open: %s" % openquery(selection))
+logger.info("Selection: %s", selection)
+logger.info("Selection is open: %s", openquery(selection))
 
 with session_scope() as session:
     logger.info("Getting header object list")
@@ -121,7 +118,7 @@ with session_scope() as session:
     headers = None
 
     # Make a list containing the tape device objects
-    tapedrives = [TapeDrive(tapedrive, fsc.fits_tape_scratchdir)
+    tapedrives = [TapeDrive(tapedrive, fsc.fits_tape_scratchdir, logger=logger)
                   for tapedrive in options.tapedrive]
 
     # Get the database tape object for each tape label given
@@ -134,16 +131,16 @@ with session_scope() as session:
         try:
             tape = query.one()
         except NoResultFound:
-            logger.error("Could not find active tape with label %s" % tapelabel)
+            logger.error("Could not find active tape with label %s", tapelabel)
             session.close()
             sys.exit(1)
         except MultipleResultsFound:
-            logger.error("Multiple active tapes with label %s:" % tapelabel)
+            logger.error("Multiple active tapes with label %s:", tapelabel)
             session.close()
             sys.exit(1)
         tapes.append(tape)
         logger.debug("Found tape id in database: %d, label: %s",
-                     (tape.id, tape.label))
+                     tape.id, tape.label)
         if tape.full:
             logger.error("Tape labeled %s is full according to the DB. Exiting",
                          tape.label)
@@ -194,7 +191,7 @@ with session_scope() as session:
                              df.filename)
             else:
                 logger.debug("Skipping File %s : is already on tape %d times",
-                             (df.filename, num))
+                             df.filename, num)
 
         diskfiles = actual_diskfiles
 
@@ -204,7 +201,7 @@ with session_scope() as session:
     for df in diskfiles:
         totalsize += df.file_size
     logger.info("Got %d files totalling %.2f GB to write to tape",
-                (numfiles, (totalsize / 1.0E9)))
+                numfiles, (totalsize / 1.0E9))
 
     if numfiles == 0:
         logger.info("Exiting - no files")
@@ -222,7 +219,7 @@ with session_scope() as session:
             if thislabel != tapelabel:
                 logger.error("Label of tape in drive %s: %s does not match "
                              "label given as %s",
-                             (td.dev, thislabel, tapelabel))
+                             td.dev, thislabel, tapelabel)
                 session.close()
                 sys.exit(1)
             logger.info("OK - found tape in drive %s with label: %s",
@@ -235,7 +232,7 @@ with session_scope() as session:
         db_md5 = df.file_md5
         if actual_md5 != db_md5:
             logger.error("md5sum mismatch for file %s: file: %s, database: %s",
-                         (df.filename, actual_md5, db_md5))
+                         df.filename, actual_md5, db_md5)
             session.close()
             sys.exit(1)
 
@@ -246,7 +243,7 @@ with session_scope() as session:
     os.chdir(fsc.storage_root)
     for td, tape in zip(tapedrives, tapes):
         logger.debug("About to write on tape label %s in drive %s",
-                     (tape.label, td.dev))
+                     tape.label, td.dev)
         # Position Tape
         if not options.dryrun:
             logger.info("Positioning Tape %s", td.dev)
@@ -256,7 +253,7 @@ with session_scope() as session:
             if td.eot():
                 logger.error("Tape %s in %s is at End of Tape. Tape is Full. "
                              "Marking tape as full in DB and aborting",
-                             (tape.label, td.dev))
+                             tape.label, td.dev)
                 tape.full = True
                 session.commit()
                 td.cleanup()
@@ -291,7 +288,7 @@ with session_scope() as session:
             blksize = 64 * 1024
 
             logger.info("Creating tar archive on tape %s on drive %s",
-                        (tape.label, td.dev))
+                        tape.label, td.dev)
             try:
                 tar = tarfile.open(name=td.dev, mode='w|', bufsize=blksize)
                 tarok = True
@@ -343,7 +340,7 @@ with session_scope() as session:
 
             session.commit()
             logger.info("Completed writing tar archive on tape %s in drive %s",
-                        (tape.label, td.dev))
+                        tape.label, td.dev)
             logger.info("Wrote %.2f GB ", bytecount/1.0E9)
             try:
                 tar.close()
@@ -354,7 +351,7 @@ with session_scope() as session:
             # update records post-write
             logger.debug("Updating tapewrite record")
             tw.enddate = datetime.datetime.utcnow()
-            logger.debug("Succeeded: %s" % tarok)
+            logger.debug("Succeeded: %s", tarok)
             tw.succeeded = tarok
             tw.afterstatus = td.status()
             tw.size = bytecount
