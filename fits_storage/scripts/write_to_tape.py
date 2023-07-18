@@ -157,10 +157,11 @@ with session_scope() as session:
         for df in diskfiles:
             numtapes = session.query(Tape)\
                 .select_from(join(TapeFile, join(TapeWrite, Tape)))\
-                .filter(Tape.active == True).filter(TapeWrite.succeeded == True)\
+                .filter(Tape.active == True)\
+                .filter(TapeWrite.succeeded == True)\
                 .filter(TapeFile.filename == df.filename)\
                 .filter(TapeFile.md5 == df.file_md5)\
-                .filter(Tape.id in tapeids)\
+                .filter(Tape.id.in_(tapeids))\
                 .count()
 
             if numtapes == 0:
@@ -180,7 +181,8 @@ with session_scope() as session:
         for df in diskfiles:
             num = session.query(TapeFile)\
                 .select_from(join(TapeFile, join(TapeWrite, Tape)))\
-                .filter(Tape.active == True).filter(TapeWrite.succeeded == True)\
+                .filter(Tape.active == True)\
+                .filter(TapeWrite.succeeded == True)\
                 .filter(TapeFile.filename == df.filename)\
                 .filter(TapeFile.md5 == df.file_md5)\
                 .count()
@@ -225,7 +227,7 @@ with session_scope() as session:
             logger.info("OK - found tape in drive %s with label: %s",
                         td.dev, thislabel)
 
-    # check md5s match what's on disk.
+    # check md5sums match what's on disk.
     logger.info("Verifying md5s")
     for df in diskfiles:
         actual_md5 = df.get_file_md5()
