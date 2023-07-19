@@ -1,0 +1,3 @@
+dataflow  -rw,lookupcache=pos  mko-nfs:/sci/dataflow
+dhs       -rw,lookupcache=pos  mko-nfs:/sci/dhs
+dasgmos   -ro hbf-nfs:/eng/swg/var/data/gmos
