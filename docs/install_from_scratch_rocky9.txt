@@ -1,11 +1,41 @@
-# Update
+# Update and basic installs
 sudo dnf update
 sudo dnf autoremove
-sudo dnf install nginx
+sudo dnf install nginx postgresql-server sysstat
+sudo dnf group install "Development Tools"
 
-# As you
-wget https://repo.anaconda.com/archive/Anaconda3-2023.03-1-Linux-x86_64.sh
-sudo bash Anaconda3-2023.03-1-Linux-x86_64.sh
+# Add to /etc/passwd:
+fitsdata:x:5179:5179:FITS Data User:/home/fitsdata:/bin/bash
+fitsweb:x:5180:5179:FITS Web WSGI User:/home/fitsweb:/bin/bash
+# And to /etc/group:
+fitsdata:x:5179:fitsdata,fitsweb
+
+# Set up postgres
+sudo mkdir -p /data/postgres/pgdata
+sudo chown -R postgres:postgres /data/postgres
+sudo chmod -R 700 /data/postgres
+sudo mkdir /etc/systemd/system/postgresql.service.d
+echo "[Service]" | sudo tee /etc/systemd/system/postgresql.service.d/fitsstorage.conf
+echo "Environment=PGDATA=/data/postgres/pgdata" | sudo tee -a /etc/systemd/system/postgresql.service.d/fitsstorage.conf
+sudo systemctl daemon-reload
+sudo postgresql-setup --initdb
+sudo su - postgres
+  vi /data/postgres/pgdata/postgresql.conf
+    shared_buffers = 512MB    # 25% of ram if ram > 1GB
+    effective_cache_size = 4GB   # 50% of ram size ish
+sudo systemctl start postgresql
+sudo systemctl status postgresql
+sudo systemctl enable postgresql
+sudo su - postgres
+  /usr/bin/createuser --no-superuser --no-createrole --createdb fitsdata
+sudo su - fitsdata
+  createdb fitsdata
+
+
+# Anaconda install (as you)
+# Go to https://www.anaconda.com/download#downloads and get the latest URL
+wget https://repo.anaconda.com/archive/Anaconda3-2023.07-1-Linux-x86_64.sh
+sudo bash Anaconda3-2023.07-1-Linux-x86_64.sh
 install location /opt/anaconda3
 do not activate
 sudo chgrp -R local-users /opt/anaconda3
@@ -17,7 +47,7 @@ conda init
 # log out and back in
 conda config --add channels conda-forge
 conda config --add channels http://astroconda.gemini.edu/public
-conda create -n dragons python=3.10 dragons ds9 bokeh=2.4.3
+conda create -n dragons python=3.10 dragons
 
 # In bash profile, add:
 export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/GHOSTDR
@@ -25,6 +55,8 @@ export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/GHOSTDR
 # At end of bashrc, add:
 conda activate dragons
 export PATH="/opt/FitsStorage/fits_storage/scripts:$PATH"
+
+# THIS FAR ON hbffits-lv1 and mkofits-lv1
 
 
 # As you
@@ -50,8 +82,7 @@ git clone git@gitlab.gemini.edu:DRSoftware/FitsStorageConfigurations.git .
 
 
 # As you
-# Add to end of /etc/passwd: fitsweb:*:5180:513:gem-fitsweb:/home/fitsweb:/bin/bash
-# Add fitsweb to fitsdata group
+
 sudo ln -s /opt/FitsStorageConfigurations/fits_storage.conf /etc/fits_storage.conf
 sudo cp /opt/FitsStorage/system_install_files/etc_systemd_system/* /etc/systemd/system
 sudo mkdir /opt/uwsgi
