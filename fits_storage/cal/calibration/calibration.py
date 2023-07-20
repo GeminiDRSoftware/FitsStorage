@@ -119,7 +119,11 @@ class CalQuery(object):
         query = query.filter(DiskFile.canonical == True) \
                      .filter(Header.qa_state != 'Fail')
 
-        query = query.filter(Header.engineering == False)
+        # Only allow engineering calibrations if the "science" data is
+        # engineering.
+        if descriptors['engineering'] is False:
+            query = query.filter(Header.engineering == False)
+
         self.query = query
 
     def __call_through(self, query_method, *args, **kw):
@@ -582,6 +586,7 @@ class Calibration(object):
                 'gcal_lamp':            self.header.gcal_lamp,
                 'detector_binning':     self.header.detector_binning,
                 'camera':               self.header.camera,
+                'engineering':          self.header.engineering
                 }
 
             iC = self.instrClass
