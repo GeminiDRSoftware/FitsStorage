@@ -14,17 +14,13 @@ from fits_storage.gemini_metadata_utils import GeminiProgram, procmode_codes
 from fits_storage.gemini_metadata_utils import gemini_gain_settings
 from fits_storage.gemini_metadata_utils import gemini_readspeed_settings
 from fits_storage.gemini_metadata_utils import gemini_welldepth_settings
-
-from astropy import wcs as pywcs
-from astropy.wcs import SingularMatrixError
-from astropy.io import fits
-
-
-__all__ = ["Header"]
-
 from fits_storage.gemini_metadata_utils import obs_types, obs_classes, \
     reduction_states
 
+from fits_storage.config import get_config
+fsc = get_config()
+
+__all__ = ["Header"]
 
 # Enumerated Column types
 PROCMODE_ENUM = Enum(*procmode_codes, name='procmode')
@@ -32,14 +28,18 @@ OBSTYPE_ENUM = Enum(*obs_types, name='obstype')
 OBSCLASS_ENUM = Enum(*obs_classes, name='obsclass')
 REDUCTION_STATE_ENUM = Enum(*reduction_states, name='reduction_state')
 TELESCOPE_ENUM = Enum('Gemini-North', 'Gemini-South', name='telescope')
-QASTATE_ENUM = Enum('Fail', 'CHECK', 'Undefined', 'Usable', 'Pass', name='qa_state')
-MODE_ENUM = Enum('imaging', 'spectroscopy', 'LS', 'MOS', 'IFS', 'IFP', name='mode')
-DETECTOR_GAIN_ENUM = Enum('None', *gemini_gain_settings, name='detector_gain_setting')
-DETECTOR_READSPEED_ENUM = Enum('None', *gemini_readspeed_settings, name='detector_readspeed_setting')
-DETECTOR_WELLDEPTH_ENUM = Enum('None', *gemini_welldepth_settings, name='detector_welldepth_setting')
+QASTATE_ENUM = Enum('Fail', 'CHECK', 'Undefined', 'Usable', 'Pass',
+                    name='qa_state')
+MODE_ENUM = Enum('imaging', 'spectroscopy', 'LS', 'MOS', 'IFS', 'IFP',
+                 name='mode')
+DETECTOR_GAIN_ENUM = Enum('None', *gemini_gain_settings,
+                          name='detector_gain_setting')
+DETECTOR_READSPEED_ENUM = Enum('None', *gemini_readspeed_settings,
+                               name='detector_readspeed_setting')
+DETECTOR_WELLDEPTH_ENUM = Enum('None', *gemini_welldepth_settings,
+                               name='detector_welldepth_setting')
 
 
-# ------------------------------------------------------------------------------
 class Header(Base):
     """
     This is the ORM class for the Header table.
@@ -115,8 +115,9 @@ class Header(Base):
     proprietary_coordinates = Column(Boolean)
     pre_image = Column(Boolean)
 
-    __table__args__ = (Index('ix_header_ut_datetime_desc_nullslast',
-                             nullslast(desc(ut_datetime))))
+    if not fsc.using_sqlite:
+        __table__args__ = (Index('ix_header_ut_datetime_desc_nullslast',
+                                 nullslast(desc(ut_datetime))))
 
     def __init__(self, diskfile, logger=DummyLogger()):
         self.diskfile_id = diskfile.id
