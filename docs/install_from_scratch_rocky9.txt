@@ -80,7 +80,7 @@ conda install uwsgi
 cd /opt/DRAGONS
 git clone https://github.com/GeminiDRSoftware/DRAGONS .
 git fetch
-git checkout -b release/3.1.x
+git checkout -b release/3.1.x  # or master, depending what you want...
 cd /opt/FitsStorage
 git clone git@github.com:/phirstgemini/FitsStorage2 .
 cd /opt/GHOSTDR
