@@ -76,9 +76,9 @@ def get_cal_object(session, filename, header=None, procmode=None,
     if header is None and descriptors is None:
         # Get the header object from the filename
         query = session.query(Header)\
-            .select_from(join(Header, join(DiskFile, File)))
-        query = query.filter(File.name == filename)\
-            .order_by(desc(DiskFile.lastmod))
+            .select_from(join(Header, join(DiskFile, File)))\
+            .filter(File.name == filename)\
+            .filter(DiskFile.canonical == True)
         header = query.first()
 
     # OK, now instantiate the appropriate Calibration object and return it
