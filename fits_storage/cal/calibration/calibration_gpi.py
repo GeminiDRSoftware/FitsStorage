@@ -76,7 +76,7 @@ class CalibrationGPI(Calibration):
         howmany = howmany if howmany else 1
 
         filters = [Header.ut_datetime <= self.descriptors['ut_datetime'],]
-        query = self.get_query(include_engineering=True) \
+        query = self.get_query() \
                     .bpm(processed) \
                     .add_filters(*filters) \
                     .match_descriptors(Header.instrument, Header.detector_binning)

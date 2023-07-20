@@ -103,13 +103,8 @@ class CalQuery(object):
 
     it will return ``(Header,)`` tuples.
 
-    `include_engineering` is used if we don't want to exclude files
-    marked as engineering.  This is mainly for bpm support as existing
-    bpms are engineering.
-
     """
-    def __init__(self, session, instrClass, descriptors, procmode=None,
-                 include_engineering=False):
+    def __init__(self, session, instrClass, descriptors, procmode=None):
         # Keep a copy of the instrument descriptors and start the query with
         # some common filters
         self.procmode = procmode
@@ -124,8 +119,7 @@ class CalQuery(object):
         query = query.filter(DiskFile.canonical == True) \
                      .filter(Header.qa_state != 'Fail')
 
-        if not include_engineering:
-            query = query.filter(Header.engineering == False)
+        query = query.filter(Header.engineering == False)
         self.query = query
 
     def __call_through(self, query_method, *args, **kw):
@@ -621,15 +615,14 @@ class Calibration(object):
         # Set the list of applicable calibrations
         self.set_applicable()
 
-    def get_query(self, include_engineering=False):
+    def get_query(self):
         """
         Returns an ``CalQuery`` object, populated with the current session,
         instrument class, descriptors and the setting for full/not-full query.
 
         """
         return CalQuery(self.session, self.instrClass, self.descriptors,
-                        procmode=self.procmode,
-                        include_engineering=include_engineering)
+                        procmode=self.procmode)
 
     def set_applicable(self):
         """

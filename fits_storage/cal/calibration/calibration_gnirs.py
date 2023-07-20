@@ -107,7 +107,7 @@ class CalibrationGNIRS(Calibration):
         howmany = howmany if howmany else 1
 
         filters = [Header.ut_datetime <= self.descriptors['ut_datetime'],]
-        query = self.get_query(include_engineering=True) \
+        query = self.get_query() \
                     .bpm(processed) \
                     .add_filters(*filters) \
                     .match_descriptors(Header.instrument, Header.detector_binning)
@@ -313,12 +313,13 @@ class CalibrationGNIRS(Calibration):
         query = (
             self.get_query()
                 .arc(processed=processed)
-                # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter_name, camera
-                .match_descriptors(Header.central_wavelength,
-                                   Gnirs.disperser,
+                # Must Totally Match: disperser, focal_plane_mask, filter_name,
+                # camera. Match central_wavelength with tolerance
+                .match_descriptors(Gnirs.disperser,
                                    Gnirs.focal_plane_mask,
                                    Gnirs.filter_name,
                                    Gnirs.camera)
+                .tolerance(central_wavelength=0.001)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
             )

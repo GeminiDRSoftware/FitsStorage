@@ -408,7 +408,7 @@ class CalibrationGMOS(Calibration):
             filters = [Header.ut_datetime <= self.descriptors['ut_datetime'],
                        Gmos.array_name.like('%' + self.descriptors['array_name'] + '%'),
                        ]
-            query = self.get_query(include_engineering=True) \
+            query = self.get_query() \
                         .bpm(processed) \
                         .add_filters(*filters) \
                         .match_descriptors(Header.instrument,
