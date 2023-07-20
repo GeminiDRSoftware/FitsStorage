@@ -59,6 +59,8 @@ def footprints(ad, logger=DummyLogger()):
     for ext in ad:
         # The detector section
         sec = ext.data_section()
+        if sec is None:
+            continue
         pix_fp = [(sec.x1, sec.y1),
                   (sec.x1, sec.y2),
                   (sec.x2, sec.y2),
