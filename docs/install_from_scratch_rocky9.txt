@@ -9,6 +9,7 @@ fitsdata:x:5179:5179:FITS Data User:/home/fitsdata:/bin/bash
 fitsweb:x:5180:5179:FITS Web WSGI User:/home/fitsweb:/bin/bash
 # And to /etc/group:
 fitsdata:x:5179:fitsdata,fitsweb
+# also add fitsdata to local-users if want to be able to ssh in
 
 # Set up postgres
 sudo mkdir -p /data/postgres/pgdata
@@ -28,6 +29,7 @@ sudo systemctl status postgresql
 sudo systemctl enable postgresql
 sudo su - postgres
   /usr/bin/createuser --no-superuser --no-createrole --createdb fitsdata
+  /usr/bin/createuser --no-superuser --no-createrole --no-createdb fitsweb
 sudo su - fitsdata
   createdb fitsdata
 
@@ -47,7 +49,7 @@ conda init
 # log out and back in
 conda config --add channels conda-forge
 conda config --add channels http://astroconda.gemini.edu/public
-conda create -n dragons python=3.10 dragons
+conda create -p /opt/anaconda3/envs/dragons python=3.10 dragons
 
 # In bash profile, add:
 export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/GHOSTDR
@@ -56,13 +58,21 @@ export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/GHOSTDR
 conda activate dragons
 export PATH="/opt/FitsStorage/fits_storage/scripts:$PATH"
 
-# THIS FAR ON hbffits-lv1 and mkofits-lv1
-
-
 # As you
 cd /opt
 sudo mkdir DRAGONS GHOSTDR FitsStorage FitsStorageConfigurations
 sudo chown fitsdata DRAGONS GHOSTDR FitsStorage FitsStorageConfigurations
+sudo mkdir /data/logs /data/locks /data/upload_staging /data/z_staging
+sudo chown fitsdata:fitsdata /data/logs/ /data/locks /data/upload_staging /data/z_staging
+sudo ln -s /opt/FitsStorageConfigurations/fits_storage.conf /etc/fits_storage.conf
+# If configuring autofs. note mko vs cpo
+sudo cp /opt/FitsStorage/system_install_files/etc-auto.sci-mko /etc/auto.sci
+sudo vi /etc/auto.master
+/sci	/etc/auto.sci --timeout=60
+sudo systemctl restart autofs
+cd /sci/dataflow
+df -h .
+
 
 # As fitsdata
 pip3 install psycopg2-binary simplejson
@@ -79,23 +89,41 @@ git fetch
 git checkout tags/v0.9.2
 cd /opt/FitsStorageConfigurations
 git clone git@gitlab.gemini.edu:DRSoftware/FitsStorageConfigurations.git .
-
+create_tables.py
+ingest_standards.py
+touch /data/logs/uwsgi.log
+chmod g+w /data/logs/uwsgi.log
 
 # As you
 
-sudo ln -s /opt/FitsStorageConfigurations/fits_storage.conf /etc/fits_storage.conf
 sudo cp /opt/FitsStorage/system_install_files/etc_systemd_system/* /etc/systemd/system
 sudo mkdir /opt/uwsgi
 sudo chown fitsweb:fitsdata /opt/uwsgi
 sudo cp /opt/FitsStorage/system_install_files/fitsservice.ini /opt/uwsgi
 sudo cp /opt/FitsStorage/system_install_files/nginx-fits /etc/nginx/nginx.conf
 sudo systemctl start fits-nginx
+sudo systemctl status fits-nginx
+sudo systemctl enable fits-nginx
 sudo systemctl start fits-uwsgi
+sudo systemctl status fits-uwsgi
+sudo systemctl enable fits-uwsgi
+sudo chmod og+rx /var/log/nginx
 # Try and hit the web server. If you get error, look in /opt/uwsgi/fits.log
+
 S=/opt/FitsStorage/system_install_files/etc_systemd_system
 D=/etc/systemd/system
 sudo cp $S/fits-environment.txt $D
 sudo cp $S/fits-*.service $D
+sudo systemctl start fits-service_ingest_queue1
+sudo systemctl status fits-service_ingest_queue1
+tail /data/logs/service_ingest_queue.py-1.log
+# Create and start other ingest queues if required
+
+sudo systemctl start fits-service_fileops_queue1
+sudo systemctl status fits-service_fileops_queue1
+sudo systemctl enable fits-service_fileops_queue1
+tail /data/logs/service_fileops_queue.py
+
 sudo systemctl start fits-service_service_ingest_queue1
 sudo systemctl enable fits-service_service_ingest_queue1
 sudo systemctl start fits-service_fileops_queue1
