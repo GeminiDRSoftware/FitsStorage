@@ -1,7 +1,7 @@
 import datetime
 from fits_storage.server.tapeutils import FileOnTapeHelper
 
-def test_1():
+def test_fileontape1():
     foth = FileOnTapeHelper(tapeserver='hbffitstape-lp2')
     foth.populate_cache('N20220501S0001')
 
@@ -10,7 +10,7 @@ def test_1():
     assert foth._cache[0]['filename'] == 'N20220501S0001.fits.bz2'
     assert foth.check_results('N20220501S0001.fits.bz2') == {113, 114}
 
-def test_2():
+def test_fileontape2():
     foth = FileOnTapeHelper(tapeserver='hbffitstape-lp2')
 
     # This should trigger an API query for that whole night
