@@ -1,4 +1,6 @@
-from .helpers import make_empty_testing_db_env, fetch_file
+from fits_storage_tests.code_tests.helpers import make_empty_testing_db_env, \
+    fetch_file
+
 from fits_storage.config import get_config
 
 from fits_storage.db import sessionfactory

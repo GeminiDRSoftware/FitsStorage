@@ -28,18 +28,18 @@ def do_test(datasize=1, chunksize=1, readsize=1):
 
 # Walk through combinations of sizes being bigger or smaller than eachother
 
-def test_1():
+def test_bzstream1():
     do_test(datasize=100, chunksize=10, readsize=1)
 
-def test_2():
+def test_bzstream2():
     do_test(datasize=100, chunksize=10, readsize=200)
 
-def test_3():
+def test_bzstream3():
     do_test(datasize=100, chunksize=1000, readsize=1)
 
-def test_4():
+def test_bzstream4():
     do_test(datasize=100, chunksize=1000, readsize=200)
 
-def test_5():
+def test_bzstream5():
     do_test(datasize=5000000, chunksize=1000000, readsize=1000)
 

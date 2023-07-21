@@ -16,7 +16,9 @@ from fits_storage.logger import DummyLogger
 from fits_storage.core.ingester import Ingester
 from fits_storage.core.orm.diskfile import DiskFile
 
-from .helpers import make_empty_testing_db_env, fetch_file
+from fits_storage_tests.code_tests.helpers import make_empty_testing_db_env, \
+    fetch_file
+
 from fits_storage.config import get_config
 
 from fits_storage.db import sessionfactory
@@ -173,7 +175,7 @@ def test_update_headers(tmp_path):
     args = {'filename': filename,
             'qa_state': 'Fail',
             'release': '2025-01-23',
-            'rawsite': ['iqany', 'cc80'],
+            'raw_site': ['iqany', 'cc80'],
             'generic': {'KANGAROO': 'Jumpy', 'SSA': 'Mickey Mouse'},
             }
 

@@ -1,7 +1,7 @@
 from fits_storage.core.orm.header import Header
 from fits_storage.cal.orm.nifs import Nifs
 
-from .helpers import make_diskfile
+from fits_storage_tests.code_tests.helpers import make_diskfile
 
 
 def test_nifs(tmp_path):

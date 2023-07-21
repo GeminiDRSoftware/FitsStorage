@@ -1,7 +1,7 @@
 from fits_storage.cal.orm.gmos import Gmos
 from fits_storage.core.orm.header import Header
 
-from .helpers import make_diskfile
+from fits_storage_tests.code_tests.helpers import make_diskfile
 
 
 def test_gmos(tmp_path):
