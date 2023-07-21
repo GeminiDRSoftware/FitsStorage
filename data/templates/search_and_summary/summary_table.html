@@ -31,6 +31,9 @@
 {% endif %}
 <FORM action='/download' method='POST'>
 {%- endif %}
+{% if sumtype == "associated_cals" %}
+   <h3>Primary Calibrations - associated directly with your search results</h3>
+   {%- endif %}
 <TABLE class="fullwidth nowrap">
 {{ generate.head(headers) }}
 {% if not cal_rows %}
@@ -42,7 +45,7 @@
 {{ generate.row(row, 'primary') }}
 {% endfor %}
 </TABLE>
-<h2>Secondary Calibrations</h2>
+<h3>Secondary Calibrations - associated with the primary calibration results above (if any)</h3>
 <TABLE class="fullwidth nowrap">
 {{ generate.head(headers) }}
 {% for row in cal_rows %}

@@ -1,6 +1,4 @@
-# init file for package
-
-from sqlalchemy import join, desc
+from sqlalchemy import join
 
 from .calibration import Calibration
 from .calibration_gmos import CalibrationGMOS

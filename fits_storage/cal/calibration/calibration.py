@@ -3,7 +3,6 @@ This module holds the Calibration superclass
 """
 
 import functools
-from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
 from fits_storage.gemini_metadata_utils import UT_DATETIME_SECS_EPOCH
@@ -14,9 +13,7 @@ from sqlalchemy import func, desc, case
 from sqlalchemy.orm import join
 from datetime import timedelta
 
-# from .. import gemini_metadata_utils as gmu
 from fits_storage import gemini_metadata_utils as gmu
-# from fits_storage.utils.render_query import render_query
 
 
 _remappings = {
@@ -44,9 +41,8 @@ def not_processed(f):
 
     return wrapper
 
-# Another common pattern: calibrations that don't apply for imaging
 
-
+# Another common pattern: calibrations that don't apply to imaging
 def not_imaging(f):
     """
     not_imaging(self, *args, **kw)
@@ -66,9 +62,8 @@ def not_imaging(f):
 
     return wrapper
 
-# Another common pattern: calibrations that don't apply for spectroscopy
 
-
+# Another common pattern: calibrations that don't apply to spectroscopy
 def not_spectroscopy(f):
     """
     not_spectroscopy(self, *args, **kw)
@@ -277,10 +272,11 @@ class CalQuery(object):
         # If returning both raw and processed, return processed first.
         enums = Header.procmode.type.enums
         whens = {pm: str(pm) if pm else 'AAA' for pm in enums}
-        procmode_sort_logic = case(value=Header.procmode, whens=whens, else_='AAA').\
-            label("procmode_sortkey")
+        procmode_sort_logic = case(value=Header.procmode, whens=whens,
+                                   else_='AAA').label("procmode_sortkey")
 
-        extra_order = () if extra_order_terms is None else tuple(extra_order_terms)
+        extra_order = () if extra_order_terms is None \
+            else tuple(extra_order_terms)
 
         # Order by absolute time separation.
         targ_ut_dt_secs = int((self.descr['ut_datetime']
@@ -295,9 +291,8 @@ class CalQuery(object):
         else:
             self.query = self.query.order_by(*order)
 
-        # if os.getenv("CAL_QUERY_DEBUG", False):
-        #     print("Query: %s" % render_query(self.query))
-
+        # This forces a deterministic sort order in the case where the above
+        # might order by something that is the same between multiple files.
         self.query = self.query.order_by(desc(DiskFile.entrytime))
 
         return self.query.limit(limit).all()
@@ -418,7 +413,7 @@ class CalQuery(object):
             return self.reduction('PROCESSED_' + name)
         else:
             return self.raw().\
-                filter(Header.types.like('%''{0}''%'.format(name)))
+                filter(Header.types.contains(name))
 
     def bias(self, processed=False):
         """
@@ -536,10 +531,10 @@ class CalQuery(object):
 
 class Calibration(object):
     """
-    This class provides a basic Calibration Manager This is the superclass
+    This class provides a Calibration Manager. This is the superclass
     from which the instrument specific variants subclass.
-
     """
+
     session = None
     header = None
     descriptors = None
@@ -589,9 +584,9 @@ class Calibration(object):
                 'engineering':          self.header.engineering
                 }
 
-            iC = self.instrClass
-            query = session.query(iC).filter(iC.header_id ==
-                                             self.descriptors['header_id'])
+            query = session.query(self.instrClass)\
+                .filter(self.instrClass.header_id ==
+                        self.descriptors['header_id'])
             inst = query.first()
 
             # Populate the descriptors dictionary for the instrument

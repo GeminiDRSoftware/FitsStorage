@@ -1,29 +1,14 @@
-"""
-This module contains the "associated calibrations" code. It is used
-to generate a summary table of calibration data associated with the
-results of a search
-"""
 from fits_storage.cal.calibration import get_cal_object
 from fits_storage.gemini_metadata_utils import cal_types
 from fits_storage.core.orm.header import Header
 from fits_storage.cal.orm.calcache import CalCache
 
-mapping = {
-    'processed_bias': ('bias', {'processed': True}),
-    'processed_flat': ('flat', {'processed': True}),
-    'processed_arc': ('arc', {'processed': True}),
-    'processed_dark': ('dark', {'processed': True}),
-    'processed_standard': ('standard', {'processed': True}),
-    'processed_slitillum': ('slitillum', {'processed': True}),
-    'processed_bpm': ('bpm', {'processed': True}),
-    }
-
-
 def associate_cals(session, headers, caltype="all", recurse_level=0):
     """
-    This function takes a list of headers from a search result and
-    generates a list of the associated calibration headers
-    We return a priority ordered (best first) list
+    This function takes a list of headers and returns a priority ordered list
+    of the associated calibration headers. Note, this is only used by the
+    "View Associated Calibrations" web function. It is not used by the
+    calmgr calibration manager API
 
     Parameters
     ----------
@@ -53,15 +38,16 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
         # Get a calibration object on this science header
         calobj = get_cal_object(session, None, header=header)
 
-        # Go through the calibration types. For now we just look for both
-        # raw and processed versions of each.
+        # Go through the calibration types. The processed_cal types are listed
+        # explicitly in the cal_types list - for those we need to call
+        # cal(processed=True).
         for ct in cal_types:
             if ct in calobj.applicable and (caltype == 'all' or caltype == ct):
-                mapped_name, mapped_args = mapping.get(ct, (ct, None))
-                if mapped_args is None:
-                    calheaders.extend(getattr(calobj, ct)())
+                if ct.startswith('processed_'):
+                    newcals = getattr(calobj, ct[10:])(processed=True)
                 else:
-                    calheaders.extend(getattr(calobj, mapped_name)(**mapped_args))
+                    newcals = getattr(calobj, ct)()
+                calheaders.extend(newcals)
 
     # Now loop through the calheaders list and remove duplicates.
     ids = set()
@@ -69,33 +55,27 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
     for calheader in calheaders:
         if calheader.id not in ids:
             ids.add(calheader.id)
+
+            # Need to check if it's already set so that primary cals that are
+            # also secondary cals stay as primary.
+            if not hasattr(calheader, 'is_primary_cal'):
+                calheader.is_primary_cal = recurse_level == 0
             shortlist.append(calheader)
+    calheaders = shortlist
 
     # Now we have to recurse to find the calibrations for the calibrations...
     # We only do this for caltype all. Keep digging deeper until we don't
     # find any extras, or we hit too many recurse levels
 
-    if caltype == 'all' and recurse_level < 1 and len(shortlist) > 0:
-        down_list = shortlist
-        for cal in associate_cals(session, down_list, caltype=caltype, recurse_level=recurse_level + 1):
+    if caltype == 'all' and recurse_level < 5 and len(calheaders) > 0:
+        morecals = associate_cals(session, calheaders, caltype=caltype,
+                                  recurse_level=recurse_level + 1)
+        for cal in morecals:
             if cal.id not in ids:
-                if recurse_level == 0:
-                    cal.is_primary_cal = True
-                else:
-                    cal.is_primary_cal = False
-                shortlist.append(cal)
+                calheaders.append(cal)
 
-    def sort_cal_fn(a):
-        try:
-            return "BPM" if a is not None and a[0].observation_type == "BPM" else "X"
-        except:
-            return "X"
-
-    if recurse_level == 0:
-        shortlist.sort(key=sort_cal_fn)
-
-    # All done, return the shortlist
-    return shortlist
+    # All done, return the calheaders
+    return calheaders
 
 
 def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
@@ -157,15 +137,11 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
 
     if caltype == 'all' and recurse_level < 4 and len(calheaders) > 0:
         down_list = calheaders
-        for cal in associate_cals_from_cache(session, down_list, caltype=caltype, recurse_level=recurse_level + 1):
+        for cal in associate_cals_from_cache(session, down_list,
+                                             caltype=caltype,
+                                             recurse_level=recurse_level + 1):
             if cal.id not in ids:
                 # cal.is_primary_cal = False
                 calheaders.append(cal)
-
-    def sort_cal_fn(a):
-        return "BPM" if a is not None and len(a) > 0 and a[0].observation_type == "BPM" else "X"
-
-    if recurse_level == 0:
-        calheaders.sort(key=sort_cal_fn)
 
     return calheaders

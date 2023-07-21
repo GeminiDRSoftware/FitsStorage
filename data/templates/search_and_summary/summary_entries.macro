@@ -14,16 +14,16 @@
 {%- macro row(row, rowtype=None) -%}
 {%- if (rowtype == 'primary' and row.is_primary_cal == True) or (rowtype == 'secondary' and row.is_primary_cal == False) or (rowtype == None) -%}
 {%- if row.procmode == 'sq' -%}
-<tr class='sq-alternating'>
+  <tr class='sq-alternating'>
 {%- elif row.procmode == 'ql' %}
-<tr class='ql-alternating'>
+  <tr class='ql-alternating'>
 {%- else %}
-<tr class='alternating'>
+  <tr class='alternating'>
 {%- endif %}
 {%- for column in row.columns %}
  <td>
   {%- if column.text != None -%}
-{{ column.text|e }}
+    {{ column.text|e }}
   {%- elif column.content != None -%}
     {%- if column.content.prop_message -%}{{ prop_message(column.content) }}
       {%- elif column.key == 'filename' -%}{{ generate_filename(column.content) }}
