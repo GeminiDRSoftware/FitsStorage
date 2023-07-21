@@ -1,7 +1,7 @@
 import os.path
 import hashlib
 
-from helpers import make_diskfile
+from .helpers import make_diskfile
 
 from astrodata import AstroData
 

@@ -16,7 +16,7 @@ from fits_storage.logger import DummyLogger
 from fits_storage.core.ingester import Ingester
 from fits_storage.core.orm.diskfile import DiskFile
 
-from helpers import make_empty_testing_db_env, fetch_file
+from .helpers import make_empty_testing_db_env, fetch_file
 from fits_storage.config import get_config
 
 from fits_storage.db import sessionfactory

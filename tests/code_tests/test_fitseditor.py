@@ -1,6 +1,6 @@
 import astrodata
 
-from helpers import make_diskfile
+from .helpers import make_diskfile
 
 from fits_storage.server.fitseditor import FitsEditor
 

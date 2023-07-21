@@ -3,7 +3,7 @@ from ast import literal_eval
 
 from fits_storage.core.orm.header import Header
 
-from helpers import make_diskfile
+from .helpers import make_diskfile
 
 
 def test_header(tmp_path):

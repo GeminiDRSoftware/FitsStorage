@@ -1,7 +1,7 @@
 from fits_storage.core.orm.header import Header
 from fits_storage.cal.orm.f2 import F2
 
-from helpers import make_diskfile
+from .helpers import make_diskfile
 
 
 def test_f2(tmp_path):

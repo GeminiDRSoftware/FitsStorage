@@ -1,7 +1,7 @@
 from fits_storage.cal.orm.gnirs import Gnirs
 from fits_storage.core.orm.header import Header
 
-from helpers import make_diskfile
+from .helpers import make_diskfile
 
 
 def test_gnirs(tmp_path):
