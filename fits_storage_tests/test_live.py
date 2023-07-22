@@ -1,0 +1,15 @@
+# This convenience testing module simply imports all the "liveserver_tests".
+# These are tests that can simply be run against an operational server.
+# They do no test the local environment where they are being run, they simply
+# hit server APIs and test the results against reference values in the tests.
+
+# The server to test against
+server = 'https://archive.gemini.edu:/jsoncalmgr'
+
+# we want to have pytest assert introspection in the helpers
+import pytest
+pytest.register_assert_rewrite('fits_storage_tests.liveserver_tests.helpers')
+
+from fits_storage_tests.liveserver_tests.test_cals_gmos import *
+from fits_storage_tests.liveserver_tests.test_cals_niri import *
+from fits_storage_tests.liveserver_tests.test_cals_gnirs import *

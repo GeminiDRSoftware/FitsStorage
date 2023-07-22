@@ -18,7 +18,7 @@ cals_2022_gmos = {
                              'flat': 'GN-2022A-Q-303-9-003',
                              'arc': 'GN-2022A-Q-303-10-001',
                              'dark': None,
-                             'specphot': 'GN-2022A-Q-303-10-001',
+                             'specphot': 'GN-2021B-Q-104-5-001',
                              # TODO - add processed BPM
                              },
     # GMOS MOS
