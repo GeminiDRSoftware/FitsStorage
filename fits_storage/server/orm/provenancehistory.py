@@ -134,22 +134,22 @@ def ingest_provenancehistory(diskfile):
         if provenance:
             prov_list = list()
             for prov in provenance:
-                timestamp = _parse_timestamp(prov[0])
-                filename = prov[1]
-                md5 = prov[2]
-                added_by = prov[3]
+                timestamp = _parse_timestamp(prov['timestamp'])
+                filename = prov['filename']
+                md5 = prov['md5']
+                added_by = prov['provenance_added_by']
                 prov_row = Provenance(timestamp, filename, md5, added_by)
                 prov_list.append(prov_row)
             diskfile.provenance = prov_list
-    if hasattr(ad, 'PROVENANCE_HISTORY'):
-        provenance_history = ad.PROVENANCE_HISTORY
+    if hasattr(ad, 'PROVHISTORY'):
+        provenance_history = ad.PROVHISTORY
         if provenance_history:
             hist_list = list()
             for ph in provenance_history:
-                timestamp_start = _parse_timestamp(ph[0])
-                timestamp_stop = _parse_timestamp(ph[1])
-                primitive = ph[2]
-                args = ph[3]
+                timestamp_start = _parse_timestamp(ph['timestamp_start'])
+                timestamp_stop = _parse_timestamp(ph['timestamp_stop'])
+                primitive = ph['primitive']
+                args = ph['args']
                 hist = History(timestamp_start, timestamp_stop, primitive, args)
                 hist_list.append(hist)
             diskfile.history = hist_list

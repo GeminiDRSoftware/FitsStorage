@@ -348,9 +348,7 @@ class SummaryGenerator(object):
         row.deprogrammed_uri = self.deprogrammed_uri
         row.procmode = header.procmode
 
-        # TODO - reenable after we sort out probvenance.
-        #if diskfile.provenance:
-        if False:
+        if header.diskfile.provenance or header.diskfile.history:
             row.has_provenance = True
         else:
             row.has_provenance = False

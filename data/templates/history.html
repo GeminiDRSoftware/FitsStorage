@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block title %}Provenance and History for: {{ filename }}{% endblock %}
+{% block body %}
+{% if filename == 'Not Found' %}
+<h1>Could not find file</h1>
+{% else %}
+<h1>Provenance and History for File: {{ filename }}</h1>
+{% if provenance_len == 0 %}
+<P>No Provenance Information found</P>
+{% else %}
+<h2>Provenance</h2>
+<TABLE class="fullwidth nowrap">
+    <tr class='tr_head'>
+        <th>Timestamp</th>
+        <th>Filename</th>
+        <th>MD5</th>
+        <th>Added By</th>
+    </tr>
+    {% for row in provenance_list %}
+      <tr class='alternating'>
+          <td class="alternating">{{ row.timestamp }}</td>
+          <td class="alternating">{{ row.filename }}</td>
+          <td class="alternating">{{ row.md5 }}</td>
+          <td class="alternating">{{ row.added_by }}</td>
+      </tr>
+    {% endfor %}
+</TABLE>
+{% endif %}
+{% if history_len == 0 %}
+<P>No History Information found</P>
+{% else %}
+<h2>History</h2>
+<TABLE class="fullwidth nowrap">
+    <tr class='tr_head'>
+        <th>Start Timestamp</th>
+        <th>End Timestamp</th>
+        <th>Primitive</th>
+        <th>Arguments</th>
+    </tr>
+    {% for row in history_list %}
+      <tr class='alternating'>
+          <td class="alternating">{{ row.timestamp_start }}</td>
+          <td class="alternating">{{ row.timestamp_end }}</td>
+          <td class="alternating">{{ row.primitive }}</td>
+          <td class="alternating">{{ row.args }}</td>
+      </tr>
+    {% endfor %}
+</TABLE>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -104,7 +104,7 @@
 {%- macro generate_download(col, sumtype, has_provenance) -%}
 <div class='center'>
 {%- if col.prev %}<span class="preview"><a href="/preview/{{ col.name }}">[P]</a> </span>{% endif -%}
-{%- if has_provenance %}<a href="/rawfiles/{{ col.name }}" target="_blank">[R]</a>{% endif -%}
+{%- if has_provenance %}<a href="/history/{{ col.name }}" target="_blank">[H]</a>{% endif -%}
 {%- if col.name.endswith('.fits') %}
 <a href="/file/{{ col.name }}.bz2">[D]</a>
 {%- else -%}
