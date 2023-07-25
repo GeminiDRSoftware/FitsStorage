@@ -32,6 +32,8 @@ if fsc.is_archive:
 
 if fsc.is_server:
     from fits_storage.server.orm.obslog import Obslog
+    from fits_storage.server.orm.provenancehistory import \
+        ingest_provenancehistory
 
 
 class Ingester(object):
@@ -444,6 +446,16 @@ class Ingester(object):
             self.s.commit()
         except:
             message = "Error adding FullTextHeader"
+            self.l.error(message, exc_info=True)
+            iqe.seterror(message)
+            self.s.commit()
+
+        try:
+            self.l.debug("Adding Provenance and History")
+            ingest_provenancehistory(diskfile)
+            self.s.commit()
+        except:
+            message = "Error adding Provenance and History"
             self.l.error(message, exc_info=True)
             iqe.seterror(message)
             self.s.commit()
