@@ -4,7 +4,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy.orm import relationship
 
-from . import Base
+from fits_storage.core.orm import Base
 
 
 __all__ = ["Provenance", "History", "ingest_provenancehistory"]
@@ -152,4 +152,4 @@ def ingest_provenancehistory(diskfile):
                 args = ph[3]
                 hist = History(timestamp_start, timestamp_stop, primitive, args)
                 hist_list.append(hist)
-            diskfile.provenance_history = hist_list
+            diskfile.history = hist_list

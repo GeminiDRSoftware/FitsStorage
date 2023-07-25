@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import BigInteger, Integer, Text, Boolean, DateTime
-from sqlalchemy.orm import relation, relationship
+from sqlalchemy.orm import relationship
 
 import os
 import datetime
@@ -9,18 +9,18 @@ import tempfile
 import hashlib
 
 from fits_storage.core.hashes import md5sum
-from ...logger import DummyLogger
+from fits_storage.logger import DummyLogger
 
 from . import Base
-from .file import File
 
 from fits_storage.config import get_config
 
 __all__ = ["DiskFile"]
 
-from .provenance import Provenance, ProvenanceHistory
-# if fsc.is_server:
-#     from ..server.preview import Preview
+fsc = get_config()
+if fsc.is_server:
+    from fits_storage.server.orm.provenancehistory import Provenance, History
+#   from ..server.preview import Preview
 
 import astrodata
 # DO NOT REMOVE THIS IMPORT, IT INITIALIZES THE ASTRODATA FACTORY
@@ -67,10 +67,7 @@ class DiskFile(Base):
 
     id = Column(Integer, primary_key=True)
     file_id = Column(Integer, ForeignKey('file.id'), nullable=False, index=True)
-    file = relation(File, order_by=id, back_populates='diskfiles')
-    # if fsc.is_server
-    #    previews = relationship(Preview, back_populates="diskfile",
-    #    order_by=Preview.filename)
+    file = relationship("File", order_by=id, back_populates='diskfiles')
 
     filename = Column(Text, index=True)
     path = Column(Text)
@@ -90,13 +87,13 @@ class DiskFile(Base):
     fverrors = Column(Integer)
     mdready = Column(Boolean)
 
-    provenance = None
-    provenance_history = None
-    # provenance = relationship(Provenance, back_populates='diskfile',
-    #                          order_by=Provenance.timestamp)
-    # provenance_history = relationship(ProvenanceHistory,
-    #                                  back_populates='diskfile',
-    #                                  order_by=ProvenanceHistory.timestamp_start)
+    if fsc.is_server:
+        provenance = relationship(Provenance, back_populates='diskfile',
+                                  order_by=Provenance.timestamp)
+        history = relationship(History, back_populates='diskfile',
+                               order_by=History.timestamp_start)
+    #   previews = relationship(Preview, back_populates="diskfile",
+    #                           order_by=Preview.filename)
 
     # We use this to store an uncompressed Cache of a compressed file
     # This is not recorded in the database and is transient for the life
@@ -121,7 +118,7 @@ class DiskFile(Base):
     _z_staging_dir = None
     _s3_staging_dir = None
 
-    def __init__(self, given_file: File, given_filename: str, given_path: str,
+    def __init__(self, given_file, given_filename: str, given_path: str,
                  compressed=None, logger=DummyLogger(),
                  storage_root=None, z_staging_dir=None, s3_staging_dir=None):
         """

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Numeric
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relationship
 
 from . import Base
 from .footprint import Footprint
@@ -46,6 +46,6 @@ class PhotStandardObs(Base):
                              nullable=False, index=True)
     footprint_id = Column(Integer, ForeignKey(Footprint.id), nullable=False,
                           index=True)
-    photstandard = relation(PhotStandard, order_by=id)
-    footprint = relation(Footprint, order_by=id)
+    photstandard = relationship(PhotStandard, order_by=id)
+    footprint = relationship(Footprint, order_by=id)
 

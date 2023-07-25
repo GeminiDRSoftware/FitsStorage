@@ -1,21 +1,16 @@
-from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, DateTime
-from sqlalchemy import Numeric, Boolean, Date
-from sqlalchemy import Time, BigInteger, Enum
-from sqlalchemy import Index, desc, nullslast
+from sqlalchemy import Column, ForeignKey, Enum, Index, desc, nullslast
+from sqlalchemy import Integer, BigInteger, Text, DateTime, Date, Time, \
+    Boolean, Numeric
 
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relationship
+
 from . import Base
-from .diskfile import DiskFile
 
 from fits_storage.logger import DummyLogger
 from fits_storage.file_parser import build_parser
-from fits_storage.gemini_metadata_utils import GeminiProgram, procmode_codes
-from fits_storage.gemini_metadata_utils import gemini_gain_settings
-from fits_storage.gemini_metadata_utils import gemini_readspeed_settings
-from fits_storage.gemini_metadata_utils import gemini_welldepth_settings
-from fits_storage.gemini_metadata_utils import obs_types, obs_classes, \
-    reduction_states
+from fits_storage.gemini_metadata_utils import GeminiProgram, procmode_codes, \
+    gemini_gain_settings, gemini_readspeed_settings, obs_types, obs_classes, \
+    gemini_welldepth_settings, reduction_states
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -54,7 +49,7 @@ class Header(Base):
     id = Column(Integer, primary_key=True)
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False,
                          index=True)
-    diskfile = relation(DiskFile, order_by=id)
+    diskfile = relationship("DiskFile", order_by=id)
     program_id = Column(Text, index=True)
     engineering = Column(Boolean, index=True)
     science_verification = Column(Boolean, index=True)
@@ -126,7 +121,7 @@ class Header(Base):
     def __repr__(self):
         return "<Header('%s', '%s')>" % (self.id, self.diskfile_id)
 
-    def populate_fits(self, diskfile: DiskFile, log=DummyLogger()):
+    def populate_fits(self, diskfile, log=DummyLogger()):
         """
         Populates header table values from the FITS headers of the file.
         Uses the AstroData object to access the file.

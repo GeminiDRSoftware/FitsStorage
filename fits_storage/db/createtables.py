@@ -62,6 +62,8 @@ class GrantHelper(object):
 # is enough to cause any metadata.create_all() call to create that table.
 
 # Core ORM classes
+from fits_storage.core.orm.file import File
+from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfilereport import DiskFileReport
 from fits_storage.core.orm.footprint import Footprint
@@ -162,7 +164,7 @@ def create_tables(session: Session):
 
     # Create the tables. You only need to call create_all on one orm object,
     # and all tables for all imported ORM classes will be created.
-    Header.metadata.create_all(bind=db._saved_engine)
+    File.metadata.create_all(bind=db._saved_engine)
 
     # Add the geometry types separately, because SQLAlchemy only partially
     # supports these. TODO: Is this still true?
@@ -194,4 +196,4 @@ def drop_tables(session: Session):
     session : :class:`Session`
         Session to create tables in
     """
-    Header.metadata.drop_all(bind=db._saved_engine)
+    File.metadata.drop_all(bind=db._saved_engine)

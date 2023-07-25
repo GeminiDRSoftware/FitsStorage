@@ -1,6 +1,8 @@
 from .orm.user import User
 from .orm.userprogram import UserProgram
 
+from .orm.provenancehistory import Provenance, History
+
 from .orm.usagelog import UsageLog
 from .orm.querylog import QueryLog
 from .orm.downloadlog import DownloadLog
