@@ -96,7 +96,7 @@ def get_fitsweb_granthelper():
          'gmos', 'niri', 'michelle', 'gnirs', 'gpi', 'nifs', 'f2', 'gsaoi',
          'nici', 'ghost', 'photstandard', 'photstandardobs', 'footprint',
          'preview', 'obslog', 'miscfile', 'obslog_comment', 'program',
-         'publication', 'programpublication'])
+         'publication', 'programpublication', 'provenance', 'history'])
 
     # For the notification system:
     grant.select('notification')
