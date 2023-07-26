@@ -4,7 +4,7 @@
 # hit server APIs and test the results against reference values in the tests.
 
 # The server to test against
-server = 'https://archive.gemini.edu:/jsoncalmgr'
+server = 'https://archive.gemini.edu'
 
 # we want to have pytest assert introspection in the helpers
 import pytest
@@ -15,3 +15,4 @@ from fits_storage_tests.liveserver_tests.test_cals_niri import *
 from fits_storage_tests.liveserver_tests.test_cals_gnirs import *
 from fits_storage_tests.liveserver_tests.test_cals_nifs import *
 from fits_storage_tests.liveserver_tests.test_cals_f2 import *
+from fits_storage_tests.liveserver_tests.test_provenance_history import *

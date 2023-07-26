@@ -1,4 +1,7 @@
+import http
+
 import requests
+
 
 def calhelper(base_url, dod):
     """
@@ -20,7 +23,10 @@ def calhelper(base_url, dod):
 
     for item in dod.keys():
         url = base_url + '/' + item
-        results = requests.get(url).json()
+        req = requests.get(url)
+        assert req.status_code == http.HTTPStatus.OK
+        results = req.json()
+
         # There should only be one "science file" result as we specified a
         # single file in the query
         assert len(results) == 1
@@ -44,3 +50,22 @@ def calhelper(base_url, dod):
         # Now check they match
         for caltype in dod[item].keys():
             assert dod[item][caltype] == cals_from_server[caltype]
+
+
+def fetch_helper(base_url, filename, buzzwords):
+    """
+    base_url is the base URL to test against, we'll append /filename to it,
+    and fetch that URL. We then assert that we got a 200 status, and we also
+    assert that each item in the buzzwords list is in the text returned.
+
+    This is pretty crude in terms of analysing returned html (for example),
+    but it provides a good sanity check in many cases.
+    """
+
+    url = base_url + '/' + filename
+    req = requests.get(url)
+    assert req.status_code == http.HTTPStatus.OK
+    results = req.text
+
+    for word in buzzwords:
+        assert word in results
