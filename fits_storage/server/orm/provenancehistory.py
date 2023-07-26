@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
 
+from fits_storage.logger import DummyLogger
 
 __all__ = ["Provenance", "History", "ingest_provenancehistory"]
 
@@ -106,7 +107,7 @@ class History(Base):
         self.args = args
 
 
-def ingest_provenancehistory(diskfile):
+def ingest_provenancehistory(diskfile, logger=DummyLogger()):
     """
     Ingest the provenance and history data from the diskfile into the database.
     These are rolled together into one function simply for convenience as we
@@ -140,7 +141,12 @@ def ingest_provenancehistory(diskfile):
                 added_by = prov['provenance_added_by']
                 prov_row = Provenance(timestamp, filename, md5, added_by)
                 prov_list.append(prov_row)
+            logger.debug("Adding %d provenance rows", len(prov_list))
             diskfile.provenance = prov_list
+        else:
+            logger.debug("File has empty provenance extension")
+    else:
+        logger.debug("File has no provenance extension")
     if hasattr(ad, 'PROVHISTORY'):
         provenance_history = ad.PROVHISTORY
         if provenance_history:
@@ -152,4 +158,9 @@ def ingest_provenancehistory(diskfile):
                 args = ph['args']
                 hist = History(timestamp_start, timestamp_stop, primitive, args)
                 hist_list.append(hist)
+            logger.debug("Adding %d history rows", len(hist_list))
             diskfile.history = hist_list
+        else:
+            logger.debug("File has empty history extension")
+    else:
+        logger.debug("File has no history extension")

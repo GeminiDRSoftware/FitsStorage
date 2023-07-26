@@ -452,7 +452,7 @@ class Ingester(object):
 
         try:
             self.l.debug("Adding Provenance and History")
-            ingest_provenancehistory(diskfile)
+            ingest_provenancehistory(diskfile, logger=self.l)
             self.s.commit()
         except:
             message = "Error adding Provenance and History"
@@ -469,14 +469,6 @@ class Ingester(object):
             message = "Error adding Header"
             self.l.error(message, exc_info=True)
             iqe.seterror(message)
-            return False
-
-        try:
-            self.l.debug("Skipping Provenance history - not implemented yet")
-            # TODO - implement provenance history calls.
-            # ingest_provenance(diskfile)
-        except:
-            self.l.error("Error adding Provenance history", exc_info=True)
             return False
 
         try:
