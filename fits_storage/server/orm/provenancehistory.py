@@ -41,11 +41,11 @@ class Provenance(Base):
     __tablename__ = 'provenance'
 
     id = Column(Integer, primary_key=True)
+    diskfile_id = Column(Integer, ForeignKey('diskfile.id'))
     timestamp = Column(DateTime)
     filename = Column(Text)
     md5 = Column(Text)
     added_by = Column(Text)
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'))
     diskfile = relationship("DiskFile", back_populates='provenance')
 
     def __init__(self, timestamp: datetime, filename: str, md5: str,
@@ -78,11 +78,11 @@ class History(Base):
     __tablename__ = 'history'
 
     id = Column(Integer, primary_key=True)
+    diskfile_id = Column(Integer, ForeignKey('diskfile.id'))
     timestamp_start = Column(DateTime)
     timestamp_end = Column(DateTime)
     primitive = Column(Text)
     args = Column(Text)
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'))
     diskfile = relationship("DiskFile", back_populates='history')
 
     def __init__(self, timestamp_start: datetime, timestamp_end: datetime,

@@ -113,7 +113,7 @@ def report(thing):
                                                    provenance.md5.ljust(md5_length),
                                                    provenance.timestamp,
                                                    provenance.primitive.ljust(primitive_length)))
-            if diskfile.provenance_history:
+            if diskfile.history:
                 resp.append("\n\n")
                 resp.append("------ HISTORY ------\n")
                 for phistory in diskfile.provenance_history:
