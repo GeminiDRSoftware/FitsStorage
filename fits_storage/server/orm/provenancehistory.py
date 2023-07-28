@@ -148,10 +148,14 @@ def ingest_provenancehistory(diskfile, logger=DummyLogger()):
     else:
         logger.debug("File has no provenance extension")
     if hasattr(ad, 'PROVHISTORY'):
-        provenance_history = ad.PROVHISTORY
-        if provenance_history:
+        logger.warning('File uses old PROVHISTORY name for HISTORY')
+        ad.HISTORY = ad.PROVHISTORY
+        del ad.PROVHISTORY
+    if hasattr(ad, 'HISTORY'):
+        history = ad.HISTORY
+        if history:
             hist_list = list()
-            for ph in provenance_history:
+            for ph in history:
                 timestamp_start = _parse_timestamp(ph['timestamp_start'])
                 timestamp_stop = _parse_timestamp(ph['timestamp_stop'])
                 primitive = ph['primitive']
