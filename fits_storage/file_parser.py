@@ -253,7 +253,7 @@ class AstroDataFileParser(FileParser):
         try:
             airmass = self.ad.airmass()
             airmass = float(airmass) if isinstance(airmass, str) else airmass
-            if airmass is not None and airmass > 10:
+            if airmass is not None and airmass > 50:
                 if self.elevation() is not None:
                     try:
                         # use secant(90-elevation) for airmass, converting to radians for numpy
