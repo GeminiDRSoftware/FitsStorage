@@ -4,6 +4,7 @@ queue.
 
 """
 import os
+from sqlalchemy.exc import NoResultFound
 
 import numpy
 import matplotlib
@@ -13,13 +14,11 @@ import matplotlib.pyplot as plt
 from .orm.preview import Preview
 
 from fits_storage.config import get_config
-#fsc = get_config()
+fsc = get_config()
 
 if fsc.using_s3:
     from .aws_s3 import get_helper
 
-import astrodata
-import gemini_instruments
 from gemini_instruments.gmos.pixel_functions import get_bias_level
 from gempy.library.spectral import Spek1D
 
@@ -43,6 +42,8 @@ def make_preview(self, diskfile, force=False):
     Make the preview, given the diskfile. This can be called either from
     the preview queue servicing, or from file ingesting.
 
+    Note - there shall be only one preview per diskfile.
+
     The diskfile object handles providing an ad_object for this code to use
 
         Parameters
@@ -53,9 +54,8 @@ def make_preview(self, diskfile, force=False):
             If True, force (re)creation of the preview even if one already
             exists
     """
-    fsc = get_config()
-    # Generate the path to store the preview files to
 
+    fsc = get_config()
     if fsc.using_s3:
         # Create the file in s3_staging_area
         preview_path = os.path.join(fsc.s3_staging_area)
@@ -63,70 +63,37 @@ def make_preview(self, diskfile, force=False):
         # Create the file in the preview_path in the storage_root
         preview_path = os.path.join(fsc.storage_root, fsc.preview_path)
 
-    preview_num = 0
-    for extnum in range(len(diskfile.ad_object)):
+    preview_filename = diskfile.filename.removesuffix('.bz2').\
+        replace('.fits', '.jpg')
+    preview_fpfn = os.path.join(preview_path, preview_filename)
+
+    if len(diskfile.ad_object[0].shape) == 1:
+        # It's a spectrum
+        pass
+    else:
+        # It's imaging.
+        with open(preview_fpfn, 'wb') as fp:
+            try:
+                self.render_image_preview(diskfile.ad_object, fp)
+            except:
+                os.unlink(preview_fpfn)
+                raise
+
+        # If we're not using S3, that's it, the file is in place.
+        # If we are using s3, need to upload it now.
+        if fsc.using_s3:
+            self.s3.upload_file(preview_filename, preview_fpfn)
+            os.unlink(preview_fpfn)
+
+        # Is it allready in the preview table?
         try:
-            preview_fullpath = os.join(preview_path, "%s_%03d_preview.jpg"
-                                       % (diskfile.filename, extnum))
-            if False:  # spect code needs more work.
-            #if len(diskfile.ad_object[0].shape) == 1:
-                # It's a spectrum
-                with open(filename, 'wb') as fp:
-                    try:
-                        self.render_spectra_preview(diskfile.ad_object, fp, idx)
-                    except:
-                        os.unlink(filename)
-                        raise
+            p_check = self.s.query(Preview).\
+                filter(Preview.diskfile_id == diskfile.id).\
+                filter(Preview.filename == preview_filename).one()
+        except NoResultFound:
+            preview = Preview(diskfile, preview_filename)
+            self.s.add(preview)
 
-                # If we're not using S3, that's it, the file is in place.
-                # If we are using s3, need to upload it now.
-                if using_s3:
-                    # Create the file in s3_staging_area
-                    prv_fullpath = os.path.join(s3_staging_area, filename)
-                else:
-                        # Create the preview filename
-                        prv_fullpath = os.path.join(storage_root, preview_path, filename)
-
-                    if using_s3:
-                        self.s3.upload_file(filename, prv_fullpath)
-                        os.unlink(prv_fullpath)
-
-                    # Add to preview table
-                    p_check = self.s.query(Preview).filter(Preview.diskfile_id == diskfile.id,
-                                                           Preview.filename == filename).first()
-                    if p_check is None:
-                        preview = Preview(diskfile, filename)
-                        self.s.add(preview)
-            else:
-                # It's imaging.
-                with open(preview_fullpath, 'wb') as fp:
-                    try:
-                        self.render_preview(diskfile.ad_object, fp)
-                    except:
-                        os.unlink(preview_fullpath)
-                        raise
-                # Now we should have a preview in fp. Close the file-object
-
-                # If we're not using S3, that's it, the file is in place.
-                # If we are using s3, need to upload it now.
-                if using_s3:
-                    self.s3.upload_file(preview_filename, preview_fullpath)
-                    os.unlink(preview_fullpath)
-
-                # Add to preview table
-                # Add to preview table
-                p_check = self.s.query(Preview).filter(Preview.diskfile_id == diskfile.id,
-                                                       Preview.filename == preview_filename).first()
-                if p_check is None:
-                    preview = Preview(diskfile, preview_filename)
-                    self.s.add(preview)
-        finally:
-            # Do any cleanup from above
-            if our_dfado:
-                if using_s3:
-                    os.unlink(munged_fullpath)
-                if our_dfcc:
-                    os.unlink(ad_fullpath)
 
     def render_spectra_preview(self, ad, outfile, idx):
         """
@@ -184,7 +151,7 @@ def make_preview(self, diskfile, force=False):
 
         plt.close()
 
-    def render_preview(self, ad, outfile):
+    def render_image_preview(self, ad, outfile):
         """
         Pass in an astrodata object and a file-like outfile. This function will
         create a jpeg rendering of the ad object and write it to the outfile.
