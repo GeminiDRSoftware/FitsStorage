@@ -62,53 +62,69 @@ class Previewer(object):
         except Exception:
             pass
 
-    def make_preview(self, force=False, scavenge=True):
+
+    def make_preview(self, force=False):
         """
         This is the general "do it all" call once you're instantiated the
         preview object.
 
-        If Force is false, it will not re-create an existing preview file if
-        there already exists a valid database entry for it.
+        If force is true, it will always re-create the preview file, and
+        will ensure there is a database entry for it.
 
-        If scavenge is True, it will re-use preview files that exist with the
-        correct filename rather than re-creating it.
+        If Force is false, it will not re-create an existing preview file that
+        has an appropriate filename for the diskfile in question. It will create
+        a preview ORM entry if it does not exist. nb - this
+        subsumes the previous "scavenge" functionality transparently.
+
         """
 
-        # Does a preview database entry exist for this diskfile?
+        # Does a preview file already exist for this preview?
+        exists = False
+        if self.using_s3:
+            self.logger.error("S3 support pending")
+        else:
+            if os.path.exists(self.fpfn):
+                self.logger.debug("Preview file already exists: %s", self.fpfn)
+                exists = True
+
+        # Decide whether to (re-) create the preview file...
+        if force or not exists:
+            status = self.make_preview_file()
+        else:
+            # Not force, file already exists
+            status = True
+
+        # If the preview file status is good, ensure that a database entry
+        # exists for it.
+
+        # Find the database entry if it exists...
         try:
             dbp = self.session.query(Preview) \
                 .filter(Preview.diskfile_id == self.diskfile.id).one()
         except NoResultFound:
             dbp = None
 
-        # Does a preview file already exist for this preview?
-        if self.using_s3:
+        if status:
+            if dbp:
+                self.logger.debug("DB preview already exists for this diskfile")
+                if dbp.filename != self.filename:
+                    self.logger.debug("correcting the filename, though...")
+                    dbp.filename = self.filename
+            else:
+                self.logger.debug("Creating DB preview entry")
+                dbp = Preview(self.diskfile, self.filename)
+                self.session.add(dbp)
+        else:
+            # If the status is bad, delete any preview database entry.
+            if dbp is not None:
+                self.logger.debug("Preview status was bad and preview exists"
+                                  "in database - deleting")
+                self.session.delete(dbp)
+        self.session.commit()
 
-
-
-        status = self.make_preview_file()
-
-        if self.using_s3 and self.status:
+        if self.using_s3 and status:
             # Upload preview file to S3 and delete local copy
             self.logger.error("Preview upload to S3 needs implementing")
-
-        if status:
-            # Add the database entry, if it does not already exist
-            # Does a preview exist for this diskfile_id?
-            try:
-                p = self.session.query(Preview)\
-                    .filter(Preview.diskfile_id == self.diskfile.id).one()
-            except NoResultFound:
-                # Doesn't exist at all, create it
-                p = Preview(self.diskfile, self.filename)
-                self.session.add(p)
-                self.session.commit()
-            # One exists for this diskfile, does it have the correct filename?
-            if p.filename != self.filename:
-                p.filename = self.filename
-                self.session.commit()
-            # Already exists, with the correct filename, we're all good.
-
 
     def make_preview_file(self):
         """
