@@ -3,37 +3,47 @@ This module contains utility functions for interacting with AWS S3
 """
 
 import os
-from time import sleep
 from urllib.request import pathname2url
 from urllib.parse import unquote
 
 from fits_storage.config import get_config
+from fits_storage.logger import DummyLogger
 
 from fits_storage.core.hashes import md5sum
 from contextlib import contextmanager
 
+import boto3
+from boto3.s3.transfer import S3Transfer, S3UploadFailedError, \
+    RetriesExceededError
+from botocore.exceptions import ClientError
+import logging
+from tempfile import mkstemp
+
+# Note, the Boto3 API can transparently handle multipart uploads for you, but
+# for some insane reason, to copy an object from one bucket to another you
+# need to do the multipart thing yourself if the object is over 5GB. That's
+# why we have all this stuff here. We use this only in copying objects
+# to the backup bucket to go to glacier.
+
 COPY_LIMIT = 5 * 1024 * 1024 * 1000
-# ~ 5GB. (It should probably be 5 * 1024**3, but we use a tad less to make sure...)
+# ~ 5GB. It should probably be 5 * 1024**3, but we use a tad less to be sure.
 
 MULTIPART_COPY_PART_SIZE = 2000000000
 # A bit under 2GB. Reduces the total number of parts...
+
 
 class DownloadError(Exception):
     pass
 
 
-import boto3
-from boto3.s3.transfer import S3Transfer, S3UploadFailedError, RetriesExceededError
-from botocore.exceptions import ClientError
-import logging
-from tempfile import mkstemp
-
 boto3.set_stream_logger(level=logging.CRITICAL)
 logging.getLogger('boto').setLevel(logging.CRITICAL)
 logging.getLogger('botocore').setLevel(logging.CRITICAL)
 
+
 def get_source(bucket, key):
     return unquote(pathname2url('{}/{}'.format(bucket, key)))
+
 
 def generate_ranges(size):
     c = 0
@@ -46,20 +56,29 @@ def generate_ranges(size):
         yield '{}-{}'.format(c, n-1)
         c = n
 
+
 class Boto3Helper(object):
-    def __init__(self, bucket_name=None, logger=None):
+    def __init__(self, bucket_name=None, logger=None, access_key=None,
+                 secret_key=None, s3_staging_area=None, storage_root=None):
         fsc = get_config()
-        self.l = logger
+        self.l = logger if logger is not None else DummyLogger()
         self.b = None
         self.b_name = bucket_name if bucket_name is not None else \
             fsc.s3_bucket_name
+        self.access_key = access_key if access_key is not None else \
+            fsc.aws_access_key
+        self.secret_key = secret_key if secret_key is not None else \
+            fsc.aws_secret_key
+        self.s3_staging_area = s3_staging_area if s3_staging_area is not None \
+            else fsc.s3_staging_area
+        self.storage_root = storage_root if storage_root is not None \
+            else fsc.storage_root
 
     @property
     def session(self):
-        fsc = get_config()
         if boto3.DEFAULT_SESSION is None:
-            boto3.setup_default_session(aws_access_key_id=fsc.aws_access_key,
-                                        aws_secret_access_key=fsc.aws_secret_key)
+            boto3.setup_default_session(aws_access_key_id=self.access_key,
+                                        aws_secret_access_key=self.secret_key)
         return boto3.DEFAULT_SESSION
 
     @property
@@ -68,7 +87,7 @@ class Boto3Helper(object):
 
     @property
     def s3(self):
-         return self.session.resource('s3')
+        return self.session.resource('s3')
 
     @property
     def bucket(self):
@@ -94,10 +113,17 @@ class Boto3Helper(object):
     def get_key(self, keyname):
         return self.bucket.Object(keyname)
 
+    def delete_key(self, key):
+        try:
+            self.s3_client.delete_object(Bucket=self.b_name, Key=key)
+            return True
+        except ClientError:
+            return False
+
     def get_md5(self, key):
         """
         Get the MD5 that the S3 server has for this key.
-        Simply strips quotes from the etag value.
+        We get this from the key metadata
         """
         if isinstance(key, str):
             key = self.get_key(key)
@@ -107,7 +133,6 @@ class Boto3Helper(object):
         except KeyError:
             # Old object, we haven't re-calculated the MD5 yet
             return None
-
 
     def get_size(self, key):
         return key.content_length
@@ -123,7 +148,8 @@ class Boto3Helper(object):
         md = obj.metadata
         md.update(kw)
         bn = self.bucket.name
-        self.s3_client.copy_object(Bucket=bn, Key=keyname, CopySource=get_source(bn, keyname),
+        self.s3_client.copy_object(Bucket=bn, Key=keyname,
+                                   CopySource=get_source(bn, keyname),
                                    MetadataDirective='REPLACE', Metadata=md)
 
     def copy_multipart(self, keyname, to_bucket, copy_metadata=True):
@@ -133,41 +159,49 @@ class Boto3Helper(object):
         extras = {'Metadata': obj.metadata} if copy_metadata else {}
         client = self.s3_client
 
-        initiated = client.create_multipart_upload(Bucket=to_bucket, Key=keyname, **extras)
-        mpu = boto3.resource('s3').MultipartUpload(to_bucket, keyname, initiated['UploadId'])
-        self.l.debug("Initiated multipart upload with id: %s", initiated['UploadId'])
+        initiated = client.create_multipart_upload(Bucket=to_bucket,
+                                                   Key=keyname, **extras)
+        mpu = boto3.resource('s3').MultipartUpload(to_bucket, keyname,
+                                                   initiated['UploadId'])
+        self.l.debug("Initiated multipart upload with id: %s",
+                     initiated['UploadId'])
         for n, rng in enumerate(generate_ranges(sz), 1):
             self.l.debug("Uploading part: %s", n)
-            client.upload_part_copy(Bucket=to_bucket, Key=keyname, CopySource=src,
-                                    PartNumber=n,
+            client.upload_part_copy(Bucket=to_bucket, Key=keyname,
+                                    CopySource=src, PartNumber=n,
                                     CopySourceRange="bytes=" + rng,
                                     UploadId=mpu.id)
-        parts = {'Parts': [dict(ETag=part.e_tag, PartNumber=part.part_number) for part in mpu.parts.filter(Key=keyname)]}
+        parts = {'Parts': [dict(ETag=part.e_tag, PartNumber=part.part_number)
+                           for part in mpu.parts.filter(Key=keyname)]}
         self.l.debug("Completing the upload...")
         mpu.complete(MultipartUpload=parts)
 
     def copy(self, keyname, to_bucket, metadatadirective='COPY', **kw):
         bn = self.bucket.name
         try:
-            self.s3_client.copy_object(Bucket=to_bucket, Key=keyname, CopySource=get_source(bn, keyname),
-                                       MetadataDirective=metadatadirective, **kw)
+            self.s3_client.copy_object(Bucket=to_bucket, Key=keyname,
+                                       CopySource=get_source(bn, keyname),
+                                       MetadataDirective=metadatadirective,
+                                       **kw)
         except ClientError:
             if self.get_key(keyname).content_length > COPY_LIMIT:
-                self.l.warning("Looks like we're trying to copy a rather large key (%s). Let's switch to multipart", keyname)
-                self.copy_multipart(keyname, to_bucket, metadatadirective=='COPY')
+                self.l.warning("Looks like we're trying to copy a rather large "
+                               "key (%s). Let's switch to multipart", keyname)
+                self.copy_multipart(keyname, to_bucket,
+                                    metadatadirective == 'COPY')
             else:
                 raise
 
-    def upload_file(self, keyname, filename, extra_meta = {}):
+    def upload_file(self, keyname, filename, extra_meta={}):
         md5 = md5sum(filename)
         transfer = S3Transfer(self.s3_client)
         try:
-            meta = dict(md5 = md5)
+            meta = dict(md5=md5)
             meta.update(extra_meta)
             transfer.upload_file(filename, self.bucket.name, keyname,
                                  extra_args={'Metadata': meta})
-        except S3UploadFailedError as e:
-            self.l.error(e.message)
+        except S3UploadFailedError:
+            self.l.error("S3 Upload Failed", exc_info=True)
             return None
 
         obj = self.get_key(keyname)
@@ -176,30 +210,31 @@ class Boto3Helper(object):
 
         return obj
 
-    def fetch_to_staging(self, keyname, fullpath=None, skip_tests=False):
+    def fetch_to_storageroot(self, keyname, fullpath=None, skip_tests=False):
         """
         Fetch the file from s3 and put it in the storage_root directory.
         Do some validation, and re-try as appropriate
         Return True if succeeded, False otherwise
         """
-        fsc = get_config()
         if not fullpath:
-            fullpath = os.path.join(fsc.storage_root, keyname)
+            fullpath = os.path.join(self.storage_root, keyname)
 
-        # Check if the file already exists in the staging area, remove it if so
+        # Check if the file already exists in the storage area, remove it if so
         if os.path.exists(fullpath):
-            self.l.warning("File already exists at S3 download location: %s. Will delete it first.", fullpath)
+            self.l.warning("File already exists at S3 download location: %s. "
+                           "Will delete it first.", fullpath)
             try:
                 os.unlink(fullpath)
             except:
-                self.l.error("Unable to delete %s which is in the way of the S3 download", fullpath)
-                # TODO: Return here? Should be the obvious
+                self.l.error("Unable to delete %s which is in the way of the "
+                             "S3 download", fullpath)
+                return False
 
         transfer = S3Transfer(self.s3_client)
         try:
             transfer.download_file(self.bucket.name, keyname, fullpath)
-        except RetriesExceededError as e:
-            self.l.error(e.message)
+        except RetriesExceededError:
+            self.l.error("Retries Exceeded", exc_info=True)
             return False
 
         if skip_tests:
@@ -215,31 +250,31 @@ class Boto3Helper(object):
             s3md5 = self.get_md5(key)
             if filemd5 == s3md5:
                 # md5 matches
-                self.l.debug("Downloaded file from S3 sucessfully")
+                self.l.debug("Downloaded file from S3 successfully")
                 return True
             else:
                 # Size is OK, but md5 is not
-                self.l.error("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s",
-                                keyname, filemd5, s3md5)
-                sleep(10)
+                self.l.error("Problem fetching %s from S3 - size OK, but md5 "
+                             "mismatch - file: %s; key: %s",
+                             keyname, filemd5, s3md5)
+                return False
         else:
             # Didn't get enough bytes
-            self.l.error("Problem fetching %s from S3 - size mismatch - file: %s; key: %s", keyname, filesize, s3size)
-            sleep(10)
-
-        return False
+            self.l.error("Problem fetching %s from S3 - size mismatch - "
+                         "file: %s; key: %s", keyname, filesize, s3size)
+            return False
 
     @contextmanager
     def fetch_temporary(self, keyname, **kwarg):
-        fsc = get_config()
-        _, fullpath = mkstemp(dir=fsc.s3_staging_area)
+        _, fullpath = mkstemp(dir=self.s3_staging_area)
         try:
             if not self.fetch_to_staging(keyname, fullpath, **kwarg):
-                raise DownloadError("Could not download the file for some reason")
+                raise DownloadError("Could not download the file")
             yield open(fullpath, mode='rb')
         finally:
             if os.path.exists(fullpath):
                 os.unlink(fullpath)
+
 
 def get_helper(*args, **kwargs):
     return Boto3Helper(*args, **kwargs)
