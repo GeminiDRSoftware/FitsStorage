@@ -20,17 +20,11 @@ __all__ = ["DiskFile"]
 fsc = get_config()
 if fsc.is_server:
     from fits_storage.server.orm.provenancehistory import Provenance, History
-#   from ..server.preview import Preview
 
 import astrodata
 # DO NOT REMOVE THIS IMPORT, IT INITIALIZES THE ASTRODATA FACTORY
 # noinspection PyUnresolvedReferences
 import gemini_instruments      # pylint: disable=unused-import
-
-try:
-    import ghost_instruments
-except:
-    pass
 
 
 class DiskFile(Base):
@@ -180,7 +174,6 @@ class DiskFile(Base):
             self.data_md5 = self.file_md5
             self.data_size = self.file_size
 
-
     # These need to be properties so that they self-initialize - instances
     # of this class returned by the sqlalchemy layer do not get __init__ed.
     @property
@@ -260,7 +253,6 @@ class DiskFile(Base):
 
         return self.uncompressed_cache_file
 
-
     def cleanup(self):
         """
         Clean-up method for DiskFile class.
@@ -269,7 +261,7 @@ class DiskFile(Base):
         if self.ad_object is not None:
             self.logger.debug("Closing diskfile.ad_object. Well, there's "
                               "actually no ad.close() method, so we just "
-                               "set ad_object=None and hope for the best")
+                              "set ad_object=None and hope for the best")
             # self.ad_object.close()
             self.ad_object = None
 
