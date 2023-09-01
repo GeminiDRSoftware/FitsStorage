@@ -81,6 +81,29 @@ if fsc.is_server:
     from fits_storage.queues.orm.previewqueueentry import PreviewQueueEntry
     from fits_storage.queues.orm.calcachequeueentry import CalCacheQueueEntry
     from fits_storage.queues.orm.fileopsqueueentry import FileopsQueueEntry
+    from fits_storage.server.orm.preview import Preview
+    from fits_storage.server.orm.provenancehistory import Provenance, History
+    from fits_storage.server.orm.miscfile import MiscFile
+    from fits_storage.server.orm.glacier import Glacier
+    from fits_storage.server.orm.user import User
+    from fits_storage.server.orm.userprogram import UserProgram
+    from fits_storage.server.orm.usagelog import UsageLog
+    from fits_storage.server.orm.querylog import QueryLog
+    from fits_storage.server.orm.downloadlog import DownloadLog
+    from fits_storage.server.orm.filedownloadlog import FileDownloadLog
+    from fits_storage.server.orm.fileuploadlog import FileUploadLog
+    from fits_storage.server.orm.notification import Notification
+    from fits_storage.server.orm.program import Program
+    from fits_storage.server.orm.publication import Publication
+    from fits_storage.server.orm.programpublication import ProgramPublication
+    from fits_storage.server.orm.logcomments import LogComments
+    from fits_storage.server.orm.obslog import Obslog
+    from fits_storage.server.orm.obslog_comment import ObslogComment
+
+    from fits_storage.server.orm.qastuff import QAreport, \
+        QAmetricIQ, QAmetricZP, QAmetricSB, QAmetricPE
+
+    from fits_storage.server.orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 
 # Calcache table
 if fsc.is_archive:

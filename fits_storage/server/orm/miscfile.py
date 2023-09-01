@@ -3,6 +3,7 @@ from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
+from fits_storage.core.orm.diskfile import DiskFile
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -150,7 +151,7 @@ class MiscFile(Base):
     id = Column(Integer, primary_key=True)
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False,
                          index=True)
-    diskfile    = relationship("DiskFile", order_by=id)
+    diskfile    = relationship(DiskFile, order_by=id)
     release     = Column(DateTime, nullable=False)
     description = Column(Text)
     program_id  = Column(Text, index=True)
