@@ -53,42 +53,51 @@ if __name__ == "__main__":
         help="python regular expression string to select files. "
         "Special values are today, twoday, fourday, tenday twentyday "
         "to include only files from today, the last two days, the last "
-        "four days, or the last 10 days respectively (days counted as UTC days)")
+        "four days, or the last 10 days respectively (days counted as UTC "
+        "days)")
 
     parser.add_argument("--debug", action="store_true", dest="debug",
                         help="Increase log level to debug")
 
     parser.add_argument("--demon", action="store_true", dest="demon",
-                        help="Run as a background demon, do not generate stdout")
+                        help="Run in the background, do not generate stdout")
 
     parser.add_argument("--path", action="store", dest="path", default="",
                         help="Use given path relative to storage root")
 
-    parser.add_argument("--force", action="store_true", dest="force", default=False,
-                        help="Force re-ingestion of these files unconditionally")
+    parser.add_argument("--force", action="store_true", dest="force",
+                        default=False, help="Force re-ingestion of these files")
 
     parser.add_argument("--force_md5", action="store_true", dest="force_md5",
-                        default=False, help="Force md5 file check, not just lastmod date")
+                        default=False, help="Force md5 check, not just lastmod")
 
     parser.add_argument("--after", action="store", dest="after", default=None,
                         help="Ingest only after this UTC datetime")
 
     parser.add_argument("--newfiles", action="store", type=int, dest="newfiles",
-                        default=None, help="Only queue files modified in the last N days")
+                        default=None,
+                        help="Only queue files modified in the last N days")
 
     parser.add_argument("--filename", action="store", type=str, dest="filename",
-                        default=None, help="Just add this one filename to the queue")
+                        default=None,
+                        help="Just add this one filename to the queue")
+
+    parser.add_argument("--s3filepre", action="store", type=str,
+                        dest="s3filepre", default=None,
+                        help="If adding from S3, only request filenames with "
+                             "this prefix")
 
     parser.add_argument("--listfile", action="store", type=str, dest="listfile",
-                        default=None, help="Read filenames to add from this text file")
+                        default=None,
+                        help="Read filenames to add from this text file")
 
-    parser.add_argument("--logsuffix", action="store", type=str, dest="logsuffix",
-                        default=None, help="Extra suffix to add on logfile")
+    parser.add_argument("--logsuffix", action="store", type=str,
+                        dest="logsuffix", default=None,
+                        help="Extra suffix to add on logfile")
 
     options = parser.parse_args()
     path = options.path
 
-    # ------------------------------------------------------------------------------
     # Logging level to debug? Include stdio log?
     setdebug(options.debug)
     setdemon(options.demon)
@@ -118,11 +127,18 @@ if __name__ == "__main__":
     else:
         # Read directory to get file list.
         if fsc.using_s3:
-            logger.info("Querying files for ingest from S3 bucket")
-            fulllist = s3.key_names()
+            if options.filename:
+                logger.info("Querying files from S3 bucket by filename")
+                fulllist = s3.key_names_with_prefix(options.filename)
+            if options.s3filepre:
+                logger.info("Querying files from S3 bucket by s3filepre")
+                fulllist = s3.key_names_with_prefix(options.s3filepre)
+            else:
+                logger.info("Querying files for ingest from S3 bucket")
+                fulllist = s3.key_names()
         else:
             fulldirpath = os.path.join(fsc.storage_root, path)
-            logger.info("Queueing files for ingest from: {}".format(fulldirpath))
+            logger.info("Queueing files for ingest from: %s", fulldirpath)
             fulllist = os.listdir(fulldirpath)
 
         logger.info("Got full file list.")
@@ -179,14 +195,16 @@ if __name__ == "__main__":
                 age = now - mtime
                 age = age.total_seconds()
                 if age > newfiles_seconds:
-                    logger.debug("Skipping {}: older than {}s".format(filename, newfiles_seconds))
+                    logger.debug("Skipping %s: older than %s secs", filename,
+                                 newfiles_seconds)
                     continue
             if options.after:
                 after = datetime.datetime.fromisoformat(options.after)
             else:
                 after = None
-            logger.info("Queueing for Ingest: ({}/{}): {}".format(i, n, filename))
+            logger.info("Queueing for Ingest: (%s/%s): %s", i, n, filename)
             iq.add(filename, path, force=options.force,
                    force_md5=options.force_md5, after=after)
 
-    logger.info("*** add_to_ingestqueue.py exiting normally at {}".format(datetime.datetime.now()))
+    logger.info("*** add_to_ingestqueue.py exiting normally at %s",
+                datetime.datetime.now())
