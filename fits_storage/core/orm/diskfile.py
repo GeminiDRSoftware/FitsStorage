@@ -11,6 +11,8 @@ import hashlib
 from fits_storage.core.hashes import md5sum
 from fits_storage.logger import DummyLogger
 
+from fits_storage.core.orm.file import File
+
 from . import Base
 
 from fits_storage.config import get_config
@@ -44,24 +46,23 @@ class DiskFile(Base):
     Methods that start with get_ (e.g. get_file_md5) actually calculate the
     value from the actual file on disk.
 
-    Finally, this class provides facilities for fetching the file from AWS S3
-    if needed, for storing a "cached" uncompressed version of compressed
-    data, and even for storing an open astrodata instance of the file.
-     here are several operations that need access to the uncompressed
-    file and uncompressing it each time is a significant performance hit, as
-    is opening the file with astrodata.
-    Functionality such as fetching from S3, creating an uncompressed cache
-    file, or opening the file with astrodata are all lazy - they are done on
-    demand, but the result is stored for future use. There is a cleanup()
-    method which will clean up all temporary files. This has to be called
-    manually. We can't use __del__ nicely with SQLAlchemy orm objects.
+    Finally, this class provides facilities for storing a "cached"
+    uncompressed version of compressed data, and even for storing an open
+    astrodata instance of the file. There are several operations that need
+    access to the uncompressed file and uncompressing it each time is a
+    significant performance hit, as is opening the file with astrodata.
+    Functionality such as creating an uncompressed cache file, or opening the
+    file with astrodata are all lazy - they are done on demand, but the
+    result is stored for future use. There is a cleanup() method which will
+    clean up all temporary files. This has to be called manually. We can't
+    use __del__ nicely with SQLAlchemy orm objects.
     """
 
     __tablename__ = 'diskfile'
 
     id = Column(Integer, primary_key=True)
     file_id = Column(Integer, ForeignKey('file.id'), nullable=False, index=True)
-    file = relationship("File", order_by=id, back_populates='diskfiles')
+    file = relationship(File, order_by=id, back_populates='diskfiles')
 
     filename = Column(Text, index=True)
     path = Column(Text)
@@ -93,11 +94,6 @@ class DiskFile(Base):
     # This is not recorded in the database and is transient for the life
     # of this diskfile instance.
     uncompressed_cache_file = None
-
-    # We use this to store the location of a file we fetched from S3. This will
-    # usually be compressed, so most clients will use uncompressed_cache_file
-    # in preference to this.
-    local_copy_of_s3_file = None
 
     # We store an astrodata instance here in the same way These are expensive
     # to instantiate We instantiate  and close this externally though. It's

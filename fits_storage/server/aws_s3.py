@@ -98,8 +98,15 @@ class Boto3Helper(object):
     def list_keys(self):
         return self.bucket.objects.all()
 
+    def list_keys_with_prefix(self, prefix):
+        return self.bucket.objects.filter(Prefix=prefix)
+
     def key_names(self):
         return [obj.key for obj in self.list_keys()]
+
+    def key_names_with_prefix(self, prefix):
+        return [obj.key for obj in self.list_keys_with_prefix(prefix)]
+
 
     def exists_key(self, key):
         try:

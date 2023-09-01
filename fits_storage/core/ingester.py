@@ -1,6 +1,8 @@
 """
 This module contains code for ingesting files into the FitsStorage system.
 """
+import os
+
 import dateutil.parser
 
 from sqlalchemy import or_
@@ -25,7 +27,7 @@ from fits_storage.config import get_config
 fsc = get_config()
 
 if fsc.using_s3:
-    from fits_storage.server.aws_s3 import get_helper
+    from fits_storage.server.aws_s3 import Boto3Helper
 
 if fsc.is_archive:
     from fits_storage.server.orm import miscfile
@@ -82,7 +84,8 @@ class Ingester(object):
 
         # If we're using S3, store the S3 helper object here
         if self.using_s3:
-            self.s3 = get_helper()
+            self.s3 = Boto3Helper(logger=self.l)
+            self.local_copy_of_s3_file = None
 
     def ingest_file(self, iqe: IngestQueueEntry):
         """
@@ -123,7 +126,7 @@ class Ingester(object):
         """
         fsc = get_config()
 
-        self.l.debug(f"Considering file for ingest: {iqe.filename}")
+        self.l.debug("Considering file for ingest: %s", iqe.filename)
 
         # First, check if the file actually exists. If it doesn't, bail out.
         # Do not attempt to make the file as not present in the database.
@@ -146,10 +149,10 @@ class Ingester(object):
         try:
             trimmed_name = File.trim_name(iqe.filename)
             fileobj = self.s.query(File).filter(File.name == trimmed_name).one()
-            self.l.debug(f"Already in file table as {trimmed_name}")
+            self.l.debug("Already in file table as %s", trimmed_name)
         except NoResultFound:
             fileobj = File(iqe.filename)
-            self.l.info(f"Adding new file table entry for {iqe.filename}")
+            self.l.info("Adding new file table entry for %s", iqe.filename)
             self.s.add(fileobj)
             self.s.commit()
 
@@ -191,6 +194,8 @@ class Ingester(object):
             self.add_fitsfile(diskfile, iqe)
 
         # We're done with the diskfile we created now
+        if self.local_copy_of_s3_file:
+            os.unlink(diskfile.fullpath)
         diskfile.cleanup()
 
         # If we are exporting to downstream servers, add to export queue now.
@@ -202,8 +207,8 @@ class Ingester(object):
                 self.l.error("Export is not supported when using S3")
             else:
                 for destination in self.export_destinations:
-                    self.l.info(f"Adding {iqe.filename} to exportqueue for "
-                                f"destination: {destination}")
+                    self.l.info("Adding %s to exportqueue for destination: %s",
+                                iqe.filename, destination)
                     eqe = ExportQueueEntry(iqe.filename, iqe.path, destination)
                     self.s.add(eqe)
                 self.s.commit()
@@ -270,8 +275,8 @@ class Ingester(object):
             return False
         else:
             self.l.debug("MD5s do not match, will reingest")
-            self.l.debug(f"Database MD5: {diskfile.file_md5}")
-            self.l.debug(f"File MD5: {file_md5}")
+            self.l.debug("Database MD5: %s", diskfile.file_md5)
+            self.l.debug(f"File MD5: %s", file_md5)
             return True
 
     def add_diskfile_entry(self, fileobj, iqe):
@@ -298,8 +303,8 @@ class Ingester(object):
             .filter(or_(DiskFile.present == True, DiskFile.canonical == True))
 
         for odf in olddiskfiles:
-            self.l.debug(f"Marking old diskfile id {odf.id} as not "
-                         f"present and not canonical")
+            self.l.debug("Marking old diskfile id %s as not present and not "
+                         "canonical", odf.id)
             odf.canonical = False
             odf.present = False
         self.s.commit()
@@ -308,13 +313,14 @@ class Ingester(object):
 
         # If we're ingesting from S3, fetch a local copy now
         if self.using_s3:
-            if not self.s3.fetch_to_staging(iqe.filename):
+            if not self.s3.fetch_to_storageroot(iqe.filename):
                 # Failed to fetch the file from S3.
                 message = f"Failed to fetch {iqe.filename} from S3"
                 self.l.error(message)
                 iqe.seterror(message)
                 self.s.commit()
                 return None
+            self.local_copy_of_s3_file = True
 
         self.l.debug("Adding new DiskFile entry for file "
                      f"name {fileobj.name} - id {fileobj.id}")
