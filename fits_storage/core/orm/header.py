@@ -6,6 +6,8 @@ from sqlalchemy.orm import relationship
 
 from . import Base
 
+from fits_storage.core.orm.diskfile import DiskFile
+
 from fits_storage.logger import DummyLogger
 from fits_storage.file_parser import build_parser
 from fits_storage.gemini_metadata_utils import GeminiProgram, procmode_codes, \
@@ -49,7 +51,7 @@ class Header(Base):
     id = Column(Integer, primary_key=True)
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False,
                          index=True)
-    diskfile = relationship("DiskFile", order_by=id)
+    diskfile = relationship(DiskFile, order_by=id)
     program_id = Column(Text, index=True)
     engineering = Column(Boolean, index=True)
     science_verification = Column(Boolean, index=True)
