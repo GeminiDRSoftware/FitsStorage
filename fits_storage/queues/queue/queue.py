@@ -40,10 +40,6 @@ class Queue(object):
         this works correctly with multiple clients attempting to pop the
         queue simultaneously.
 
-        The ORM instance returned is detached from the database - it's a
-        transient object not associated with the session. It has all the data
-        items from the ORM, but don't try to modify the database with it.
-
         There are lots of subtleties to this. There could be duplicate entries
         in the queue (that's fine), some of which may be marked as failed and
         some may be inprogress. If there are two entries for the same file,
@@ -59,9 +55,9 @@ class Queue(object):
 
         # Note - in the past we would make the qentry a transient instance
         # before returning it because of issues with ACCESS EXCLUSIVE locking.
-        # Now that SQLAlchemy supports and we're using SELECT FOR UPDATE,
+        # Now that SQLAlchemy supports (and we're using) SELECT FOR UPDATE,
         # that's no longer a factor, and we DO NOT make the qentries into
-        # transient objects befofe returning them.
+        # transient objects before returning them.
 
         # There's a quirk regarding the way failed is handled. See the note
         # in ormqueuemixin.py .Basically fail_dt == fail_dt_false
