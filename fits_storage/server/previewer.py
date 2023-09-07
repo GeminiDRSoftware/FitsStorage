@@ -49,7 +49,7 @@ class Previewer(object):
         self.path = fsc.s3_staging_dir if self.using_s3 else self.path
 
         self.filename = diskfile.filename.removesuffix('.bz2')\
-            .replace('.fits', '.jpg')
+            .replace('.fits', '_preview.jpg')
 
         self.fpfn = os.path.join(self.path, self.filename)
 
@@ -96,10 +96,11 @@ class Previewer(object):
         exists = False
         if self.using_s3:
             exists = self.s3.exists_key(self.filename)
-            self.logger.debug("S3 key exists: %s", exists)
+            self.logger.debug("S3 key exists %s: %s", self.filename, exists)
         else:
             if os.path.exists(self.fpfn):
-                self.logger.debug("Preview file already exists: %s", self.fpfn)
+                self.logger.debug("Preview file already exists %s: %s",
+                                  self.fpfn, exists)
                 exists = True
 
         # Decide whether to (re-) create the preview file...
