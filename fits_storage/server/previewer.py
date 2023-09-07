@@ -17,8 +17,10 @@ from fits_storage.config import get_config
 
 from fits_storage.server.orm.preview import Preview
 
+
 class PreviewException(Exception):
     pass
+
 
 class Previewer(object):
     """
@@ -36,7 +38,7 @@ class Previewer(object):
     spectrum = None
 
     def __init__(self, diskfile, session, logger=None, path = None,
-                 using_s3 = None):
+                 using_s3 = None, force=False, scavengeonly=False):
         self.diskfile = diskfile
         self.session = session
         self.logger = logger if logger is not None else DummyLogger()
@@ -53,6 +55,12 @@ class Previewer(object):
 
         self.spectrum = len(diskfile.get_ad_object[0].shape) == 1
 
+        self.force = force
+        self.scavengeonly = scavengeonly
+
+        if self.using_s3:
+            from fits_storage.server.aws_s3 import Boto3Helper
+            self.s3 = Boto3Helper()
     def delete_file(self):
         """
         Delete the preview file. Fail silently if unable
@@ -63,7 +71,7 @@ class Previewer(object):
             pass
 
 
-    def make_preview(self, force=False, scavengeonly=False):
+    def make_preview(self):
         """
         This is the general "do it all" call once you're instantiated the
         preview object.
@@ -84,14 +92,15 @@ class Previewer(object):
         # Does a preview file already exist for this preview?
         exists = False
         if self.using_s3:
-            self.logger.error("S3 support pending")
+            exists = self.s3.exists_key(self.filename)
+            self.logger.debug("S3 key exists: %s", exists)
         else:
             if os.path.exists(self.fpfn):
                 self.logger.debug("Preview file already exists: %s", self.fpfn)
                 exists = True
 
         # Decide whether to (re-) create the preview file...
-        if force or (not exists and not scavengeonly):
+        if self.force or (not exists and not self.scavengeonly):
             status = self.make_preview_file()
         else:
             # Not force, file already exists, or file doesn't exist but only
@@ -129,6 +138,8 @@ class Previewer(object):
         if self.using_s3 and status:
             # Upload preview file to S3 and delete local copy
             self.logger.error("Preview upload to S3 needs implementing")
+
+        return status
 
     def make_preview_file(self):
         """
