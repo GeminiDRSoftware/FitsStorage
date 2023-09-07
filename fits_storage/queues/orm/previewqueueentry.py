@@ -24,13 +24,15 @@ class PreviewQueueEntry(OrmQueueMixin, Base):
     inprogress = Column(Boolean, index=True)
     fail_dt = Column(DateTime, index=True)
     force = Column(Boolean)
+    scavengeonly = Column(Boolean)
     sortkey = Column(Text, index=True)
     error = Column(Text)
 
-    def __init__(self, diskfile, force=False):
+    def __init__(self, diskfile, force=False, scavengeonly=False):
         self.diskfile_id = diskfile.id
         self.filename = diskfile.filename
         self.sortkey = self.sortkey_from_filename(diskfile.filename)
         self.inprogress = False
         self.fail_dt = self.fail_dt_false  # See note in OrmQueueMixin
         self.force = force
+        self.scavengeonly = scavengeonly

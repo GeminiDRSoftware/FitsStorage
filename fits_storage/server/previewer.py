@@ -63,7 +63,7 @@ class Previewer(object):
             pass
 
 
-    def make_preview(self, force=False):
+    def make_preview(self, force=False, scavengeonly=False):
         """
         This is the general "do it all" call once you're instantiated the
         preview object.
@@ -76,6 +76,9 @@ class Previewer(object):
         a preview ORM entry if it does not exist. nb - this
         subsumes the previous "scavenge" functionality transparently.
 
+        If scavengeonly is True it will not create new preview files that do
+        not exist, but will create database entries where the file exists but
+        the database entry does not.
         """
 
         # Does a preview file already exist for this preview?
@@ -88,10 +91,11 @@ class Previewer(object):
                 exists = True
 
         # Decide whether to (re-) create the preview file...
-        if force or not exists:
+        if force or (not exists and not scavengeonly):
             status = self.make_preview_file()
         else:
-            # Not force, file already exists
+            # Not force, file already exists, or file doesn't exist but only
+            # scavenging
             status = True
 
         # If the preview file status is good, ensure that a database entry
