@@ -53,7 +53,10 @@ class Previewer(object):
 
         self.fpfn = os.path.join(self.path, self.filename)
 
-        self.spectrum = len(diskfile.get_ad_object[0].shape) == 1
+        # self.spectrum = len(diskfile.get_ad_object[0].shape) == 1
+        # This doesn't work when diskfile comes from the database as there's
+        # no file associated with it.
+        self.spectrum = False
 
         self.force = force
         self.scavengeonly = scavengeonly
