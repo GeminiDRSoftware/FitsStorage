@@ -48,8 +48,7 @@ class Previewer(object):
         self.path = path if path is not None else fsc.previewpath
         self.path = fsc.s3_staging_dir if self.using_s3 else self.path
 
-        self.filename = diskfile.filename.removesuffix('.bz2')\
-            .replace('.fits', '_preview.jpg')
+        self.filename = diskfile.filename + '_preview.jpg'
 
         self.fpfn = os.path.join(self.path, self.filename)
 
