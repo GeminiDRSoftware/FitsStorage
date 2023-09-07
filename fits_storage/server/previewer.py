@@ -103,11 +103,18 @@ class Previewer(object):
                 exists = True
 
         # Decide whether to (re-) create the preview file...
-        if self.force or (not exists and not self.scavengeonly):
+        if self.force:
+            # Force flag - always (re-)create the preview file
             status = self.make_preview_file()
+        elif not exists:
+            if self.scavengeonly:
+                # Preview file doesn't exist, but we're in scavenge only mode
+                status = False
+            else:
+                # Preview file doesn't exist, not in scavenge only mode
+                status = self.make_preview_file()
         else:
-            # Not force, file already exists, or file doesn't exist but only
-            # scavenging
+            # Not force, file already exists
             status = True
 
         # If the preview file status is good, ensure that a database entry
