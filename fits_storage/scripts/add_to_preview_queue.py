@@ -28,6 +28,10 @@ parser.add_option("--force", action="store_true", dest="force", default=False,
 parser.add_option("--scavengeonly", action="store_true", dest="scavengeonly",
                   default=False, help="Do not create new previews, only "
                                       "scavenge existing preview files")
+parser.add_option("--bulk-add", action="store_true", dest="bulk_add",
+                  help="Add all the entries in one database commit. This is a"
+                       "lot faster for a large number of entries, but if any"
+                       "one of them has an error, they will all fail to add")
 
 options, args = parser.parse_args()
 
@@ -66,11 +70,12 @@ with session_scope() as session:
         pqe = PreviewQueueEntry(df, force=options.force,
                                 scavengeonly=options.scavengeonly)
         session.add(pqe)
-        session.commit()
+        if not options.bulk_add:
+            session.commit()
         i += 1
         logger.debug("Adding %s to preview queue (%s/%s)", df.filename, i, num)
-
     logger.info("Added %s entries to preview queue", i)
+    session.commit()
 
 logger.info("*** add_to_preview_queue.py exiting normally at %s",
             datetime.datetime.now())
