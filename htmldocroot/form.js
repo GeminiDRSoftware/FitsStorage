@@ -236,34 +236,15 @@ function setPreviewVisibility() {
     $('.preview').click(function(e) {
         e.preventDefault();
         // Set the image to the loading swirlything
-        $('#previewboxmain').children('img').prop('src', "/static/ajax-loading.gif");
+        $('#previewbox').children('img').prop('src', "/static/ajax-loading.gif");
         $('#previewbox').show();
         // Get the URL from the a href link
         var url = ($(this).children('a').prop('href'));
-        var num_previews_url = url.replace('/preview/', '/num_previews/');
-        $.ajax(
-            {
-                "url": num_previews_url
-            }
-        ).done(function(count) {
-            // Set the URL of the img element to the preview url
-            $('#previewboxmain').children('img').prop('src', url);
-            // Hide it on click anywhere
-            var i;
-            var lnks = "";
-            if (count > 1) {
-                for (i=0; i<count; i++) {
-                    var onclk = '$("#previewboxmain").children("img").prop("src", "' + url + '/' + i + '")';
-                    lnks += " <a href=\"#\" onclick=\'" + onclk + "\'>[" + i + "]</a>";
-                }
-                $('#previewboxlinks').html("<p>Additonal Previews: </p>" + lnks);
-            } else {
-                lnks = "";
-                $('#previewboxlinks').html("");
-            }
-            $('#previewboxmain').click(function() {
-                $('#previewbox').hide();
-            });
+        // Set the URL of the img element to the preview url
+        $('#previewbox').children('img').prop('src', url);
+        // Hide it on click anywhere
+        $('#previewbox').click(function() {
+            $('#previewbox').hide();
         });
     });
 };

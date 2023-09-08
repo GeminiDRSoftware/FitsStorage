@@ -53,6 +53,8 @@ from fits_storage.web.gmoscalfilelist import gmoscalbiasfiles
 
 from fits_storage.web.history import history
 
+from fits_storage.web.preview import preview
+
 from .routing import SequenceConverter, SelectionConverter
 
 from fits_storage.config import get_config
@@ -150,10 +152,9 @@ url_map = Map([
 
     # History and Provenance
     Rule('/history/<thing>', history),
+
     # Previews
-    # Rule('/preview/<filenamegiven>', preview),
-    # Rule('/preview/<filenamegiven>/<int:number>', preview),
-    # Rule('/num_previews/<filenamegiven>', num_previews),
+    Rule('/preview/<filenamegiven>', preview),
 
     # QA metrics
     Rule('/qareport', qareport, methods=['POST']),

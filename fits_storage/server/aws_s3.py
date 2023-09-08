@@ -275,7 +275,7 @@ class Boto3Helper(object):
     def fetch_temporary(self, keyname, **kwarg):
         _, fullpath = mkstemp(dir=self.s3_staging_area)
         try:
-            if not self.fetch_to_staging(keyname, fullpath, **kwarg):
+            if not self.fetch_to_storageroot(keyname, fullpath, **kwarg):
                 raise DownloadError("Could not download the file")
             yield open(fullpath, mode='rb')
         finally:

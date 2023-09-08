@@ -1,8 +1,8 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
+from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
-from fits_storage.core.orm.diskfile import DiskFile
 
 __all__ = ["Preview"]
 
@@ -15,9 +15,10 @@ class Preview(Base):
     __tablename__ = 'preview'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False,
+    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False,
                          index=True)
     filename = Column(Text)
+    diskfile = relationship("DiskFile")
 
     def __init__(self, diskfile, preview_filename: str):
         """

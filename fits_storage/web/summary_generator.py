@@ -384,9 +384,7 @@ class SummaryGenerator(object):
             c.text = None
             c.content = None
             if col.summary_func:
-                preview = None
-                #if diskfile.previews:
-                #    preview = diskfile.previews[0]
+                preview = header.diskfile.preview
                 value = getattr(self, col.summary_func)(header=header,
                                                         diskfile=header.diskfile,
                                                         file=header.diskfile.file,

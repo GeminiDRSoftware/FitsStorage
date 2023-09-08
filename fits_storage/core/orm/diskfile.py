@@ -22,6 +22,7 @@ __all__ = ["DiskFile"]
 fsc = get_config()
 if fsc.is_server:
     from fits_storage.server.orm.provenancehistory import Provenance, History
+    from fits_storage.server.orm.preview import Preview
 
 import astrodata
 # DO NOT REMOVE THIS IMPORT, IT INITIALIZES THE ASTRODATA FACTORY
@@ -87,8 +88,8 @@ class DiskFile(Base):
                                   order_by=Provenance.timestamp)
         history = relationship(History, back_populates='diskfile',
                                order_by=History.timestamp_start)
-    #   previews = relationship(Preview, back_populates="diskfile",
-    #                           order_by=Preview.filename)
+        preview = relationship(Preview, back_populates="diskfile",
+                               uselist=False)
 
     # We use this to store an uncompressed Cache of a compressed file
     # This is not recorded in the database and is transient for the life
