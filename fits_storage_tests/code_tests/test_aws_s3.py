@@ -25,7 +25,7 @@ def test_aws_s3(tmp_path):
     bh = Boto3Helper(bucket_name='gemini-archive-test',
                      access_key=fsc.testing_aws_access_key,
                      secret_key=fsc.testing_aws_secret_key,
-                     s3_staging_area=s3staging,
+                     s3_staging_dir=s3staging,
                      storage_root=storageroot,
                      logger=logging.getLogger())
 

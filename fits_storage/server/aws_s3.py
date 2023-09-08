@@ -59,7 +59,7 @@ def generate_ranges(size):
 
 class Boto3Helper(object):
     def __init__(self, bucket_name=None, logger=None, access_key=None,
-                 secret_key=None, s3_staging_area=None, storage_root=None):
+                 secret_key=None, s3_staging_dir=None, storage_root=None):
         fsc = get_config()
         self.l = logger if logger is not None else DummyLogger()
         self.b = None
@@ -69,8 +69,8 @@ class Boto3Helper(object):
             fsc.aws_access_key
         self.secret_key = secret_key if secret_key is not None else \
             fsc.aws_secret_key
-        self.s3_staging_area = s3_staging_area if s3_staging_area is not None \
-            else fsc.s3_staging_area
+        self.s3_staging_dir = s3_staging_dir if s3_staging_dir is not None \
+            else fsc.s3_staging_dir
         self.storage_root = storage_root if storage_root is not None \
             else fsc.storage_root
 
@@ -273,7 +273,7 @@ class Boto3Helper(object):
 
     @contextmanager
     def fetch_temporary(self, keyname, **kwarg):
-        _, fullpath = mkstemp(dir=self.s3_staging_area)
+        _, fullpath = mkstemp(dir=self.s3_staging_dir)
         try:
             if not self.fetch_to_storageroot(keyname, fullpath, **kwarg):
                 raise DownloadError("Could not download the file")
