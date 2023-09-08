@@ -75,7 +75,9 @@ with session_scope() as session:
         i += 1
         logger.debug("Adding %s to preview queue (%s/%s)", df.filename, i, num)
     logger.info("Added %s entries to preview queue", i)
-    session.commit()
+    if options.bulk_add:
+        logger.info("Doing bulk database commit...")
+        session.commit()
 
 logger.info("*** add_to_preview_queue.py exiting normally at %s",
             datetime.datetime.now())
