@@ -86,7 +86,7 @@ try:
                 # Request a queue entry
                 pqe = pq.pop()
 
-                if pq is None:
+                if pqe is None:
                     logger.info("Nothing on queue.")
                     if options.empty:
                         logger.info("--empty flag set, exiting")
@@ -108,7 +108,7 @@ try:
 
                 # Actually do the preview here
                 try:
-                    # Fetch the diskfile object
+                    # Get the diskfile object
                     df = session.get(DiskFile, pqe.diskfile_id)
 
                     # Make the previewer instance
@@ -117,7 +117,8 @@ try:
 
                     if p.make_preview():
                         # Success
-                        logger.info("Made preview for %s", pqe.filename)
+                        logger.debug("make_preview() succeeded for %s",
+                                     pqe.filename)
                         session.delete(pqe)
                     else:
                         # Failed

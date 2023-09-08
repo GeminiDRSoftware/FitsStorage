@@ -106,16 +106,20 @@ class Previewer(object):
         if self.force:
             # Force flag - always (re-)create the preview file
             status = self.make_preview_file()
+            upload = status
         elif not exists:
             if self.scavengeonly:
                 # Preview file doesn't exist, but we're in scavenge only mode
                 status = False
+                upload = False
             else:
                 # Preview file doesn't exist, not in scavenge only mode
                 status = self.make_preview_file()
+                upload = status
         else:
             # Not force, file already exists
             status = True
+            upload = False
 
         # If the preview file status is good, ensure that a database entry
         # exists for it.
@@ -145,7 +149,7 @@ class Previewer(object):
                 self.session.delete(dbp)
         self.session.commit()
 
-        if self.using_s3 and status:
+        if self.using_s3 and upload:
             # Upload preview file to S3 and delete local copy
             self.logger.error("Preview upload to S3 needs implementing")
 
@@ -167,6 +171,7 @@ class Previewer(object):
             self.delete_file()
 
         try:
+            self.logger.info("Rendering preview for %s", self.diskfile.filename)
             with open(self.fpfn, 'wb') as fp:
                 if self.spectrum:
                     rendered = self.render_spectrum(fp)
