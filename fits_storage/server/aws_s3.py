@@ -39,6 +39,9 @@ class DownloadError(Exception):
 boto3.set_stream_logger(level=logging.CRITICAL)
 logging.getLogger('boto').setLevel(logging.CRITICAL)
 logging.getLogger('botocore').setLevel(logging.CRITICAL)
+logging.getLogger('utils').setLevel(logging.CRITICAL)
+logging.getLogger('tasks').setLevel(logging.CRITICAL)
+logging.getLogger('futures').setLevel(logging.CRITICAL)
 
 
 def get_source(bucket, key):
@@ -106,7 +109,6 @@ class Boto3Helper(object):
 
     def key_names_with_prefix(self, prefix):
         return [obj.key for obj in self.list_keys_with_prefix(prefix)]
-
 
     def exists_key(self, key):
         try:

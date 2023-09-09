@@ -55,6 +55,8 @@ from fits_storage.web.history import history
 
 from fits_storage.web.preview import preview
 
+from fits_storage.web.miscfiles import miscfiles
+
 from .routing import SequenceConverter, SelectionConverter
 
 from fits_storage.config import get_config
@@ -176,8 +178,8 @@ url_map = Map([
     # Rule('/list_publications', list_publications),
 
     # Miscfiles
-    # Rule('/miscfiles', miscfiles.miscfiles),
-    # Rule('/miscfiles/<int:handle>', miscfiles.miscfiles),
+    Rule('/miscfiles', miscfiles),
+    Rule('/miscfiles/<int:handle>', miscfiles),
     # Rule('/miscfiles/validate_add', miscfiles.validate,
     #      methods=['POST']),
     #

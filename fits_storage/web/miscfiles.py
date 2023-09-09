@@ -1,36 +1,34 @@
-from ..orm.miscfile import MiscFile, normalize_diskname
-from gemini_obs_db.orm.diskfile import DiskFile
-from gemini_obs_db.orm.file import File
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-
-from . import templating
-
-from ..fits_storage_config import upload_staging_path, api_backend_location
-
-from gemini_obs_db.utils.gemini_metadata_utils import GeminiProgram
-
-from ..utils.api import ApiProxy, ApiProxyError
-from ..utils.userprogram import icanhave
-from ..utils.web import get_context, Return
-
-from .user import needs_login
-
 import dateutil
 import json
 import os
 import stat
 from datetime import datetime, timedelta
 
+from sqlalchemy.exc import NoResultFound, MultipleResultsFound
+
+from fits_storage.server.orm.miscfile import MiscFile, normalize_diskname
+from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.file import File
+
+from fits_storage.web import templating
+
+from fits_storage.gemini_metadata_utils import GeminiProgram
+
+from fits_storage.server.access_control_utils import icanhave
+
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
+
+from fits_storage.web.user import needs_login
+
 SEARCH_LIMIT = 500
 
 def miscfiles(handle = None):
     formdata = None
     try:
-#        if len(things) == 1 and things[0] == 'validate_add':
-#            return validate()
+        # if len(things) == 1 and things[0] == 'validate_add':
+            # return validate()
 
-        ctx = get_context()
-        env = ctx.env
         # if handle is None and 'upload' in formdata:
         #     return save_file_fixed(get_context()._env)
 
@@ -54,11 +52,10 @@ def miscfiles(handle = None):
 
 @templating.templated("miscfiles/miscfiles.html")
 def bare_page():
-    return dict(can_add=get_context().is_staffer)
+    return dict(can_add=get_context().is_staff)
 
 def enumerate_miscfiles(query):
     ctx = get_context()
-    session = ctx.session
     for misc, disk, file in query:
         yield icanhave(ctx, misc), misc, disk, file
 
@@ -66,7 +63,7 @@ def enumerate_miscfiles(query):
 def search_miscfiles(formdata):
     ctx = get_context()
 
-    ret = dict(can_add=ctx.is_staffer)
+    ret = dict(can_add=ctx.is_staff)
     query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile, MiscFile.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id).filter(DiskFile.canonical == True)
 
     message = []
@@ -211,7 +208,7 @@ def detail_miscfile(handle, formdata = {}):
             meta, df, fobj = query.filter(File.name == handle).one()
 
         ret = dict(
-            canedit = ctx.is_staffer,
+            canedit = ctx.is_staff,
             canhave = icanhave(ctx, meta),
             uri  = ctx.env.uri,
             meta = meta,
