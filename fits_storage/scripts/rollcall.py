@@ -29,6 +29,8 @@ parser.add_option("--limit", action="store", type="int",
                        "applied")
 parser.add_option("--file-pre", action="store", type="string", dest="filepre",
                   help="File prefix to check (omit for all)")
+parser.add_option("--checkmd5", action="store_true", dest="checkmd5",
+                  help="Check md5sums of files that exist against the database")
 parser.add_option("--debug", action="store_true", dest="debug",
                   help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon",
@@ -83,7 +85,17 @@ with session_scope() as session:
             session.commit()
         else:
             if (i % 1000) == 0:
-                logger.info("File %d/%d: present and correct", i, n)
+                logger.info("File %d/%d: present", i, n)
+            if options.checkmd5:
+                if fsc.using_s3:
+                    logger.error("md5 check with S3 not implemented")
+                else:
+                    file_md5 = df.get_file_md5()
+                    logger.debug("File md5: %s  DB md5: %s",
+                                 file_md5, df.file_md5)
+                    if file_md5 != df.file_md5:
+                        logger.warning("MD5 mismatch between file and DB: %s",
+                                       df.filename)
         i += 1
 
     if len(missingfiles):
