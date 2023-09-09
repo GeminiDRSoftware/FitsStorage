@@ -194,7 +194,7 @@ class Ingester(object):
             self.add_fitsfile(diskfile, iqe)
 
         # We're done with the diskfile we created now
-        if self.local_copy_of_s3_file:
+        if fsc.using_s3 and self.local_copy_of_s3_file:
             os.unlink(diskfile.fullpath)
         diskfile.cleanup()
 
