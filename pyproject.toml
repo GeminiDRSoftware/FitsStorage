@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = "fits_storage"
+version = "3.0.0-dev"
+authors = [
+  { name="Paul Hirst", email="paul.hirst@noirlab.edu" },
+]
+description = "The Gemini Observatory Fits Storage System"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: BSD",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://www.gemini.edu"
+
+[tool.setuptools]
+packages = ['fits_storage', 'fits_storage.config',
+    'fits_storage.core', 'fits_storage.core.orm', 'fits_storage.db',
+    'fits_storage.cal', 'fits_storage.cal.calibration', 'fits_storage.cal.orm']
