@@ -577,6 +577,7 @@ dropdown_options = {
          ("CaT", "CaT"),
          ("Lya395", "Lya395"),
          ("ri", "ri"),
+         ("DS920", "DS920"),
          ("open", "Open")],
     "pre_image_options":
         [("preimage", "Pre-image"),],
