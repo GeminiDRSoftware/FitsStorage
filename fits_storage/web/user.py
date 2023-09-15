@@ -57,11 +57,11 @@ def request_account(things):
     if formdata:
         request_attempted = True
         if 'username' in formdata:
-            username = formdata['username'].value
+            username = formdata['username'].value.lower()
         if 'fullname' in formdata:
             fullname = formdata['fullname'].value
         if 'email' in formdata:
-            email = formdata['email'].value
+            email = formdata['email'].value.lower()
 
         # Validate
         valid_request = False
@@ -940,13 +940,10 @@ def email_inuse(email):
     inclined to just fix the account data and then add a proper unique
     constraint and skip doing any kind of trigger validation.
     """
-    rows = get_context().session.execute("select count(1) from archiveuser "
-                                         "where LOWER(email)=:email",
-                                         {'email': email.lower()})
-    for row in rows:
-        if len(row) > 0 and row[0] == 0:
-            return False
-    return True
+    num = get_context().session.query(User).\
+        filter(User.email.ilike(email)).count()
+
+    return num != 0
 
 
 def username_inuse(username):
