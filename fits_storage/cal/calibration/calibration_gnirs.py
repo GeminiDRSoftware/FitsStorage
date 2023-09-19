@@ -160,34 +160,48 @@ class CalibrationGNIRS(Calibration):
         """
         Utility method for getting a query for GNIRS flats
 
-        This will find GNIRS flats with a matching disperser, focal plane mask, camera, filter name,
-        and well depth setting.  It also matches the central wavelength within 0.001 microns.
-
         Parameters
         ----------
 
         processed : bool
-            Indicate if we want to retrieve processed or raw darks.
+            Indicate if we want to retrieve processed or raw flats.
 
         Returns
         -------
-        :class:`fits_storage.cal.calibration.CalQuery` setup for flats as described that can be
-            further refined
+        :class:`fits_storage.cal.calibration.CalQuery` setup for flats as
+        described that can be further refined
         """
-        return (
-            self.get_query()
-            .flat(processed=processed)
-            # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name, well_depth_setting
-            # update from RM 20130321 - read mode should not be required to match, but well depth should.
-            # For imaging, central wavelength and disperser are not required to match
+
+        # Must totally match: disperser, camera, filter_name, and
+        # well_depth_setting. Matches central wavelength within a tolerance
+        # range for imaging.
+        #
+        # Matches focal_plane_mask, except for the pinholes, where only the
+        # decker component is required to match.
+        #
+        # From RM 20130321: read mode should not be required to match,
+        # but well depth should.
+
+        query = self.get_query() \
+            .flat(processed=processed) \
             .match_descriptors(Gnirs.disperser,
-                               Gnirs.focal_plane_mask,
                                Gnirs.camera,
                                Gnirs.filter_name,
-                               Gnirs.well_depth_setting)
-            .if_(self.descriptors['spectroscopy'], 'match_descriptors', Gnirs.disperser)
-            .if_(self.descriptors['spectroscopy'], 'tolerance', central_wavelength=0.001)
-        )
+                               Gnirs.well_depth_setting) \
+            .if_(self.descriptors['spectroscopy'], 'tolerance',
+                 central_wavelength=0.001)
+
+        if 'PINHOLE' in self.types:
+            # This just matches the decker. The Decker is one of the substrings
+            # in the focal_plane_mask, so this avoids having to add a decker
+            # to the GNIRS table jist for this
+            query = query.filter(Gnirs.focal_plane_mask.contains(
+                self.descriptors['focal_plane_mask'].split("&")[1]))
+        else:
+            query = query.match_descriptors(Gnirs.focal_plane_mask)
+
+        return query
+
 
     def flat(self, processed=False, howmany=None, return_query=False):
         """
