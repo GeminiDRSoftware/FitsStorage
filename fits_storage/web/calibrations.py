@@ -67,7 +67,7 @@ class WrapperObject(object):
         self.cals['darks'] = self.darks()
         self.cals['biases'] = self.common('bias', self.c.bias)
         self.cals['flats'] = self.flats()
-        self.cals['pinhole_masks'] = self.common('pinhole_mask', self.c.pinhole_mask)
+        self.cals['pinhole'] = self.common('pinhole', self.c.pinhole)
         self.cals['ronchi_masks'] = self.common('ronchi_mask', self.c.ronchi_mask)
         if self._warning:
             self._counter['warnings'] += 1

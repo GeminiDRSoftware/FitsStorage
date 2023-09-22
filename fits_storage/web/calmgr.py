@@ -50,7 +50,8 @@ args_for_cals = {
     'processed_dark': ('dark', {'processed': True}),
     'processed_flat': ('flat', {'processed': True}),
     'processed_standard': ('standard', {'processed': True}),
-    'processed_bpm': ('bpm', {'processed': True})
+    'processed_bpm': ('bpm', {'processed': True}),
+    'processed_pinhole': ('pinhole', {'processed': True})
     }
 
 

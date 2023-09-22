@@ -342,7 +342,7 @@ class CalibrationGNIRS(Calibration):
         else:
             return query.all(howmany)
 
-    def pinhole_mask(self, processed=False, howmany=None, return_query=False):
+    def pinhole(self, processed=False, howmany=None, return_query=False):
         """
         Find the optimal GNIRS Pinhole Mask for this target frame
 

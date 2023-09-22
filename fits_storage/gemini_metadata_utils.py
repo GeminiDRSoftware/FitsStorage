@@ -748,8 +748,9 @@ def gemini_observation_class(string: str) -> str:
 
 reduction_states = ('RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS',
                     'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK',
-                    'PROCESSED_TELLURIC', 'PROCESSED_SCIENCE', 'PROCESSED_STANDARD',
-                    'PROCESSED_SLITILLUM', 'PROCESSED_BPM', 'PROCESSED_UNKNOWN')
+                    'PROCESSED_TELLURIC', 'PROCESSED_SCIENCE', 'PROCESSED_BPM'
+                    'PROCESSED_STANDARD', 'PROCESSED_SLITILLUM',
+                    'PROCESSED_PINHOLE', 'PROCESSED_UNKNOWN')
 
 
 def gemini_reduction_state(string: str) -> str:
@@ -775,11 +776,12 @@ def gemini_reduction_state(string: str) -> str:
 
 cal_types = (
     'bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark',
-    'processed_flat', 'processed_arc', 'processed_fringe', 'pinhole_mask',
-    'ronchi_mask', 'spectwilight', 'lampoff_flat', 'qh_flat', 'specphot',
-    'photometric_standard', 'telluric_standard', 'domeflat', 'lampoff_domeflat',
-    'mask', 'polarization_standard', 'astrometric_standard', 'polarization_flat',
-    'processed_standard', 'processed_slitillum', 'slitillum', 'processed_bpm',
+    'processed_flat', 'processed_arc', 'processed_fringe', 'pinhole',
+    'processed_pinhole', 'ronchi_mask', 'spectwilight', 'lampoff_flat',
+    'qh_flat', 'specphot', 'photometric_standard', 'telluric_standard',
+    'domeflat', 'lampoff_domeflat', 'mask', 'polarization_standard',
+    'astrometric_standard', 'polarization_flat', 'processed_standard',
+    'processed_slitillum', 'slitillum', 'processed_bpm',
 )
 
 
