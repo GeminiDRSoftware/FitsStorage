@@ -123,14 +123,3 @@ class Context(object):
         except NoResultFound:
             # This is not a valid session cookie
             return None
-
-    @property
-    def is_staff(self):
-        """
-        ``True`` if the current logged-in user is a staff member, ``False``
-        otherwise
-        """
-        try:
-            return self.user.is_staff
-        except AttributeError:
-            return False
