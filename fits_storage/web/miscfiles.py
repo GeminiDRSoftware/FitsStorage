@@ -1,8 +1,9 @@
-import dateutil
+import dateutil.parser
 import json
 import os
 import stat
 from datetime import datetime, timedelta
+import hashlib
 
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
@@ -21,17 +22,20 @@ from fits_storage.server.wsgi.returnobj import Return
 
 from fits_storage.web.user import needs_login
 
+from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsRequest
+
+from fits_storage.server.orm.fileuploadlog import FileUploadLog
+
+from fits_storage.logger import DummyLogger
+
+from fits_storage.config import get_config
+
 SEARCH_LIMIT = 500
 
-def miscfiles(handle = None):
+
+def miscfiles(handle=None):
     formdata = None
     try:
-        # if len(things) == 1 and things[0] == 'validate_add':
-            # return validate()
-
-        # if handle is None and 'upload' in formdata:
-        #     return save_file_fixed(get_context()._env)
-
         formdata = get_context().get_form_data(large_file=True)
         if handle is None:
             if 'search' in formdata:
@@ -50,27 +54,35 @@ def miscfiles(handle = None):
             except OSError:
                 pass
 
+
 @templating.templated("miscfiles/miscfiles.html")
 def bare_page():
-    return dict(can_add=get_context().is_staff)
+    return dict(can_add=get_context().user.misc_upload)
+
 
 def enumerate_miscfiles(query):
     ctx = get_context()
     for misc, disk, file in query:
         yield icanhave(ctx, misc), misc, disk, file
 
+
 @templating.templated("miscfiles/miscfiles.html")
 def search_miscfiles(formdata):
     ctx = get_context()
 
-    ret = dict(can_add=ctx.is_staff)
-    query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile, MiscFile.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id).filter(DiskFile.canonical == True)
+    ret = dict(can_add=ctx.user.misc_upload)
+    query = ctx.session.query(MiscFile, DiskFile, File).\
+        join(DiskFile, MiscFile.diskfile_id == DiskFile.id).\
+        join(File, DiskFile.file_id == File.id).\
+        filter(DiskFile.canonical == True)
 
     message = []
 
     name = formdata['name'].value.strip() if 'name' in formdata else ''
     # Make sure there are no '&' in the keywords
-    keyw = ' '.join(formdata['keyw'].value.split('&')).strip() if 'keyw' in formdata else ''
+    keyw = ' '.join(formdata['keyw'].value.split('&')).strip() \
+        if 'keyw' in formdata else ''
+
     prog = formdata['prog'].value.strip() if 'prog' in formdata else ''
 
     if name:
@@ -78,7 +90,8 @@ def search_miscfiles(formdata):
         ret['searchName'] = name
 
     if keyw:
-        query = query.filter(MiscFile.description.match(' & '.join(keyw.split())))
+        query = query.\
+            filter(MiscFile.description.match(' & '.join(keyw.split())))
         ret['searchKeyw'] = keyw
 
     if prog:
@@ -95,9 +108,11 @@ def search_miscfiles(formdata):
 
     return ret
 
+
 def string_to_date(string):
     # May raise ValueError if the format is wrong or the date is invalid
     return datetime.strptime(string, '%Y-%m-%d')
+
 
 def validate():
     ctx = get_context()
@@ -124,23 +139,16 @@ def validate():
     ctx.resp.content_type = 'application/json'
     ctx.resp.append_json(response)
 
+
 @needs_login(misc_upload=True)
 @templating.templated("miscfiles/miscfiles.html")
 def save_file(formdata):
-    # fileitem = formdata.uploaded_file
+    fsc = get_config()
     fileitem = formdata['uploadFile'].uploaded_file
     localfilename = normalize_diskname(fileitem.name)
-    fullpath = os.path.join(upload_staging_path, localfilename)
+    fullpath = os.path.join(fsc.upload_staging_dir, localfilename)
     jsonpath = fullpath + '.json'
     current_data = {}
-
-    def cleanup():
-        for fn in (fullpath, jsonpath):
-            if os.path.exists(fn):
-                try:
-                    os.unlink(fn)
-                except IOError:
-                    pass
 
     for item in ('uploadProg', 'uploadDesc'):
         try:
@@ -150,56 +158,103 @@ def save_file(formdata):
 
     uploadRelease = formdata.getvalue('uploadRelease', '').strip()
     if uploadRelease == 'default':
-        release_date = datetime.now() + timedelta(days=540) # Now + 18 pseudo-months
+        # Now + 18 pseudo-months
+        release_date = datetime.now() + timedelta(days=540)
     elif uploadRelease == 'now':
         release_date = datetime.now()
     else:
         try:
-            release_date = string_to_date(formdata.getvalue('arbRelease', '').strip())
+            release_date = string_to_date(formdata.getvalue('arbRelease', '')
+                                          .strip())
         except (ValueError, KeyError):
-            return dict(can_add=True, errorMessage = "Wrong value for release date",
+            return dict(can_add=True,
+                        errorMessage="Wrong value for release date",
                         **current_data)
 
+    ctx = get_context()
+    # Add the initial fileuploadlog entry
+    fileuploadlog = FileUploadLog(ctx.usagelog)
+    fileuploadlog.filename = localfilename
+    fileuploadlog.processed_cal = False
+    ctx.session.add(fileuploadlog)
+
+    # Content Length may or may not be defined. It's not required and if the
+    # exporter is compressing on-the-fly, it won't know the length of the
+    # compressed data ahead of time. Still, it's useful to log it.
+    content_length = ctx.env['CONTENT_LENGTH']
+    content_length = int(content_length) if content_length else None
+    fileuploadlog.add_note(f"Content_Length header gave: {content_length}")
+    ctx.session.commit()
+
+    # Python's wsgiref.simple_server has a bug with .read() that causes the
+    # read to hang in certain situations. We can work around this if
+    # content-length is set, but not if not. This is what bytes_left does.
+    # https://github.com/python/cpython/issues/66077
+
+    # Stream the data into the upload_staging file.
+    # Calculate the md5 and size as we do it
+    m = hashlib.md5()
+    size = 0
+    chunksize = 1000000  # 1MB
     try:
         with open(fullpath, 'wb') as staging_file:
+            fileuploadlog.ut_transfer_start = datetime.utcnow()
             read_file = formdata['uploadFile'].file
             read_file.seek(0)
-            dat = read_file.read(4096)
-            while dat:
-                staging_file.write(dat)
-                dat = read_file.read(4096)
-            staging_file.flush()
-            staging_file.close()
-        # formdata['uploadFile'].uploaded_file.rename_to(fullpath)
-        os.chmod(fullpath, stat.S_IRUSR|stat.S_IRGRP|stat.S_IROTH)
+            while chunk := read_file.read(chunksize):
+                size += len(chunk)
+                m.update(chunk)
+                staging_file.write(chunk)
+                # Work around simple_server bug if content_length is set.
+                bytes_left = content_length - size if content_length else None
+                if content_length and (bytes_left < chunksize):
+                    chunksize = bytes_left
+
+        fileuploadlog.ut_transfer_complete = datetime.utcnow()
+        fileuploadlog.size = size
+        fileuploadlog.md5 = m.hexdigest()
+        ctx.session.commit()
+        os.chmod(fullpath, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
         with open(jsonpath, 'w') as meta:
             json.dump({'filename': fileitem.name,
                        'is_misc':  'True',
                        'release':  release_date.strftime('%Y-%m-%d'),
                        'description': formdata['uploadDesc'].value,
                        'program': formdata['uploadProg'].value},
-                     meta)
-        proxy = ApiProxy(api_backend_location)
-        result = proxy.ingest_upload(filename=localfilename)
-        return dict(can_add=True, actionMessage = "Ingested with result: " + str(result))
+                      meta)
+
+        fq = FileopsQueue(ctx.session, logger=DummyLogger())
+
+        fo_req = FileOpsRequest(request='ingest_upload',
+                                args={'filename': localfilename,
+                                      'fileuploadlog_id': fileuploadlog.id,
+                                      'processed_cal': False})
+
+        fq.add(fo_req, filename=localfilename, response_required=False)
+
     except IOError:
-        cleanup()
+        # Clean up files
+        for fn in (fullpath, jsonpath):
+            if os.path.exists(fn):
+                try:
+                    os.unlink(fn)
+                except IOError:
+                    pass
         # TODO: We should log the failure
-        return dict(can_add=True, errorMessage = "Error when trying to save the file",
-                    **current_data)
-    except ApiProxyError:
-        cleanup()
-        return dict(can_add=True, errorMessage = "Error when trying to queue the file for ingestion",
+        return dict(can_add=True,
+                    errorMessage="Error when trying to save the file",
                     **current_data)
 
     return dict(can_add=True)
 
+
 @templating.templated("miscfiles/detail.html")
-def detail_miscfile(handle, formdata = {}):
+def detail_miscfile(handle, formdata={}):
     ctx = get_context()
 
     try:
-        query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile, MiscFile.diskfile_id == DiskFile.id)\
+        query = ctx.session.query(MiscFile, DiskFile, File)\
+            .join(DiskFile, MiscFile.diskfile_id == DiskFile.id)\
             .join(File, DiskFile.file_id == File.id)
         try:
             meta, df, fobj = query.filter(MiscFile.id == int(handle)).one()
@@ -208,23 +263,25 @@ def detail_miscfile(handle, formdata = {}):
             meta, df, fobj = query.filter(File.name == handle).one()
 
         ret = dict(
-            canedit = ctx.is_staff,
-            canhave = icanhave(ctx, meta),
-            uri  = ctx.env.uri,
-            meta = meta,
-            disk = df,
-            file = fobj
+            canedit=ctx.user.misc_upload,
+            canhave=icanhave(ctx, meta),
+            uri=ctx.env.uri,
+            meta=meta,
+            disk=df,
+            file=fobj
             )
 
         if 'save' in formdata:
             release = formdata.getvalue('release', '').strip()
             if release == 'default':
-                release_date = datetime.now() + timedelta(days=540) # Now + 18 pseudo-months
+                # Now + 18 pseudo-months
+                release_date = datetime.now() + timedelta(days=540)
             elif release == 'now':
                 release_date = datetime.now()
             else:
                 try:
-                    release_date = string_to_date(formdata.getvalue('arbRelease', '').strip())
+                    release_date = string_to_date(
+                        formdata.getvalue('arbRelease', '').strip())
                 except (ValueError, KeyError):
                     ret['errorMessage'] = "Wrong value for release date"
                     return ret
@@ -237,6 +294,9 @@ def detail_miscfile(handle, formdata = {}):
 
         return ret
     except NoResultFound:
-        ctx.resp.client_error(Return.HTTP_NOT_FOUND, "Could not find the required content")
+        ctx.resp.client_error(Return.HTTP_NOT_FOUND,
+                              "Could not find the required content")
     except MultipleResultsFound:
-        ctx.resp.client_error(Return.HTTP_INTERNAL_SERVER_ERROR, "More than one file was found matching the provided name. This is an error!")
+        ctx.resp.client_error(Return.HTTP_INTERNAL_SERVER_ERROR,
+                              "More than one file was found matching the "
+                              "provided name. This is an error!")

@@ -90,7 +90,8 @@ def ingest_upload(args, session, logger):
             s3 = get_helper()
             extra_meta = misc_meta if it_is_misc else {}
             fileuploadlog.s3_ut_start = datetime.datetime.utcnow()
-            fileuploadlog.s3_ok = s3.upload_file(dst, src, extra_meta)
+            fileuploadlog.s3_ok = s3.upload_file(dst, src, extra_meta) \
+                                  is not None
             fileuploadlog.s3_ut_end = datetime.datetime.utcnow()
             os.unlink(src)
             if it_is_misc:
