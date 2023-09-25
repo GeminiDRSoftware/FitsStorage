@@ -3,6 +3,7 @@ ExportQueue housekeeping class. Note that this is not the ORM class, which is
 now called ...QueueEntry as it represents an entry on the queue as opposed to
 the queue itself.
 """
+import datetime
 
 from sqlalchemy.exc import IntegrityError
 
@@ -46,3 +47,27 @@ class ExportQueue(Queue):
                               f"on queue. Silently rolling back.")
             self.session.rollback()
             return False
+
+    def retry_failures(self, interval=60):
+        """
+        Mark any failed queue entries for re-try. We call this when the queue
+        is empty in order to re-try anything that failed.
+
+        This method finds any not-in-progress and failed export queue entries
+        and marks them as not failed with an 'after' value 'interval' seconds
+        in the future.
+        """
+
+        fails = self.session.query(ExportQueueEntry)\
+            .filter(ExportQueueEntry.inprogress == False)\
+            .filter(ExportQueueEntry.fail_dt != ExportQueueEntry.fail_dt_false)\
+            .all()
+
+        future = datetime.datetime.now() + datetime.timedelta(seconds=interval)
+
+        for fail in fails:
+            fail.fail_dt = fail.fail_dt_false
+            fail.after = future
+
+        self.session.commit()
+        

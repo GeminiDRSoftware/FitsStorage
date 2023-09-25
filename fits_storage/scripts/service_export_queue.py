@@ -1,22 +1,21 @@
 #! /usr/bin/env python3
 
 import signal
-import sys
 import datetime
 import time
-import traceback
-import requests
-import ssl
-from requests import RequestException
 
-from sqlalchemy.exc import OperationalError, IntegrityError
+from sqlalchemy.exc import OperationalError
 from optparse import OptionParser
 
 from fits_storage.queues.queue.exportqueue import ExportQueue
+from fits_storage.server.exporter import Exporter
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.server.pidfile import PidFile, PidFileError
 from fits_storage.db import session_scope
 
+from fits_storage.config import get_config
+
+fsc = get_config()
 
 if __name__ == "__main__":
 
@@ -33,8 +32,15 @@ if __name__ == "__main__":
                       help="Use a lockfile to limit instances")
     parser.add_option("--empty", action="store_true", default=False,
                       dest="empty", help="Exit once the queue is empty.")
-    parser.add_argument("--oneshot", action="store_true", dest="oneshot",
-                        default=False, help="Process only one file then exit")
+    parser.add_option("--oneshot", action="store_true", dest="oneshot",
+                      default=False, help="Process only one file then exit")
+    parser.add_option("--fast-rebuild", action="store_true", dest="fastrebuild",
+                      help="Do not report queue length for faster processing of"
+                           "very long queues")
+    parser.add_option("--retry-delay", action="store", type="int",
+                      dest="delay", default=60,
+                      help="Number of seconds to delay retries after the "
+                           "queue becomes empty")
     (options, args) = parser.parse_args()
 
     # Logging level to debug? Include stdio log?
@@ -73,7 +79,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGPIPE, handler)
     signal.signal(signal.SIGTERM, nicehandler)
 
-    # Annouce startup
+    # Announce startup
     logger.info("***   service_export_queue.py - starting up at %s",
                 datetime.datetime.now())
     logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
@@ -83,6 +89,7 @@ if __name__ == "__main__":
                 session_scope() as session:
 
             export_queue = ExportQueue(session, logger=logger)
+            exporter = Exporter(session, logger, timeout=10)
 
             # Loop forever. loop is a global variable defined up top
             while loop:
@@ -100,14 +107,14 @@ if __name__ == "__main__":
                             logger.info("Nothing on Queue... Waiting")
                             time.sleep(2)
                             # Mark any old failures for retry
-                            export_queue.retry_failures(interval)
+                            export_queue.retry_failures(options.delay)
                             continue
 
                     if options.oneshot:
                         loop = False
 
                     # Don't query queue length in fast_rebuild mode
-                    if options.fast_rebuild:
+                    if options.fastrebuild:
                         logger.info("Exporting %s - %s" %
                                     (eqe.filename, eqe.id))
                     else:
@@ -124,57 +131,31 @@ if __name__ == "__main__":
 
                     exporter.export_file(eqe)
 
-                    try:
-                        success, details = export_queue.export_file(eq.filename, eq.path, eq.destination,
-                                                               header_fields=eq.header_fields,
-                                                               md5_before_header=eq.md5_before_header,
-                                                               md5_after_header=eq.md5_after_header,
-                                                               reject_new=eq.reject_new)
-                        except (RequestException, ssl.SSLError, ValueError):
-                            logger.info("Problem Exporting File - Rolling back")
-                            # Originally we set the inprogress flag back to False at the point that we abort.
-                            # But that can lead to an immediate re-try and subsequent rapid rate re-failures,
-                            # and it will never move on to the next file. So leave it set inprogress to avoid that.
-
-                            # Setting the error may be pointless, because the export will be tried again in
-                            # (maybe) a few minutes, but let's do it for consistency
-                            export_queue.set_error(eq, *sys.exc_info())
-                            raise
-                        if success:
-                            logger.debug("Deleting exportqueue id %d", eq.id)
-                            export_queue.delete(eq)
-                        else:
-                            if details == "pending ingest":
-                                # we just have to defer it
-                                export_queue.set_deferred(eq)
-                            else:
-                                logger.info(f"Exportqueue id %d DID NOT TRANSFER", eq.id)
-                                # The eq instance we have is transient - get one connected to the session
-                                export_queue.set_last_failed(eq)
-                        session.commit()
-
-                    throttle.reset()
-
                 except (KeyboardInterrupt, OperationalError):
                     loop = False
 
-                except IntegrityError as e:
-                    logger.error("Nothing on export queue - Exception: %s", str(e))
-                    throttle.wait()
-                    session.rollback()
                 except:
-                    string = traceback.format_tb(sys.exc_info()[2])
-                    string = "".join(string)
-                    if eq:
-                        logger.error("File %s - Exception: %s : %s... %s", eq.filename, sys.exc_info()[0], sys.exc_info()[1], string)
-                    else:
-                        logger.error("Nothing on export queue - Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
-                    # Make sure that the session ends up in a consistent state
-                    session.rollback()
-                    # Prevent fast fail loop
-                    time.sleep(5)
+                    # export_file() should handle its own exceptions, and
+                    # should never raise, so if there's a problem with a given
+                    # file we log the error and continue with the next one.
+                    # This catches anything else in the code above. Again, we
+                    # log the error and carry on. Probably the error would
+                    # reoccur if we re-try the same file though, so we set it
+                    # as failed and record the error in the eqe too.
+                    message = "Unknown Error - no IngestQueueEntry instance"
+                    if eqe is not None:
+                        eqe.failed = True
+                        eqe.inprogress = False
+                        message = "Exception in service_export_queue while " \
+                                  f"processing {eqe.filename}"
+                        eqe.error = message
+                        session.commit()
+
+                    logger.error(message, exc_info=True)
+                    # Press on with the next file, don't raise the exception
 
     except PidFileError as e:
         logger.error(str(e))
 
-    logger.info("*********    service_export_queue.py - exiting at %s", datetime.datetime.now())
+    logger.info("***   service_export_queue.py - exiting at %s",
+                datetime.datetime.now())

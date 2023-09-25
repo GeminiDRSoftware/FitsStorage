@@ -8,6 +8,7 @@ data, but not the other way round, which is what we're doing here.
 import bz2
 import hashlib
 
+
 class StreamBz2Compressor(object):
     """
     This class provides a somewhat file-like-object from which you can read
@@ -29,17 +30,19 @@ class StreamBz2Compressor(object):
     These update as data is read from the class, they are most useful after
     all the data have been read of course.
     """
-    def __init__(self, src, chunksize=1000000):
+    def __init__(self, src, chunksize=1000000, itersize=1000000):
         """
         Instantiate a StreamBz2Compressor instance.
         src - file-like-object to read data from
         chunksize (default 1MB) size of the chunks of data we will compress
+        itersize (default 1MB) size of the chunks we return as an iterator
         """
         self.src = src
         self.comp = bz2.BZ2Compressor()
         self.output_buffer = bytes(0)
         self.done = False
         self.chunksize = chunksize
+        self.itersize = itersize
         self._bytes_output = 0
         self.hashobj = hashlib.md5()
 
@@ -92,3 +95,15 @@ class StreamBz2Compressor(object):
     @property
     def md5sum_output(self):
         return self.hashobj.hexdigest()
+
+    # requests uses the presence of __iter__ to determine that the thing
+    # passed is a file-like-object, and itterates the object to retrieve
+    # the contents.
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        chunk = self.read(self.itersize)
+        if chunk is None:
+            raise StopIteration
+        return chunk

@@ -169,6 +169,7 @@ class Exporter(object):
             self.l.debug("Header update failed. Falling back to file transfer")
 
         self.file_transfer()
+        self.reset()
         return
 
     def transfer_headers(self):
@@ -204,7 +205,7 @@ class Exporter(object):
         # Get a file-like-object for the data to export
         # Note that we always export bz2 compressed data.
         fpfn = os.path.join(self.storage_root, path, filename)
-        with open(fpfn, mode='readonly') as f:
+        with open(fpfn, mode='rb') as f:
             if filename.endswith('.bz2'):
                 destination_filename = filename
                 flo = f
@@ -222,10 +223,10 @@ class Exporter(object):
                 self.logeqeerror(f"Timeout posting {url}", exc_info=True)
                 return
             except requests.ConnectionError:
-                self.logeqeerror("ConnectionError posting {url}", exc_info=True)
+                self.logeqeerror(f"ConnectionError posting {url}", exc_info=True)
                 return
             except requests.RequestException:
-                self.logeqeerror("RequestException posting {url}",
+                self.logeqeerror(f"RequestException posting {url}",
                                  exc_info=True)
                 return
 
