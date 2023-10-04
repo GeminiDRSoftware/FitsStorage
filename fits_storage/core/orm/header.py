@@ -166,6 +166,9 @@ class Header(Base):
         self.telescope = parser.telescope()
         self.instrument = parser.instrument()
 
+        # Extra debug to figure out where it stalls sometimes
+        log.debug("Done basic data values")
+
         # Date and times part
         self.ut_datetime = parser.ut_datetime()
         self.ut_datetime_secs = parser.ut_datetime_secs()
@@ -185,6 +188,9 @@ class Header(Base):
         self.cass_rotator_pa = parser.cass_rotator_pa()
         self.airmass = parser.airmass()
 
+        # Extra debug to figure out where it stalls sometimes
+        log.debug("Done block 2 values")
+
         self.raw_iq = parser.raw_iq()
         self.raw_cc = parser.raw_cc()
         self.raw_wv = parser.raw_wv()
@@ -194,6 +200,9 @@ class Header(Base):
         self.requested_cc = parser.requested_cc()
         self.requested_wv = parser.requested_wv()
         self.requested_bg = parser.requested_bg()
+
+        # Extra debug to figure out where it stalls sometimes
+        log.debug("Done block 3 values")
 
         self.filter_name = parser.filter_name()
         self.exposure_time = parser.exposure_time()
@@ -215,6 +224,9 @@ class Header(Base):
         self.laser_guide_star = parser.laser_guide_star()
         self.wavefront_sensor = parser.wavefront_sensor()
 
+        # Extra debug to figure out where it stalls sometimes
+        log.debug("Done block 4 values")
+
         # And the Spectroscopy and mode items
         self.spectroscopy = parser.spectroscopy()
         self.mode = parser.mode()
@@ -225,6 +237,9 @@ class Header(Base):
         self.gcal_lamp = parser.gcal_lamp()
         self.reduction = parser.reduction()
         self.pre_image = parser.pre_image()
+
+        # Extra debug to figure out where it stalls sometimes
+        log.debug("Done block 5 values")
 
         # Get the types list
         self.types = str(diskfile.ad_object.tags) \
