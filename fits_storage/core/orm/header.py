@@ -139,6 +139,9 @@ class Header(Base):
 
         parser = build_parser(diskfile.get_ad_object, log)
 
+        # Extra debug to figure out where it stalls sometimes
+        log.debug("Built parser")
+
         # Check for site_monitoring data. Currently, this only comprises
         # GS_ALLSKYCAMERA, but may accommodate other monitoring data.
         self.site_monitoring = parser.site_monitoring()
@@ -226,5 +229,8 @@ class Header(Base):
         # Get the types list
         self.types = str(diskfile.ad_object.tags) \
             if hasattr(diskfile.ad_object, 'tags') else None
+
+        # Extra debug to figure out where it stalls sometimes
+        log.debug("Set all header orm values")
 
         return
