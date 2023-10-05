@@ -19,6 +19,9 @@ logger = logging.getLogger()
 # Default to INFO and be setable to debug with a command line argument
 logger.setLevel(logging.INFO)
 
+# Capture python warnings module messages to log
+logging.captureWarnings(True)
+
 # Turn off boto3 debug logging
 logging.getLogger('boto').setLevel(logging.CRITICAL)
 logging.getLogger('boto3').setLevel(logging.CRITICAL)
@@ -26,6 +29,8 @@ logging.getLogger('botocore').setLevel(logging.CRITICAL)
 logging.getLogger('utils').setLevel(logging.CRITICAL)
 logging.getLogger('tasks').setLevel(logging.CRITICAL)
 logging.getLogger('futures').setLevel(logging.CRITICAL)
+logging.getLogger('s3transfer').setLevel(logging.CRITICAL)
+
 
 
 # Create log formatter
