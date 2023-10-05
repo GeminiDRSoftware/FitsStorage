@@ -21,6 +21,7 @@ logger.setLevel(logging.INFO)
 
 # Turn off boto3 debug logging
 logging.getLogger('boto').setLevel(logging.CRITICAL)
+logging.getLogger('boto3').setLevel(logging.CRITICAL)
 logging.getLogger('botocore').setLevel(logging.CRITICAL)
 logging.getLogger('utils').setLevel(logging.CRITICAL)
 logging.getLogger('tasks').setLevel(logging.CRITICAL)
