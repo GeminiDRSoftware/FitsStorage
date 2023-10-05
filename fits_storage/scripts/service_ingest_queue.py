@@ -2,6 +2,7 @@
 
 import datetime
 import signal
+import traceback
 import time
 
 from sqlalchemy.exc import OperationalError
@@ -83,6 +84,12 @@ if __name__ == "__main__":
     # way to pass the logger as an argument to these.
     def handler(signum, frame):
         logger.error("Received signal: %d. Crashing out.", signum)
+        stack = traceback.extract_stack(f=frame)
+        strings = traceback.format_list(stack)
+        text = "Stack Frame where signal was received: \n"
+        for s in strings:
+            text += s
+        logger.debug(text)
         raise KeyboardInterrupt('Signal', signum)
 
     def nicehandler(signum, frame):
