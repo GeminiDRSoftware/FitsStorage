@@ -19,6 +19,14 @@ logger = logging.getLogger()
 # Default to INFO and be setable to debug with a command line argument
 logger.setLevel(logging.INFO)
 
+# Turn off boto3 debug logging
+logging.getLogger('boto').setLevel(logging.CRITICAL)
+logging.getLogger('botocore').setLevel(logging.CRITICAL)
+logging.getLogger('utils').setLevel(logging.CRITICAL)
+logging.getLogger('tasks').setLevel(logging.CRITICAL)
+logging.getLogger('futures').setLevel(logging.CRITICAL)
+
+
 # Create log formatter
 formatter = logging.Formatter("%(asctime)s %(process)d:%(module)s:%(lineno)d "
                               "%(levelname)s: %(message)s")
