@@ -30,6 +30,8 @@ logging.getLogger('utils').setLevel(logging.CRITICAL)
 logging.getLogger('tasks').setLevel(logging.CRITICAL)
 logging.getLogger('futures').setLevel(logging.CRITICAL)
 logging.getLogger('s3transfer').setLevel(logging.CRITICAL)
+logging.getLogger('connectionpool').setLevel(logging.CRITICAL)
+
 
 
 
