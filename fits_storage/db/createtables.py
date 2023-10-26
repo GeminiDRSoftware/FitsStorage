@@ -81,6 +81,7 @@ if fsc.is_server:
     from fits_storage.queues.orm.previewqueueentry import PreviewQueueEntry
     from fits_storage.queues.orm.calcachequeueentry import CalCacheQueueEntry
     from fits_storage.queues.orm.fileopsqueueentry import FileopsQueueEntry
+    from fits_storage.queues.orm.reducequeentry import ReduceQueueEntry
     from fits_storage.server.orm.preview import Preview
     from fits_storage.server.orm.provenancehistory import Provenance, History
     from fits_storage.server.orm.miscfile import MiscFile
