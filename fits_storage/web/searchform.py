@@ -825,6 +825,7 @@ dropdown_options = {
          ("NIFS", "NIFS"),
          ("GSAOI", "GSAOI"),
          ("GHOST", "GHOST"),
+         ("IGRINS-2", "IGRINS-2"),
          ("IGRINS", "IGRINS"),
          ("ALOPEKE", "ALOPEKE"),
          ("ZORRO", "ZORRO"),
