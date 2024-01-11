@@ -51,6 +51,7 @@ input {
 .help {
     font-size: 0.85em;
     font-style: italic;
+    text-align: left;
 }
 
 .helpleft {

@@ -366,6 +366,8 @@ def updateselection(formdata, selection):
             selection['readspeed'] = value
         elif key in ('gmos_gain', 'ghost_gain'):
             selection['gain'] = value
+        elif key == 'ghost_resolution':
+            selection['focal_plane_mask'] = value
         else:
             # This covers the generic case where the formdata key is also
             # the selection key, and the form value is the selection value
@@ -538,6 +540,9 @@ dropdown_options = {
          ("medium", "Medium"),
          ("slow", "Slow"),
          ("standard", "Standard")],
+    "ghost_resolution_options":
+        [("SR", "Standard Resolution"),
+         ("HR", "High Resolution")],
     "gnirs_depth_options":
         [("Deep", "Deep"),
          ("Shallow", "Shallow")],
