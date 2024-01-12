@@ -837,6 +837,21 @@ class GHOSTFileParser(AstroDataFileParser):
             return None
         return gs
 
+    def read_speed_setting(self):
+        # GHOST is an oddball here. If this is a raw data bundle (ie we got
+        # a dict, then we construct some custom red:foo,blue:bar strings that
+        # are also entries in the read_speed_setting enum, which I'm not keen
+        # on, but it's the only pragmatic solution for having these searchable.
+        rss = self.ad.read_speed_setting()
+        if isinstance(rss, dict):
+            if 'blue' in rss.keys() and 'red' in rss.keys():
+                return f"red:{rss['red']},blue:{rss['blue']}"
+            else:
+                # we got a dict but without red and blue.
+                return None
+        # What we got wasn't a dict. Suck it and see
+        return rss
+
 class GRACESFileParser(AstroDataFileParser):
     def reduction(self) -> str:
         reduction = 'RAW'

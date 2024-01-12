@@ -92,7 +92,18 @@ obsre = r'((?:^%s)|(?:^%s)|(?:^%s))-(?P<obsid>\d*)$' % (calengre, scire, calengr
 
 # Here are some lists of defined detector settings
 gemini_gain_settings = ('high', 'low', 'standard')
-gemini_readspeed_settings = ('fast', 'slow')
+gemini_readspeed_settings = ('fast', 'medium', 'slow',
+                             # And these GHOST ones...
+                             'red:fast,blue:fast',
+                             'red:fast,blue:medium',
+                             'red:fast,blue:slow',
+                             'red:medium,blue:fast',
+                             'red:medium,blue:medium',
+                             'red:medium,blue:slow',
+                             'red:slow,blue:fast',
+                             'red:slow,blue:medium',
+                             'red:slow,blue:slow')
+
 gemini_welldepth_settings = ('Shallow', 'Deep', 'Invalid')
 gemini_readmode_settings = ('Classic',
                             'NodAndShuffle',
