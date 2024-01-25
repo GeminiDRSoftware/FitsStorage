@@ -38,7 +38,7 @@ class CalibrationNICI(Calibration):
 
         self.applicable.append('processed_bpm')
 
-    def bpm(self, processed=False, howmany=None, return_query=False):
+    def bpm(self, processed=False, howmany=None):
         """
         This method identifies the best BPM to use for the target
         dataset.
@@ -64,12 +64,9 @@ class CalibrationNICI(Calibration):
                     .add_filters(*filters) \
                     .match_descriptors(Header.instrument, Header.detector_binning)
 
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def dark(self, processed=False, howmany=None, return_query=False):
+    def dark(self, processed=False, howmany=None):
         """
         Find the optimal NICI Dark for this target frame
 
@@ -99,12 +96,9 @@ class CalibrationNICI(Calibration):
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def flat(self, processed=False, howmany=None, return_query=False):
+    def flat(self, processed=False, howmany=None):
         """
         Find the optimal NICI Flat for this target frame
 
@@ -137,13 +131,10 @@ class CalibrationNICI(Calibration):
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
     @not_processed
-    def lampoff_flat(self, processed=False, howmany=None, return_query=False):
+    def lampoff_flat(self, processed=False, howmany=None):
         """
         Find the optimal NICI Lamp-off Flat for this target frame
 
@@ -178,7 +169,4 @@ class CalibrationNICI(Calibration):
                 # Absolute time separation must be within 1 hour of the lamp on flats
                 .max_interval(seconds=3600)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)

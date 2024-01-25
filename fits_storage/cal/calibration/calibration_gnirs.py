@@ -86,7 +86,7 @@ class CalibrationGNIRS(Calibration):
 
         self.applicable.append('processed_bpm')
 
-    def bpm(self, processed=False, howmany=None, return_query=False):
+    def bpm(self, processed=False, howmany=None):
         """
         This method identifies the best BPM to use for the target
         dataset.
@@ -112,12 +112,9 @@ class CalibrationGNIRS(Calibration):
                     .add_filters(*filters) \
                     .match_descriptors(Header.instrument, Header.detector_binning)
 
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def dark(self, processed=False, howmany=None, return_query=False):
+    def dark(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS Dark for this target frame
 
@@ -151,10 +148,7 @@ class CalibrationGNIRS(Calibration):
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
     def get_gnirs_flat_query(self, processed):
         """
@@ -203,7 +197,7 @@ class CalibrationGNIRS(Calibration):
         return query
 
 
-    def flat(self, processed=False, howmany=None, return_query=False):
+    def flat(self, processed=False, howmany=None):
         """
         Utility method for getting a query for GNIRS flats
 
@@ -282,10 +276,7 @@ class CalibrationGNIRS(Calibration):
             if len(qh_all) < len(ir_all):
                 qh_all.extend([None] * (len(ir_all)-len(qh_all)))
             retval = [x for x in chain(*zip(ir_all, qh_all)) if x is not None][:howmany]
-            if return_query:
-                return retval, debug_query
-            else:
-                return retval
+            return retval
         else:
             # just filter on both, this is non-XD data, plus lampoff if appropriate
             if self.descriptors['central_wavelength'] and self.descriptors['central_wavelength'] >= 4.25:
@@ -295,14 +286,10 @@ class CalibrationGNIRS(Calibration):
             query = base_query.add_filters(or_(*lampfilters)) \
                 .max_interval(days=90)
 
-            if return_query:
-                return query.all(howmany, extra_order_terms=[desc(Header.observation_id
-                                                                  == self.descriptors['observation_id'])]), query
-            else:
-                return query.all(howmany, extra_order_terms=[desc(Header.observation_id
-                                                                  == self.descriptors['observation_id'])])
+            return query.all(howmany, extra_order_terms=
+            [desc(Header.observation_id == self.descriptors['observation_id'])])
 
-    def arc(self, processed=False, howmany=None, return_query=False):
+    def arc(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS ARC for this target frame
 
@@ -337,12 +324,9 @@ class CalibrationGNIRS(Calibration):
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def pinhole(self, processed=False, howmany=None, return_query=False):
+    def pinhole(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS Pinhole Mask for this target frame
 
@@ -374,13 +358,10 @@ class CalibrationGNIRS(Calibration):
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
     @not_processed
-    def lampoff_flat(self, processed=False, howmany=None, return_query=False):
+    def lampoff_flat(self, processed=False, howmany=None):
         """
         Find the optimal lamp-off flats to go with the lamp-on flat
 
@@ -409,15 +390,11 @@ class CalibrationGNIRS(Calibration):
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
             )
-        if return_query:
-            return query.all(howmany, extra_order_terms=[desc(Header.observation_id
-                                                              == self.descriptors['observation_id'])]), query
-        else:
-            return query.all(howmany, extra_order_terms=[desc(Header.observation_id
-                                                              == self.descriptors['observation_id'])])
+        return query.all(howmany, extra_order_terms=
+        [desc(Header.observation_id == self.descriptors['observation_id'])])
 
 
-    def telluric_standard(self, processed=False, howmany=None, return_query=False):
+    def telluric_standard(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS telluric observations for this target frame
 
@@ -454,7 +431,4 @@ class CalibrationGNIRS(Calibration):
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)

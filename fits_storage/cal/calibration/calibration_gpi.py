@@ -55,7 +55,7 @@ class CalibrationGPI(Calibration):
         # Apparently FPM doesn't have to match...
         return (Gpi.disperser, Gpi.filter_name)
 
-    def bpm(self, processed=False, howmany=None, return_query=False):
+    def bpm(self, processed=False, howmany=None):
         """
         This method identifies the best BPM to use for the target
         dataset.
@@ -81,12 +81,9 @@ class CalibrationGPI(Calibration):
                     .add_filters(*filters) \
                     .match_descriptors(Header.instrument, Header.detector_binning)
 
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def dark(self, processed=False, howmany=None, return_query=False):
+    def dark(self, processed=False, howmany=None):
         """
         Find the optimal GPI DARK for this target frame
 
@@ -115,12 +112,9 @@ class CalibrationGPI(Calibration):
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def arc(self, processed=False, howmany=None, return_query=False):
+    def arc(self, processed=False, howmany=None):
         """
         Find the optimal GPI ARC for this target frame
 
@@ -148,12 +142,9 @@ class CalibrationGPI(Calibration):
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def telluric_standard(self, processed=False, howmany=None, return_query=False):
+    def telluric_standard(self, processed=False, howmany=None):
         """
         Find the optimal GPI telluric standard for this target frame
 
@@ -186,12 +177,9 @@ class CalibrationGPI(Calibration):
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def polarization_standard(self, processed=False, howmany=None, return_query=False):
+    def polarization_standard(self, processed=False, howmany=None):
         """
         Find the optimal GPI polarization standard for this target frame
 
@@ -227,12 +215,9 @@ class CalibrationGPI(Calibration):
             query.match_descriptors(*CalibrationGPI.common_descriptors())
                  .max_interval(days=365)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def astrometric_standard(self, processed=False, howmany=None, return_query=False):
+    def astrometric_standard(self, processed=False, howmany=None):
         """
         Find the optimal GPI astrometric standard field for this target frame
 
@@ -267,12 +252,9 @@ class CalibrationGPI(Calibration):
         # Looks like we don't care about matching the usual descriptors...
         # Absolute time separation must be within 1 year
         query =query.max_interval(days=365)
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def polarization_flat(self, processed=False, howmany=None, return_query=False):
+    def polarization_flat(self, processed=False, howmany=None):
         """
         Find the optimal GPI polarization flat for this target frame
 
@@ -311,7 +293,4 @@ class CalibrationGPI(Calibration):
                  # Absolute time separation must be within 1 year
                  .max_interval(days=365)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)

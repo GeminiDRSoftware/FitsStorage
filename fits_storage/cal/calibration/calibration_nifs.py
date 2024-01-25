@@ -55,7 +55,7 @@ class CalibrationNIFS(Calibration):
     def common_descriptors():
         return (Nifs.disperser, Nifs.focal_plane_mask, Nifs.filter_name)
 
-    def bpm(self, processed=False, howmany=None, return_query=False):
+    def bpm(self, processed=False, howmany=None):
         """
         This method identifies the best BPM to use for the target
         dataset.
@@ -81,12 +81,9 @@ class CalibrationNIFS(Calibration):
                     .add_filters(*filters) \
                     .match_descriptors(Header.instrument, Header.detector_binning)
 
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def dark(self, processed=False, howmany=None, return_query=False):
+    def dark(self, processed=False, howmany=None):
         """
         Find the optimal NIFS Dark for this target frame
 
@@ -115,12 +112,9 @@ class CalibrationNIFS(Calibration):
                                    Header.coadds,
                                    Nifs.disperser) \
                 .max_interval(days=90)
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def flat(self, processed=False, howmany=None, return_query=False):
+    def flat(self, processed=False, howmany=None):
         """
         Find the optimal NIFS Flat for this target frame
 
@@ -150,12 +144,9 @@ class CalibrationNIFS(Calibration):
                 .match_descriptors(*CalibrationNIFS.common_descriptors()) \
                 .tolerance(central_wavelength=0.001) \
             .max_interval(days=10)
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def lampoff_flat(self, howmany=None, return_query=False):
+    def lampoff_flat(self, howmany=None):
         """
         Find the optimal NIFS Lamp-off Flat for this target frame
 
@@ -185,12 +176,9 @@ class CalibrationNIFS(Calibration):
                 .match_descriptors(*CalibrationNIFS.common_descriptors()) \
             .tolerance(central_wavelength=0.001) \
             .max_interval(seconds=3600)
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def arc(self, howmany=None, return_query=False):
+    def arc(self, howmany=None):
         """
         Find the optimal NIFS Arc for this target frame
 
@@ -217,12 +205,9 @@ class CalibrationNIFS(Calibration):
                 .match_descriptors(*CalibrationNIFS.common_descriptors()) \
             .tolerance(central_wavelength=0.001) \
             .max_interval(days=365)
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def ronchi_mask(self, processed=False, howmany=None, return_query=False):
+    def ronchi_mask(self, processed=False, howmany=None):
         """
         Find the optimal NIFS Ronchi Mask for this target frame
 
@@ -248,12 +233,9 @@ class CalibrationNIFS(Calibration):
                 .observation_type('RONCHI') \
                 .match_descriptors(Header.central_wavelength,
                                    Nifs.disperser)
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def telluric_standard(self, processed=False, howmany=None, return_query=False):
+    def telluric_standard(self, processed=False, howmany=None):
         """
         Find the optimal NIFS Telluric Standards for this target frame
 
@@ -281,7 +263,4 @@ class CalibrationNIFS(Calibration):
                 .match_descriptors(*CalibrationNIFS.common_descriptors()) \
             .tolerance(central_wavelength=0.001) \
             .max_interval(days=1)
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)

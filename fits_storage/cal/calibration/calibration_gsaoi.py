@@ -34,7 +34,7 @@ class CalibrationGSAOI(Calibration):
 
         self.applicable.append('processed_bpm')
 
-    def bpm(self, processed=False, howmany=None, return_query=False):
+    def bpm(self, processed=False, howmany=None):
         """
         This method identifies the best BPM to use for the target
         dataset.
@@ -60,12 +60,9 @@ class CalibrationGSAOI(Calibration):
                     .add_filters(*filters) \
                     .match_descriptors(Header.instrument, Header.detector_binning)
 
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def domeflat(self, processed=False, howmany=None, return_query=False):
+    def domeflat(self, processed=False, howmany=None):
         """
         Find the optimal GSAOI dome flat for this target frame
 
@@ -101,12 +98,9 @@ class CalibrationGSAOI(Calibration):
             query.match_descriptors(Gsaoi.filter_name)
                  .max_interval(days=30)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def lampoff_domeflat(self, processed=False, howmany=None, return_query=False):
+    def lampoff_domeflat(self, processed=False, howmany=None):
         """
         Find the optimal GSAOI lamp off flat for this target frame
 
@@ -143,10 +137,7 @@ class CalibrationGSAOI(Calibration):
             query.match_descriptors(Gsaoi.filter_name)
                  .max_interval(days=30)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
     # For gsaoi, domeflats are the only flats
     flat = domeflat
@@ -154,7 +145,7 @@ class CalibrationGSAOI(Calibration):
 
     # Processed photometric standards haven't been implemented
     @not_processed
-    def photometric_standard(self, processed=False, howmany=None, return_query=False):
+    def photometric_standard(self, processed=False, howmany=None):
         """
         Find the optimal GSAOI photometric standard for this target frame
 
@@ -183,7 +174,4 @@ class CalibrationGSAOI(Calibration):
                 .match_descriptors(Gsaoi.filter_name)
                 .max_interval(days=30)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)

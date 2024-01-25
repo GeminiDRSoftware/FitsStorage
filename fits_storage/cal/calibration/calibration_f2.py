@@ -79,7 +79,7 @@ class CalibrationF2(Calibration):
 
         self.applicable.append('processed_bpm')
 
-    def dark(self, processed=False, howmany=None, return_query=False):
+    def dark(self, processed=False, howmany=None):
         """
         Get a query for darks appropriate for F2.
 
@@ -97,10 +97,7 @@ class CalibrationF2(Calibration):
                 .max_interval(days=90)
             )
 
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
     @staticmethod
     def common_descriptors():
@@ -113,7 +110,7 @@ class CalibrationF2(Calibration):
         """
         return F2.disperser, F2.lyot_stop, F2.filter_name, F2.focal_plane_mask
 
-    def flat(self, processed=False, howmany=None, return_query=False):
+    def flat(self, processed=False, howmany=None):
         """
         Get matching flats for an F2 observation.
 
@@ -148,12 +145,9 @@ class CalibrationF2(Calibration):
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def arc(self, processed=False, howmany=None, return_query=False):
+    def arc(self, processed=False, howmany=None):
         """
         Get matching arcs for an F2 observation.
 
@@ -185,12 +179,9 @@ class CalibrationF2(Calibration):
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def bpm(self, processed=False, howmany=None, return_query=False):
+    def bpm(self, processed=False, howmany=None):
         """
         This method identifies the best BPM to use for the target
         dataset.
@@ -218,13 +209,10 @@ class CalibrationF2(Calibration):
                     .match_descriptors(Header.instrument,
                                        Header.detector_binning)
 
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
     @not_processed
-    def lampoff_flat(self, processed=False, howmany=None, return_query=False):
+    def lampoff_flat(self, processed=False, howmany=None):
         """
         Get matching lamp-off flats for an F2 observation.
 
@@ -260,14 +248,10 @@ class CalibrationF2(Calibration):
                 # Absolute time separation must be within 3 months
                 .max_interval(days=1)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
     @not_processed
-    def photometric_standard(self, processed=False, howmany=None,
-                             return_query=False):
+    def photometric_standard(self, processed=False, howmany=None):
         """
         Get matching photometric standards for an F2 observation.
 
@@ -302,13 +286,10 @@ class CalibrationF2(Calibration):
                 # science
                 .max_interval(days=1)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
     @not_processed
-    def telluric_standard(self, processed=False, howmany=None, return_query=False):
+    def telluric_standard(self, processed=False, howmany=None):
         """
         Get matching telluric standards for an F2 observation.
 
@@ -341,7 +322,4 @@ class CalibrationF2(Calibration):
                 .max_interval(days=1)
             )
 
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)

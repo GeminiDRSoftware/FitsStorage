@@ -76,7 +76,7 @@ class CalibrationNIRI(Calibration):
 
         self.applicable.append('processed_bpm')
 
-    def bpm(self, processed=False, howmany=None, return_query=False):
+    def bpm(self, processed=False, howmany=None):
         """
         This method identifies the best BPM to use for the target
         dataset.
@@ -102,12 +102,9 @@ class CalibrationNIRI(Calibration):
                     .add_filters(*filters) \
                     .match_descriptors(Header.instrument, Header.detector_binning)
 
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def dark(self, processed=False, howmany=None, return_query=False):
+    def dark(self, processed=False, howmany=None):
         """
         Method to find the darks
 
@@ -141,12 +138,9 @@ class CalibrationNIRI(Calibration):
                                    Header.coadds) \
                 .tolerance(exposure_time = 0.01) \
                 .max_interval(days=180)
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def flat(self, processed=False, howmany=None, return_query=False):
+    def flat(self, processed=False, howmany=None):
         """
         Method to find the flats
 
@@ -195,12 +189,9 @@ class CalibrationNIRI(Calibration):
                 .tolerance(central_wavelength = 0.001, condition=self.descriptors['spectroscopy']) \
                 .max_interval(days=180) \
 
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
-    def arc(self, processed=False, howmany=None, return_query=False):
+    def arc(self, processed=False, howmany=None):
         """
          Method to find the arcs
 
@@ -235,13 +226,10 @@ class CalibrationNIRI(Calibration):
                                    Niri.disperser) \
                 .tolerance(central_wavelength = 0.001) \
                 .max_interval(days=180)
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
     @not_processed
-    def lampoff_flat(self, processed=False, howmany=None, return_query=False):
+    def lampoff_flat(self, processed=False, howmany=None):
         """
          Method to find the lamp off flats
 
@@ -277,13 +265,10 @@ class CalibrationNIRI(Calibration):
                 # Absolute time separation must be within 1 day of the lamp on flats
                 .max_interval(days=1)  # changed from 1 hr per KL
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
     @not_processed
-    def photometric_standard(self, processed=False, howmany=None, return_query=False):
+    def photometric_standard(self, processed=False, howmany=None):
         """
          Method to find the photometric standards
 
@@ -319,13 +304,10 @@ class CalibrationNIRI(Calibration):
                 # Absolute time separation must be within 24 hours of the science
                 .max_interval(days=1)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
 
     @not_processed
-    def telluric_standard(self, processed=False, howmany=None, return_query=False):
+    def telluric_standard(self, processed=False, howmany=None):
         """
          Method to find the telluric standards
 
@@ -361,7 +343,4 @@ class CalibrationNIRI(Calibration):
                 # Absolute time separation must be within 24 hours of the science
                 .max_interval(days=1)
             )
-        if return_query:
-            return query.all(howmany), query
-        else:
-            return query.all(howmany)
+        return query.all(howmany)
