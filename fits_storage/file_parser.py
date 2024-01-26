@@ -817,12 +817,21 @@ class GHOSTFileParser(AstroDataFileParser):
                         if retval is None or (v is not None and v<retval):
                             retval = v
                     return retval
+        else:
+            return value
 
     def exposure_time(self) -> Union[float, None]:
         et = self.ad.exposure_time()
         if isinstance(et, dict):
-            return min(self.ad.number_of_exposures()[camera] * self.ad.exposure_time()[camera] for camera in ('blue', 'red'))
-        return super().exposure_time()
+            val =  min(self.ad.number_of_exposures()[camera] * self.ad.exposure_time()[camera] for camera in ('blue', 'red'))
+        else:
+            val =  super().exposure_time()
+        if isinstance(val, str):
+            try:
+                val = float(str)
+            except:
+                val = None
+        return val
 
     def detector_binning(self) -> str:
         dvx = self.dedictify(self.ad.detector_x_bin())
