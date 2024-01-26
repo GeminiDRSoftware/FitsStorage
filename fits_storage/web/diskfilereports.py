@@ -99,26 +99,33 @@ def report(thing):
                 resp.append("------ PROVENANCE ------\n")
                 filename_length = len('Filename')
                 md5_length = len('MD5')
-                primitive_length = len('Primitive')
+                addedby_length = len('Added By')
                 for provenance in diskfile.provenance:
                     filename_length = max(filename_length, len(provenance.filename))
                     md5_length = max(md5_length, len(provenance.md5))
-                    primitive_length = max(primitive_length, len(provenance.primitive))
+                    addedby_length = max(addedby_length, len(provenance.added_by))
                 resp.append("%s %s %s %s\n" % ('Filename'.ljust(filename_length),
                                                'MD5'.ljust(md5_length),
                                                'Timestamp'.ljust(26),
-                                               'Provenance Added By'.ljust(primitive_length)))
+                                               'Added By'.ljust(addedby_length)))
                 for provenance in diskfile.provenance:
                     resp.append("%s %s %s %s\n" % (provenance.filename.ljust(filename_length),
                                                    provenance.md5.ljust(md5_length),
                                                    provenance.timestamp,
-                                                   provenance.primitive.ljust(primitive_length)))
+                                                   provenance.added_by.ljust(addedby_length)))
             if diskfile.history:
                 resp.append("\n\n")
                 resp.append("------ HISTORY ------\n")
-                for phistory in diskfile.provenance_history:
-                    resp.append("start:     %s\nend:       %s\nprimitive: %s\nargs:      %s\n\n"
-                                % (phistory.timestamp_start,
-                                   phistory.timestamp_end,
-                                   phistory.primitive,
-                                   phistory.args))
+                primitive_length = len('Primitive')
+                for history in diskfile.history:
+                    primitive_length = max(primitive_length, len(history.primitive))
+                resp.append("%s %s %s %s\n" % ('Start '.ljust(26),
+                                               'End'.ljust(26),
+                                               'Primitive'.ljust(primitive_length),
+                                               'Args'))
+                for history in diskfile.history:
+                    resp.append("%s %s %s %s\n" % (
+                        history.timestamp_start,
+                        history.timestamp_end,
+                        history.primitive.ljust(primitive_length),
+                        history.args))
