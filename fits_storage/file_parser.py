@@ -794,7 +794,7 @@ class GMOSFileParser(AstroDataFileParser):
 
 
 class GHOSTFileParser(AstroDataFileParser):
-    def dedictify(self, value, sum=False, min=False):
+    def dedictify(self, value, sum=False, min=False, scionly=False):
         arm = self.ad.arm()
         if isinstance(value, dict):
             if arm is not None:
@@ -817,6 +817,14 @@ class GHOSTFileParser(AstroDataFileParser):
                         if retval is None or (v is not None and v<retval):
                             retval = v
                     return retval
+                if scionly:
+                    retval = None
+                    bval = value.get('blue')
+                    rval = value.get('red')
+                    if bval == rval:
+                        return bval
+                    else:
+                        return None
         else:
             return value
 
@@ -834,8 +842,8 @@ class GHOSTFileParser(AstroDataFileParser):
         return val
 
     def detector_binning(self) -> str:
-        dvx = self.dedictify(self.ad.detector_x_bin())
-        dvy = self.dedictify(self.ad.detector_y_bin())
+        dvx = self.dedictify(self.ad.detector_x_bin(), scionly=True)
+        dvy = self.dedictify(self.ad.detector_y_bin(), scionly=True)
         if (dvx is not None) and (dvy is not None):
             return "%dx%d" % (dvx, dvy)
         return None

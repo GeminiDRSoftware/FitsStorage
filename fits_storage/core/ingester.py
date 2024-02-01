@@ -21,7 +21,7 @@ from fits_storage.core.orm.fulltextheader import FullTextHeader
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.footprint import Footprint, footprints
 from fits_storage.core import geometryhacks
-from fits_storage.cal.orm import instrument_class
+from fits_storage.cal.orm import get_inst_rows
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -505,14 +505,23 @@ class Ingester(object):
             # Just log the error and press on
 
         try:
-            # Add the instrument specific table entry now
-            inst = header.instrument
-            instclass = instrument_class.get(inst)
-            if instclass is not None:
-                self.l.debug(f"Adding new {inst} entry")
-                entry = instclass(header, diskfile.ad_object)
-                self.s.add(entry)
+            # Add the instrument specific table entry/entries now. Creating
+            # the orm instances is delegated to get_inst_rows() in the
+            # cal.orm module so that instrument specific handling is
+            # contained there. Note this function returns None if the instrument
+            # does not have a class, and returns a *list* of rows if it does.
+            # It will be a list of one for most instruments, but some (eg ghost)
+            # return multiple rows.
+            instrows = get_inst_rows(header, diskfile.ad_object, self.l)
+            if instrows is None:
+                self.l.debug("No instclass for instrument %s", header.instrument)
+            elif isinstance(instrows, list):
+                for ir in instrows:
+                    self.l.debug("Adding new %s entry", str(type(ir)))
+                    self.s.add(ir)
                 self.s.commit()
+            else:
+                self.l.debug("Bad return from get_inst_rows")
         except:
             message = "Error adding Instrument Table Entry"
             self.l.error(message, exc_info=True)

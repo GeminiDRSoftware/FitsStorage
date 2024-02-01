@@ -94,6 +94,7 @@ obsre = r'((?:^%s)|(?:^%s)|(?:^%s))-(?P<obsid>\d*)$' % (calengre, scire, calengr
 gemini_gain_settings = ('high', 'low', 'standard')
 gemini_readspeed_settings = ('fast', 'medium', 'slow',
                              # And these GHOST ones...
+                             'standard',
                              'red:fast,blue:fast',
                              'red:fast,blue:medium',
                              'red:fast,blue:slow',

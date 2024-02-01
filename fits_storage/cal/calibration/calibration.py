@@ -543,11 +543,17 @@ class Calibration(object):
     instrClass = None
     instrDescriptors = ()
 
-    def __init__(self, session, header, descriptors, types, procmode=None):
+    def __init__(self, session, header, descriptors, types, procmode=None,
+                 instinit=True):
         """
         Initialize a calibration manager for a given header object (ie data
         file) Need to pass in an sqlalchemy session that should already be
-        open, this class will not close it. Also pass in a header object
+        open, this class will not close it. Also pass in a header object.
+
+        Most instruments subclass this, but do not provide an __init__()
+        method in the subclass. Those that need to do a special instrument
+        specific __init__() can call this one via super with instinit=False
+        to stop this method attempting to handle instrument specifics.
 
         """
         self.session = session
@@ -584,14 +590,16 @@ class Calibration(object):
                 'engineering':          self.header.engineering
                 }
 
-            query = session.query(self.instrClass)\
-                .filter(self.instrClass.header_id ==
-                        self.descriptors['header_id'])
-            inst = query.first()
+            if instinit:
+                query = session.query(self.instrClass)\
+                    .filter(self.instrClass.header_id ==
+                            self.descriptors['header_id'])
+                inst = query.first()
 
-            # Populate the descriptors dictionary for the instrument
-            for descr in self.instrDescriptors:
-                self.descriptors[descr] = getattr(inst, descr, None)
+                # Populate the descriptors dictionary for the instrument
+                for descr in self.instrDescriptors:
+                    self.descriptors[descr] = getattr(inst, descr, None)
+
         elif self.descriptors is not None:
             # The data_section comes over as a native python array, needs to
             # be a string
@@ -618,114 +626,9 @@ class Calibration(object):
     def get_query(self):
         """
         Returns an ``CalQuery`` object, populated with the current session,
-        instrument class, descriptors and the setting for full/not-full query.
+        instrument class, descriptors and procmode.
 
         """
         return CalQuery(self.session, self.instrClass, self.descriptors,
                         procmode=self.procmode)
 
-    def set_applicable(self):
-        """
-        This method determines which calibration types are applicable
-        to the target data set, and records the list of applicable
-        calibration types in the class applicable variable.
-        All this really does is determine whether what calibrations the
-        /calibrations feature will look for. Just because a caltype isn't
-        applicable doesn't mean you can't ask the calmgr for one.
-
-        The return value is a list of strings with the names of the applicable
-        methods (eg. ``['bias', 'dark', 'flat']``)
-
-        The base implementation returns an empty list. It **must** be
-        overriden by every subclass of ``Calibration``.
-
-        """
-        self.applicable = []
-
-    def bias(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def dark(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def flat(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def arc(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def fringe(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def ronchi_mask(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def pinhole_mask(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def spectwilight(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def lampoff_flat(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def domeflat(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def lampoff_domeflat(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def processed_fringe(self, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def specphot(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def photometric_standard(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def qh_flat(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def telluric_standard(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def polarization_standard(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def astrometric_standard(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def polarization_flat(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def mask(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def slitillum(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
-
-    def bpm(self, processed=False, howmany=None):
-        # Not defined for this instrument
-        return []
