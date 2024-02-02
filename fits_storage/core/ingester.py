@@ -84,7 +84,8 @@ class Ingester(object):
 
         # If we're using S3, store the S3 helper object here
         if self.using_s3:
-            self.s3 = Boto3Helper(logger=self.l)
+            self.s3 = Boto3Helper(logger=self.l,
+                                  storage_root=fsc.s3_staging_dir)
             self.local_copy_of_s3_file = None
 
     def ingest_file(self, iqe: IngestQueueEntry):

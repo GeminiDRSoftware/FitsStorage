@@ -143,6 +143,9 @@ class DiskFile(Base):
             else fsc.z_staging_dir
         self._s3_staging_dir = s3_staging_dir if s3_staging_dir is not None \
             else fsc.s3_staging_dir
+        # If using s3, we set the storage root to the s3 staging dir
+        if fsc.using_s3 and self._s3_staging_dir:
+            self._storage_root = self._s3_staging_dir
 
         # Having the logger here is useful in ingest, but not valid e.g, when
         # in web code. DummyLogger() is a no-op default
