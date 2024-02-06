@@ -599,6 +599,12 @@ class CalibrationGMOS(Calibration):
         else:
             return self.imaging_flat(processed, howmany, flat_descriptors, filters)
 
+    def fringe(self, processed=False, howmany=None):
+        if processed:
+            return self.processed_fringe(howmany=howmany)
+        else:
+            return []
+
     def processed_fringe(self, howmany=None):
         """
         Method to find the best processed_fringe frame for the target dataset.
