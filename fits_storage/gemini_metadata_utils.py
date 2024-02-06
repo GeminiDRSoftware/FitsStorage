@@ -761,7 +761,7 @@ def gemini_observation_class(string: str) -> str:
 
 reduction_states = ('RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS',
                     'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK',
-                    'PROCESSED_TELLURIC', 'PROCESSED_SCIENCE', 'PROCESSED_BPM'
+                    'PROCESSED_TELLURIC', 'PROCESSED_SCIENCE', 'PROCESSED_BPM',
                     'PROCESSED_STANDARD', 'PROCESSED_SLITILLUM',
                     'PROCESSED_PINHOLE', 'PROCESSED_UNKNOWN')
 
