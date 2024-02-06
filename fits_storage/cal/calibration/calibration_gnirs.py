@@ -56,7 +56,7 @@ class CalibrationGNIRS(Calibration):
                 # If they are XD, they need an IR flat, a Quartz-Halogen flat and pinhole.
                 # the flat recipe for XD will be smart about IR and QH flats
                 self.applicable.append('flat')
-                self.applicable.append('pinhole_mask')
+                self.applicable.append('pinhole')
             else:
                 # non-XD, Long Camera ranges
                 if 'Short' in self.descriptors['camera']:
