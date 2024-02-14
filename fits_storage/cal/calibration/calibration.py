@@ -632,3 +632,11 @@ class Calibration(object):
         return CalQuery(self.session, self.instrClass, self.descriptors,
                         procmode=self.procmode)
 
+    def set_applicable(self):
+        """
+        In this generic superclass implementation, this just sets applicable to
+        an empty list so that instruments without a cal subclass don't attempt
+        to associate calibrations
+        """
+        
+        self.applicable = []
