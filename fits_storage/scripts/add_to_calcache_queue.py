@@ -80,12 +80,18 @@ if __name__ == "__main__":
 
         logger.info("Got %d header items to queue" % len(headers))
 
+        # Looping through the header list directly for the add is really slow
+        # if the list is big..
+
+        logger.info("Building (hid, filename) list...")
+        items = []
+        for header in headers:
+            items.append((header.id, header.diskfile.filename))
+
         # Note, we don't try and batch these commits as if there's an
         # IntegrityError resulting from an entry already existing, that will
         # fail the entire commit and thus the entire batch.
-        for header in headers:
-            hid = header.id
-            filename = header.diskfile.filename
+        for (hid, filename) in items:
             logger.info("Adding CalCacheQueueEntry with obs_hid %s, "
                          "filename %s", hid, filename)
             cqe = CalCacheQueueEntry(hid, filename)
