@@ -305,7 +305,7 @@ with session_scope() as session:
                 try:
                     statinfo = os.stat(df.fullpath)
                     f = open(df.fullpath, "rb")
-                    tarinfo = tarfile.TarInfo(df.fullpath)
+                    tarinfo = tarfile.TarInfo(df.filename)
                     tarinfo.size = statinfo.st_size  # tarinfo.size
                     tarinfo.mtime = statinfo.st_mtime
                     tarinfo.mode = statinfo.st_mode
