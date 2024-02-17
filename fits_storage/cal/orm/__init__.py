@@ -60,7 +60,9 @@ def get_ghost_rows(header, ad, logger):
     if isinstance(adarm, str):
         arms = [adarm]
     elif adarm is None:
-        arms = GHOST_ARMS
+        # This causes issues for ghost files that do not have all 3 arms.
+        # arms = GHOST_ARMS
+        arms = adc.exposure_time().keys()
     else:
         logger.error("Bad return type for ad.arm()")
         arms = []
