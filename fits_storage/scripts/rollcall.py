@@ -69,6 +69,8 @@ with session_scope() as session:
 
     i = 0
     missingfiles = []
+    badfiles = []
+    goodfiles = []
     for df in query:
         if fsc.using_s3:
             logger.debug("Getting s3 key for %s", df.filename)
@@ -96,8 +98,15 @@ with session_scope() as session:
                     if file_md5 != df.file_md5:
                         logger.warning("MD5 mismatch between file and DB: %s",
                                        df.filename)
+                        badfiles.append(df.filename)
+                    else:
+                        goodfiles.append(df.filename)
         i += 1
 
+    if len(badfiles):
+        logger.info("\n %d files failed md5 check", len(badfiles))
+    if len(goodfiles):
+        logger.info("\n %d files passed md5 check", len(goodfiles))
     if len(missingfiles):
         logger.warning("\nMarked %d files as no longer present\n%s\n",
                        len(missingfiles), missingfiles)
