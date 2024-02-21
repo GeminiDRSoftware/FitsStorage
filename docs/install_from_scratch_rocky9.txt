@@ -34,7 +34,7 @@ sudo su - fitsdata
   createdb fitsdata
 
 
-# Anaconda install (as you)
+# Anaconda install (as fitsdata)
 # Go to https://www.anaconda.com/download#downloads and get the latest URL
 wget https://repo.anaconda.com/archive/Anaconda3-2023.07-1-Linux-x86_64.sh
 sudo bash Anaconda3-2023.07-1-Linux-x86_64.sh
@@ -52,7 +52,7 @@ conda config --add channels http://astroconda.gemini.edu/public
 conda create -p /opt/anaconda3/envs/dragons python=3.10 dragons
 
 # In bash profile, add:
-export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/GHOSTDR
+export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
 
 # At end of bashrc, add:
 conda activate dragons
@@ -60,8 +60,8 @@ export PATH="/opt/FitsStorage/fits_storage/scripts:$PATH"
 
 # As you
 cd /opt
-sudo mkdir DRAGONS GHOSTDR FitsStorage FitsStorageConfigurations
-sudo chown fitsdata DRAGONS GHOSTDR FitsStorage FitsStorageConfigurations
+sudo mkdir DRAGONS FitsStorage FitsStorageConfigurations
+sudo chown fitsdata DRAGONS FitsStorage FitsStorageConfigurations
 sudo mkdir /data/logs /data/locks /data/upload_staging /data/z_staging
 sudo chown fitsdata:fitsdata /data/logs/ /data/locks /data/upload_staging /data/z_staging
 sudo chmod g+w /data/upload_staging
@@ -80,15 +80,11 @@ pip3 install psycopg2-binary simplejson
 conda install uwsgi
 pip3 install boto3 # if required
 cd /opt/DRAGONS
-git clone https://github.com/GeminiDRSoftware/DRAGONS .
+git clone git@github.com:/GeminiDRSoftware/DRAGONS .
 git fetch
-git checkout -b release/3.1.x  # or master, depending what you want...
+git switch release/3.2.x  # or master, depending what you want...
 cd /opt/FitsStorage
 git clone git@github.com:/phirstgemini/FitsStorage2 .
-cd /opt/GHOSTDR
-git clone https://github.com/GeminiDRSoftware/GHOSTDR .
-git fetch
-git checkout tags/v1.0.0
 cd /opt/FitsStorageConfigurations
 git clone git@gitlab.gemini.edu:DRSoftware/FitsStorageConfigurations.git .
 create_tables.py
