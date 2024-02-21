@@ -91,11 +91,15 @@ if __name__ == "__main__":
         # Note, we don't try and batch these commits as if there's an
         # IntegrityError resulting from an entry already existing, that will
         # fail the entire commit and thus the entire batch.
+        i = 0
+        n = len(items)
         for (hid, filename) in items:
-            logger.info("Adding CalCacheQueueEntry with obs_hid %s, "
-                         "filename %s", hid, filename)
+            i += 1
+            logger.info("Creating CalCacheQueueEntry with obs_hid %s, "
+                         "filename %s (%d/%d)", hid, filename, i, n)
             cqe = CalCacheQueueEntry(hid, filename)
             try:
+                logger.debug("Adding CalCacheQueueEntry")
                 session.add(cqe)
                 session.commit()
             except IntegrityError:
