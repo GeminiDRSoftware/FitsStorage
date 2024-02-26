@@ -74,7 +74,7 @@ class Header(Base):
     cass_rotator_pa = Column(Numeric(precision=16, scale=12))
     airmass = Column(Numeric(precision=8, scale=6))
     filter_name = Column(Text, index=True)
-    exposure_time = Column(Numeric(precision=8, scale=4))
+    exposure_time = Column(Numeric(precision=12, scale=6))
     disperser = Column(Text, index=True)
     camera = Column(Text, index=True)
     central_wavelength = Column(Numeric(precision=8, scale=6), index=True)
