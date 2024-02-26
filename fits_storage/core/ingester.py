@@ -192,7 +192,8 @@ class Ingester(object):
             pass
         else:
             # Proceed with normal fits file ingestion
-            self.add_fitsfile(diskfile, iqe)
+            if not self.add_fitsfile(diskfile, iqe):
+                self.l.debug("add_fitsfile failed (returned False)")
 
         # We're done with the diskfile we created now
         if fsc.using_s3 and self.local_copy_of_s3_file:
@@ -215,7 +216,8 @@ class Ingester(object):
                 self.s.commit()
 
         # Finally, delete the iqe we have just completed
-        self.s.delete(iqe)
+        if iqe.error is None and iqe.failed is False:
+            self.s.delete(iqe)
         self.s.commit()
 
     def need_to_add_diskfile(self, iqe, fileobj):
@@ -441,8 +443,9 @@ class Ingester(object):
             self.s.add(dfreport)
             self.s.commit()
         except:
-            message = "Error adding DiskFileReport"
+            message = "Exception adding DiskFileReport - see log file"
             self.l.error(message, exc_info=True)
+            self.s.rollback()
             iqe.seterror(message)
             self.s.commit()
 
@@ -452,8 +455,9 @@ class Ingester(object):
             self.s.add(ftheader)
             self.s.commit()
         except:
-            message = "Error adding FullTextHeader"
+            message = "Exception adding FullTextHeader - see log file"
             self.l.error(message, exc_info=True)
+            self.s.rollback()
             iqe.seterror(message)
             self.s.commit()
 
@@ -462,8 +466,9 @@ class Ingester(object):
             ingest_provenancehistory(diskfile, logger=self.l)
             self.s.commit()
         except:
-            message = "Error adding Provenance and History"
+            message = "Exception adding Provenance and History - see log file"
             self.l.error(message, exc_info=True)
+            self.s.rollback()
             iqe.seterror(message)
             self.s.commit()
 
@@ -473,9 +478,11 @@ class Ingester(object):
             self.s.add(header)
             self.s.commit()
         except:
-            message = "Error adding Header"
+            message = "Exception adding Header - see log file"
             self.l.error(message, exc_info=True)
+            self.s.rollback()
             iqe.seterror(message)
+            self.s.commit()
             return False
 
         try:
@@ -524,8 +531,9 @@ class Ingester(object):
             else:
                 self.l.debug("Bad return from get_inst_rows")
         except:
-            message = "Error adding Instrument Table Entry"
+            message = "Exception adding Instrument Table Entry - see log file"
             self.l.error(message, exc_info=True)
+            self.s.rollback()
             iqe.seterror(message)
             self.s.commit()
             return False
@@ -566,6 +574,8 @@ class Ingester(object):
             .filter(IngestQueueEntry.path == iqe.path)
 
         for failed_iqe in failed_iqes:
+            self.l.debug("Deleting failed ingestqueue entries having "
+                         "successfully ingested file.")
             self.s.delete(failed_iqe)
 
         return True
