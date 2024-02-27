@@ -218,7 +218,7 @@ class Ingester(object):
                 self.s.commit()
 
         # Finally, delete the iqe we have just completed
-        if iqe.error is None and iqe.failed is False:
+        if iqe.failed is False:
             self.s.delete(iqe)
         self.s.commit()
 
@@ -582,8 +582,8 @@ class Ingester(object):
             .filter(IngestQueueEntry.path == iqe.path)
 
         for failed_iqe in failed_iqes:
-            self.l.debug("Deleting failed ingestqueue entries having "
-                         "successfully ingested file.")
+            self.l.info("Deleting failed ingestqueue entry %d having "
+                        "successfully ingested file." % failed_iqe.id)
             self.s.delete(failed_iqe)
 
         return True
