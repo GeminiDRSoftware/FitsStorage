@@ -36,6 +36,8 @@ if fsc.is_server:
     from fits_storage.server.orm.obslog import Obslog
     from fits_storage.server.orm.provenancehistory import \
         ingest_provenancehistory
+    if fsc.using_previews:
+        from fits_storage.server.previewer import Previewer
 
 
 class Ingester(object):
@@ -542,8 +544,14 @@ class Ingester(object):
             # Handle previews here
             if self.using_previews:
                 if self.make_previews:
-                    self.l.info("Skipping Building Preview. Code needs work.")
-                    # TODO - fix this
+                    # Make the previewer instance
+                    p = Previewer(diskfile, self.s, logger=self.l)
+
+                    if p.make_preview():
+                        self.l.info("make_preview() succeeded")
+                    else:
+                        self.l.error("Failed to make preview for %s",
+                                     diskfile.filename)
                 else:
                     self.l.info(f"Adding {diskfile.filename} to preview queue")
                     pqe = PreviewQueueEntry(diskfile)
