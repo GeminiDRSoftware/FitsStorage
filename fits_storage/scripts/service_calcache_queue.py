@@ -36,6 +36,8 @@ if __name__ == "__main__":
                       help="Use a lockfile to limit instances")
     parser.add_option("--empty", action="store_true", default=False,
                       dest="empty", help="Exit once the queue is empty.")
+    parser.add_option("--oneshot", action="store_true", default=False,
+                      dest="oneshot", help="Process one queue entry then exit")
     (options, args) = parser.parse_args()
 
     # Logging level to debug? Include stdio log?
@@ -108,8 +110,10 @@ if __name__ == "__main__":
 
                     try:
                         # Do the associations and put them in the CalCache table
+                        success = True
                         ccq.cache_associations(ccqe.obs_hid)
                     except:
+                        success = False
                         session.rollback()
                         message = "Exception while associating calibrations " \
                                   "for CalCache"
@@ -119,18 +123,20 @@ if __name__ == "__main__":
                         ccqe.error = message
                         session.commit()
 
-                    logger.debug("Deleting calcachequeue id %d" % ccqe.id)
-                    session.delete(ccqe)
+                    if success:
+                        logger.debug("Deleting calcachequeue id %d" % ccqe.id)
+                        session.delete(ccqe)
+
+                    if options.oneshot:
+                        loop = False
 
                 except (KeyboardInterrupt, OperationalError):
                     loop = False
 
                 except:
-                    string = traceback.format_tb(sys.exc_info()[2])
-                    string = "".join(string)
                     session.rollback()
                     logger.error("Exception", exc_info=True)
-                    # Press on with the next file, don't raise the esception
+                    # Press on with the next file, don't raise the exception
                     # further.
 
     except PidFileError as e:
