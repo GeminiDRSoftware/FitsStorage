@@ -86,7 +86,7 @@ if options.list_tapes:
                 .filter(Tape.label == l)
             sumsize = query.one()[0]
             gbs = float(sumsize) / 1E9
-            logger.info("There are %.1f GB to read on tape %s", (gbs, l))
+            logger.info("There are %.1f GB to read on tape %s", gbs, l)
 
     # If all we're doing is listing tapes, stop here.
     sys.exit(0)
