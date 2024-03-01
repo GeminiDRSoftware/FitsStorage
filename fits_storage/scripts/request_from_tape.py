@@ -41,10 +41,6 @@ setdemon(options.demon)
 logger.info("***   request_from_tape.py - starting up at %s",
             datetime.datetime.now())
 
-logger.error("This script hasn't been tested properly since the great refactor "
-             "of 2023. Please test before use")
-sys.exit(0)
-
 if (not options.filere) and (not options.tape_label) and (not options.noreally):
     logger.error("You must specify a file-re or a tape-label. "
                  "You probably want a file-re")

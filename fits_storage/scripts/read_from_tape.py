@@ -39,15 +39,12 @@ setdebug(options.debug)
 setdemon(options.demon)
 
 # Make separate log files per tape drive
-setlogfilesuffix(options.tapedrive.split('/')[-1])
+if options.tapedrive:
+    setlogfilesuffix(options.tapedrive.split('/')[-1])
 
 # Announce startup
 logger.info("***   read_from_tape.py - starting up at %s",
             datetime.datetime.now())
-
-logger.error("This script has not been tested since the great refactor "
-             "of 2023. Please test first.")
-sys.exit(0)
 
 # Query the DB to find a list of files to extract This is a little
 # non-trivial, given that there are multiple identical copies of the file on
