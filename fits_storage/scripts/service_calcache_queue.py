@@ -104,10 +104,11 @@ if __name__ == "__main__":
                     # Don't query queue length in fast_rebuild mode
                     if options.fast_rebuild:
                         logger.info("Processing obs_hid %d - %s" %
-                                    ccqe.obs_hid, ccqe.filename)
+                                    (ccqe.obs_hid, ccqe.filename))
                     else:
                         logger.info("Processing obs_hid %d - %s, (%d in queue)"
-                                    % ccqe.obs_hid, ccqe.filename, ccq.length())
+                                    % (ccqe.obs_hid, ccqe.filename,
+                                       ccq.length()))
 
                     try:
                         # Do the associations and put them in the CalCache table
