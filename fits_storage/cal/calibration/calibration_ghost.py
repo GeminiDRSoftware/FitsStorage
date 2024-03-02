@@ -597,7 +597,8 @@ class GHOSTCalQuery(object):
                                             self.pdescriptors[arm], procmode))
         # Set up the "call through methods" here
         calmethods = ['bias', 'arc', 'flat']
-        argsmethods = ['add_filters', 'match_descriptors']
+        argsmethods = ['add_filters', 'match_descriptors', 'raw', 'OBJECT',
+                       'spectroscopy', 'object']
         kwmethods = ['max_interval']
         for m in calmethods:
             setattr(self, m, functools.partial(self.docal, m))
