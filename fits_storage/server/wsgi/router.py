@@ -55,6 +55,8 @@ from fits_storage.web.history import history
 
 from fits_storage.web.preview import preview
 
+from fits_storage.web.obslogs import obslogs
+
 from fits_storage.web.miscfiles import miscfiles
 
 from .routing import SequenceConverter, SelectionConverter
@@ -206,12 +208,13 @@ url_map = Map([
     # Rule('/programinfojson/<program_id>', program_info_json),                # Displays data from a program
     # Rule('/logcomments/<selection(SEL):selection>', log_comments),
     # Rule('/programs/<selection:selection>', programs),
+
     # # Obslogs get their own summary-like handler
     # # Both actions use the same function, with 'sumtype' specifiying which
     # # one of them, but aside from that, it's just a regular (req, selections)
     # # We're using functools.partial here to pin sumtype's value
-    # Rule('/obslogs/<selection:selection>', partial(obslogs, sumtype='obslogs')),
-    # Rule('/associated_obslogs/<selection:selection>', partial(obslogs, sumtype='associated_obslogs')),
+    Rule('/obslogs/<selection:selection>', partial(obslogs, sumtype='obslogs')),
+    Rule('/associated_obslogs/<selection:selection>', partial(obslogs, sumtype='associated_obslogs')),
     #
     # # The GMOS twilight flat and bias report (JSON result)
     # # The function here is the same as for 'gmoscal'. We're using partial for

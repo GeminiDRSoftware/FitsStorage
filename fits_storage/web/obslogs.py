@@ -3,31 +3,40 @@ This module contains the obslogs web summary code.
 """
 import datetime
 
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound
 from fits_storage.server.orm.obslog import Obslog
-from ..fits_storage_config import fits_open_result_limit, fits_closed_result_limit
 from fits_storage.db.list_headers import list_obslogs, list_headers
 from fits_storage.db.selection import openquery
 
-from ..utils.userprogram import icanhave
-from ..utils.web import get_context
+from fits_storage.server.access_control_utils import icanhave
+from fits_storage.server.wsgi.context import get_context
 
-from ..orm.querylog import QueryLog
+from fits_storage.server.orm.querylog import QueryLog
 
 from . import templating
+
+from fits_storage.config import get_config
+fsc = get_config()
+fits_open_result_limit = fsc.fits_open_result_limit
+fits_closed_result_limit = fsc.fits_closed_result_limit
+
 
 def add_summary_completed():
     ctx = get_context()
     try:
-        querylog = ctx.session.query(QueryLog).filter(QueryLog.usagelog_id == ctx.usagelog.id).one()
+        querylog = ctx.session.query(QueryLog).\
+            filter(QueryLog.usagelog_id == ctx.usagelog.id).one()
         querylog.summary_completed = datetime.datetime.utcnow()
     except NoResultFound:
         # Shouldn't happen, but just in case...
         pass
 
+
 def generate_obslogs(obslogs):
     for obslog in obslogs:
-        yield obslog.diskfile.file.name, obslog.date, obslog.program_id, icanhave(get_context(), obslog)
+        yield obslog.diskfile.file.name, obslog.date, obslog.program_id, \
+            icanhave(get_context(), obslog)
+
 
 @templating.templated("obslog/obslogs.html", at_end_hook=add_summary_completed)
 def obslogs(selection, sumtype):
@@ -59,7 +68,8 @@ def obslogs(selection, sumtype):
         querylog.add_note("Selection Warning: %s" % selection['warning'])
     # Note any notrecognised in the querylog
     if 'notrecognised' in selection:
-        querylog.add_note("Selection NotRecognised: %s" % selection['notrecognised'])
+        querylog.add_note("Selection NotRecognised: %s" %
+                          selection['notrecognised'])
     # Note in the log if we hit limits
     if num_results == fits_open_result_limit:
         querylog.add_note("Hit Open search result limit")
@@ -71,14 +81,16 @@ def obslogs(selection, sumtype):
     session.flush()
 
     return dict(
-        hits_open    = openquery(selection) and (len(obslogs) == fits_open_result_limit),
-        hits_closed  = len(obslogs) == fits_closed_result_limit,
-        open_limit   = fits_open_result_limit,
-        closed_limit = fits_closed_result_limit,
-        selection    = selection,
-        no_obslogs   = num_results == 0,
-        obslogs      = generate_obslogs(obslogs)
+        hits_open=openquery(selection) and
+                  (len(obslogs) == fits_open_result_limit),
+        hits_closed=len(obslogs) == fits_closed_result_limit,
+        open_limit=fits_open_result_limit,
+        closed_limit=fits_closed_result_limit,
+        selection=selection,
+        no_obslogs=num_results == 0,
+        obslogs=generate_obslogs(obslogs)
         )
+
 
 def associate_obslogs(headers):
     """
@@ -87,10 +99,13 @@ def associate_obslogs(headers):
 
     obslogs = []
 
-    # Could do this more efficiently by grouping the header query by date and progid, but this will do for now
+    # Could do this more efficiently by grouping the header query by date and
+    # progid, but this will do for now
     session = get_context().session
     for header in headers:
-        query = session.query(Obslog).filter(Obslog.date == header.ut_datetime.date()).filter(Obslog.program_id == header.program_id)
+        query = session.query(Obslog).\
+            filter(Obslog.date == header.ut_datetime.date()).\
+            filter(Obslog.program_id == header.program_id)
         for result in query:
             if result not in obslogs:
                 obslogs.append(result)
