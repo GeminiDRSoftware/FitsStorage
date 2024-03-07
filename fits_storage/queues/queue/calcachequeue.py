@@ -33,6 +33,9 @@ class CalCacheQueue(Queue):
         if None in [header.instrument, header.ut_datetime]:
             return
 
+        if header.qa_state == 'Fail':
+            return
+
         # Get a cal object for it
         cal = get_cal_object(self.session, None, header=header)
 
