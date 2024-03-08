@@ -183,7 +183,7 @@ class CalibrationGHOST(Calibration):
 
         processed : bool
             Indicate if we want to retrieve processed or raw biases
-        howmany : int, default 1 if processed, else 50
+        howmany : int, default 1 if processed, else 10
 
         Returns
         -------
@@ -192,7 +192,7 @@ class CalibrationGHOST(Calibration):
         """
 
         if howmany is None:
-            howmany = 1 if processed else 50
+            howmany = 1 if processed else 10
 
         filters = []
 
@@ -248,7 +248,7 @@ class CalibrationGHOST(Calibration):
 
         processed : bool
             Indicate if we want to retrieve processed or raw imaging flats
-        howmany : int, default 1 if processed, else 20
+        howmany : int, default 1 if processed, else 10
             How many do we want results
         flat_descr: list
             set of filter parameters from the higher level function calling
@@ -265,7 +265,7 @@ class CalibrationGHOST(Calibration):
         """
 
         if howmany is None:
-            howmany = 1 if processed else 20
+            howmany = 1 if processed else 10
 
         if processed:
             query = self.get_query().PROCESSED_FLAT()
