@@ -3,12 +3,13 @@ from fits_storage.gemini_metadata_utils import cal_types
 from fits_storage.core.orm.header import Header
 from fits_storage.cal.orm.calcache import CalCache
 
+
 def associate_cals(session, headers, caltype="all", recurse_level=0):
     """
     This function takes a list of headers and returns a priority ordered list
-    of the associated calibration headers. Note, this is only used by the
-    "View Associated Calibrations" web function. It is not used by the
-    calmgr calibration manager API
+    of the associated calibration headers. Note, this is used by the
+    "View Associated Calibrations" web function and in building the calcache.
+    It is not used directly by the calmgr calibration manager API
 
     Parameters
     ----------
@@ -23,7 +24,7 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
         Type of calibration to lookup, or "all" for all types
 
     recurse_level : int, defaults to 0
-        The current depth of the query, should initally be passed in as 0.
+        The current depth of the query, should initially be passed in as 0.
 
     Returns
     -------
@@ -82,8 +83,8 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
     """
     This function takes a list of :class:`fits_storage.orm.header.Header`
     from a search result and generates a list of the associated calibration
-    :class:`fits_storage.orm.header.Header` We return a priority ordered (
-    best first) list
+    :class:`fits_storage.orm.header.Header` We return a priority ordered
+    (best first) list
 
     This is the same interface as associate_cals above, but this version
     queries the :class:`~CalCache` table rather
@@ -127,9 +128,13 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
         order_by(CalCache.obs_hid).order_by(CalCache.rank)
 
     calheaders = query.all()
-    # for cal in calheaders:
-    #     cal.is_primary_cal = True
-    ids = set(calh.id for calh in calheaders)
+    calhids = []
+    for cal in calheaders:
+        calhids.append(cal.id)
+        # Need to check if it's already set so that primary cals that are
+        # also secondary cals stay as primary.
+        if not hasattr(cal, 'is_primary_cal'):
+            cal.is_primary_cal = recurse_level == 0
 
     # Now we have to recurse to find the calibrations for the calibrations...
     # We only do this for caltype all. Keep digging deeper until we don't
@@ -140,8 +145,8 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
         for cal in associate_cals_from_cache(session, down_list,
                                              caltype=caltype,
                                              recurse_level=recurse_level + 1):
-            if cal.id not in ids:
-                # cal.is_primary_cal = False
+            if cal.id not in calhids:
+                calhids.append(cal.id)
                 calheaders.append(cal)
 
     return calheaders
