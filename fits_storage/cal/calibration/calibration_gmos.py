@@ -94,8 +94,7 @@ class CalibrationGMOS(Calibration):
             # If it (is spectroscopy) and
             # (is an OBJECT) and
             # (is not a Twilight) and
-            # (is not a specphot)
-            # then it needs an arc, flat, spectwilight, specphot
+            # then it needs an arc, flat
             if ((self.descriptors['spectroscopy'] == True) and
                 (self.descriptors['observation_type'] == 'OBJECT') and
                 (self.descriptors['object'] != 'Twilight')):
@@ -105,7 +104,8 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('flat')
                 self.applicable.append('processed_flat')
 
-                if self.descriptors['observation_class'] not in ['partnerCal', 'progCal']:
+                # and specphot and spectwilight if it is not a specphot...
+                if 'STANDARD' not in self.types:
                     self.applicable.append('spectwilight')
                     self.applicable.append('specphot')
 
@@ -798,10 +798,12 @@ class CalibrationGMOS(Calibration):
         # amp_read_area is not relevant to specphots
 
         query = (self.get_query()
-                # They are OBJECT partnerCal or progCal spectroscopy frames
+                # They are OBJECT spectroscopy frames
                 # with target not twilight.
+                # As of DRAGONS 3.2, the 'STANDARD' tag is the definitive way
+                # to tell if it is a valid specphot star.
                 .raw().OBJECT().spectroscopy(True)
-                .add_filters(Header.observation_class.in_(['partnerCal', 'progCal']),
+                .add_filters(Header.types.contains('STANDARD'),
                              Header.object != 'Twilight',
                              *filters)
                 # Note no requirement to match detector binning
