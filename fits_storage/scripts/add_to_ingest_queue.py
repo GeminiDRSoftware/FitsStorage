@@ -13,6 +13,9 @@ from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.db import session_scope
 from fits_storage.queues.queue import IngestQueue
 
+from fits_storage.db.selection import getselection
+from fits_storage.db.list_headers import list_headers
+
 if fsc.using_s3:
     from fits_storage.server.aws_s3 import get_helper
     s3 = get_helper()
@@ -91,6 +94,11 @@ if __name__ == "__main__":
                         default=None,
                         help="Read filenames to add from this text file")
 
+    parser.add_argument("--selection", action="store", type=str,
+                        dest="selection", default="None",
+                        help="Select files already in database for reingestion."
+                             "This is a standard selection string.")
+
     parser.add_argument("--logsuffix", action="store", type=str,
                         dest="logsuffix", default=None,
                         help="Extra suffix to add on logfile")
@@ -124,6 +132,19 @@ if __name__ == "__main__":
             for line in f:
                 files.append(line.strip())
 
+    elif options.selection:
+        # Query database using selection
+        logger.info("Querying database with selection: %s", options.selection)
+        files = []
+        with session_scope() as session:
+            things = options.selection.split('/')
+            things.append("canonical")
+            selection = getselection(things)
+            headers = list_headers(selection, None, session)
+            logger.info("Found %d headers to reingest", len(headers))
+            for header in headers:
+                files.append(header.diskfile.filename)
+            logger.info("Got %d files to reingest", len(files))
     else:
         # Read directory to get file list.
         if fsc.using_s3:
