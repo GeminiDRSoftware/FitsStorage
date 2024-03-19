@@ -140,7 +140,7 @@ if __name__ == "__main__":
             things = options.selection.split('/')
             things.append("canonical")
             selection = getselection(things)
-            headers = list_headers(selection, None, session)
+            headers = list_headers(selection, None, session, unlimit=True)
             logger.info("Found %d headers to reingest", len(headers))
             for header in headers:
                 files.append(header.diskfile.filename)
