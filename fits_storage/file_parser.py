@@ -566,6 +566,12 @@ class AstroDataFileParser(FileParser):
             return False
 
     def spectroscopy(self) -> bool:
+
+        # Hack for GHOST data... GHOST bundles don't have the SPECT tag as they
+        # also contain the slit viewer images. But any sane archive user wants
+        # GHOST bundles to show up if you search for spectroscopy...
+        if 'GHOST' in self.ad.tags and 'BUNDLE' in self.ad.tags:
+            return True
         return 'SPECT' in self.ad.tags
 
     def telescope(self) -> str:
