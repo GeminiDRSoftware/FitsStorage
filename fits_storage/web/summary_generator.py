@@ -192,7 +192,10 @@ class SummaryGenerator(object):
         self.init_cols()
         # Set the want flags
         self.sumtype = sumtype
-        self.wanted = sum_type_defs[sumtype] + list(additional_columns)
+        # This will have duplicate columns in it
+        wanted = sum_type_defs[sumtype] + list(additional_columns)
+        self.wanted = []
+        [self.wanted.append(x) for x in wanted if x not in self.wanted]
         self.links = links
         self.uri = uri
         self.deprogrammed_uri = _deprogrammed_uri(uri)
