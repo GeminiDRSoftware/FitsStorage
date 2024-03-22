@@ -534,6 +534,31 @@ class CalibrationGHOST(Calibration):
             )
         return query.all(howmany)
 
+    def bpm(self, processed=False, howmany=1):
+        """
+        Method to find the best processed GHOST BPM for the target dataset
+
+        Parameters
+        ----------
+
+        howmany : int
+            How many do we want results
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header`
+            records that match the criteria
+        """
+        filters = [Header.ut_datetime <= self.descriptors['ut_datetime']]
+
+        query = self.get_query() \
+            .bpm(processed) \
+            .add_filters(*filters) \
+            .match_descriptors(Ghost.arm)
+
+        return query.all(howmany)
+
+
     def get_query(self):
         """
         Returns an ``CalQuery`` object, populated with the current session,
@@ -596,7 +621,7 @@ class GHOSTCalQuery(object):
             self.calqueries.append(CalQuery(session, instrClass,
                                             self.pdescriptors[arm], procmode))
         # Set up the "call through methods" here
-        calmethods = ['bias', 'arc', 'flat']
+        calmethods = ['bias', 'arc', 'flat', 'bpm']
         argsmethods = ['add_filters', 'match_descriptors', 'raw', 'OBJECT',
                        'spectroscopy', 'object']
         kwmethods = ['max_interval']
