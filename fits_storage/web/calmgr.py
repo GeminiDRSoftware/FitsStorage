@@ -210,7 +210,7 @@ def generate_post_calmgr(selection, caltype, procmode=None):
                              qtype='POST',
                              log=ctx.log,
                              add_note=usagelog.add_note,
-                             hostname=fsc.fits_servername,
+                             hostname=fsc.fits_server_name,
                              storage_root=fsc.storage_root)
         )
 

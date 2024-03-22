@@ -177,7 +177,7 @@ minutes, so please do that promptly.</p>
     token = user.generate_reset_token()
 
     fsc = get_config()
-    url = "https://%s/password_reset/%d/%s" % (fsc.fits_servername,
+    url = "https://%s/password_reset/%d/%s" % (fsc.fits_server_name,
                                                userid, token)
 
     plaintext = message_text.format(name=fullname, username=username, url=url)

@@ -147,7 +147,7 @@ def searchform(things, orderby):
 
     fsc = get_config()
     template_args = dict(
-        server_title   = fsc.fits_server_title,
+        server_title   = fsc.fits_server_name,
         title_suffix   = title_suffix,
         archive_style  = fsc.is_archive,
         thing_string   = thing_string,
