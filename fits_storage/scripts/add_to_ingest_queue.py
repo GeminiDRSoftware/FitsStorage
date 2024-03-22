@@ -95,7 +95,7 @@ if __name__ == "__main__":
                         help="Read filenames to add from this text file")
 
     parser.add_argument("--selection", action="store", type=str,
-                        dest="selection", default="None",
+                        dest="selection", default=None,
                         help="Select files already in database for reingestion."
                              "This is a standard selection string.")
 
