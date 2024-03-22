@@ -74,6 +74,11 @@ class CalibrationGHOST(Calibration):
 
                 # Quick kludge here that in a bundle, arm is None
                 self.descriptors['arm'] = None
+        else:
+            self.descriptors = descriptors
+            self.types = types
+        self.procmode = procmode
+        self.session = session
 
     def set_applicable(self):
         """
@@ -92,10 +97,11 @@ class CalibrationGHOST(Calibration):
             if 'PROCESSED_SCIENCE' in self.types:
                 return
 
-            # Do BIAS. Most things require Biases.
+            # Do BIAS and bpm. Most things require Biases and processed_bpms
             if self.descriptors['observation_type'] != 'BIAS':
                 self.applicable.append('bias')
                 self.applicable.append('processed_bias')
+                self.applicable.append('processed_bpm')
 
             # If it (is spectroscopy) and * Note: tweaked for GHOST to ignore
             # flag, it's basically always spectroscopy
