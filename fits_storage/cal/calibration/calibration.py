@@ -115,8 +115,8 @@ class CalQuery(object):
                      .filter(Header.qa_state != 'Fail')
 
         # Only allow engineering calibrations if the "science" data is
-        # engineering.
-        if descriptors['engineering'] is False:
+        # engineering. But POST data won't have an engineering descriptor.
+        if descriptors.get('engineering', None) is False:
             query = query.filter(Header.engineering == False)
 
         self.query = query
