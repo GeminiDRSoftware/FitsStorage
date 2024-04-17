@@ -127,6 +127,10 @@ gemini_telescopes = {
     'gemini-south': 'Gemini-South'
 }
 
+# These are the new (2024) official processing modes. As used in the
+# FitsStorage reduction table, and thus archive.
+gemini_processing_modes = ('Science-Quality', 'Quick-Look')
+
 # sortkey_regex_dict:
 # These regular expessions are used by the queues to determine how to sort (
 # ie prioritize) files when despooling the queues. The regexes should provide
