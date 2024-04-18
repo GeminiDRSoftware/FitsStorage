@@ -100,6 +100,7 @@ if fsc.is_server:
     from fits_storage.server.orm.logcomments import LogComments
     from fits_storage.server.orm.obslog import Obslog
     from fits_storage.server.orm.obslog_comment import ObslogComment
+    from fits_storage.server.orm.reduction import Reduction
 
     from fits_storage.server.orm.qastuff import QAreport, \
         QAmetricIQ, QAmetricZP, QAmetricSB, QAmetricPE
@@ -120,7 +121,8 @@ def get_fitsweb_granthelper():
          'gmos', 'niri', 'michelle', 'gnirs', 'gpi', 'nifs', 'f2', 'gsaoi',
          'nici', 'ghost', 'photstandard', 'photstandardobs', 'footprint',
          'preview', 'obslog', 'miscfile', 'obslog_comment', 'program',
-         'publication', 'programpublication', 'provenance', 'history'])
+         'publication', 'programpublication', 'provenance', 'history',
+         'reduction'])
 
     # For the notification system:
     grant.select('notification')

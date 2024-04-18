@@ -33,6 +33,7 @@ if fsc.is_archive:
     from fits_storage.server.orm import miscfile
 
 if fsc.is_server:
+    from fits_storage.server.orm.reduction import Reduction
     from fits_storage.server.orm.obslog import Obslog
     from fits_storage.server.orm.provenancehistory import \
         ingest_provenancehistory
@@ -43,7 +44,7 @@ if fsc.is_server:
 class Ingester(object):
     """
     This class provides functionality for ingesting files into the database.
-    We instantiate this class once in each serivce_ingest_queue task, and
+    We instantiate this class once in each service_ingest_queue task, and
     then feed it files one at a time by calling ingest_file().
     """
     def __init__(self, session, logger,
@@ -486,6 +487,20 @@ class Ingester(object):
             iqe.seterror(message)
             self.s.commit()
             return False
+
+        if fsc.is_server:
+            try:
+                self.l.debug("Adding new Reduction entry")
+                reduction = Reduction(header, logger=self.l)
+                self.s.add(reduction)
+                self.s.commit()
+            except:
+                message = "Exception adding Reduction - see log file"
+                self.l.error(message, exc_info=True)
+                self.s.rollback()
+                iqe.seterror(message)
+                self.s.commit()
+                return False
 
         try:
             if not self.using_sqlite:
