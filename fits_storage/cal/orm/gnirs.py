@@ -43,6 +43,9 @@ class Gnirs(Base):
     camera = Column(Text, index=True)
     focal_plane_mask = Column(Text)
 
+    # This is to support 2024-04 PRISM mechanism issue workarounds
+    prism_motor_steps = Column(Integer)
+
     def __init__(self, header: Header, ad):
         """
         Create a GNIRS record for the given header and astrodata
@@ -84,3 +87,5 @@ class Gnirs(Base):
 
         self.camera = ad.camera()
         self.focal_plane_mask = ad.focal_plane_mask()
+
+        self.prism_motor_steps = ad.prism_motor_steps()

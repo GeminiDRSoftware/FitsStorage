@@ -242,11 +242,26 @@ class CalibrationGNIRS(Calibration):
         # We prioritize flats that have the same observation ID as the science, but don't *require* this.
         # If we are interleaving QH/IR flats then that takes precedence and the observation ID preference
         # happens only within each lamp type.
+        #
+        # The prism_motor_steps thing (April 2024) - Sciops found that the prism
+        # mechanism does not re-position precisely enough for the HR-IFU. Thus
+        # they take some dummy flats (marked as AcqCal) and adjust the
+        # definition of the current named prism mechanism position (in steps)
+        # so that the mechanism moves but the PRISM name stays the same.
+        # It can be a different tweak for subsequent observations, but the
+        # science and flat must be taken with the same tweak - ie the same step
+        # count on the mechanism, which is the PRSM_ENG header and now also
+        # the prism_motor_steps descriptor for GNIRS.
 
         if howmany is None:
             howmany = 1 if processed else 10
 
         base_query =  self.get_gnirs_flat_query(processed)
+
+        if self.descriptors['focal_plane_mask'] and 'HR-IFU' in \
+                self.descriptors['focal_plane_mask']:
+            # prism_motor_steps must match
+            base_query = base_query.match_descriptors(Gnirs.prism_motor_steps)
 
         if self.descriptors['disperser'] and 'XD' in self.descriptors['disperser']:
             # need QH interleaved with IRHigh
