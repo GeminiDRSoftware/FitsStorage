@@ -429,46 +429,6 @@ def ratodeg(string: str) -> float:
         pass
     return None
 
-
-# deprecated, used by ratodeg_old
-racre = re.compile(r'^([012]\d):([012345]\d):([012345]\d)(\.?\d*)$')
-
-
-# deprecated
-def ratodeg_old(string: str) -> float:
-    """
-    A utility function that recognises an RA: HH:MM:SS.sss
-    Or a decimal degrees RA value
-    Returns a float in decimal degrees if it is valid, None otherwise
-    """
-    re_match = racre.match(string)
-    if re_match is None:
-        # Not HH:MM:SS. Maybe it's decimal degrees already
-        try:
-            value = float(string)
-            if value <= 360.0 and value >= 0.0:
-                return value
-        except:
-            return None
-        return None
-    hours = float(re_match.group(1))
-    mins = float(re_match.group(2))
-    secs = float(re_match.group(3))
-    frac = re_match.group(4)
-    if frac:
-        frac = float(frac)
-    else:
-        frac = 0.0
-
-    secs += frac
-    mins += secs / 60.0
-    hours += mins / 60.0
-
-    degs = 15.0 * hours
-
-    return degs
-
-
 def dectodeg(string: str) -> float:
     """
     A utility function that recognises a Dec: [+-]DD:MM:SS.sss
@@ -489,49 +449,6 @@ def dectodeg(string: str) -> float:
     except:
         # unparseable
         return None
-
-
-# deprecated, used by dectodeg_old
-deccre = re.compile(r'^([+-]?)(\d\d):([012345]\d):([012345]\d)(\.?\d*)$')
-
-
-# deprecated
-def dectodeg_old(string: str) -> float:
-    """
-    A utility function that recognises a Dec: [+-]DD:MM:SS.sss
-    Returns a float in decimal degrees if it is valid, None otherwise
-    """
-    re_match = deccre.match(string)
-    if re_match is None:
-        # Not DD:MM:SS. Maybe it's decimal degrees already
-        try:
-            value = float(string)
-            if value >= -90.0 and value <= 90.0:
-                return value
-        except:
-            return None
-        return None
-    sign = 1
-    if re_match.group(1) == '-':
-        sign = -1
-
-    degs = float(re_match.group(2))
-    mins = float(re_match.group(3))
-    secs = float(re_match.group(4))
-    frac = re_match.group(5)
-    if frac:
-        frac = float(frac)
-    else:
-        frac = 0.0
-
-    secs += frac
-    mins += secs / 60.0
-    degs += mins / 60.0
-
-    degs *= sign
-
-    return degs
-
 
 def degtora(decimal: float) -> str:
     """
