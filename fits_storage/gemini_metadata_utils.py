@@ -18,7 +18,6 @@ __all__ = [
     "gemini_readspeed_settings",
     "gemini_welldepth_settings",
     "gemini_readmode_settings",
-    "gemini_telescopes",
     "gemini_telescope",
     "gemini_instrument",
     "get_fake_ut",
@@ -122,10 +121,7 @@ gemini_readmode_settings = ('Classic',
                             'Medium_Background',
                             'High_Background')
 
-gemini_telescopes = {
-    'gemini-north': 'Gemini-North',
-    'gemini-south': 'Gemini-South'
-}
+
 
 # These are the new (2024) official processing modes. As used in the
 # FitsStorage reduction table, and thus archive.
@@ -152,26 +148,35 @@ sortkey_regex_dict = {_standard_filename_re: 'z',
 
 
 # ------------------------------------------------------------------------------
-def gemini_telescope(string) -> str:
+def gemini_telescope(string):
     """
-    If the string argument matches a gemini telescope name, then returns the
-    "official" (ie same as in the fits headers) name of the telesope. Otherwise
-    returns None.
+    If the string argument matches a gemini telescope name, then return the
+    "official" form of the name of the telescope. Otherwise, return None.
+    This basically fixes capitalization and '-'/'_' errors.
 
     Parameters
     ----------
     string : <str>
-        A string representing a Gemini telescope.
+        A string representing a Gemini telescope, eg 'geminiNorth'
 
     Return
     ------
     <str> or <NoneType>
-        The "official" name of the telesope, as found in Gemini
-        fits headers.
+        The "official" name of the telescope, as found in Gemini
+        fits headers, eg 'Gemini-North'.
 
     """
+    if not isinstance(string, str):
+        return None
+
+    gemini_telescopes = {
+        'gemininorth': 'Gemini-North',
+        'geminisouth': 'Gemini-South'
+    }
+
     try:
-        return gemini_telescopes.get(string.lower())
+        s = string.lower().replace('-', '').replace('_', '')
+        return gemini_telescopes.get(s)
     except AttributeError:
         return None
 

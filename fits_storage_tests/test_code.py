@@ -28,3 +28,4 @@ from fits_storage_tests.code_tests.test_bz2stream import *
 from fits_storage_tests.code_tests.test_granthelper import *
 from fits_storage_tests.code_tests.test_user_accesscontrol import *
 from fits_storage_tests.code_tests.test_provenance_history import *
+from fits_storage_tests.code_tests.test_gemini_metadata_utils import *
