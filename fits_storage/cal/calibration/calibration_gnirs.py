@@ -258,10 +258,19 @@ class CalibrationGNIRS(Calibration):
 
         base_query =  self.get_gnirs_flat_query(processed)
 
-        if self.descriptors['focal_plane_mask'] and 'HR-IFU' in \
-                self.descriptors['focal_plane_mask']:
+        # See prism_motor_steps notes above
+        if self.descriptors.get('prism_motor_steps') and \
+                self.descriptors['focal_plane_mask'] and \
+                'HR-IFU' in self.descriptors['focal_plane_mask']:
             # prism_motor_steps must match
             base_query = base_query.match_descriptors(Gnirs.prism_motor_steps)
+
+        # "Sacrificial HR-IFU flats" April-2024. The "dummy" flats described in
+        # the notes above are taken with class acqCal. HR-IFU acqCal flats are
+        # not to be used as flats
+        if self.descriptors['focal_plane_mask'] and \
+                'HR-IFU' in self.descriptors['focal_plane_mask']:
+            base_query.add_filters(Header.observation_class != 'acqCal')
 
         if self.descriptors['disperser'] and 'XD' in self.descriptors['disperser']:
             # need QH interleaved with IRHigh
