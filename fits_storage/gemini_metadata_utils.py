@@ -38,9 +38,7 @@ __all__ = [
     "gemini_reduction_state",
     "cal_types",
     "gemini_caltype",
-    "gmos_gratings",
     "gmos_gratingname",
-    "gmos_facility_plane_masks",
     "gmos_focal_plane_mask",
     "gemini_fitsfilename",
     "gemini_binning",
@@ -416,7 +414,7 @@ def gemini_date(string: str, as_datetime: bool = False, offset: timedelta = ZERO
     return '' if not as_datetime else None
 
 
-def ratodeg(string: str) -> float:
+def ratodeg(string):
     """
     A utility function that recognises an RA: HH:MM:SS.sss
     Or a decimal degrees RA value
@@ -434,7 +432,7 @@ def ratodeg(string: str) -> float:
         pass
     return None
 
-def dectodeg(string: str) -> float:
+def dectodeg(string):
     """
     A utility function that recognises a Dec: [+-]DD:MM:SS.sss
     Returns a float in decimal degrees if it is valid, None otherwise
@@ -495,7 +493,7 @@ def degtodec(decimal: float) -> str:
 dmscre = re.compile(r'^([+-]?)(\d*):([012345]\d):([012345]\d)(\.?\d*)$')
 
 
-def dmstodeg(string: str) -> float:
+def dmstodeg(string):
     """
     A utility function that recognises a generic [+-]DD:MM:SS.sss
     Returns a float in decimal degrees if it is valid, None otherwise
@@ -509,7 +507,7 @@ def dmstodeg(string: str) -> float:
             return value
         except:
             return None
-        return None
+
     sign = 1
     if re_match.group(1) == '-':
         sign = -1
@@ -534,7 +532,7 @@ def dmstodeg(string: str) -> float:
 srcre = re.compile(r"([\d.]+)\s*(d|D|degs|Degs)?")
 
 
-def srtodeg(string: str) -> float:
+def srtodeg(string):
     """
     Converts a Search Radius in arcseconds to decimal degrees.
 
@@ -565,8 +563,7 @@ def srtodeg(string: str) -> float:
     return value
 
 
-def gemini_daterange(string: str, as_datetime: bool = False, offset: timedelta = ZERO_OFFSET) \
-        -> Union[datetime.datetime, str, None]:
+def gemini_daterange(string, as_datetime = False, offset = ZERO_OFFSET):
     """
     A utility function for matching date ranges of the form YYYYMMDD-YYYYMMDD
     Does not support 'today', yesterday', ...
@@ -749,20 +746,17 @@ def gemini_caltype(string: str) -> str:
     return string if string in cal_types else None
 
 
-gmos_gratings = ('MIRROR', 'B480', 'B600', 'R600', 'R400', 'R831', 'R150', 'B1200')
-
-
-def gmos_gratingname(string: str) -> str:
+def gmos_gratingname(string):
     """
     A utility function matching a GMOS Grating name. This could be expanded to
-    other instruments, but for many instruments the grating name is too ambiguous and
-    could be confused with a filter or band (eg 'H'). Also most of the use cases
-    for this are where gratings are swapped.
+    other instruments, but for many instruments the grating name is too
+    ambiguous and could be confused with a filter or band (eg 'H'). Also, most
+    of the use cases for this are where gratings are swapped.
 
     This function doesn't match or return the component ID.
 
     If the string argument matches a grating, we return the official name for
-    that grating.
+    that grating. Otherwise, we return None
 
     Parameters
     ----------
@@ -775,39 +769,43 @@ def gmos_gratingname(string: str) -> str:
          A grating name or None.
 
     """
-    return string if string in gmos_gratings else ''
+    gmos_gratings = (
+    'MIRROR', 'B480', 'B600', 'R600', 'R400', 'R831', 'R150', 'B1200')
 
-def gmos_dispersion(string: str) -> float:
+    return string if string in gmos_gratings else None
+
+def gmos_dispersion(string):
     """
     Returns an estimate of the gmos dispersion in um/pix given a grating name.
     Note, this is not exact, it is an approximation that is used primarily for
     estimating a sensible central wavelength tolerance on calibration matches.
     """
-    grating = gmos_gratingname(str)
-    if grating == '' or grating == 'MIRROR':
+    grating = gmos_gratingname(string)
+    if grating is None or grating == 'MIRROR':
         return None
     lmm = float(grating.strip('BR'))
     dispersion = 0.03/lmm
     return dispersion
 
-gmosfpmaskcre = re.compile(r'^G[NS]?(20\d\d)[ABFDLWVSX](.)(\d\d\d)-(\d\d)$')
-gmos_facility_plane_masks = (
-    'NS2.0arcsec', 'IFU-R', 'IFU-B', 'focus_array_new', 'Imaging', '2.0arcsec',
-    'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec',
-    '0.75arcsec', '1.0arcsec', '0.5arcsec'
-)
 
-
-def gmos_focal_plane_mask(string: str) -> str:
+def gmos_focal_plane_mask(string):
     """
-    A utility function matching gmos focal plane mask names. This could be expanded to
-    other instruments. Most of the uses cases for this are for masks that are swapped.
-    This function knows the names of the facility masks (long slits, NSlongslits and IFUs)
-    Also it knows the form of the MOS mask names and will return a mosmask name if the string
-    matches that format, even if that maskname does not actually exist
+    A utility function matching gmos focal plane mask names. This could be
+    expanded to other instruments. Most of the uses cases for this are for
+    masks that are swapped. This function knows the names of the facility masks
+    (long slits, NSlongslits and IFUs). Also, it knows the form of the MOS mask
+    names and will return a mosmask name if the string matches that format,
+    even if that maskname does not actually exist
 
-    If the string matches an focal_plane_mask, we return the focal_plane_mask.
+    If the string matches a focal_plane_mask, we return the focal_plane_mask.
     """
+
+    gmosfpmaskcre = re.compile(r'^G[NS]?(20\d\d)[ABFDLWVSX](.)(\d\d\d)-(\d\d)$')
+
+    gmos_facility_plane_masks = (
+        'NS2.0arcsec', 'IFU-R', 'IFU-B', 'focus_array_new', 'Imaging',
+        '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec',
+        'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec')
 
     if (string in gmos_facility_plane_masks) or gmosfpmaskcre.match(string):
         return string
@@ -815,20 +813,23 @@ def gmos_focal_plane_mask(string: str) -> str:
     return None
 
 
-fitsfilenamecre = re.compile(r'^([NS])(20\d\d)([01]\d[0123]\d)(S)(\d\d\d\d)([\d-]*)(\w*)(?P<fits>.fits)?$')
-vfitsfilenamecre = re.compile(
-    r'^(20)?(\d\d)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d\d)_(\d+)(?P<fits>.fits)?$')
-
-
-def gemini_fitsfilename(string: str) -> str:
+def gemini_fitsfilename(string):
     """
-    A utility function matching Gemini data fits filenames
-    If the string argument matches the format of a gemini
-    data filename, with or without the .fits on the end, this
-    function will return the filename, with the .fits on the end.
+    A utility function matching Gemini data fits filenames. If the string
+    argument matches the format of a gemini data filename, with or without the
+    .fits on the end, this function will return the filename, with the .fits
+    on the end.
 
     If the string does not look like a filename, we return an empty string.
     """
+
+    fitsfilenamecre = re.compile(
+        r'^([NS])(20\d\d)([01]\d[0123]\d)(S)(\d\d\d\d)([\d-]*)(\w*)'
+        r'(?P<fits>.fits)?$')
+    vfitsfilenamecre = re.compile(
+        r'^(20)?(\d\d)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d\d)'
+        r'_(\d+)(?P<fits>.fits)?$')
+
     retval = ''
     m = fitsfilenamecre.match(string) or vfitsfilenamecre.match(string)
     if m:
@@ -916,15 +917,16 @@ class GeminiDataLabel:
         if dl is not None and isinstance(dl, str):
             dl = dl.strip()
 
-        self.datalabel = dl              #: datalabel as a string
-        self.projectid = ''              #: project id portion
-        self.project = None              #: :class:`~fits_storage_core.utils.gemini_metadata_utils.GeminiProgram` for the given project id
-        self.observation_id = ''         #: observaiton id portion
-        self.obsnum = ''                 #: observation number
-        self.dlnum = ''                  #: datalabel number
-        self.extension = ''              #: extension number, if any
-        self.datalabel_noextension = ''  #: datalabel without the extension number suffix
-        self.valid = False               #: True if datalabel is in the correct format
+        self.datalabel = dl              # datalabel as a string
+        self.projectid = ''              # project id portion
+        self.project = None              # GeminiProgram instance
+        self.observation_id = ''         # observaiton id portion
+        self.obsnum = ''                 # observation number
+        self.dlnum = ''                  # datalabel number
+        self.extension = ''              # extension number, if any
+        self.datalabel_noextension = ''  # datalabel without extension number
+        self.valid = False               # True if datalabel is valid format
+
         if self.datalabel:
             self.parse()
 
@@ -941,7 +943,8 @@ class GeminiDataLabel:
             self.extension = dlm.group('extn')
             self.project = GeminiProgram(self.projectid)
             self.observation_id = '%s-%s' % (self.projectid, self.obsnum)
-            self.datalabel_noextension = '%s-%s-%s' % (self.projectid, self.obsnum, self.dlnum)
+            self.datalabel_noextension = '%s-%s-%s' % (self.projectid,
+                                                       self.obsnum, self.dlnum)
             self.valid = True
         else:
             # Match failed - Null the datalabel field
@@ -1002,20 +1005,20 @@ class GeminiProgram:
     reference the following data members:
 
     * program_id: The program ID passed in.
-    * valid: a Boolean saying whether the program_id is a valid standard format
-    * is_cal: a Boolean that is true if this is a CAL program
-    * is_eng: a Boolean that is true if this is an ENG program
-    * is_q: a Boolean that is true if this is a Queue program
-    * is_c: a Boolean that is true if this is a Classical program
-    * is_sv: a Boolean that is true if this is an SV (Science Verification) program
-    * is_qs: a Boolean that is true if this is an QS (Quick Start) program
-    * is_dd: a Boolean that is true if this is an DD (Directors Discretion) program
-    * is_lp: a Boolean that is true if this is an LP (Large Program) program
-    * is_ft: a Boolean that is true if this is an FT (Fast Turnaround) program
-    * is_ds: a Boolean that is true if this is an DS (Demo Science) program
+    * valid: Boolean indicating the program_id is a valid standard format
+    * is_cal: Boolean indicating if this is a CAL program
+    * is_eng: Boolean indicating if this is an ENG program
+    * is_q: Boolean indicating if this is a Queue program
+    * is_c: Boolean indicating if this is a Classical program
+    * is_sv: Boolean indicating this is an SV (Science Verification) program
+    * is_qs: Boolean indicating if this is an QS (Quick Start) program
+    * is_dd: Boolean indicating if this is an DD (Directors Discretion) program
+    * is_lp: Boolean indicating if this is an LP (Large Program) program
+    * is_ft: Boolean indicating if this is an FT (Fast Turnaround) program
+    * is_ds: Boolean indicating if this is an DS (Demo Science) program
 
-    This could be easily expanded to extract semester, hemisphere, program number etc
-    if required.
+    This could be easily expanded to extract semester, hemisphere, program
+    number etc. if required.
 
     Parameters
     ----------
@@ -1070,8 +1073,8 @@ class GeminiProgram:
                 self.is_ft = sci_match.group(4) == 'FT'
                 self.is_ds = sci_match.group(4) == 'DS'
 
-            # If the program id is OLD style and program number contained leading zeros, strip them out of
-            # the official program_id
+            # If the program id is OLD style and program number contained
+            # leading zeros, strip them out of the official program_id
             if sci_match.group(5)[0] == '0' and not program_id.startswith('G-'):
                 prog_num = int(sci_match.group(5))
                 self.program_id = "%s-%s-%s-%s" % (sci_match.group(1),
@@ -1088,16 +1091,17 @@ class GeminiProgram:
 
 def get_date_offset() -> timedelta:
     """
-    This function is used to add set offsets to the dates. The aim is to get the
-    "current date" adjusting for the local time, taking into account the different
-    sites where Gemini is based.
+    This function is used to add set offsets to the dates. The aim is to get
+    the "current date" adjusting for the local time, taking into account the
+    different sites where Gemini is based.
 
     Returns
     -------
     timedelta
         The `timedelta` to use for this application/server.
     """
-    #if db_config.use_utc:
+
+    # if db_config.use_utc:
     #    return ZERO_OFFSET
 
     # Calculate the proper offset to add to the date
@@ -1108,13 +1112,15 @@ def get_date_offset() -> timedelta:
     # print datetime.timedelta(seconds=zone)
     # print ONEDAY_OFFSET
 
-    # return datetime.timedelta(hours=16) + datetime.timedelta(seconds=zone) - ONEDAY_OFFSET
-    # I think this interacted with the Chile today changes to cause the missing starts in Hawaii for summary
-    return datetime.timedelta(hours=14) + datetime.timedelta(seconds=zone) - ONEDAY_OFFSET
+    # return datetime.timedelta(hours=16) + datetime.timedelta(seconds=zone)
+    # - ONEDAY_OFFSET
+    # I think this interacted with the Chile today changes to cause the
+    # missing starts in Hawaii for summary
+    return datetime.timedelta(hours=14) + datetime.timedelta(seconds=zone)\
+        - ONEDAY_OFFSET
 
 
-def get_time_period(start: str, end: str = None, as_date: bool = False) \
-        -> Union[Tuple[date, date], Tuple[datetime.datetime, datetime.datetime]]:
+def get_time_period(start: str, end: str = None, as_date: bool = False):
     """
     Get a time period from a given start and end date string.  The string
     format for the inputs is YYYYMMDD or YYYY-MM-DDThh:mm:ss.
@@ -1126,12 +1132,14 @@ def get_time_period(start: str, end: str = None, as_date: bool = False) \
     end : str
         End of the time period
     as_date: bool
-        If True, make return type `date` only, else return full `datetime` objects, defaults to False
+        If True, make return type `date` only, else return full `datetime`
+        objects, defaults to False
 
     Returns
     -------
     tuple
-        A tuple of `date` or `datetime` with the resulting parsed values, defaults to False
+        A tuple of `date` or `datetime` with the resulting parsed values,
+        defaults to False
     """
     startdt = gemini_date(start, offset=get_date_offset(), as_datetime=True)
     if end is None:
@@ -1151,8 +1159,7 @@ def get_time_period(start: str, end: str = None, as_date: bool = False) \
     return startdt, enddt
 
 
-def gemini_time_period_from_range(rng: str, as_date: bool = False) \
-        -> Union[Tuple[date, date], Tuple[datetime.datetime, datetime.datetime]]:
+def gemini_time_period_from_range(rng: str, as_date: bool = False):
     """
     Get a time period from a passed in string representation
 
@@ -1161,7 +1168,8 @@ def gemini_time_period_from_range(rng: str, as_date: bool = False) \
     rng : str
         YYYYMMDD-YYYYMMDD style range
     as_date : bool
-        If True, return tuple of `date`, else tuple of `datetime`, defaults to False
+        If True, return tuple of `date`, else tuple of `datetime`, defaults to
+        False
 
     Returns
     -------
@@ -1172,13 +1180,13 @@ def gemini_time_period_from_range(rng: str, as_date: bool = False) \
     return get_time_period(a, b, as_date)
 
 
-def gemini_semester(dt: date) -> str:
+def gemini_semester(dt):
     """
     Return the semester name that contains date
 
     Parameters
     ----------
-    date : date
+    dt : date
         The date to check for the owning semester.
 
     Returns
@@ -1186,7 +1194,7 @@ def gemini_semester(dt: date) -> str:
     str
         Semester code containing the provided date.
     """
-    if dt.month >= 2 and dt.month <= 7:
+    if 2 <= dt.month <= 7:
         letter = 'A'
         year = dt.year
     else:
