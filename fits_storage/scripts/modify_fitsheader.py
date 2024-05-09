@@ -96,12 +96,13 @@ def main():
     #  old_value: old keyword value (only for modify)}
     actions = []
     cre = re.compile("(?P<act>ADD:|SET:|UPDATE:)"
-                     "(?P<key>[A-Z0-9_]+)=(?P<a>.+)(?:=(?P<b>.+))?")
+                     "(?P<key>[A-Z0-9_]+)="
+                     "(?P<a>[\w\d_\-\+\.]+)(?:=(?P<b>[\w\d\-\+\.]+))?")
     for string in options.actions:
         if m := cre.match(string):
             action = {'action': m['act'].rstrip(':'),
                       'keyword': m['key']}
-            if m['key'] == 'UPDATE:':
+            if m['act'] == 'UPDATE:':
                 if m['b'] is None:
                     logger.warning("Invalid update action - requires old and "
                                    "new values. Aborting.")
