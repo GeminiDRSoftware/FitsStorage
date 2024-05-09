@@ -139,12 +139,12 @@ def modify_fitsfile(filename, actions, options, logger):
     hdulist.close()
 
 
-def apply_action(hdulist, action, logger):
+def apply_action(hdulist, actdict, logger):
     logger.debug("- Applying action %s", action)
-    action = action.get('action')
-    keyword = action.get('keyword')
-    old_value = action.get('old_value')
-    new_value = action.get('new_value')
+    action = actdict.get('action')
+    keyword = actdict.get('keyword')
+    old_value = actdict.get('old_value')
+    new_value = actdict.get('new_value')
 
     # We only deal with the PHU for now.
     header = hdulist[0].header
