@@ -41,7 +41,8 @@ if __name__ == "__main__":
     # Announce startup
     logger.info("***   add_to_export_queue.py - starting up at %s"
                 % datetime.datetime.now())
-    logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
+    # This script doesn't actually use any config file items.
+    # logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
 
     if not options.selection:
         logger.error("You must specify a file selection")
