@@ -140,7 +140,7 @@ def modify_fitsfile(filename, actions, options, logger):
 
 
 def apply_action(hdulist, actdict, logger):
-    logger.debug("- Applying action %s", action)
+    logger.debug("- Applying action %s", actdict)
     action = actdict.get('action')
     keyword = actdict.get('keyword')
     old_value = actdict.get('old_value')
