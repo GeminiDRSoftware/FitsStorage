@@ -2,6 +2,7 @@
 
 from optparse import OptionParser
 import re
+import json
 from astropy.io import fits
 
 from fits_storage.logger import logger, setdebug, setdemon
@@ -29,11 +30,23 @@ def main():
                       help="Action(s) to be taken on each fits file. "
                            "This can be given more than once to do multiple "
                            "header updates in the same pass. The argument is"
-                           "a formatted string as follows: \n"
-                           "ADD:KEYWORD=VALUE - add KEYWORD with VALUE \n"
-                           "SET:KEYWORD=VALUE - set existing KEYWORD to VALUE\n"
+                           "a formatted string as follows: "
+                           "ADD:KEYWORD=VALUE - add KEYWORD with VALUE "
+                           "SET:KEYWORD=VALUE - set existing KEYWORD to VALUE "
                            "UPDATE:KEYWORD=OLD=NEW - update KEYWORD to value "
-                           "NEW only if it currently has the value OLD \n")
+                           "NEW only if it currently has the value OLD. "
+                           "There are some restrictions on formatting imposed "
+                           "by parsing this on the command line. See actionfile"
+                           "if you need more versatility.")
+    parser.add_option("--actionfile", action="store", dest="actionfile",
+                      help="A JSON formatted file, consisting a list of"
+                           "dictioraries spcifying actions to take on each "
+                           "file. Each dictionary should contain the keys "
+                           "'action' = 'ADD|SET|UPDATE', 'keyword' = the fits"
+                           "keyword, 'new_value' = the new value to take, "
+                           "'old_value' = the old value, only for update "
+                           "actions, and 'comment' being the FITS header"
+                           "comment if you want to set it.")
     parser.add_option("--dryrun", action="store_true", dest="dryrun",
                       help="Do not actually modify files, but run through the "
                            "files and report what would actually be done")
@@ -86,36 +99,63 @@ def main():
             return
 
     # Parse action list and build action dictionaries.
-    if not options.actions:
-        logger.error("No actions specified. Exiting.")
-        return
-    # Actions is a list of dictionaries, of the form:
-    # {action: add|set|update,
-    # keyword: FITS keyword,
-    #  new_value: new keyword value
-    #  old_value: old keyword value (only for modify)}
-    actions = []
-    cre = re.compile("(?P<act>ADD:|SET:|UPDATE:)"
-                     "(?P<key>[A-Z0-9_]+)="
-                     "(?P<a>[\w\d_\-\+\.]+)(?:=(?P<b>[\w\d\-\+\.]+))?")
-    for string in options.actions:
-        if m := cre.match(string):
-            action = {'action': m['act'].rstrip(':'),
-                      'keyword': m['key']}
-            if m['act'] == 'UPDATE:':
-                if m['b'] is None:
-                    logger.warning("Invalid update action - requires old and "
-                                   "new values. Aborting.")
-                    return
-                action['old_value'] = m['a']
-                action['new_value'] = m['b']
-            else:
-                action['new_value'] = m['a']
-            logger.debug("Parsed action: %s", action)
-            actions.append(action)
-        else:
-            logger.error("Could not parse action string: %s. Exiting.", string)
+    if options.actionfile:
+        logger.debug("Reading actions from %s", options.actionfile)
+        try:
+            with open(options.actionfile, "r") as file:
+                actions = json.load(file)
+        except FileNotFoundError:
+            logger.error("Action File not found: %s", options.actionfile)
             return
+        except PermissionError:
+            logger.error("Permission error reading: %s", options.actionfile)
+            return
+        except Exception:
+            logger.error("Error reading action file %s", options.actionfile,
+                         exc_info=True)
+            return
+        except json.JSONDecodeError:
+            logger.error("Error Decoding JSON in %s", options.actionfile,
+                         exc_info=True)
+            return
+
+        logger.info("Read %d actions from actionfile: %s",
+                    len(actions), options.actionfile)
+        for action in actions:
+            logger.debug("Action: %s", action)
+
+    elif options.actions:
+        # Actions is a list of dictionaries, of the form:
+        # {action: add|set|update,
+        # keyword: FITS keyword,
+        #  new_value: new keyword value
+        #  old_value: old keyword value (only for modify)}
+        actions = []
+        cre = re.compile(r"(?P<act>ADD:|SET:|UPDATE:)"
+                          "(?P<key>[A-Z0-9_]+)="
+                          "(?P<a>[\w+.-]+)(?:=(?P<b>[\w+.-]+))?")
+        for string in options.actions:
+            if m := cre.match(string):
+                action = {'action': m['act'].rstrip(':'),
+                          'keyword': m['key']}
+                if m['act'] == 'UPDATE:':
+                    if m['b'] is None:
+                        logger.warning("Invalid update action - requires old "
+                                       "and new values. Aborting.")
+                        return
+                    action['old_value'] = m['a']
+                    action['new_value'] = m['b']
+                else:
+                    action['new_value'] = m['a']
+                logger.debug("Parsed action: %s", action)
+                actions.append(action)
+            else:
+                logger.error("Could not parse action string: %s. Exiting.",
+                             string)
+                return
+    else:
+        logger.error("No actions or actionfile specified. Exiting")
+        return
 
     if options.parseonly:
         logger.debug("--parseonly option given, exiting now")
@@ -145,6 +185,7 @@ def apply_action(hdulist, actdict, logger):
     keyword = actdict.get('keyword')
     old_value = actdict.get('old_value')
     new_value = actdict.get('new_value')
+    comment = actdict.get('comment')
 
     # We only deal with the PHU for now.
     header = hdulist[0].header
@@ -152,37 +193,40 @@ def apply_action(hdulist, actdict, logger):
     kw_exists = keyword in header
     current_value = header.get(keyword)
 
+    if action not in ['ADD', 'SET', 'UPDATE']:
+        logger.error("Invalid action. This should NOT happen")
+        return
+
     if action == 'ADD':
         if kw_exists:
             logger.warning("Keyword to add (%s) already exists in header. "
-                           "Skipping add action")
+                           "Skipping add action", keyword)
             return
-        logger.debug("Adding header %s with value %s", keyword, new_value)
-        header[keyword] = new_value
 
     elif action == 'SET':
         if not kw_exists:
             logger.warning("Keyword to set (%s) does not exist in header. "
-                           "Skipping set action")
+                           "Skipping set action", keyword)
             return
-        logger.debug("Setting header %s to value %s", keyword, new_value)
-        header[keyword] = new_value
 
     elif action == 'UPDATE':
         if not kw_exists:
             logger.warning("Keyword to update (%s) does not exist in header. "
-                           "Skipping update action")
+                           "Skipping update action", keyword)
             return
         if old_value != current_value:
             logger.debug("Keyword to update (%s) has current value %s which"
                          "differs from old value given %s - not updating",
                          keyword, current_value, old_value)
             return
-        logger.debug("Setting header %s to value %s", keyword, new_value)
-        header[keyword] = new_value
 
+    if comment:
+        logger.debug("Assigning header %s with value %s and comment %s",
+                     keyword, new_value, comment)
+        header[keyword] = (new_value, comment)
     else:
-        logger.error("Invalid action. This should NOT happen")
+        logger.debug("Assigning header %s with value %s", keyword, new_value)
+        header[keyword] = new_value
 
 
 if __name__ == "__main__":

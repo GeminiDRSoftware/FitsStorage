@@ -1,0 +1,3 @@
+[{"action": "SET", "keyword": "FOO", "new_value": "Foo Bar", "comment": "Hello, world"},
+{"action": "ADD", "keyword": "BAR", "new_value": "Foo Bar", "comment": "Hello, world"},
+{"action": "UPDATE", "keyword": "BAZ", "old_value": "foo", "new_value": "Foo Bar", "comment": "Hello, world"}]
