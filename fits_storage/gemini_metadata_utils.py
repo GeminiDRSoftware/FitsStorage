@@ -4,7 +4,6 @@ classes and functions for parsing the metadata in Gemini FITS files.
 
 """
 from astropy.coordinates import Angle
-from typing import Union, Tuple
 
 import re
 import time
@@ -12,49 +11,6 @@ import datetime
 from datetime import date, timedelta
 import dateutil.parser
 
-
-__all__ = [
-    "gemini_gain_settings",
-    "gemini_readspeed_settings",
-    "gemini_welldepth_settings",
-    "gemini_readmode_settings",
-    "gemini_telescope",
-    "gemini_instrument",
-    "get_fake_ut",
-    "gemini_date",
-    "ratodeg",
-    "dectodeg",
-    "degtora",
-    "degtodec",
-    "dmstodeg",
-    "srtodeg",
-    "gemini_daterange",
-    "gemini_procmode",
-    "obs_types",
-    "gemini_observation_type",
-    "obs_classes",
-    "gemini_observation_class",
-    "reduction_states",
-    "gemini_reduction_state",
-    "cal_types",
-    "gemini_caltype",
-    "gmos_gratingname",
-    "gmos_focal_plane_mask",
-    "gemini_fitsfilename",
-    "gemini_binning",
-    "GeminiDataLabel",
-    "GeminiObservation",
-    "GeminiProgram",
-    "get_date_offset",
-    "get_time_period",
-    "gemini_time_period_from_range",
-    "gemini_semester",
-    "previous_semester",
-    "site_monitor",
-    "UT_DATETIME_SECS_EPOCH",
-]
-
-# ------------------------------------------------------------------------------
 DATE_LIMIT_LOW = dateutil.parser.parse('19900101')
 DATE_LIMIT_HIGH = dateutil.parser.parse('20500101')
 ZERO_OFFSET = datetime.timedelta()
@@ -316,8 +272,7 @@ def get_fake_ut(transit: str = "14:00:00"):
     return fake_ut
 
 
-def gemini_date(string: str, as_datetime: bool = False, offset: timedelta = ZERO_OFFSET) \
-        -> Union[datetime.datetime, str, None]:
+def gemini_date(string, as_datetime = False, offset = ZERO_OFFSET):
     """
     A utility function for matching dates of the form YYYYMMDD
     also supports today/tonight, yesterday/lastnight
