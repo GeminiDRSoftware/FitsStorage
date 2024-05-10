@@ -127,7 +127,7 @@ def gemini_instrument(string, gmos=False, other=False):
     """
     If the string argument matches a gemini instrument name, then returns the
     "official" (ie same as in the fits headers) name of the instrument.
-    Otherwise returns None.
+    Otherwise, returns None.
 
     If the gmos argument is True, this recognises 'GMOS' as a valid instrument
     name. If the 'other' is True, it will pass through unknown instrument
@@ -199,7 +199,7 @@ obs_types = ('DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI',
              'CAL', 'FRINGE', 'MASK', 'STANDARD', 'SLITILLUM', 'BPM')
 
 
-def gemini_observation_type(string: str) -> str:
+def gemini_observation_type(string):
     """
     A utility function for matching Gemini ObsTypes.
 
@@ -227,7 +227,7 @@ def gemini_observation_type(string: str) -> str:
 obs_classes = ('dayCal', 'partnerCal', 'acqCal', 'acq', 'science', 'progCal')
 
 
-def gemini_observation_class(string: str) -> str:
+def gemini_observation_class(string):
     """
     A utility function matching Gemini ObsClasses.
 
@@ -368,7 +368,9 @@ def gmos_focal_plane_mask(string):
     If the string matches a focal_plane_mask, we return the focal_plane_mask.
     """
 
-    gmosfpmaskcre = re.compile(r'^G[NS]?(20\d\d)[ABFDLWVSX](.)(\d\d\d)-(\d\d)$')
+    gmosfpmaskre_old = r'^G[NS]?(20\d\d)[ABFDLWVSX](.)(\d\d\d)-(\d\d)$'
+    gmosfpmaskre_new = r'^G(20\d\d)[AB](\d\d\d\d)[CDFLQSV]-(\d\d)$'
+    gmosfpmaskcre = re.compile("%s|%s" % (gmosfpmaskre_old, gmosfpmaskre_new))
 
     gmos_facility_plane_masks = (
         'NS2.0arcsec', 'IFU-R', 'IFU-B', 'focus_array_new', 'Imaging',
@@ -422,12 +424,12 @@ def gemini_binning(string: str) -> str:
     return string if (a and b and (a in valid) and (b in valid)) else ''
 
 
-def percentilestring(num: int, type: str) -> str:
+def percentilestring(num, type) -> str:
     """
     A utility function that converts a numeric percentile
     number, and the site condition type, into a compact string,
     eg (20, 'IQ') -> IQ20. Maps 100 onto 'Any' and gives
-    'Unknown' if the num is None
+    'Undefined' if the num is None
     """
 
     if num is None:
