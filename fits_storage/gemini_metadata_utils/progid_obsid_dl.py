@@ -1,64 +1,66 @@
 import re
 
+# We start off here by constructing regular expressions to match program ID
+# strings, and then observation ID strings and datalabel strings.
+#
+# Because there are (now) a large variety of program ID strings in circulation,
+# we do this step-by-step, with regexes to match each variety that are then
+# combined into one regex with |s.
+# Where applicable the groups should label the following groups:
+# ec: ENG|CAL|COM|MON, typ: Q|C|etc, sem: semester eg 2012A, date: yyyymmdd.
+# Note, match group names have to be unique, even if they're in mutually
+# exclusive parts of the regex, so we define eg ec1, ec2, ec3 group names and
+# we combine these before we test against them.
+#
+# G[N|S]-[CAL|ENG]yyyymmdd eg GN-CAL20120123. There is a modest attempt at
+# date enforcement in that years must be 20xx, months [01]x and days [0123]x.
+pid_caleng_orig = r'G[NS]-(?P<ec1>CAL|ENG)(?P<date1>20\d\d[01]\d[0123]\d)'
 
-# This regex matches a program id like GN-CAL20091020 with no groups
-calengre_old = r'G[NS]-((?:CAL)|(?:ENG))20\d\d[01]\d[0123]\d'
-calengre = r'^G[NS]?-20\d\d[ABFDLWVSX]-((?:CAL)|(?:ENG))-' \
-           r'([A-Za-z0-9_]*[A-Za-z_]+[A-Za-z0-9_]*-)?\d+'
+# There are a few archaic ones that are just CALyyyymmdd or ENGyyyymmdd
+pid_caleng_archaic = r'(?P<ec2>CAL|ENG)(?P<date2>20\d\d[01]\d[0123]\d)'
 
-# G-YYYYT-M-BNNN  T is one of:
-#  A/B - regular semester program
-#  F - FT
-#  D - DD
-#  L - LP
-#  W - PW
-#  V - SV
-#  S - DS
-#  X - XT
-# M is observing mode "(Q/C), could add P for PV"
-scire = r"^(G[NS]?)-(20\d\d([A-Z]))-(Q|C|SV|QS|DD|LP|FT|DS|ENG|CAL)-(\d+)"
+# At some point things like GN-2020A-CAL-191 became a thing...
+pid_caleng_another = r'G[NS]-(?P<sem1>20\d\d[AB])-(?P<ec3>CAL|ENG)-\d+'
 
-# This matches a program id
-progre = r'(?:^%s$)|(?:^%s$)|(?:^%s$)' % (calengre, scire, calengre_old)
+# And the "New" 2024 GPP format is: G-YYYYS-TYP-<inst>-NN
+# Where TYP can be [CAL|ENG|COM|MON] - COMmissinong and instrument MONitoring.
+pid_caleng_new = r'G-(?P<sem2>20\d\d[AB])-(?P<ec4>CAL|ENG|COM|MON)-[\w+-]+-\d+'
+
+pid_caleng = "%s|%s|%s|%s" % (pid_caleng_new, pid_caleng_orig,
+                              pid_caleng_another, pid_caleng_archaic)
+pid_caleng_cre = re.compile(pid_caleng)
+
+# And now science program ids
+# Original format was GN-2011A-Q-123
+pid_sci_orig = r'G[NS]-(?P<sem3>20\d\d[AB])-(?P<typ1>Q|C|SV|QS|DD|LP|FT|DS)-\d+'
+
+# New 2024 GPP format is: G-YYYYS-NNNN-T
+# Where T is a single letter from [CDFLQSV]
+pid_sci_new = r'G-(?P<sem4>20\d\d[AB])-\d+-(?P<typ2>[CDFLQSV])'
+
+# This should match any valid program science program ID
+pid_sci = "%s|%s" % (pid_sci_orig, pid_sci_new)
+pid_sci_cre = re.compile(pid_sci)
+
+# Finally, this should match any valid program ID
+pid = "%s|%s" % (pid_sci, pid_caleng)
+pid_cre = re.compile(pid)
 
 # This matches an observation id with the project id and obsnum as groups
-obsre = r'((?:^%s)|(?:^%s)|(?:^%s))-(?P<obsid>\d*)$' % \
-        (calengre, scire, calengre_old)
+obsid = "(%s)-(?P<obsid>\d+)" % pid
+obsid_cre = re.compile(obsid)
 
-
-# The Gemini Data Label Class
-
-# This regex matches program_id-obsum-dlnum - ie a datalabel,
-# With 3 groups - program_id, obsnum, dlnum
-# This also allows for an optional -blah on the end (processed biases etc.)
-
-dlcre = re.compile(r'^(?P<progid>(?:%s)|(?:%s)|(?:%s))-(?P<obsid>\d*)-'
-                   r'(?P<dlid>\d*)(?:-(?P<extn>[-\w]*))?$' %
-                   (calengre, scire, calengre_old))
-# dlcre = re.compile(r'^((?:%s)|(?:%s)|(?:%s))-(\d*)-(\d*)(?:-([-\w]*))?$' %\
-#   (r'^G[NS]?-20\d\d[ABFDLWVSX]-((?:CAL)|(?:ENG))-(?:[A-Za-z0-9_]+-)?\d+',
-#   r"^(?:G[NS]?)-(?:20\d\d([A-Z]))-(?:Q|C|SV|QS|DD|LP|FT|DS|ENG|CAL)-(?:\d+)",
-#   r'G[NS]-((?:CAL)|(?:ENG))20\d\d[01]\d[0123]\d'))
+# This matches a data-label with an optional extension
+# ie program_id-obsnum-dlnum[-ext], with groups progid, obsid, dlid, extn
+dl = r'(?P<progid>%s)-(?P<obsid>\d+)-(?P<dlid>\d+)(?:-(?P<extn>[-\w]*))?' % pid
+dl_cre = re.compile(dl)
 
 
 class GeminiDataLabel:
     """
-    Construct a GeminiDataLabel from the given datalabel string.
-
-    This will parse the passed datalabel and fill in the various fields
-    with values inferred from the datalabel.
-
-    dl: str
-        datalabel to use
+    GeminiDataLabel class. Construct an instance from a datalabel string, you
+    can then call various methods to evaluate properties of the data label.
     """
-
-    datalabel = ''
-    projectid = ''
-    observation_id = ''
-    obsnum = ''
-    dlnum = ''
-    extension = ''
-    project = ''
 
     def __init__(self, dl: str):
         """
@@ -71,18 +73,19 @@ class GeminiDataLabel:
             datalabel to use
         """
         # Clean up datalabel if it has space padding
-        if dl is not None and isinstance(dl, str):
-            dl = dl.strip()
+        if not isinstance(dl, str):
+            raise ValueError('Value passed to GeminiDataLabel must be a str')
+        dl = dl.strip()
 
-        self.datalabel = dl              # datalabel as a string
-        self.projectid = ''              # project id portion
-        self.project = None              # GeminiProgram instance
-        self.observation_id = ''         # observaiton id portion
-        self.obsnum = ''                 # observation number
-        self.dlnum = ''                  # datalabel number
-        self.extension = ''              # extension number, if any
-        self.datalabel_noextension = ''  # datalabel without extension number
-        self.valid = False               # True if datalabel is valid format
+        self.datalabel = dl               # datalabel as a string
+        self.program_id = None            # program id portion
+        self.program = None               # GeminiProgram instance
+        self.observation_id = None        # observaiton id portion
+        self.obsnum = None                # observation number
+        self.dlnum = None                 # datalabel number
+        self.extension = None             # extension number, if any
+        self.datalabel_noextension = None # datalabel without extension number
+        self.valid = False                # True if datalabel is valid format
 
         if self.datalabel:
             self.parse()
@@ -92,15 +95,14 @@ class GeminiDataLabel:
         Infer the other fields for this GeminiDataLabel based on the
         text datalabel.
         """
-        dlm = dlcre.match(self.datalabel)
+        dlm = dl_cre.match(self.datalabel)
         if dlm:
-            self.projectid = dlm.group('progid')
+            self.program_id = dlm.group('progid')
             self.obsnum = dlm.group('obsid')
             self.dlnum = dlm.group('dlid')
             self.extension = dlm.group('extn')
-            self.project = GeminiProgram(self.projectid)
-            self.observation_id = '%s-%s' % (self.projectid, self.obsnum)
-            self.datalabel_noextension = '%s-%s-%s' % (self.projectid,
+            self.observation_id = '%s-%s' % (self.program_id, self.obsnum)
+            self.datalabel_noextension = '%s-%s-%s' % (self.program_id,
                                                        self.obsnum, self.dlnum)
             self.valid = True
         else:
@@ -119,25 +121,22 @@ class GeminiObservation:
     * observation_id: The observation ID provided. If the class cannot
                      make sense of the string passed in, this field will
                      be empty
-    * project: A GeminiProgram object for the project this is part of
+    * program: A GeminiProgram object for the project this is part of
     * obsnum: The observation numer within the project
 
     Parameters
     ----------
     observation_id : str
-        ObservationID from which to parse the information
+        Observation ID from which to parse the information
     """
-    observation_id = ''
-    program = ''
-    obsnum = ''
 
     def __init__(self, observation_id):
         # Clean up value if it has space padding
-        if observation_id is not None and isinstance(observation_id, str):
+        if isinstance(observation_id, str):
             observation_id = observation_id.strip()
 
         if observation_id:
-            match = re.match(obsre, observation_id)
+            match = re.match(obsid_cre, observation_id)
             if match:
                 self.observation_id = observation_id
                 self.program = GeminiProgram(match.group(1))
@@ -145,7 +144,7 @@ class GeminiObservation:
                 self.valid = True
             else:
                 self.observation_id = ''
-                self.project = ''
+                self.program = None
                 self.obsnum = ''
                 self.valid = False
         else:
@@ -182,65 +181,57 @@ class GeminiProgram:
     program_id : str
         Gemini ProgramID to parse
     """
-    program_id = None
-    valid = None
-    is_cal = False
-    is_eng = False
-    is_q = False
-    is_c = False
-    is_sv = False
-    is_qs = False
-    is_dd = False
-    is_lp = False
-    is_ft = False
-    is_ds = False
 
     def __init__(self, program_id: str):
+        if not isinstance(program_id, str):
+            raise ValueError("Must initialize a GeminiProgram with a str")
+
         # clean up any spaces
-        if program_id is not None and isinstance(program_id, str):
-            program_id = program_id.strip()
+        program_id = program_id.strip()
 
-        self.program_id = program_id
-        # Check for the CAL / ENG form
-        ec_match_old = re.match(calengre_old + r'$', program_id)
-        ec_match = re.match(calengre + r'$', program_id)
-        sci_match = re.match(scire + r'$', program_id)
-        if ec_match_old:
-            # Valid eng / cal form
+        m = re.match(pid_cre, program_id)
+        if m:
             self.valid = True
-            self.is_eng = ec_match_old.group(1) == 'ENG'
-            self.is_cal = ec_match_old.group(1) == 'CAL'
-        elif ec_match:
-            self.valid = True
-            self.is_eng = ec_match.group(1) == 'ENG'
-            self.is_cal = ec_match.group(1) == 'CAL'
-        elif sci_match:
-            # Valid science form
-            self.valid = True
-            self.is_q = sci_match.group(4) == 'Q'
-            self.is_c = sci_match.group(4) == 'C'
-            self.is_eng = sci_match.group(4) == 'ENG'
-            self.is_cal = sci_match.group(4) == 'CAL'
-            if program_id.startswith('G-'):
-                self.is_sv = sci_match.group(3) == 'V'
-                self.is_ft = sci_match.group(3) == 'F'
-                self.is_ds = sci_match.group(3) == 'S'
-            else:
-                self.is_sv = sci_match.group(4) == 'SV'
-                self.is_ft = sci_match.group(4) == 'FT'
-                self.is_ds = sci_match.group(4) == 'DS'
+            self.program_id = program_id
 
-            # If the program id is OLD style and program number contained
-            # leading zeros, strip them out of the official program_id
-            if sci_match.group(5)[0] == '0' and not program_id.startswith('G-'):
-                prog_num = int(sci_match.group(5))
-                self.program_id = "%s-%s-%s-%s" % (sci_match.group(1),
-                                                   sci_match.group(2),
-                                                   sci_match.group(4),
-                                                   prog_num)
+            # We need to 'combine' the multiple group names here (see note with
+            # the regex definitions about unique group names)
+            ec = None
+            for i in ['ec1', 'ec2', 'ec3', 'ec4']:
+                j = m.groupdict().get(i)
+                ec = j if j else ec
+            self.is_eng = ec == 'ENG'
+            self.is_cal = ec == 'CAL'
+            self.is_com = ec == 'COM'
+            self.is_mon = ec == 'MON'
+
+            typ = None
+            for i in ['typ1', 'typ2']:
+                j = m.groupdict().get(i)
+                typ = j if j else typ
+            self.is_q = typ == 'Q'
+            self.is_c = typ == 'C'
+            self.is_sv = typ in ['V', 'SV']
+            self.is_ft = typ in ['F', 'FT']
+            self.is_ds = typ in ['S', 'DS']
+            self.is_dd = typ in ['D', 'DD']
+            self.is_ll = typ in ['L', 'LP']
+
+            sem = None
+            for i in ['sem1', 'sem2', 'sem3', 'sem4']:
+                j = m.groupdict().get(i)
+                sem = j if j else sem
+            self.semester = sem
+
+            date = None
+            for i in ['date1', 'date2']:
+                j = m.groupdict().get(i)
+                date = j if j else date
+            self.date = date
 
         else:
             # Not a valid format. Probably some kind of engineering test program
             # that someone just made up.
             self.valid = False
+            self.program_id = None
             self.is_eng = True
