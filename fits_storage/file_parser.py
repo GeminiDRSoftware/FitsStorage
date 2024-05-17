@@ -9,7 +9,7 @@ from typing import Any, Union, Callable, List
 import dateutil
 import numpy as np
 
-from fits_storage.gemini_metadata_utils import gemini_procmode, gemini_telescope, gemini_instrument, \
+from fits_storage.gemini_metadata_utils import gemini_processing_mode, gemini_telescope, gemini_instrument, \
     gemini_observation_type, gemini_observation_class, ratodeg, dectodeg, dmstodeg, gemini_readspeed_settings, \
     gemini_welldepth_settings, UT_DATETIME_SECS_EPOCH
 
@@ -154,7 +154,7 @@ class FileParser(ABC):
     def pre_image(self) -> bool:
         raise NotImplementedError()
 
-    def procmode(self) -> str:
+    def processing(self) -> str:
         raise NotImplementedError()
 
     def program_id(self) -> str:
@@ -433,18 +433,26 @@ class AstroDataFileParser(FileParser):
         except Exception:
             return False
 
-    def procmode(self) -> str:
-        try:
-            procmode = gemini_procmode(self.ad.phu.get('PROCMODE'))
-        except AttributeError:
-            procmode = None
+    def processing(self) -> str:
+        # If there is a valid processing review, that is definitive
+        procrevw = gemini_processing_mode(self.ad.phu.get('PROCREVW'))
+        if procrevw:
+            return procrevw
+        # Otherwise, processing intent is next up
+        procitnt = gemini_processing_mode(self.ad.phu.get('PROCITNT'))
+        if procitnt:
+            return procitnt
+
+        # OK, now we're into legacy stuff:
+        procmode = self.ad.phu.get('PROCMODE')
         if procmode is None:
-            # check if PROCSCI is ql or sq for legacy file support
-            try:
-                procmode = gemini_procmode(self.ad.phu.get('PROCSCI'))
-            except AttributeError:
-                procmode = None
-        return procmode
+            procmode = self.ad.phu.get('PROCSCI')
+        if procmode == 'ql':
+            return 'Quick-Look'
+        if procmode == 'sq':
+            return 'Science-Quality'
+
+        return 'Raw'
 
     def program_id(self) -> str:
         return self._try_or_none(lambda: self.ad.program_id(), 'Unable to read Program ID from header',
@@ -885,11 +893,11 @@ class GRACESFileParser(AstroDataFileParser):
             pass
         return reduction
 
-    def procmode(self) -> str:
+    def processing(self) -> str:
         procmode = None
         try:
             if self.ad.phu.get('REDUCTIO') is not None:
-                procmode = 'ql'
+                procmode = 'Quick-Look'
         except:
             pass
         return procmode

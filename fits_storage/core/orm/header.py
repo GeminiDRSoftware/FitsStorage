@@ -10,17 +10,15 @@ from fits_storage.core.orm.diskfile import DiskFile
 
 from fits_storage.logger import DummyLogger
 from fits_storage.file_parser import build_parser
-from fits_storage.gemini_metadata_utils import GeminiProgram, procmode_codes, \
+from fits_storage.gemini_metadata_utils import GeminiProgram, \
     gemini_gain_settings, gemini_readspeed_settings, obs_types, obs_classes, \
-    gemini_welldepth_settings, reduction_states
+    gemini_welldepth_settings, reduction_states, gemini_processing_modes
 
 from fits_storage.config import get_config
 fsc = get_config()
 
-__all__ = ["Header"]
-
 # Enumerated Column types
-PROCMODE_ENUM = Enum(*procmode_codes, name='procmode')
+PROCMODE_ENUM = Enum(*gemini_processing_modes, name='procmode')
 OBSTYPE_ENUM = Enum(*obs_types, name='obstype')
 OBSCLASS_ENUM = Enum(*obs_classes, name='obsclass')
 REDUCTION_STATE_ENUM = Enum(*reduction_states, name='reduction_state')
@@ -56,7 +54,7 @@ class Header(Base):
     engineering = Column(Boolean, index=True)
     science_verification = Column(Boolean, index=True)
     calibration_program = Column(Boolean, index=True)
-    procmode = Column(PROCMODE_ENUM)
+    processing = Column(PROCMODE_ENUM)
     observation_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
     telescope = Column(TELESCOPE_ENUM, index=True)
@@ -160,7 +158,7 @@ class Header(Base):
             self.engineering = True
             self.science_verification = False
 
-        self.procmode = parser.procmode()
+        self.processing = parser.processing()
         self.observation_id = parser.observation_id()
         self.data_label = parser.data_label()
         self.telescope = parser.telescope()

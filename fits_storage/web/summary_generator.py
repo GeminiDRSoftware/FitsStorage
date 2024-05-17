@@ -33,7 +33,7 @@ search_col_mapping = {
     'col_dis': ('disperser', 'D'),
     'col_ra' : ('ra', 'r'),
     'col_dec': ('dec', 'd'),
-    'col_procmode': ('procmode', 'p'),
+    'col_processing': ('processing', 'p'),
     'col_qas': ('qa_state', 'Q'),
     'col_riq': ('raw_iq', 'i'),
     'col_rcc': ('raw_cc', 'c'),
@@ -62,10 +62,10 @@ def selection_to_column_names(selection):
     return tuple(search_col_mapping[x][0] for x in cols)
 
 sum_type_defs = {
-    'summary' : ['filename', 'procmode', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
+    'summary' : ['filename', 'processing', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
                     'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'qa_state',
                     'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
-    'lsummary' : ['filename', 'procmode', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
+    'lsummary' : ['filename', 'processing', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
                     'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'filter_name', 'focal_plane_mask',
                     'detector_roi', 'detector_binning', 'detector_gain_setting', 'detector_readmode_setting', 'qa_state',
                     'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
@@ -217,10 +217,10 @@ class SummaryGenerator(object):
             'download':    ColDef(heading      = 'Download',
                                   sortarrows   = False,
                                   summary_func = 'download'),
-            'procmode':    ColDef(heading      = 'Reduction',
-                                  longheading  = 'Reduction Quality',
+            'processing':    ColDef(heading      = 'Processing',
+                                  longheading  = 'Processing Status',
                                   sortarrows   = False,
-                                  summary_func = 'procmode'),
+                                  summary_func = 'processing'),
             'filename':    ColDef(heading      = 'Filename',
                                   summary_func = 'filename'),
             'data_label':  ColDef(heading      = 'Data Label',
@@ -349,7 +349,7 @@ class SummaryGenerator(object):
 
         row.uri = self.uri
         row.deprogrammed_uri = self.deprogrammed_uri
-        row.procmode = header.procmode
+        row.processing = header.processing
 
         if header.diskfile.provenance or header.diskfile.history:
             row.has_provenance = True
@@ -429,7 +429,7 @@ class SummaryGenerator(object):
         else:
             return dict(prop_message=file.name, release=header.release)
 
-    def procmode(self, header, **kw):
+    def processing(self, header, **kw):
         """
         Get the quality of the file (science quality, quick look...)
 
@@ -439,7 +439,7 @@ class SummaryGenerator(object):
         :param kw:
         :return:
         """
-        return header.procmode
+        return header.processing
 
     def datalabel(self, header, comment, **kw):
         """

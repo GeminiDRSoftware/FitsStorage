@@ -34,9 +34,6 @@ gemini_readmode_settings = ('Classic',
                             'High_Background')
 
 
-# These are the new (2024) official processing modes. As used in the
-# FitsStorage reduction table, and thus archive.
-gemini_processing_modes = ('Science-Quality', 'Quick-Look')
 
 # sortkey_regex_dict:
 # These regular expessions are used by the queues to determine how to sort (
@@ -171,10 +168,12 @@ def gemini_instrument(string, gmos=False, other=False):
     return retary
 
 
-procmode_codes = ('sq', 'ql', 'qa')
+# These are the new (2024) official processing modes. As used in the
+# FitsStorage reduction table, and thus archive.
+gemini_processing_modes = ('Raw', 'Fail', 'Science-Quality', 'Quick-Look')
 
 
-def gemini_procmode(string: str) -> str:
+def gemini_processing_mode(string: str) -> str:
     """
     A utility function for matching Gemini Processed Mode.
 
@@ -192,7 +191,7 @@ def gemini_procmode(string: str) -> str:
         The name of the processed mode code or None.
 
     """
-    return string if string in procmode_codes else None
+    return string if string in gemini_processing_modes else None
 
 
 obs_types = ('DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI',

@@ -1,19 +1,13 @@
-from sqlalchemy import Column, ForeignKey, Enum
+from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
-
-from fits_storage.gemini_metadata_utils import gemini_processing_modes
 
 from fits_storage.core.orm import Base
 
+from fits_storage.core.orm.header import PROCMODE_ENUM
+from fits_storage.gemini_metadata_utils import gemini_processing_modes
+
 from fits_storage.logger import DummyLogger
 
-__all__ = ["Reduction"]
-
-# Enumerated Column Types
-PROC_INTENT_ENUM = Enum(*gemini_processing_modes, name='processing_intent')
-SOFTWARE_MODE_ENUM = Enum(*gemini_processing_modes, name='software_mode')
-PROC_REVIEW_ENUM = Enum(*gemini_processing_modes, 'FAIL',
-                        name="processing_review_outcome")
 
 class Reduction(Base):
     """
@@ -27,16 +21,15 @@ class Reduction(Base):
     header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
                          index=True)
 
-    processing_intent = Column(PROC_INTENT_ENUM, index=True)
-    software_mode = Column(SOFTWARE_MODE_ENUM)
+    processing_intent = Column(PROCMODE_ENUM, index=True)
+    software_mode = Column(PROCMODE_ENUM)
     software_used = Column(Text)
     software_version = Column(Text)
     processing_initiated_by = Column(Text)
     processing_reviewed_by = Column(Text)
-    processing_review_outcome = Column(PROC_REVIEW_ENUM)
+    processing_review_outcome = Column(PROCMODE_ENUM)
     processing_level = Column(Integer, index=True)
     processing_tag = Column(Text)
-
 
     def __init__(self, header, diskfile=None, logger=DummyLogger()):
         self.header_id = header.id
@@ -55,7 +48,6 @@ class Reduction(Base):
         self.processing_level = self._get_processing_level(ad)
         self.processing_tag = ad.phu.get('PROCTAG')
 
-
     def _get_processing_intent(self, ad):
         pi = ad.phu.get('PROCITNT')
         return pi if pi in gemini_processing_modes else None
@@ -70,20 +62,18 @@ class Reduction(Base):
         return ro if ro in valid else None
 
     def _get_processing_level(self, ad):
-        # If there's a valid proclevl header, always respect it:
-        proclevl = ad.phu.get('PROCLEVL')
-        if isinstance(proclevl, int):
+        # If there's a valid proclevl header, always respect it, If it is
+        # not an integer, return None.
+        if 'PROCLEVL' in ad.phu.keys():
+            try:
+                proclevl = int(ad.phu.get('PROCLEVL'))
+            except (ValueError, TypeError):
+                proclevl = None
             return proclevl
 
         # Otherwise, Return 0 for raw data
         if 'RAW' in ad.tags:
             return 0
 
-        # Try to cast the value to int and return that, otherwise None.
-        # This will also catch cases where the header is blank or 'None' etc.
-        try:
-            level = int(proclevl)
-        except ValueError:
-            level = None
-
-        return level
+        # Otherwise, return None
+        return None

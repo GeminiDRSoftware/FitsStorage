@@ -15,10 +15,22 @@
 {%- endmacro %}
 
 <div class="right">
+    <label>PI/CoI Name:</label>
+    <input type="text" placeholder="(leave empty for Any)" name="PIname" value="{{ updated.PIname }}"/>
+    <span class="help">(no punctuation; separate with spaces)
+        <span class="helpright">Matches all words. Write <b>!word</b> to reject results that contain it</span>
+    </span><br>
+
     <label>Program Title:</label>
     <input type="text" placeholder="(leave empty for Any)" name="ProgramText" value="{{ updated.ProgramText }}"/>
     <span class="help">(no punctuation; separate with spaces)
         <span class="helpright">Text search the program Title. Matches all words. Write <b>!word</b> to reject results that contain it</span>
+    </span><br>
+
+    <label>Publication:</label>
+    <input id="publication" type="text" placeholder="(leave empty for Any)" name="publication" value="{{ updated.publication }}"/>
+    <span class="help">(bibliography code of related publication)
+        <span class="helpright">Search for data related to a publication by it's bibliography code.</span>
     </span><br>
 
     <label>Target Name:</label>
@@ -73,24 +85,6 @@
     </span>
     <br>
 
-    <label>Raw / Reduced:</label>
-    <select class="ddwide" name="reduction_state">
-        <option value="">Any</option>
-        {{ generate_option_list(reduction_options, updated.reduction) }}
-    </select>
-    <span class="help">(Select data by processing state)
-        <span class="helpright">You can select raw data, reduced data, or processed calibrations. We only guarantee the presence of RAW data,
-            reduced data and processed calibrations are mostly on a best efforts basis.</span>
-    </span>
-    <br>
-
-    <label>Publication:</label>
-    <input id="publication" type="text" placeholder="(leave empty for Any)" name="publication" value="{{ updated.publication }}"/>
-    <span class="help">(bibliography code of related publication)
-        <span class="helpright">Search for data related to a publication by it's bibliography code.</span>
-    </span>
-    <br>
-
     <label class="wide" id="advanced_header">Advanced Options &#9662;</label>
     <span class="help">(click to show / hide)
         <span class="helpright">Click where it says "Advanced Options" to show or hide the advanced options.</span>
@@ -132,14 +126,14 @@
         </span>
         <br>
 
-        Reduced data:
-        <select class="ddw" name="science_quality">
+        (Old) Reduction State:
+        <select class="ddwide" name="reduction_state">
             <option value="">Any</option>
-            {{ generate_option_list(science_quality_options, updated.procmode) }}
+            {{ generate_option_list(reduction_options, updated.reduction) }}
         </select>
-        <span class="help">(Reduction status of reduced data results)
-            <span class="helpright">Reduced data in the archive can have different levels of processing. Select here the processing status
-                for any reduced data files in your results.</span>
+        <span class="help">(Deprecated - Select data by processing state)
+            <span class="helpleft">You can select raw data, reduced data, or processed calibrations. This option will be removed soon, in favor of
+            the Processing State, combined with observation type or other selection criteria as appropriate.</span>
         </span>
         <br>
 
@@ -161,13 +155,6 @@
 </div>
 
 <div class="left">
-    <label>PI/CoI Name:</label>
-    <input type="text" placeholder="(leave empty for Any)" name="PIname" value="{{ updated.PIname }}"/>
-    <span class="help">(no punctuation; separate with spaces)
-        <span class="helpleft">Matches all words. Write <b>!word</b> to reject results that contain it</span>
-    </span>
-    <br>
-
     <label>Program ID:</label>
     <input type="text" placeholder="(leave empty for Any)" name="program_id" value="{{ updated.program_id }}"/>
     <span class="help">(or Obs. ID / Data Label. Exact Match)
@@ -231,16 +218,6 @@
             instruments support all these modes, such searches will return no results.</span>
     </span>
     <br>
-    
-    <label>Adaptive Optics:</label>
-    <select class="ddw" name="AO">
-        <option value="">Any</option>
-        {{ generate_option_list(ao_options, updated.ao) }}
-    </select>
-    <span class="help">(help)
-        <span class="helpleft">Select data did or did not use Adaptive Optics, or that used specifically LGS or NGS AO.</span>
-    </span>
-    <br>
 
     <div id="Spec" style="display:none">
         <label class="wide">Central Wavelength: </label>
@@ -254,6 +231,27 @@
         </span>
         <br>
     </div>
+    
+    <label>Adaptive Optics:</label>
+    <select class="ddw" name="AO">
+        <option value="">Any</option>
+        {{ generate_option_list(ao_options, updated.ao) }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select data did or did not use Adaptive Optics, or that used specifically LGS or NGS AO.</span>
+    </span>
+    <br>
+
+    <label>Processing:</label>
+    <select class="ddw" name="processing">
+        <option value="">Any</option>
+        {{ generate_option_list(processing_options, updated.processing) }}
+    </select>
+    <span class="help">(Processing status of data)
+        <span class="helpleft">Reduced data in the archive can have different reduction status. Select here if you would like to
+            search for a particular type or reduced data, or for raw data only.</span>
+    </span><br>
+
 </div>
 
 {%- if col_sel is defined %}
@@ -275,7 +273,7 @@
                 <td>{{ column_sel('RA', 'col_ra') }}</td>
                 <td>{{ column_sel('Dec', 'col_dec') }}</td>
                 <td>{{ column_sel('Wavelength', 'col_cwl') }}</td>
-                <td>{{ column_sel('Reduction', 'col_procmode') }}</td>
+                <td>{{ column_sel('Processing', 'col_processing') }}</td>
                 <td>{{ column_sel('QA State', 'col_qas', std=True) }}</td>
             </tr><tr>
                 <td>{{ column_sel('Raw IQ', 'col_riq') }}</td>

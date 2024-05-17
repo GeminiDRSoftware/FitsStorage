@@ -38,6 +38,7 @@ getselection_test_pairs = (
     (gmu.gemini_observation_type, 'observation_type'),
     (gmu.gemini_observation_class, 'observation_class'),
     (gmu.gemini_caltype, 'caltype'),
+    (gmu.gemini_processing_mode, 'processing'),
     (gmu.gemini_reduction_state, 'reduction'),
     (gmu.gmos_gratingname, 'disperser'),
     (gmu.gmos_focal_plane_mask, 'focal_plane_mask'),
@@ -199,8 +200,8 @@ def getselection(things):
                 selection['lgs'] = thing
                 # Make LGS / NGS selection imply AO selection
                 selection['ao'] = 'AO'
-            elif thing in {'sq', 'ql'}:
-                selection['procmode'] = thing
+            elif thing in {'Raw', 'Quick-Look', 'Science-Quality'}:
+                selection['processing'] = thing
             elif thing.lower() in getselection_detector_roi:
                 selection['detector_roi'] = getselection_detector_roi[thing.lower()]
             elif thing.lower() == 'preimage':
@@ -243,7 +244,7 @@ sayselection_defs = {
     'observation_type':'ObsType',
     'observation_class': 'ObsClass',
     'filename': 'Filename',
-    'procmode': 'Quality',
+    'processing': 'Processing',
     'object': 'Object Name',
     'engineering': 'Engineering Data',
     'science_verification': 'Science Verification Data',
@@ -359,7 +360,7 @@ queryselection_filters = (
     ('pre_image',             Header.pre_image),
     ('raw_cc',                Header.raw_cc),
     ('raw_iq',                Header.raw_iq),
-    ('procmode',              Header.procmode)
+    ('processing',            Header.processing)
     )
 
 def queryselection(query, selection):
