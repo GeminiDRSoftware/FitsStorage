@@ -111,7 +111,8 @@ def check_observation_related_fields(header, env):
 
     valid = (prg.valid and obs.obsnum != '' and dl.dlnum != ''
                        and obs.obsnum == dl.obsnum
-                       and prg.program_id == obs.program.program_id == dl.projectid)
+                       and prg.program_id == obs.program.program_id ==
+             dl.program_id)
 
     if not valid:
         return False, "Not a valid Observation ID"
