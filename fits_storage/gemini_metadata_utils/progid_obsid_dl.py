@@ -9,7 +9,7 @@ import re
 # Where applicable the groups should label the following groups:
 # ec: ENG|CAL|COM|MON, typ: Q|C|etc, sem: semester eg 2012A, date: yyyymmdd.
 # Note, match group names have to be unique, even if they're in mutually
-# exclusive parts of the regex, so we define eg ec1, ec2, ec3 group names and
+# exclusive parts of the regex, so we define e.g. ec1, ec2, ec3 group names, and
 # we combine these before we test against them.
 #
 # G[N|S]-[CAL|ENG]yyyymmdd eg GN-CAL20120123. There is a modest attempt at
@@ -77,15 +77,15 @@ class GeminiDataLabel:
             raise ValueError('Value passed to GeminiDataLabel must be a str')
         dl = dl.strip()
 
-        self.datalabel = dl               # datalabel as a string
-        self.program_id = None            # program id portion
-        self.program = None               # GeminiProgram instance
-        self.observation_id = None        # observaiton id portion
-        self.obsnum = None                # observation number
-        self.dlnum = None                 # datalabel number
-        self.extension = None             # extension number, if any
-        self.datalabel_noextension = None # datalabel without extension number
-        self.valid = False                # True if datalabel is valid format
+        self.datalabel = dl                # datalabel as a string
+        self.program_id = None             # program id portion
+        self._program = None               # GeminiProgram instance
+        self.observation_id = None         # observation id portion
+        self.obsnum = None                 # observation number
+        self.dlnum = None                  # datalabel number
+        self.extension = None              # extension number, if any
+        self.datalabel_noextension = None  # datalabel without extension number
+        self.valid = False                 # True if datalabel is valid format
 
         if self.datalabel:
             self.parse()
@@ -109,6 +109,15 @@ class GeminiDataLabel:
             # Match failed - Null the datalabel field
             self.datalabel = ''
             self.valid = False
+
+    @property
+    def program(self):
+        # Lazy load the GeminiProgram instance
+        if self._program is None:
+            if self.program_id is None:
+                return None
+            self._program = GeminiProgram(self.program_id)
+        return self._program
 
 
 class GeminiObservation:
@@ -135,22 +144,32 @@ class GeminiObservation:
         if isinstance(observation_id, str):
             observation_id = observation_id.strip()
 
+        self._program = None
+
         if observation_id:
             match = re.match(obsid_cre, observation_id)
             if match:
                 self.observation_id = observation_id
-                self.program = GeminiProgram(match.group(1))
+                self.program_id = match.group(1)
                 self.obsnum = match.group('obsid')
                 self.valid = True
             else:
                 self.observation_id = ''
-                self.program = None
+                self.program_id = None
                 self.obsnum = ''
                 self.valid = False
         else:
             self.observation_id = ''
             self.valid = False
 
+    @property
+    def program(self):
+        # Lazy load the GeminiProgram instance
+        if self._program is None:
+            if self.program_id is None:
+                return None
+            self._program = GeminiProgram(self.program_id)
+        return self._program
 
 class GeminiProgram:
     """
@@ -164,6 +183,8 @@ class GeminiProgram:
     * valid: Boolean indicating the program_id is a valid standard format
     * is_cal: Boolean indicating if this is a CAL program
     * is_eng: Boolean indicating if this is an ENG program
+    * is_com: Boolean indicating if this is a Commissioning program
+    * is_mon: Boolean indicating if this is an instrument Monitoring program
     * is_q: Boolean indicating if this is a Queue program
     * is_c: Boolean indicating if this is a Classical program
     * is_sv: Boolean indicating this is an SV (Science Verification) program
@@ -181,13 +202,27 @@ class GeminiProgram:
     program_id : str
         Gemini ProgramID to parse
     """
-
-    def __init__(self, program_id: str):
+    def __init__(self, program_id):
         if not isinstance(program_id, str):
             raise ValueError("Must initialize a GeminiProgram with a str")
 
         # clean up any spaces
         program_id = program_id.strip()
+
+        # Initialize all the is_ flags to None. These will get set to True
+        # or False if they are validly assessed.
+        self.is_cal = None
+        self.is_eng = None
+        self.is_com = None
+        self.is_mon = None
+        self.is_q = None
+        self.is_c = None
+        self.is_sv = None
+        self.is_qs = None
+        self.is_dd = None
+        self.is_lp = None
+        self.is_ft = None
+        self.is_ds = None
 
         m = re.match(pid_cre, program_id)
         if m:

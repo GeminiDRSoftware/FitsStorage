@@ -148,3 +148,5 @@ def test_gp():
         gp = GeminiProgram(pid)
         assert gp.valid is False
         assert gp.program_id is None
+        assert gp.is_sv is None
+        assert gp.is_com is None
