@@ -108,8 +108,8 @@ class CalQuery(object):
         query = session.query(Header)\
             .select_from(join(join(instrClass, Header), DiskFile))
 
-        if procmode == 'sq':
-            query = query.filter(Header.procmode == procmode)
+        if procmode == 'Science-Quality':
+            query = query.filter(Header.processing == procmode)
 
         query = query.filter(DiskFile.canonical == True) \
                      .filter(Header.qa_state != 'Fail')
@@ -270,10 +270,10 @@ class CalQuery(object):
 
         """
         # If returning both raw and processed, return processed first.
-        enums = Header.procmode.type.enums
+        enums = Header.processing.type.enums
         whens = {pm: str(pm) if pm else 'AAA' for pm in enums}
-        procmode_sort_logic = case(value=Header.procmode, whens=whens,
-                                   else_='AAA').label("procmode_sortkey")
+        processing_sort_logic = case(value=Header.processing, whens=whens,
+                                   else_='AAA').label("processing_sortkey")
 
         extra_order = () if extra_order_terms is None \
             else tuple(extra_order_terms)
@@ -283,8 +283,8 @@ class CalQuery(object):
                                - UT_DATETIME_SECS_EPOCH)
                                .total_seconds())
         def_order = func.abs(Header.ut_datetime_secs - targ_ut_dt_secs)
-        procmode_order = desc(procmode_sort_logic)
-        order = (def_order, procmode_order) + extra_order
+        processing_order = desc(processing_sort_logic)
+        order = (def_order, processing_order) + extra_order
 
         if order_by is not None:
             self.query = self.query.order_by(order_by)
