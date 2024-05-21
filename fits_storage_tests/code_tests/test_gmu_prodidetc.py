@@ -6,66 +6,67 @@ def test_pid_caleng_regexes():
     orig_valid = ['GN-CAL20120123', 'GS-CAL20000131', 'GN-ENG20441231']
     orig_invalid = ['G-CAL20120123', 'GX-CAL20000131', 'GN-ENG19441231']
     for i in orig_valid:
-        assert re.match(pid_caleng_orig, i) is not None
+        assert re.fullmatch(pid_caleng_orig, i) is not None
     for i in orig_invalid:
-        assert re.match(pid_caleng_orig, i) is None
+        assert re.fullmatch(pid_caleng_orig, i) is None
 
     archaic_valid = ['CAL20031122', 'ENG20221101']
     archaic_invalid = ['CAL1901122', 'Eng20221101', 'CAL200312']
     for i in archaic_valid:
-        assert re.match(pid_caleng_archaic, i) is not None
+        assert re.fullmatch(pid_caleng_archaic, i) is not None
     for i in archaic_invalid:
-        assert re.match(pid_caleng_archaic, i) is None
+        assert re.fullmatch(pid_caleng_archaic, i) is None
 
     another_valid = ['GN-2020A-CAL-191', 'GN-2020B-ENG-191']
     another_invalid = ['GN-2020A-foo-191', 'G-2020B-ENG-191']
     for i in another_valid:
-        assert re.match(pid_caleng_another, i) is not None
+        assert re.fullmatch(pid_caleng_another, i) is not None
     for i in another_invalid:
-        assert re.match(pid_caleng_another, i) is None
+        assert re.fullmatch(pid_caleng_another, i) is None
 
     new_valid = ['G-2001A-CAL-GMOS_N-20', 'G-2001B-ENG-GMOS_N-20',
                  'G-2001A-COM-IGRINS-2-20', 'G-2001A-MON-F_2-20',
                  'G-2001B-CAL-GMOS_N-100']
     new_invalid = ['GN-2001A-CAL-GMOS_N-20', 'G-2001B-FOO-GMOS_N-20']
     for i in new_valid:
-        assert re.match(pid_caleng_new, i) is not None
+        assert re.fullmatch(pid_caleng_new, i) is not None
     for i in new_invalid:
-        assert re.match(pid_caleng_new, i) is None
+        assert re.fullmatch(pid_caleng_new, i) is None
 
     # And now the combined one, to check for crosstalk...
     all_valid = orig_valid + archaic_valid + another_valid + new_valid
     all_invalid = orig_invalid + archaic_invalid + another_invalid + new_invalid
     for i in all_valid:
-        assert re.match(pid_caleng, i) is not None
+        assert re.fullmatch(pid_caleng, i) is not None
     for i in all_invalid:
-        assert re.match(pid_caleng, i) is None
+        assert re.fullmatch(pid_caleng, i) is None
 
 
 def test_pid_sci_regexes():
     # First, test out the individual program id variety regexes
     orig_valid = ['GN-2011A-Q-12', 'GS-2000B-C-1', 'GN-2000A-DD-3',
                   'GS-2033B-QS-1234']
-    orig_invalid = ['G-2011A-Q-12', 'GS-2000C-C-1', 'GN-2000A-ZZ-3']
+    orig_invalid = ['G-2011A-Q-12', 'GS-2000C-C-1', 'GN-2000A-ZZ-3',
+                    'GS-2024A-Q-410-36']
     for i in orig_valid:
-        assert re.match(pid_sci_orig, i) is not None
+        assert re.fullmatch(pid_sci_orig, i) is not None
     for i in orig_invalid:
-        assert re.match(pid_sci_orig, i) is None
+        assert re.fullmatch(pid_sci_orig, i) is None
 
     new_valid = ['G-2020A-1234-Q', 'G-2020B-1234-C', 'G-2020A-14-F']
     new_invalid = ['GN-2020A-1234-Q', 'G-2020C-1234-C', 'G-2020A-14-Z']
     for i in new_valid:
-        assert re.match(pid_sci_new, i) is not None
+        assert re.fullmatch(pid_sci_new, i) is not None
     for i in new_invalid:
-        assert re.match(pid_sci_new, i) is None
+        assert re.fullmatch(pid_sci_new, i) is None
 
     # Do the combined test to check for crosstalk
     all_valid = orig_valid + new_valid
     all_invalid = orig_invalid + new_invalid
     for i in all_valid:
-        assert re.match(pid_sci, i) is not None
+        assert re.fullmatch(pid_sci, i) is not None
     for i in all_invalid:
-        assert re.match(pid_sci, i) is None
+        assert re.fullmatch(pid_sci, i) is None
 
 
 # These are used for the class tests too
@@ -73,15 +74,16 @@ pid_valid = ['GN-CAL20120123', 'CAL20031122', 'GN-2011A-ENG-191',
              'G-2001A-MON-F_2-20', 'GN-2000A-DD-3', 'GN-2011A-Q-12',
              'G-2099B-COM-SCORPIO-1']
 pid_invalid = ['GX-CAL20000131', 'Eng20221101', 'GN-2020A-foo-191',
-               'GN-2001A-CAL-GMOS_N-20', 'G-2011A-Q-12', 'GN-2020A-1234-Q']
+               'GN-2001A-CAL-GMOS_N-20', 'G-2011A-Q-12', 'GN-2020A-1234-Q',
+               'GS-2024A-Q-410-36']
 
 
 def test_pid_regex():
     # Just a quick sanity check on the uber combined one
     for i in pid_valid:
-        assert re.match(pid, i) is not None
+        assert re.fullmatch(pid, i) is not None
     for i in pid_invalid:
-        assert re.match(pid, i) is None
+        assert re.fullmatch(pid, i) is None
 
 
 # Test the GeminiDataLabel class

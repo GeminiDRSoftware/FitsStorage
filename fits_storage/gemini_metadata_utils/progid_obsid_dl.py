@@ -12,6 +12,10 @@ import re
 # exclusive parts of the regex, so we define e.g. ec1, ec2, ec3 group names, and
 # we combine these before we test against them.
 #
+# Note, we don't put ^ and $ to match the start and end of the string as we use
+# eg the progid regexes to build regesed for obsid too. Instead of these, we use
+# the re.fullmatch function throughout.
+#
 # G[N|S]-[CAL|ENG]yyyymmdd eg GN-CAL20120123. There is a modest attempt at
 # date enforcement in that years must be 20xx, months [01]x and days [0123]x.
 pid_caleng_orig = r'G[NS]-(?P<ec1>CAL|ENG)(?P<date1>20\d\d[01]\d[0123]\d)'
@@ -26,7 +30,7 @@ pid_caleng_another = r'G[NS]-(?P<sem1>20\d\d[AB])-(?P<ec3>CAL|ENG)-\d+'
 # Where TYP can be [CAL|ENG|COM|MON] - COMmissinong and instrument MONitoring.
 pid_caleng_new = r'G-(?P<sem2>20\d\d[AB])-(?P<ec4>CAL|ENG|COM|MON)-[\w+-]+-\d+'
 
-pid_caleng = "%s|%s|%s|%s" % (pid_caleng_new, pid_caleng_orig,
+pid_caleng = r'%s|%s|%s|%s' % (pid_caleng_new, pid_caleng_orig,
                               pid_caleng_another, pid_caleng_archaic)
 pid_caleng_cre = re.compile(pid_caleng)
 
@@ -47,12 +51,15 @@ pid = "%s|%s" % (pid_sci, pid_caleng)
 pid_cre = re.compile(pid)
 
 # This matches an observation id with the project id and obsnum as groups
-obsid = "(%s)-(?P<obsid>\d+)" % pid
+obsid = "(?P<progid>%s)-(?P<obsid>\d+)" % pid
 obsid_cre = re.compile(obsid)
 
 # This matches a data-label with an optional extension
-# ie program_id-obsnum-dlnum[-ext], with groups progid, obsid, dlid, extn
-dl = r'(?P<progid>%s)-(?P<obsid>\d+)-(?P<dlid>\d+)(?:-(?P<extn>[-\w]*))?' % pid
+# ie program_id-obsnum-dlnum[-ext], with groups progid, obsid, dlid, extn.
+# Note the extn has to start with a letter to avoid confusion with the various
+# program ID and thus datalabel formats.
+dl = r'(?P<progid>%s)-(?P<obsid>\d+)-(?P<dlid>\d+)' \
+     r'(?:-(?P<extn>[A-Za-z]\w*))?' % pid
 dl_cre = re.compile(dl)
 
 
@@ -90,12 +97,15 @@ class GeminiDataLabel:
         if self.datalabel:
             self.parse()
 
+    def __repr__(self):
+        return "<%s %s>" % (self.__class__.__name__, self.datalabel)
+
     def parse(self):
         """
         Infer the other fields for this GeminiDataLabel based on the
         text datalabel.
         """
-        dlm = dl_cre.match(self.datalabel)
+        dlm = dl_cre.fullmatch(self.datalabel)
         if dlm:
             self.program_id = dlm.group('progid')
             self.obsnum = dlm.group('obsid')
@@ -147,10 +157,10 @@ class GeminiObservation:
         self._program = None
 
         if observation_id:
-            match = re.match(obsid_cre, observation_id)
+            match = re.fullmatch(obsid_cre, observation_id)
             if match:
                 self.observation_id = observation_id
-                self.program_id = match.group(1)
+                self.program_id = match.group('progid')
                 self.obsnum = match.group('obsid')
                 self.valid = True
             else:
@@ -162,6 +172,8 @@ class GeminiObservation:
             self.observation_id = ''
             self.valid = False
 
+    def __repr__(self):
+        return "<%s %s>" % (self.__class__.__name__, self.observation_id)
     @property
     def program(self):
         # Lazy load the GeminiProgram instance
@@ -224,7 +236,7 @@ class GeminiProgram:
         self.is_ft = None
         self.is_ds = None
 
-        m = re.match(pid_cre, program_id)
+        m = re.fullmatch(pid_cre, program_id)
         if m:
             self.valid = True
             self.program_id = program_id
@@ -270,3 +282,6 @@ class GeminiProgram:
             self.valid = False
             self.program_id = None
             self.is_eng = True
+
+    def __repr__(self):
+        return "<%s %s>" % (self.__class__.__name__, self.program_id)
