@@ -105,8 +105,8 @@ with session_scope() as session:
             logger.debug("IntegrityError adding hid %s - filename %s"
                          "to queue. Likely they are already on the"
                          "queue", hid, filename)
-        if options.bulk_add:
-            session.commit()
+    if options.bulk_add:
+        session.commit()
 
 logger.info("*** add_to_calcache_queue.py exiting normally at %s" %
             datetime.datetime.now())
