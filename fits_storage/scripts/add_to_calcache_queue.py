@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # Option Parsing
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("--file-re", action="store", type="string",
+    parser.add_option("--file-pre", action="store", type="string",
                       dest="file_pre",
                       help="filename prefix to select files to queue by")
     parser.add_option("--lastdays", action="store", type="int",
@@ -42,7 +42,11 @@ if __name__ == "__main__":
                       dest="debug", help="Increase log level to debug")
     parser.add_option("--demon", action="store_true", dest="demon",
                       help="Run as a background demon, do not generate stdout")
-
+    parser.add_option("--bulk-add", action="store_true", dest="bulk_add",
+                      help="Add all the entries in one database commit. This is"
+                           " a lot faster for a large number of entries, but if"
+                           " any one of them has an error, they will all fail "
+                           "to add")
     options, args = parser.parse_args()
 
     # Logging level to debug? Include stdio log?
@@ -101,12 +105,15 @@ if __name__ == "__main__":
             try:
                 logger.debug("Adding CalCacheQueueEntry")
                 session.add(cqe)
-                session.commit()
+                if not options.bulk_add:
+                    session.commit()
             except IntegrityError:
                 session.rollback()
                 logger.debug("IntegrityError adding hid %s - filename %s"
                              "to queue. Likely they are already on the"
                              "queue", hid, filename)
+            if options.bulk_add:
+                session.commit()
 
     logger.info("*** add_to_calcache_queue.py exiting normally at %s" %
                 datetime.datetime.now())
