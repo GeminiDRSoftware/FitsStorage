@@ -1,0 +1,6 @@
+[{"action": "ADD", "keyword": "PROCITNT", "new_value": "Quick-Look", "comment": "Processing Intent"},
+{"action": "UPDATE", "keyword": "PROCMODE", "old_value": "sq", "new_value": "Science-Quality", "comment": "DRAGONS Processing Mode"},
+{"action": "ADD", "keyword": "PROCSOFT", "new_value": "DRAGONS", "comment": "Processing Software"},
+{"action": "ADD", "keyword": "PROCSVER", "new_value": "3.2.0", "comment": "Processing Software Version"},
+{"action": "ADD", "keyword": "PROCINBY", "new_value": "USNGO-Placco", "comment": "Processing Initiated By"},
+{"action": "ADD", "keyword": "PROCTAG", "new_value": "USNGO-GHOST", "comment": "Gemini Processing Tag"}]
