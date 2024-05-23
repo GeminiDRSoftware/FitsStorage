@@ -613,7 +613,10 @@ class SummaryGenerator(object):
         # filter_name for imaging, disperser and cen_wlen for spec
         if header.spectroscopy and header.instrument != 'GPI':
             try:
-                return "{} : {:.3f}".format(header.disperser, header.central_wavelength)
+                # If the disperser name is None, use the instrument name
+                disp = header.disperser if header.disperser is not None \
+                    else header.instrument
+                return "{} : {:.3f}".format(disp, header.central_wavelength)
             except:
                 return "None"
         else:
