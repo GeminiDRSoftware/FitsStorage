@@ -611,7 +611,7 @@ class SummaryGenerator(object):
         Generates the waveband column data
         """
         # filter_name for imaging, disperser and cen_wlen for spec
-        if header.spectroscopy and header.instrument not in ('GPI', 'IGRINS')
+        if header.spectroscopy and header.instrument not in ('GPI', 'IGRINS'):
             # If the disperser name is None, use the instrument name
             disp = header.disperser if header.disperser is not None \
                 else header.instrument
