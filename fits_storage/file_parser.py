@@ -780,6 +780,27 @@ class IGRINSFileParser(AstroDataFileParser):
         if retval is None and self.ad.telescope() is not None and ' ' in self.ad.telescope():
             return gemini_telescope(self.ad.telescope().replace(' ', '-'))
 
+class IGRINS2FileParser(AstroDataFileParser):
+    def exposure_time(self):
+        # Two exposure times, in the first and second extensions
+        try:
+            a = self.ad[0].hdr.get('EXPTIME')
+        except Exception:
+            a = None
+        try:
+            b = self.ad[1].hdr.get('EXPTIME')
+        except Exception:
+            b = None
+        if a is None and b is None:
+            return None
+        if a is None:
+            return b
+        if b is None:
+            return a
+        try:
+            return max(a, b)
+        except Exception:
+            return None
 
 class NICIFileParser(AstroDataFileParser):
     def exposure_time(self) -> Union[float, None]:
@@ -920,6 +941,8 @@ def build_parser(ad, log) -> FileParser:
                 return IGRINSFileParser(ad, log)
             elif ad.instrument().upper() == 'GRACES':
                 return GRACESFileParser(ad, log)
+            elif ad.instrument().upper() == 'IGRINS-2':
+                return IGRINS2FileParser(ad, log)
     except:
         pass
     return AstroDataFileParser(ad, log)
