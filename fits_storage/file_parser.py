@@ -254,12 +254,12 @@ class AstroDataFileParser(FileParser):
         try:
             airmass = self.ad.airmass()
             airmass = float(airmass) if isinstance(airmass, str) else airmass
-            if airmass is not None and airmass > 50:
+            if airmass is not None and (airmass > 50 or airmass < 1.0):
                 if self.elevation() is not None:
                     try:
-                        # use secant(90-elevation) for airmass, converting to radians for numpy
-                        cos_value = np.cos(np.radians(90-self.elevation()))
-                        sec_value = np.arccos(cos_value)
+                        # approximate airmass with secant(90-elevation),
+                        # converting to radians for numpy
+                        sec_value = 1.0 / np.cos(np.radians(90-self.elevation()))
                         if self._log:
                             self._log.warning('Bad airmass value, using sec(90-elevation) as an estimate')
                         airmass = sec_value
