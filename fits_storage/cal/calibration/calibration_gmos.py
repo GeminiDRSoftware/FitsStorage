@@ -699,6 +699,9 @@ class CalibrationGMOS(Calibration):
     @not_imaging
     def spectwilight(self, processed=False, howmany=None):
         """
+        Note - DRAGONS has no concept of a spectwilight. The slit illumination
+        function is a slitillum. This function may be deprecated in future.
+
         Method to find the best spectwilight - ie spectroscopy twilight
         ie MOS / IFU / LS twilight
 
@@ -739,8 +742,8 @@ class CalibrationGMOS(Calibration):
                 .raw().OBJECT().spectroscopy(True).object('Twilight')
                 .add_filters(*filters)
                 .match_descriptors(Header.instrument,
-                                   # Gmos.detector_x_bin, ### no CCDSUM in the files I got from Bruno
-                                   # Gmos.detector_y_bin,
+                                   Gmos.detector_x_bin,
+                                   Gmos.detector_y_bin,
                                    Gmos.filter_name,
                                    Gmos.disperser,
                                    Gmos.focal_plane_mask)
