@@ -5,7 +5,7 @@ from fits_storage_tests.code_tests.helpers import make_diskfile
 
 
 def test_gsaoi(tmp_path):
-    data_file = 'S20181018S0151.fits'
+    data_file = 'S20181018S0151.fits.bz2'
 
     diskfile = make_diskfile(data_file, tmp_path)
     header = Header(diskfile)

@@ -5,7 +5,7 @@ from fits_storage_tests.code_tests.helpers import make_diskfile
 
 
 def test_nifs(tmp_path):
-    data_file = 'N20150505S0119.fits'
+    data_file = 'N20150505S0119.fits.bz2'
 
     diskfile = make_diskfile(data_file, tmp_path)
     header = Header(diskfile)

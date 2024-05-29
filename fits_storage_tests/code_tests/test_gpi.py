@@ -5,7 +5,7 @@ from fits_storage_tests.code_tests.helpers import make_diskfile
 
 
 def test_gpi(tmp_path):
-    data_file = 'S20171125S0116.fits'
+    data_file = 'S20171125S0116.fits.bz2'
 
     diskfile = make_diskfile(data_file, tmp_path)
     header = Header(diskfile)

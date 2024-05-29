@@ -5,7 +5,7 @@ from fits_storage_tests.code_tests.helpers import make_diskfile
 
 
 def test_michelle(tmp_path):
-    data_file = 'N20100119S0080.fits'
+    data_file = 'N20100119S0080.fits.bz2'
 
     diskfile = make_diskfile(data_file, tmp_path)
     header = Header(diskfile)

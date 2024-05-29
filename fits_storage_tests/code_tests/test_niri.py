@@ -5,7 +5,7 @@ from fits_storage_tests.code_tests.helpers import make_diskfile
 
 
 def test_niri(tmp_path):
-    data_file = 'N20180329S0134.fits'
+    data_file = 'N20180329S0134.fits.bz2'
 
     diskfile = make_diskfile(data_file, tmp_path)
     header = Header(diskfile)

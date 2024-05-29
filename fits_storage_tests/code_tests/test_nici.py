@@ -5,7 +5,7 @@ from fits_storage_tests.code_tests.helpers import make_diskfile
 
 
 def test_nici(tmp_path):
-    data_file = 'S20130123S0131.fits'
+    data_file = 'S20130123S0131.fits.bz2'
 
     diskfile = make_diskfile(data_file, tmp_path)
     header = Header(diskfile)
@@ -17,7 +17,7 @@ def test_nici(tmp_path):
 
 
 def test_nici_cal(tmp_path):
-    data_file = 'S20130124S0036.fits'
+    data_file = 'S20130124S0036.fits.bz2'
 
     diskfile = make_diskfile(data_file, tmp_path)
     header = Header(diskfile)

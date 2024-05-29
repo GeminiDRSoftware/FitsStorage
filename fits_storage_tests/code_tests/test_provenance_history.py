@@ -15,7 +15,7 @@ def test_provenance_provhistory(tmp_path):
     This file has the old PROVHISTORY extension before it was
     renamed to HISTORY
     """
-    data_file = 'bpm_20220303_gmos-n_Ham_44_full_12amp.fits'
+    data_file = 'bpm_20220303_gmos-n_Ham_44_full_12amp.fits.bz2'
 
     diskfile = make_diskfile(data_file, tmp_path)
 
