@@ -1,7 +1,5 @@
-from fits_storage_tests.liveserver_tests.helpers import calhelper
+from fits_storage_tests.liveserver_tests.helpers import calhelper, getserver
 
-# The server to test against
-server = 'https://archive.gemini.edu:/jsoncalmgr'
 
 # This dict of dicts defines the expected calibration associations.
 cals_2022_gnirs = {
@@ -26,7 +24,7 @@ cals_2022_gnirs = {
                                'dark': None,
                                'flat': 'GN-2021B-Q-308-295-013',
                                'arc': 'GN-2021B-Q-308-295-029',
-                               'pinhole_mask': 'GN-2021B-Q-308-238-001',
+                               'pinhole': 'GN-2021B-Q-308-238-001',
                                'processed_bpm': 'GN-CAL20121205-10-001-BPM',
                                },
     # GNIRS XD 111l/mm K
@@ -34,11 +32,11 @@ cals_2022_gnirs = {
                               'dark': None,
                               'flat': 'GN-2021B-Q-305-18-005',
                               'arc': 'GN-2021B-Q-305-27-001',
-                              'pinhole_mask': 'GN-2021B-Q-305-28-001',
+                              'pinhole': 'GN-2021B-Q-305-28-001',
                               'processed_bpm': 'GN-CAL20121205-10-001-BPM',
                               },
 }
 
 
 def test_gnirscals():
-    calhelper(server, cals_2022_gnirs)
+    calhelper(getserver(), cals_2022_gnirs)

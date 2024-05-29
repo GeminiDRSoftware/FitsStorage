@@ -1,7 +1,5 @@
-from fits_storage_tests.liveserver_tests.helpers import fetch_helper
+from fits_storage_tests.liveserver_tests.helpers import fetch_helper, getserver
 
-# The server to test against
-server = 'http://mkofits-lv1/history'
 
 buzzwords = {
     'bpm_20220303_gmos-n_Ham_44_full_12amp.fits': [
@@ -41,6 +39,7 @@ buzzwords = {
     ]
 }
 def test_bpm():
+    server = getserver() + '/history'
     for filename in buzzwords.keys():
         fetch_helper(server, filename, buzzwords[filename])
 

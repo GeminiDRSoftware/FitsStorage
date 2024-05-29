@@ -1,7 +1,5 @@
-from fits_storage_tests.liveserver_tests.helpers import calhelper
+from fits_storage_tests.liveserver_tests.helpers import calhelper, getserver
 
-# The server to test against
-server = 'https://archive.gemini.edu:/jsoncalmgr'
 
 # This dict of dicts defines the expected calibration associations.
 cals_2022_f2 = {
@@ -36,4 +34,4 @@ cals_2022_f2 = {
 
 
 def test_f2cals():
-    calhelper(server, cals_2022_f2)
+    calhelper(getserver(), cals_2022_f2)

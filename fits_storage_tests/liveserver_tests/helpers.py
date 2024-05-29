@@ -1,14 +1,30 @@
+import os
 import http
 
 import requests
 
 
+def getserver():
+    """
+    Returns a server name (in the form https://archive.gemini.edu )
+    either using the FITS_STORAGE_TEST_LIVESERVER environment variable,
+    or defaulting to archive if that is not set.
+    """
+    server = os.environ.get('FITS_STORAGE_TEST_LIVESERVER')
+    if server is None:
+        server = 'https://archive.gemini.edu'
+
+    print(f'Using live server: {server}')
+    return server
+
+
 def calhelper(base_url, dod):
     """
-    base_url is the jsoncalmgr url to test against. dod is a dict of dicts of
-    this form: {'sci_file': {'bias': 'bias_file', 'flat': 'flat_file', ...},
-    ...} where sci_file is a datalabel of a file that should have the
-    calibations associated with it, 'bias', 'flat', ... are calibration types
+    base_url is the jsoncalmgr url to test against, without the /jsoncalmgr.
+    dod is a dict of dicts of the form:
+    {'sci_file': {'bias': 'bias_file', 'flat': 'flat_file', ...}, ...}
+    where sci_file is a datalabel of a file that should have the
+    calibrations associated with it, 'bias', 'flat', ... are calibration types
     and 'bias_file', 'flat_file', ... are the corresponding datalabels of the
     best match (ie first in the results) calibration file.
 
@@ -22,7 +38,8 @@ def calhelper(base_url, dod):
     """
 
     for item in dod.keys():
-        url = base_url + '/' + item
+        print(f"Testing dict item: {item}")
+        url = base_url + '/jsoncalmgr/' + item
         req = requests.get(url)
         assert req.status_code == http.HTTPStatus.OK
         results = req.json()
@@ -49,6 +66,7 @@ def calhelper(base_url, dod):
 
         # Now check they match
         for caltype in dod[item].keys():
+            print(f"Testing caltype {caltype}")
             assert dod[item][caltype] == cals_from_server[caltype]
 
 
