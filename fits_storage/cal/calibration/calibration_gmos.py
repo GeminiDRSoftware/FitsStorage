@@ -5,7 +5,7 @@ The CalibrationGMOS class
 
 import math
 
-from sqlalchemy import desc, func
+from sqlalchemy import asc, func, Float
 
 from fits_storage.core.orm.header import Header
 from fits_storage.cal.orm.gmos import Gmos
@@ -18,6 +18,7 @@ from .calibration import not_processed
 from .calibration import not_spectroscopy
 
 from fits_storage.gemini_metadata_utils import gmos_dispersion
+
 
 class CalibrationGMOS(Calibration):
     """
@@ -969,7 +970,7 @@ class CalibrationGMOS(Calibration):
         """
         This utility function generates the argument for an order_by()
         clause that consists of a weighted combination of closest in time
-        and closest in wavelenth. This is useful for various gmos spectroscopy
+        and closest in wavelength. This is useful for various gmos spectroscopy
         calibrations such as photspec and slitillum where we take them
         infrequently and also sometimes at not quite the same wavelength - for
         example if the science does a wavelength dither to cover the chip gaps
@@ -998,14 +999,17 @@ class CalibrationGMOS(Calibration):
 
         sci_ut_dt_secs = int((self.descriptors['ut_datetime']
                                - UT_DATETIME_SECS_EPOCH).total_seconds())
-        dt_score = func.abs((Header.ut_datetime_secs - sci_ut_dt_secs)
-                             /norm_secs)
-
+        dt_score = func.abs(
+            func.cast((Header.ut_datetime_secs - sci_ut_dt_secs), Float)
+            / norm_secs)
         sci_wl = self.descriptors['central_wavelength']
-        wl_score = func.abs((Header.central_wavelength - sci_wl) / wlen_range)
+        wl_score = func.abs(
+            func.cast((Header.central_wavelength - sci_wl), Float)
+            / wlen_range)
 
         score = dt_score + wl_score
 
-        order = desc(score)
+        # Smallest score is best, sort ascending.
+        order = asc(score)
 
         return order
