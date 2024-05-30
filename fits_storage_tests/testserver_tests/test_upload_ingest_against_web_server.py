@@ -2,39 +2,45 @@
 # fits storage server with a web server running and an empty database
 # then run these tests pointing at it. The server needs to have
 # service_queue tasks running for ingest and fileops.
-# The base address is defined here:
-
-base_url = 'http://localhost:8000/'
 
 import os.path
 import http
 import requests
 import time
 
-from fits_storage.config import get_config
 
-from helpers import fetch_file
+from fits_storage_tests.testserver_tests.helpers import getserver
+from fits_storage_tests.code_tests.helpers import fetch_file
+
 
 def _jsonsummary(filename):
-    url = f"{base_url}/jsonsummary/present/{filename}"
+    url = f"{getserver()}/jsonsummary/present/{filename}"
     return requests.get(url).json()
 
+
 def test_upload_update(tmp_path):
-    fsc = get_config()
-    filename = 'N20180329S0134.fits'
+    server = getserver()
+    filename = 'N20180329S0134.fits.bz2'
     print('Fetching File')
     fetch_file(filename, tmp_path)
 
     # upload the file to the server
     print("Uploading File...")
     fpfn = os.path.join(tmp_path, filename)
-    url = f"{base_url}/upload_file/{filename}"
+    url = f"{server}/upload_file/{filename}"
     print(f"upload URL is {url}")
 
     with open(fpfn, mode='rb') as f:
-        req = requests.post(url, data=f, timeout=10)
+        try:
+            req = requests.post(url, data=f, timeout=10)
+        except Exception:
+            print(f"Exception posting to {url}")
+            print(f"Response was: {req.text}")
+            raise
         assert req.status_code == http.HTTPStatus.OK
-        assert req.text == '[{"filename": "N20180329S0134.fits", "size": 4213440, "md5": "6a9688a89307afa7776bd23ea4ccae3f"}]'
+        assert req.text == '[{"filename": "N20180329S0134.fits.bz2", ' \
+                           '"size": 1059693, ' \
+                           '"md5": "1c1c2eb66af5a49218ea95a53b2b9f78"}]'
 
     # Now we basically poll jsonsummary, waiting for the ingest to complete
     print("Waiting for ingest to complete")
@@ -51,7 +57,7 @@ def test_upload_update(tmp_path):
 
     # Sanity check initial values
     jsf = js[0]
-    assert jsf['name'] == filename
+    assert jsf['filename'] == filename
     assert jsf['data_md5'] == '6a9688a89307afa7776bd23ea4ccae3f'
     assert jsf['release'] == '2018-09-29'
     assert jsf['raw_iq'] == 85
@@ -65,11 +71,13 @@ def test_upload_update(tmp_path):
 
     print("Testing old format header update by filename")
     # Create the header_update payload, old format
-    msg = '[{"filename": "N20180329S0134.fits", "values": {"qa_state": "Usable"}}]'
-    url = f"{base_url}/update_headers"
+    msg = '[{"filename": "N20180329S0134.fits", ' \
+          '"values": {"qa_state": "Usable"}}]'
+    url = f"{server}/update_headers"
     req = requests.post(url, data=msg, timeout=10)
     assert req.status_code == http.HTTPStatus.OK
-    assert req.text == '{"result": true, "value": true, "id": "N20180329S0134.fits"}'
+    assert req.text == '{"result": true, "value": true, ' \
+                       '"id": "N20180329S0134.fits"}'
     print("Waiting for ingest to complete")
     waiting = True
     timeout = 20
@@ -86,11 +94,13 @@ def test_upload_update(tmp_path):
 
     print("Testing old format header update by datalabel")
     # Create the header_update payload, old format
-    msg = '[{"data_label": "GN-2018A-FT-103-13-003", "values": {"raw_site": "iqany"}}]'
-    url = f"{base_url}/update_headers"
+    msg = '[{"data_label": "GN-2018A-FT-103-13-003", ' \
+          '"values": {"raw_site": "iqany"}}]'
+    url = f"{server}/update_headers"
     req = requests.post(url, data=msg, timeout=10)
     assert req.status_code == http.HTTPStatus.OK
-    assert req.text == '{"result": true, "value": true, "id": "GN-2018A-FT-103-13-003"}'
+    assert req.text == '{"result": true, "value": true, ' \
+                       '"id": "GN-2018A-FT-103-13-003"}'
     print("Waiting for ingest to complete")
     waiting = True
     timeout = 20
@@ -107,11 +117,14 @@ def test_upload_update(tmp_path):
 
     print("Testing new format header update by datalabel")
     # Create the header_update payload, old format
-    msg = '{"request": [{"data_label": "GN-2018A-FT-103-13-003", "values": {"release": "2123-04-05"}, "reject_new": true}], "batch": false}'
-    url = f"{base_url}/update_headers"
+    msg = '{"request": [{"data_label": "GN-2018A-FT-103-13-003", ' \
+          '"values": {"release": "2123-04-05"}, ' \
+          '"reject_new": true}], "batch": false}'
+    url = f"{server}/update_headers"
     req = requests.post(url, data=msg, timeout=10)
     assert req.status_code == http.HTTPStatus.OK
-    assert req.text == '{"result": true, "value": true, "id": "GN-2018A-FT-103-13-003"}'
+    assert req.text == '{"result": true, "value": true, ' \
+                       '"id": "GN-2018A-FT-103-13-003"}'
     print("Waiting for ingest to complete")
     waiting = True
     timeout = 20
@@ -128,11 +141,14 @@ def test_upload_update(tmp_path):
 
     print("Testing new format header update by filename")
     # Create the header_update payload, old format
-    msg = '{"request": [{"filename": "N20180329S0134.fits", "values": {"raw_site": "iq70"}, "reject_new": true}], "batch": false}'
-    url = f"{base_url}/update_headers"
+    msg = '{"request": [{"filename": "N20180329S0134.fits", ' \
+          '"values": {"raw_site": "iq70"}, "reject_new": true}], ' \
+          '"batch": false}'
+    url = f"{server}/update_headers"
     req = requests.post(url, data=msg, timeout=10)
     assert req.status_code == http.HTTPStatus.OK
-    assert req.text == '{"result": true, "value": true, "id": "N20180329S0134.fits"}'
+    assert req.text == '{"result": true, "value": true, ' \
+                       '"id": "N20180329S0134.fits"}'
     print("Waiting for ingest to complete")
     waiting = True
     timeout = 20
@@ -149,9 +165,11 @@ def test_upload_update(tmp_path):
 
     print("Testing new format bad request")
     # Create the header_update payload, old format
-    msg = '{"request": [{"typo": "N20180329S0134.fits", "values": {"raw_site": "iqany"}, "reject_new": true}], "batch": false}'
-    url = f"{base_url}/update_headers"
+    msg = '{"request": [{"typo": "N20180329S0134.fits", ' \
+          '"values": {"raw_site": "iqany"}, "reject_new": true}], ' \
+          '"batch": false}'
+    url = f"{server}/update_headers"
     req = requests.post(url, data=msg, timeout=10)
     assert req.status_code == http.HTTPStatus.BAD_REQUEST
-    assert req.text == '{"result": false, "value": "No filename or datalabel given"}'
-
+    assert req.text == '{"result": false, ' \
+                       '"value": "No filename or datalabel given"}'

@@ -3,8 +3,6 @@
 # They do no test the local environment where they are being run, they simply
 # hit server APIs and test the results against reference values in the tests.
 
-# The server to test against
-server = 'https://archive.gemini.edu'
 
 # we want to have pytest assert introspection in the helpers
 import pytest

@@ -2,11 +2,12 @@
 # fits storage server with a web server running and an empty database
 # then run these tests pointing at it.
 
-base_url = 'http://localhost:8000/'
 
 import requests
 import http
 from urllib.parse import quote
+
+from fits_storage_tests.testserver_tests.helpers import getserver
 
 
 def test_jsonqareport():
@@ -35,7 +36,7 @@ def test_jsonqareport():
                         "elip_std": 0.001,
                         "pa": 156.3,
                         "pa_std": 30.4,
-                        "nsamples": 42 ,
+                        "nsamples": 42,
                         "percentile_band": "IQ70",
                         "adaptive_optics": "True",
                         "ao_seeing": 0.75,
@@ -73,17 +74,18 @@ def test_jsonqareport():
         }
     ]
 
-    url = f"{base_url}/qareport"
+    url = f"{getserver()}/qareport"
     r = requests.post(url, json=json)
 
     assert r.status_code == http.HTTPStatus.OK
     assert r.text == ''
 
+
 def test_qareport():
     xml = "<qareport> </qareport>"
     postdata = quote(xml)
 
-    url = f"{base_url}/qareport"
+    url = f"{getserver()}/qareport"
     r = requests.post(url, data=postdata)
 
     # We don't support xml anymore, only json.
