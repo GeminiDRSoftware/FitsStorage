@@ -95,7 +95,7 @@ def jsonfilelist(selection, fields=None):
 
 
 header_fields = ('program_id', 'engineering', 'science_verification',
-                 'procmode', 'calibration_program', 'observation_id',
+                 'processing', 'calibration_program', 'observation_id',
                  'data_label', 'telescope', 'instrument', 'ut_datetime',
                  'local_time', 'observation_type', 'observation_class',
                  'object', 'ra', 'dec', 'azimuth', 'elevation',
