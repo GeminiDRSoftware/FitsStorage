@@ -70,3 +70,12 @@ def test_header(tmp_path):
     assert header.phot_standard is None
     assert header.proprietary_coordinates is False
     assert header.pre_image is False
+
+
+def test_engdata(tmp_path):
+    # This file is a CAL program, but has ENG_DATA = T
+    diskfile = make_diskfile('N20240531S0144.fits.bz2', tmp_path)
+    header = Header(diskfile)
+
+    assert header.program_id == 'GN-CAL20240601'
+    assert header.engineering is True

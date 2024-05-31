@@ -158,6 +158,11 @@ class Header(Base):
             self.engineering = True
             self.science_verification = False
 
+        # Do we have an engineering over-ride header?
+        eng_data = parser.engineering()
+        if eng_data is not None:
+            self.engineering = eng_data
+
         self.processing = parser.processing()
         self.observation_id = parser.observation_id()
         self.data_label = parser.data_label()

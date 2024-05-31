@@ -112,6 +112,9 @@ class FileParser(ABC):
     def elevation(self) -> Union[float, None]:
         raise NotImplementedError()
 
+    def engineering(self) -> Union[bool, None]:
+        raise NotImplementedError()
+
     def exposure_time(self) -> Union[float, None]:
         raise NotImplementedError()
 
@@ -340,6 +343,15 @@ class AstroDataFileParser(FileParser):
         if isinstance(elevation, str):
             elevation = dmstodeg(elevation)
         return elevation
+
+    def engineering(self) -> Union[bool, None]:
+        engdata = self.ad.phu.get('ENG_DATA')
+        if engdata is not None:
+            try:
+                engdata = bool(engdata)
+            except Exception:
+                engdata = None
+        return engdata
 
     def exposure_time(self) -> Union[float, None]:
         exposure_time = self._try_or_none(lambda: self.ad.exposure_time(), "Unable to parse exposure time from header")
