@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<queryResult>
+    <programs>
+        <program>
+            <semester>2009B</semester>
+            <title>Star Formation Rates</title>
+            <reference>GN-2009B-Q-123</reference>
+            <active>No</active>
+            <completed>No</completed>
+            <investigators>
+                <investigator pi="true">
+                    <name>Mickey Mouse</name>
+                    <email>mm@disney.edu</email>
+                </investigator>
+                <investigator pi="false">
+                    <name>Daffy Duck</name>
+                    <email>dd@disney.ac.uk</email>
+                </investigator>
+            </investigators>
+            <notifyPi>Yes</notifyPi>
+            <rollover>No</rollover>
+            <abstrakt>Understanding galaxies is hard. We did some things and we need to do more things.</abstrakt>
+            <scienceBand>3</scienceBand>
+            <supportPartner>United Kingdom</supportPartner>
+            <partners>
+                <partner>
+                    <name>United Kingdom</name>
+                    <hoursAllocated>15.0</hoursAllocated>
+                </partner>
+            </partners>
+            <ngoEmail>ngoperson@gemini.edu</ngoEmail>
+            <contactScientistEmail>csperson@gemini.edu, anothercs@gemini.edu</contactScientistEmail>
+            <tooStatus>None</tooStatus>
+            <thesis>Yes</thesis>
+            <allocatedTime>54000000</allocatedTime>
+            <remainingTime>44596167</remainingTime>
+        </program>
+        <program>
+            <semester>2011A</semester>
+            <title>Spectroscopic Investigation of stars</title>
+            <reference>GN-2011A-Q-111</reference>
+            <active>No</active>
+            <completed>No</completed>
+            <investigators>
+                <investigator pi="true">
+                    <name>Pee Eye</name>
+                    <email>peeeyet@astro.ca, anotherpi@astro.ca</email>
+                </investigator>
+                <investigator pi="false">
+                    <name>Co eye</name>
+                    <email>coeye@astro.ca</email>
+                </investigator>
+            </investigators>
+            <notifyPi>Yes</notifyPi>
+            <rollover>No</rollover>
+            <abstrakt>We need more spectras please. kthxbye</abstrakt>
+            <scienceBand>2</scienceBand>
+            <supportPartner>Canada</supportPartner>
+            <partners>
+                <partner>
+                    <name>Canada</name>
+                    <hoursAllocated>18.0</hoursAllocated>
+                </partner>
+            </partners>
+            <ngoEmail>ngo@ngo.gc.ca</ngoEmail>
+            <contactScientistEmail>ceeess@gemini.edu, cs@gemini.edu</contactScientistEmail>
+            <tooStatus>None</tooStatus>
+            <thesis>No</thesis>
+            <allocatedTime>64800000</allocatedTime>
+            <remainingTime>11623620</remainingTime>
+        </program>
+        <program>
+            <title>GN-ENG20091222</title>
+            <reference>GN-ENG20091222</reference>
+            <active>Yes</active>
+            <completed>No</completed>
+            <investigators/>
+            <notifyPi>Yes</notifyPi>
+            <rollover>No</rollover>
+            <scienceBand></scienceBand>
+            <ngoEmail></ngoEmail>
+            <contactScientistEmail></contactScientistEmail>
+            <tooStatus>None</tooStatus>
+            <thesis>No</thesis>
+            <allocatedTime>0</allocatedTime>
+            <remainingTime>0</remainingTime>
+        </program>
+        <program>
+            <title>GN-CAL20110701</title>
+            <reference>GN-CAL20110701</reference>
+            <active>Yes</active>
+            <completed>No</completed>
+            <investigators/>
+            <notifyPi>Yes</notifyPi>
+            <rollover>No</rollover>
+            <scienceBand></scienceBand>
+            <ngoEmail></ngoEmail>
+            <contactScientistEmail></contactScientistEmail>
+            <tooStatus>None</tooStatus>
+            <thesis>No</thesis>
+            <allocatedTime>0</allocatedTime>
+            <remainingTime>0</remainingTime>
+        </program>
+        <program>
+            <title>GN-ENG20170525</title>
+            <reference>GN-ENG20170525</reference>
+            <active>Yes</active>
+            <completed>No</completed>
+            <investigators/>
+            <notifyPi>Yes</notifyPi>
+            <rollover>No</rollover>
+            <scienceBand></scienceBand>
+            <ngoEmail></ngoEmail>
+            <contactScientistEmail></contactScientistEmail>
+            <tooStatus>None</tooStatus>
+            <thesis>No</thesis>
+            <allocatedTime>0</allocatedTime>
+            <remainingTime>0</remainingTime>
+        </program>
+    </programs>
+</queryResult>
