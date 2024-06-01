@@ -4,14 +4,13 @@ This module contains the ReduceQueueEntry ORM class.
 """
 import datetime
 
-from sqlalchemy import Column, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Boolean, DateTime, Text, ARRAY
 
 from fits_storage.core.orm import Base
 from .ormqueuemixin import OrmQueueMixin
 
-from fits_storage.core.orm.header import Header
-
+from fits_storage.config import get_config
 
 class ReduceQueueEntry(OrmQueueMixin, Base):
     """
@@ -26,7 +25,14 @@ class ReduceQueueEntry(OrmQueueMixin, Base):
     )
 
     id = Column(Integer, primary_key=True)
-    filenames = Column(ARRAY(Text))
+    # Note, ARRAY isn't supported by SQLite. Kludge this here so that the
+    # table can be built for SQLite testing environments even though this table
+    # would never be used in the real world on an SQLite install.
+    fsc = get_config()
+    if fsc.using_sqlite:
+        filenames = Column(Text)
+    else:
+        filenames = Column(ARRAY(Text))
     inprogress = Column(Boolean, index=True)
     fail_dt = Column(DateTime, index=True)
     added = Column(DateTime)

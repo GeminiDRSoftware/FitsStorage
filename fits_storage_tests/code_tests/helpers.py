@@ -9,7 +9,6 @@ from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
 
 from fits_storage.db import sessionfactory
-from fits_storage.db.createtables import create_tables, drop_tables
 
 from fits_storage.config import get_config
 
@@ -120,6 +119,10 @@ def make_empty_testing_db_env(tmpdir):
         is_server = True
         """
     fsc = get_config(configstring=configstring, builtinonly=True, reload=True)
+
+    # Note - must do this import *after* the call to get_config() above this
+    # import references the fsc at import time.
+    from fits_storage.db.createtables import create_tables, drop_tables
 
     session = sessionfactory(reload=True)
     drop_tables(session)
