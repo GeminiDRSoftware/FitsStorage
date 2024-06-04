@@ -1,14 +1,14 @@
 from sqlalchemy import Column
-from sqlalchemy import Integer, Text, Boolean
+from sqlalchemy import Integer, Text
 
 from fits_storage.core.orm import Base
 
-# ------------------------------------------------------------------------------
+
 class ObslogComment(Base):
     """
-    This is the ORM class for storing observation log comments retrieved from the
-    ODB. Note, these are not related (in the FitsStorage world) to the obslog files
-    we also store.
+    This is the ORM class for storing observation log comments retrieved from
+    the ODB. Note, these are not related (in the FitsStorage world) to the
+    obslog files we also store.
 
     """
     __tablename__ = 'obslog_comment'
@@ -20,7 +20,8 @@ class ObslogComment(Base):
 
     def __init__(self, program_id, data_label, comment):
         """
-        Create an :class:`~ObslogComment` record for the given program id, data label and comment text
+        Create an ObslogComment record for the given program id, data label,
+        and comment text
 
         Parameters
         ----------
