@@ -5,6 +5,13 @@
 # use those in the tests, and they do download data from the archive, but
 # everything here is standalone and doesn't require a target server.
 
+from fits_storage.config import get_config
+configstring = f"""
+        [DEFAULT]
+        is_server = True
+        """
+fsc = get_config(configstring=configstring, builtinonly=True, reload=True)
+
 from fits_storage_tests.code_tests.test_config import *
 from fits_storage_tests.code_tests.test_file import *
 from fits_storage_tests.code_tests.test_diskfile import *

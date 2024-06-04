@@ -5,6 +5,8 @@ from fits_storage.core.orm.header import Header
 
 from fits_storage_tests.code_tests.helpers import make_diskfile
 
+from fits_storage.config import get_config
+fsc = get_config(builtinonly=True, reload=True)
 
 def test_header(tmp_path):
     diskfile = make_diskfile('N20200127S0023.fits.bz2', tmp_path)
