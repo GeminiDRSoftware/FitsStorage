@@ -1,7 +1,11 @@
 #! /usr/bin/env python3
-
+import http
 from optparse import OptionParser
 from datetime import datetime
+
+import requests
+import requests.utils
+import json
 
 from fits_storage.logger import logger, setdebug, setdemon
 
@@ -88,7 +92,28 @@ if options.dryrun:
 # Are we ingesting locally, or relaying to a remote host?
 if options.relayto:
     logger.info("Relaying programs to remote host: %s", options.relayto)
-    logger.info("Not implemented yet")
+    rs = requests.Session()
+    cookie_dict = {'gemini_fits_upload_auth': fsc.export_auth_cookie}
+    requests.utils.add_dict_to_cookiejar(rs.cookies, cookie_dict)
+    url = "%s/ingest_programs" % options.relayto
+    data = json.dumps(programs)
+    try:
+        req = rs.post(url, data=data, timeout=30)
+    except requests.Timeout:
+        logger.error(f"Timeout posting {url}", exc_info=True)
+    except requests.ConnectionError:
+        logger.error(f"ConnectionError posting {url}", exc_info=True)
+    except requests.RequestException:
+        logger.error(f"RequestException posting {url}", exc_info=True)
+
+    logger.debug("Got http status %s and response %s",
+                 req.status_code, req.text)
+
+    if req.status_code != http.HTTPStatus.OK:
+        logger.error("Got bad HTTP status %s POSTing to %s", req.status_code,
+                     url)
+    else:
+        logger.info("POSTed ODB successfully to %s", url)
 else:
     with session_scope() as session:
         update_programs(session, programs, logger)

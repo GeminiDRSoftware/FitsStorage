@@ -10,3 +10,4 @@ from fits_storage_tests.testserver_tests.\
     test_upload_ingest_against_web_server import *
 from fits_storage_tests.testserver_tests.\
     test_jsonqareport_against_web_server import *
+from fits_storage_tests.testserver_tests.test_ingest_programs import *

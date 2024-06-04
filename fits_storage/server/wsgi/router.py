@@ -60,6 +60,7 @@ from fits_storage.web.obslogs import obslogs
 from fits_storage.web.program import program_info, program_info_json
 from fits_storage.web.logcomments import log_comments
 from fits_storage.web.programs import programs
+from fits_storage.web.ingest_programs import ingest_programs
 
 from fits_storage.web.miscfiles import miscfiles
 
@@ -176,7 +177,7 @@ url_map = Map([
 
     Rule('/update_headers', update_headers, methods=['POST']),
     # Rule('/ingest_files', ingest_files, methods=['POST']),
-    # Rule('/ingest_programs', ingest_programs, methods=['POST']),
+    Rule('/ingest_programs', ingest_programs, methods=['POST']),
 
     # Publication handling
     # Rule('/ingest_publications', ingest_publications, methods=['POST']),
