@@ -5,6 +5,7 @@ from fits_storage.db.list_headers import list_programs
 
 from . import templating
 
+
 @templating.templated("programs/programs.html")
 def programs(selection):
     """
@@ -20,8 +21,8 @@ def programs(selection):
     title_suffix = ' '.join(things)
 
     return dict(
-        selection    = selection,
-        title_suffix = title_suffix,
-        no_programs  = len(prgms) == 0,
-        programs     = prgms
+        selection=selection,
+        title_suffix=title_suffix,
+        no_programs=len(prgms) == 0,
+        programs=prgms
         )

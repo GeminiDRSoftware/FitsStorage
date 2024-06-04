@@ -4,18 +4,19 @@ This module deals with displaying information about programs.
 
 from html import escape
 from . import templating
-from .templating import SkipTemplateError
-from ..orm.program import Program
+from fits_storage.server.orm.program import Program
 
-from ..utils.web import get_context, Return
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
 
 
 @templating.templated("program.html")
 def program_info(program_id):
     session = get_context().session
 
-    ret_dict = { 'program_id': program_id }
-    prog = session.query(Program).filter(Program.program_id==program_id).first()
+    ret_dict = {'program_id': program_id}
+    prog = session.query(Program).\
+        filter(Program.program_id == program_id).first()
 
     found = prog is not None
 
@@ -43,11 +44,12 @@ def program_info_json(program_id):
     # ripping the html logic and added a json template.
     session = get_context().session
 
-    ret_dict = { 'program_id': program_id }
-    prog = session.query(Program).filter(Program.program_id==program_id).first()
+    ret_dict = {'program_id': program_id}
+    prog = session.query(Program).\
+        filter(Program.program_id == program_id).first()
 
     if prog is None:
-        raise SkipTemplateError(Return.HTTP_NOT_FOUND)
+        raise templating.SkipTemplateError(Return.HTTP_NOT_FOUND)
 
     found = prog is not None
 

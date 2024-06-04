@@ -57,6 +57,10 @@ from fits_storage.web.preview import preview
 
 from fits_storage.web.obslogs import obslogs
 
+from fits_storage.web.program import program_info, program_info_json
+from fits_storage.web.logcomments import log_comments
+from fits_storage.web.programs import programs
+
 from fits_storage.web.miscfiles import miscfiles
 
 from .routing import SequenceConverter, SelectionConverter
@@ -202,12 +206,12 @@ url_map = Map([
     Rule('/gmoscaltwilightfiles', gmoscaltwilightfiles),            # The GMOS twilight flat list of files
     Rule('/gmoscalbiasfiles/<selection:selection>', gmoscalbiasfiles),  # The GMOS bias list of files
 
-    #
-    # # Group of URIs dealing with program/publication
-    # Rule('/programinfo/<program_id>', program_info),                # Displays data from a program
-    # Rule('/programinfojson/<program_id>', program_info_json),                # Displays data from a program
-    # Rule('/logcomments/<selection(SEL):selection>', log_comments),
-    # Rule('/programs/<selection:selection>', programs),
+
+    # Group of URIs dealing with program/publication
+    Rule('/programinfo/<program_id>', program_info),                # Displays data from a program
+    Rule('/programinfojson/<program_id>', program_info_json),                # Displays data from a program
+    Rule('/logcomments/<selection(SEL):selection>', log_comments),
+    Rule('/programs/<selection:selection>', programs),
 
     # # Obslogs get their own summary-like handler
     # # Both actions use the same function, with 'sumtype' specifiying which
