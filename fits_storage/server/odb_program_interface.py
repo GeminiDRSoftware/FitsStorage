@@ -301,7 +301,7 @@ def fetch_odb_xml(odb, semester, active=False, notifypi=None, logger=None):
         logger = DummyLogger()
 
     # Construct the ODB URL
-    url = "http://%s:8442/odbbrowser/programs" % odb
+    url = "http://%s:8442/odbbrowser/observations" % odb
     if semester is None:
         logger.info("Fetching %s XML program info for all semesters" % odb)
         url += "?programSemester=20*"

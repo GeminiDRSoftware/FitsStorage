@@ -14,8 +14,6 @@ from fits_storage.gemini_metadata_utils import GeminiProgram, \
     gemini_gain_settings, gemini_readspeed_settings, obs_types, obs_classes, \
     gemini_welldepth_settings, reduction_states, gemini_processing_modes
 
-from fits_storage.config import get_config
-fsc = get_config()
 
 # Enumerated Column types
 PROCMODE_ENUM = Enum(*gemini_processing_modes, name='procmode')
@@ -33,6 +31,12 @@ DETECTOR_READSPEED_ENUM = Enum('None', *gemini_readspeed_settings,
                                name='detector_readspeed_setting')
 DETECTOR_WELLDEPTH_ENUM = Enum('None', *gemini_welldepth_settings,
                                name='detector_welldepth_setting')
+
+from fits_storage.config import get_config
+fsc = get_config()
+
+if fsc.is_server:
+    from fits_storage.server.orm.obslog_comment import ObslogComment
 
 
 class Header(Base):
@@ -103,7 +107,6 @@ class Header(Base):
     qa_state = Column(QASTATE_ENUM, index=True)
     release = Column(Date)
     reduction = Column(REDUCTION_STATE_ENUM, index=True)
-    # added per Trac #264, Support for Gemini South All Sky Camera
     site_monitoring = Column(Boolean)
     types = Column(Text)
     phot_standard = Column(Boolean)
@@ -113,6 +116,18 @@ class Header(Base):
     if not fsc.using_sqlite:
         __table__args__ = (Index('ix_header_ut_datetime_desc_nullslast',
                                  nullslast(desc(ut_datetime))))
+
+    if fsc.is_server:
+        # Note, we don't define ObslogComment.data_label to be a foreign key to
+        # Header.data_label as that would prevent us ingesting and storing
+        # obslog comments for which a header entry does not exist (yet), which
+        # would be irritating when re-building DB and preserving historical
+        # obslog comments which might not be in the ODB anymore.
+        obslog_comments = relationship(ObslogComment,
+                                       foreign_keys=ObslogComment.data_label,
+                                       primaryjoin='Header.data_label=='
+                                                   'ObslogComment.data_label'
+                                       )
 
     def __init__(self, diskfile, logger=DummyLogger()):
         self.diskfile_id = diskfile.id

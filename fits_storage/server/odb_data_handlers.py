@@ -43,7 +43,7 @@ def update_notifications(session, progdicts, logger=DummyLogger()):
         query = session.query(Notification).filter(Notification.label == label)
         if query.count() == 0:
             # This notification doesn't exist in DB yet.
-            # Only add it if notifyPi is Yes and it's a valid program ID
+            # Only add it if notifyPi is Yes, and it's a valid program ID
             gp = GeminiProgram(prog['id'])
             if prog['notify'] and gp.valid:
                 n = Notification(label)
@@ -137,8 +137,7 @@ def update_programs(session, progdicts, logger=DummyLogger()):
                     olc_obj.comment = olc['comment']
                 else:
                     # Add a new ObslogComment
-                    olc_obj = ObslogComment(prog['id'],
-                                            olc['label'], olc['comment'])
+                    olc_obj = ObslogComment(olc['label'], olc['comment'])
                     session.add(olc_obj)
             session.commit()
             logger.info("Processed %s ObsLogComments", ncoms)

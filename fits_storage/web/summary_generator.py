@@ -441,16 +441,23 @@ class SummaryGenerator(object):
         """
         return header.processing
 
-    def datalabel(self, header, comment, **kw):
+    def datalabel(self, header, **kw):
         """
         Generates the datalabel column data
         """
+        # Unlikely in practice that there's more than one obslog_comment, but
+        # handle that, just in case
+        comment = None
+        if header.obslog_comments is not None:
+            comment = ''
+            for c in header.obslog_comments:
+                comment += c.comment
         # We parse the data_label to create links to the project id and obs id
         return dict(
             links     = self.links == ALL_LINKS,
             datalabel = str(header.data_label),
             dl        = GeminiDataLabel(header.data_label),
-            comment   = comment.comment if comment is not None else None,
+            comment   = comment,
             display_prog  = False if header.calibration_program else True
             )
 

@@ -9,30 +9,22 @@ class ObslogComment(Base):
     This is the ORM class for storing observation log comments retrieved from
     the ODB. Note, these are not related (in the FitsStorage world) to the
     obslog files we also store.
-
     """
     __tablename__ = 'obslog_comment'
 
     id = Column(Integer, primary_key=True)
-    program_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
     comment = Column(Text)
 
-    def __init__(self, program_id, data_label, comment):
-        """
-        Create an ObslogComment record for the given program id, data label,
-        and comment text
+    # Note - we don't define data_label to be a foreign key into header,
+    # because we want to allow the ingest of obslog comments for which the
+    # fits file hasn't been ingested (yet). So we define the foreign key
+    # in the *relationship* in the header table, but not as a constraint
+    # in the obslog_comment table.
 
-        Parameters
-        ----------
-        program_id : str
-            Program ID for the Obslog comment
-        data_label : str
-            Datalabel for the Obslog comment
-        comment : str
-            Comment to save
+    def __init__(self, data_label, comment):
         """
-        self.program_id = program_id
+        Create an ObslogComment record for the given data label, and comment
+        """
         self.data_label = data_label
         self.comment = comment
-
