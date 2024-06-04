@@ -97,7 +97,6 @@ if fsc.is_server:
     from fits_storage.server.orm.program import Program
     from fits_storage.server.orm.publication import Publication
     from fits_storage.server.orm.programpublication import ProgramPublication
-    from fits_storage.server.orm.logcomments import LogComments
     from fits_storage.server.orm.obslog import Obslog
     from fits_storage.server.orm.obslog_comment import ObslogComment
     from fits_storage.server.orm.reduction import Reduction
