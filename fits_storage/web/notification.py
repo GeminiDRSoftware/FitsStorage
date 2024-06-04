@@ -3,7 +3,7 @@ This module contains the notification html generator function,
 and odb import via web function
 """
 from fits_storage.server.orm.notification import Notification
-from fits_storage.server.odb_program_interface import ingest_odb_xml
+#from fits_storage.server.odb_program_interface import ingest_odb_xml
 
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return

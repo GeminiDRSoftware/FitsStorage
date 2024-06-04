@@ -1,13 +1,10 @@
 from sqlalchemy import Column
-from sqlalchemy import Integer, Text, Boolean, Float, DateTime
-from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
-
+from sqlalchemy import Integer, Text
 from sqlalchemy.ext.associationproxy import association_proxy
 
 from fits_storage.core.orm import Base
 
-# ------------------------------------------------------------------------------
+
 class Program(Base):
     """
     This is the ORM class for storing program details fetched from the ODB.
@@ -20,26 +17,29 @@ class Program(Base):
     pi_coi_names = Column(Text, index=True)
     title = Column(Text)
     abstract = Column(Text)
-    piemail = Column(Text)
-    coiemail = Column(Text)
-    science_band = Column(Integer)
-    partners = Column(Text)
-    rollover = Column(Boolean)
-    too = Column(Boolean)
-    completion = Column(Text)
-    allocated_hours = Column(Float)
-    remaining_hours = Column(Float)
-    last_refreshed = Column(DateTime, index=True, server_default=func.now(), onupdate=func.now())
+
     publications = association_proxy('program_publications', 'publication')
 
-    def __init__(self, program_id):
+    def __init__(self, progdict):
         """
-        Create a new program with the given program id
+        Create a new Program instance, using values from the supplied
+        program dictionary
+        """
+
+        self.program_id = progdict.get('id')
+        self.update(progdict)
+
+    def update(self, progdict):
+        """
+        Update a program, or populate fields in a new program, using values
+        from the supplied dictionary. This updates all fields apart from the
+        program ID.
 
         Parameters
         ----------
-        program_id : str
-            Program ID
+        progdict : dict
+            Dictionary containing values to populate
         """
-        self.program_id = program_id
-
+        self.pi_coi_names = progdict.get('investigator_names')
+        self.title = progdict.get('title')
+        self.abstract = progdict.get('abstract')

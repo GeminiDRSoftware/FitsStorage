@@ -3,21 +3,28 @@ Utilities to interface with the ODB. This is for science program data, which
 includes:
 - program info (ie to populate the programs table)
 - contact info for new data email notifications.
-- obslog comments
+- obslog comments. These are ingested at the same time we ingest program info.
 
 This code talks to the ODB "odbbrowser/programs" interface, and parses the
-XML that comes back into a python data structure (list of dictionries) that can
+XML that comes back into a python data structure (list of dictionaries) that can
 be used natively and also represented by a JSON document.
+
+The data from the ODB is used by both the summit fits servers (which send the
+new data notifications) and the archive (which needs the program info and
+obslog comments). Currently, the ODB is network-visible to the summit fits
+servers, but not to the archive server, so we use the summit fits servers to
+"relay" the data to the archvie server by HTTP POSTing the JSON document
+containing this data to a URL on the archive server.
 """
 import requests
 import http
 
 from xml.dom.minidom import parseString
 
-from fits_storage.server.orm.notification import Notification
 from fits_storage.gemini_metadata_utils import GeminiProgram
 
 from fits_storage.logger import DummyLogger
+
 
 def extract_data(node, replace=True):
     """
@@ -78,11 +85,11 @@ def get_programs(xdoc):
 
     Returns
     -------
-    iterable of :class:`~Program` data
+    iterable of :class:`~OdbProgram` data
     """
     for pg in xdoc.getElementsByTagName("program"):
         try:
-            yield Program(pg)
+            yield OdbProgram(pg)
         except NoInfoError:
             # ok, no investigators
             pass
@@ -97,7 +104,7 @@ class NoInfoError(Exception):
         self.message = message
 
 
-class Program(object):
+class OdbProgram(object):
     def __init__(self, program_node):
         self.root = program_node
 
@@ -198,6 +205,7 @@ class Program(object):
     def get_semester(self):
         return extract_element_by_tag_name(self.root, 'semester',
                                            default_val="No semester")
+
     def get_notify(self):
         return extract_element_by_tag_name(self.root, "notifyPi",
                                            default_val="No", replace=False)
@@ -212,7 +220,7 @@ def build_odb_progdicts(programs):
 
     Parameters
     ----------
-    programs : list of :class:`~Program`
+    programs : list of :class:`~OdbProgram`
         The programs to convert to a list of dicts
 
     Returns
@@ -230,10 +238,11 @@ def build_odb_progdicts(programs):
             odb_data['ngoEmail'] = program.get_ngo_email()
             odb_data['too'] = program.get_too()
             odb_data['abstract'] = program.get_abstract()
-            odb_data['investigatorNames'], odb_data['piEmail'] = \
+            odb_data['investigator_names'], odb_data['piEmail'] = \
                 program.get_investigators()
             odb_data['observations'] = program.get_obslog_comms()
             odb_data['notify'] = program.get_notify() == 'Yes'
+            odb_data['obslog_comments'] = program.get_obslog_comms()
             progdicts.append(odb_data)
         except NoInfoError as exception:
             print(exception.message)
@@ -244,6 +253,7 @@ def build_odb_progdicts(programs):
 Notifications utils - add / update notification table entries from ODB XML
 """
 
+
 def get_odb_prog_dicts(odb, semester, active=False, notifypi=None, logger=None,
                        xml_inject=None):
     """
@@ -253,7 +263,7 @@ def get_odb_prog_dicts(odb, semester, active=False, notifypi=None, logger=None,
     odb should be the hostname of the ODB server to query
     semester is a semester name (eg 2012A) or None to fetch all active programs
     active sets programActive=yes in the ODB URL
-    notifypi sets programNotifyPi=trus in the ODB URL
+    notifypi sets programNotifyPi=true in the ODB URL
     logger is where log messages will be written.
 
     if xml_inject is set, the http query to the ODB will be skipped and the xml
@@ -273,6 +283,7 @@ def get_odb_prog_dicts(odb, semester, active=False, notifypi=None, logger=None,
     # Parse the XML and build the dictionary to return.
     dom = parseString(xml)
     return build_odb_progdicts(get_programs(dom))
+
 
 def fetch_odb_xml(odb, semester, active=False, notifypi=None, logger=None):
     """
@@ -321,71 +332,3 @@ def fetch_odb_xml(odb, semester, active=False, notifypi=None, logger=None):
 
     return xml
 
-
-def update_notifications(session, progdicts, logger=None):
-    """
-    Update notifications in the local Fits Server to match progdicts, which
-    is a list of dictionaries containing the program info
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.session.Session`
-        SQL Alchemy session to operate in
-    progdicts : list of dictionaries
-            progam information from ODB
-    logger: logger-like instance or None
-            logger to write messages to
-
-    Returns
-    -------
-    None
-
-    """
-    nprogs = 0
-    for prog in progdicts:
-        nprogs += 1
-
-        # Search for this program ID in notification table
-        label = "Auto - %s" % prog['id']
-        query = session.query(Notification).filter(Notification.label == label)
-        if query.count() == 0:
-            # This notification doesn't exist in DB yet.
-            # Only add it if notifyPi is Yes and it's a valid program ID
-            gp = GeminiProgram(prog['id'])
-            if prog['notify'] and gp.valid:
-                n = Notification(label)
-                n.selection = "%s/science" % prog['id']
-                n.piemail = prog['piEmail']
-                n.ngoemail = prog['ngoEmail']
-                n.csemail = prog['csEmail']
-                logger.info("Adding notification %s" % label)
-                session.add(n)
-                session.commit()
-            else:
-                if not gp.valid:
-                    logger.warning("Did not add %s as %s is not a valid program"
-                                   " ID" % (label, prog['id']))
-                if not prog['notify']:
-                    logger.debug("Did not add %s as notifyPi is No" % label)
-        else:
-            # Already exists in DB, check for updates.
-            logger.debug("%s is already present, check for updates" % label)
-            n = query.first()
-            if n.piemail != prog['piEmail']:
-                logger.info("Updating PIemail for %s" % label)
-                n.piemail = prog['piEmail']
-            if n.ngoemail != prog['ngoEmail']:
-                logger.info("Updating NGOemail for %s" % label)
-                n.ngoemail = prog['ngoEmail']
-            if n.csemail != prog['csEmail']:
-                logger.info("Updating CSemail for %s" % label)
-                n.csemail = prog['csEmail']
-
-            session.commit()
-            # If notifyPi is No, delete it from the notification table
-            if not prog['notify']:
-                logger.info("Deleting %s: notifyPi set to No")
-                session.delete(n)
-                session.commit()
-
-    logger.info("Processed %s programs" % nprogs)

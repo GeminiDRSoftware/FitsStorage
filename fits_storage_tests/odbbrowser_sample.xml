@@ -34,6 +34,21 @@
             <thesis>Yes</thesis>
             <allocatedTime>54000000</allocatedTime>
             <remainingTime>44596167</remainingTime>
+            <observations>
+                <observation>
+                    <name>fred</name>
+                    <obsLog>
+                        <dataset>
+                            <id>GN-2009B-Q-123-45-67</id>
+                            <record>Full of stars</record>
+                        </dataset>
+                        <dataset>
+                            <id>GN-2009B-Q-123-45-68</id>
+                            <record>Full of galaxies</record>
+                        </dataset>
+                    </obsLog>
+                </observation>
+            </observations>
         </program>
         <program>
             <semester>2011A</semester>
