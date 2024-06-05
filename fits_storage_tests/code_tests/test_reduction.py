@@ -1,9 +1,12 @@
 from fits_storage.server.orm.reduction import Reduction
 
 from fits_storage.core.orm.header import Header
-from fits_storage_tests.code_tests.helpers import make_diskfile
+from fits_storage_tests.code_tests.helpers import get_test_config, make_diskfile
+
 
 def test_reduction(tmp_path):
+    get_test_config()
+
     # We use this RAW GNIRS file as a basis
     data_file = 'N20180524S0117.fits'
 

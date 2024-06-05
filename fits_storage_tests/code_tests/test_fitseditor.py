@@ -1,11 +1,12 @@
 import astrodata
 
-from fits_storage_tests.code_tests.helpers import make_diskfile
+from fits_storage_tests.code_tests.helpers import get_test_config, make_diskfile
 
 from fits_storage.server.fitseditor import FitsEditor
 
-
 def get_from_file(fpfn, headers=[]):
+    get_test_config()
+
     ad = astrodata.open(fpfn)
     d = {}
     d['qa_state'] = ad.qa_state()
@@ -20,6 +21,8 @@ def get_from_file(fpfn, headers=[]):
 
 
 def test_fitseditor(tmp_path):
+    get_test_config()
+
     diskfile = make_diskfile('N20200127S0023.fits.bz2', tmp_path)
     df_fp = diskfile.fullpath
 

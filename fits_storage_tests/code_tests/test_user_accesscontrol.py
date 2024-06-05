@@ -2,8 +2,8 @@ import pytest
 
 from fits_storage.web.user import needs_login, needs_cookie
 
+from fits_storage_tests.code_tests.helpers import get_test_config
 from fits_storage.config import get_config
-
 badcookie_message = "This resource can only be accessed by providing a valid " \
                     "magic cookie, which this request did not."
 
@@ -11,6 +11,9 @@ notloggedin_message = "You need to be logged in to access this resource"
 
 notstaff_message = "You need to be logged in as Gemini Staff member to access" \
                    " this resource"
+
+get_test_config()
+
 
 class FakeUser(object):
     username = None
@@ -25,14 +28,17 @@ class FakeUser(object):
         self.misc_upload = misc_upload
         self.superuser = superuser
 
+
 class FakeRespError(Exception):
     pass
+
 
 class FakeResp(object):
 
     def client_error(self, code=None, content_type=None, annotate=None,
                      message=None):
         raise FakeRespError(message)
+
 
 class FakeCtx(object):
     cookies = None
@@ -54,6 +60,7 @@ def test_cookie_access_good():
 
     assert thefunction() == "OK"
 
+
 def test_cookie_access_badvalue():
 
     fakectx = FakeCtx(cookies={'good_cookie_name': 'bad_value'})
@@ -66,6 +73,7 @@ def test_cookie_access_badvalue():
     with pytest.raises(Exception) as e:
         thefunction()
     assert e.value.args[0] == badcookie_message
+
 
 def test_cookie_access_badcookie():
 
@@ -104,6 +112,7 @@ def test_login_access_user():
 
     assert thefunction() == "OK"
 
+
 def test_login_access_notstaff():
     fakeuser = FakeUser()
     fakectx = FakeCtx(user=fakeuser)
@@ -116,6 +125,7 @@ def test_login_access_notstaff():
     with pytest.raises(Exception) as e:
         thefunction()
     assert e.value.args[0] == notstaff_message
+
 
 def test_login_access_staff():
     fakeuser = FakeUser(staff=True)
@@ -150,6 +160,7 @@ def test_login_bypass_false():
         thefunction()
     assert e.value.args[0] == notloggedin_message
 
+
 def test_login_bypass_true():
     configtext = """
         [DEFAULT]
@@ -168,6 +179,7 @@ def test_login_bypass_true():
         return "OK"
 
     assert thefunction() == 'OK'
+
 
 def test_cookie_bypass_true():
     configtext = """

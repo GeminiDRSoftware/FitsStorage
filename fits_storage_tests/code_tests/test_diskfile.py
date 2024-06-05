@@ -1,12 +1,13 @@
 import os.path
 import hashlib
 
-from fits_storage_tests.code_tests.helpers import make_diskfile
+from fits_storage_tests.code_tests.helpers import get_test_config, make_diskfile
 
 from astrodata import AstroData
 
 
 def test_diskfile(tmp_path):
+    get_test_config()
     diskfile = make_diskfile('N20200127S0023.fits.bz2', tmp_path)
 
     assert diskfile.filename == 'N20200127S0023.fits.bz2'

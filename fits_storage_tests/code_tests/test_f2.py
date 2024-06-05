@@ -1,10 +1,11 @@
 from fits_storage.core.orm.header import Header
 from fits_storage.cal.orm.f2 import F2
 
-from fits_storage_tests.code_tests.helpers import make_diskfile
+from fits_storage_tests.code_tests.helpers import get_test_config, make_diskfile
 
 
 def test_f2(tmp_path):
+    get_test_config()
     diskfile = make_diskfile('S20181219S0333.fits.bz2', tmp_path)
     header = Header(diskfile)
     f2 = F2(header, diskfile.get_ad_object)

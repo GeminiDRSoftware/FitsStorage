@@ -128,3 +128,15 @@ def make_empty_testing_db_env(tmpdir):
     session = sessionfactory(reload=True)
     drop_tables(session)
     create_tables(session)
+
+def get_test_config():
+    """
+    This configures FitsStorage for code testing. Some tests may build their
+    own config, but this initializes a minimal stable config for those that
+    don't.
+    """
+    configstring = f"""
+            [DEFAULT]
+            is_server = True
+            """
+    get_config(configstring=configstring, builtinonly=True, reload=True)

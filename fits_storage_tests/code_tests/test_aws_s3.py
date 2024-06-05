@@ -1,3 +1,4 @@
+import pytest
 import os.path
 import random
 import logging
@@ -6,9 +7,11 @@ from fits_storage.server.aws_s3 import Boto3Helper
 from fits_storage.config import get_config
 from fits_storage.core.hashes import md5sum
 
-fsc = get_config()
+fsc = get_config(builtinonly=True, reload=True)
 
 
+@pytest.mark.skipif(fsc.testing_aws_access_key == '',
+                    reason='Current config does not provide test aws keys')
 def test_aws_s3(tmp_path):
     s3staging = os.path.join(tmp_path, 's3_staging')
     storageroot = os.path.join(tmp_path, 'storage_root')

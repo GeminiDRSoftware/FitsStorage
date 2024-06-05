@@ -1,10 +1,12 @@
 from fits_storage.core.orm.header import Header
 from fits_storage.cal.orm.michelle import Michelle
 
-from fits_storage_tests.code_tests.helpers import make_diskfile
+from fits_storage_tests.code_tests.helpers import get_test_config, make_diskfile
 
 
 def test_michelle(tmp_path):
+    get_test_config()
+
     data_file = 'N20100119S0080.fits.bz2'
 
     diskfile = make_diskfile(data_file, tmp_path)

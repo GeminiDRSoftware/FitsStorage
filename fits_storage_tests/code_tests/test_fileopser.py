@@ -1,6 +1,10 @@
 import datetime
 import astrodata
 
+from fits_storage.config import get_config
+from fits_storage_tests.code_tests.helpers import get_test_config
+get_test_config()
+
 from fits_storage.server.fileopser import FileOpser
 from fits_storage.queues.orm.fileopsqueueentry import FileopsQueueEntry
 
@@ -19,9 +23,8 @@ from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage_tests.code_tests.helpers import make_empty_testing_db_env, \
     fetch_file
 
-from fits_storage.config import get_config
-
 from fits_storage.db import sessionfactory
+
 
 
 class DummySession(object):
@@ -39,6 +42,8 @@ class DummyFqe(object):
 
 
 def test_reset():
+    get_test_config()
+
     fo = FileOpser(DummySession(), DummyLogger())
     fo.fqe = 'foobar'
     fo.reset()
@@ -47,6 +52,8 @@ def test_reset():
 
 
 def test_echo_nodb():
+    get_test_config()
+
     fo = FileOpser(DummySession(), DummyLogger())
     fqe = DummyFqe()
     fo.fileop(fqe)

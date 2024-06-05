@@ -1,7 +1,10 @@
 from fits_storage.config import get_config
+from fits_storage_tests.code_tests.helpers import get_test_config
 
 # Verify we're getting a singleton object
 def test_singleton():
+    get_test_config()
+
     a = get_config()
     b = get_config()
 
@@ -9,6 +12,8 @@ def test_singleton():
 
 # Test that it actually reloads and returns a different instance
 def test_reload():
+    get_test_config()
+
     a = get_config()
     b = get_config(reload=True)
 
@@ -16,6 +21,8 @@ def test_reload():
 
 # Test boolean return
 def test_bool():
+    get_test_config()
+
     a = get_config()
     b = a.using_sqlite
 
@@ -23,6 +30,8 @@ def test_bool():
 
 # Test int return
 def test_int():
+    get_test_config()
+
     a = get_config()
     b = a.postgres_database_pool_size
 
@@ -30,13 +39,18 @@ def test_int():
 
 # Test list return
 def test_list():
+    get_test_config()
+
     a = get_config()
     b = a.blocked_urls
 
     assert type(b) is list
+    assert len(b) == 0
 
 # Test got correct default
 def test_default_dburl():
+    get_test_config()
+
     a = get_config(reload=True, configfile='')
     assert a.database_url == 'sqlite:///:memory:'
 
@@ -69,12 +83,14 @@ def test_configused():
                a.configfiles_used[1] == tf.name
 
 def test_using_fitsverify():
+    get_test_config()
+
     a = get_config()
-    assert a.using_fitsverify is False
+    assert a.using_fitsverify is True
 
     configtext = """
     [DEFAULT]
-    is_server = True
+    is_server = False
     """
     a = get_config(configstring=configtext, reload=True)
-    assert a.using_fitsverify is True
+    assert a.using_fitsverify is False
