@@ -227,6 +227,8 @@ class FitsStorageConfig(dict):
         -------
         the actual list
         """
+        if self.config[key] in [None, '']:
+            return []
         result = literal_eval(self.config[key])
         if not isinstance(result, list):
             raise ValueError
