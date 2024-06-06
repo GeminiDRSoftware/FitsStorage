@@ -641,14 +641,38 @@ class GHOSTCalQuery(object):
     def all(self, *args, **kwargs):
         """
         Calls .all() on each of the list of calqueries and returns a deduped
-        list. There may be some foibles with ordering here, that we're going
-        to gloss over for now...
+        list.
+
+        There are be some foibles with ordering here, that we're going
+        to gloss over for now. We can't use a set here as then the ordering
+        gets totally scrambled, so we simply interleave the results into a
+        list, doing deduplication on the way.
         """
 
-        headers = set()
+        # We form a list of lists here... A list of cal results for each cq
+        lol = []
         for cq in self.calqueries:
-            newheaders=cq.all(*args, **kwargs)
-            headers = headers.union(newheaders)
+            lol.append(cq.all(*args, **kwargs))
+
+        # The lists may not all be the same length, or course. :-)
+        # We walk through the lists round-robin style popping the first value
+        # until there are no more left. We keep track of when each list is
+        # empty and stop when they all are
+        empty = []
+        nol = len(lol)  # number of lists, for convenience
+        for i in range(nol):
+            empty.append(False)
+
+        headers = []
+        while False in empty:
+            for i in range(nol):
+                try:
+                    newhead = lol[i].pop(0)
+                    if newhead not in headers:
+                        headers.append(newhead)
+                except IndexError:
+                    # Pop from empty list. Mark list as empty
+                    empty[i] = True
 
         return headers
 
