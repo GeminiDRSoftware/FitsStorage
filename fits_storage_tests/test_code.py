@@ -15,6 +15,7 @@ from fits_storage_tests.code_tests.test_header import *
 from fits_storage_tests.code_tests.test_gmos import *
 from fits_storage_tests.code_tests.test_gnirs import *
 from fits_storage_tests.code_tests.test_gpi import *
+from fits_storage_tests.code_tests.test_ghost import *
 from fits_storage_tests.code_tests.test_f2 import *
 from fits_storage_tests.code_tests.test_gsaoi import *
 from fits_storage_tests.code_tests.test_michelle import *
