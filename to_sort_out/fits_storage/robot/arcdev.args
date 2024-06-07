@@ -1,8 +1,0 @@
---outputdir arcdev.report
---variable URL:https://arcdev.gemini.edu
-MissingCalibration.robot
-PagesAndTabs.robot
-QAForGUI.robot
-SearchInstrumentGNIRS.robot
-SearchInstrumentGRACES.robot
-SearchInstrumentNIRI_hi.robot

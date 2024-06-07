@@ -1,8 +1,0 @@
-      - name: Setup Source Folders
-        import_tasks: tasks/setup_source_folders.yml
-      - name: Rsync FitsStorage into /opt (AWS)
-        become: false
-        local_action:
-          module: shell
-          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../.. fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/FitsStorage/
-        notify: restart services
