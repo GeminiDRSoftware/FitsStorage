@@ -44,11 +44,11 @@ class UsageLog(Base):
         # We pass None for some testing context where we just need to
         # instantiate the object with no real content.
         if ctx is not None:
-            self.ip_address = ctx.env.remote_ip
+            self.ip_address = ctx.req.env.remote_ip
             self.user_agent = ctx.req.env.user_agent
             self.referer = ctx.req.env.referrer
-            self.method = ctx.env.method
-            self.uri = ctx.env.unparsed_uri
+            self.method = ctx.req.env.method
+            self.uri = ctx.req.env.unparsed_uri
 
     def set_finals(self, ctx):
         """
