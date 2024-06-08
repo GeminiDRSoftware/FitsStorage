@@ -35,3 +35,5 @@ from fits_storage_tests.code_tests.test_provenance_history import *
 from fits_storage_tests.code_tests.test_gmu_telins import *
 from fits_storage_tests.code_tests.test_gmu_progidetc import *
 from fits_storage_tests.code_tests.test_odb_interface import *
+from fits_storage_tests.code_tests.test_orm_calcache import *
+from fits_storage_tests.code_tests.test_server_logorms import *
