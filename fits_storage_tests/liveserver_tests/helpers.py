@@ -69,6 +69,33 @@ def calhelper(base_url, dod):
             print(f"Testing caltype {caltype}")
             assert dod[item][caltype] == cals_from_server[caltype]
 
+def associatedcalhelper(base_url, dod):
+    """
+    base_url is the associated_cals url to test against, without the
+    /associated_cals.
+    dod is the same type of dics as for calhelper() (see above)
+
+    For now, we simply check the presence of the cal file in the html results.
+    The assocaited_cals html results does not provide any information as to
+    the caltype or how the cal was associated, so this is the best we can do.
+    This does test the spirit of assocated_cals, and provides a good sanity
+    and functional test.
+
+    This function retrieves the html from base_url/associated_cals, and simply
+    asserts that the calibration data label is somewhere in the html.
+    """
+
+    for item in dod.keys():
+        print(f"Testing dict item: {item}")
+        url = base_url + '/associated_cals/' + item
+        req = requests.get(url)
+        assert req.status_code == http.HTTPStatus.OK
+        html = req.text
+
+        for caltype in dod[item].keys():
+            if dod[item][caltype] is not None:
+                assert dod[item][caltype] in html
+
 
 def fetch_helper(base_url, filename, buzzwords):
     """

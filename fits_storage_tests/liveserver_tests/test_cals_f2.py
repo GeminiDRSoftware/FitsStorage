@@ -1,4 +1,8 @@
-from fits_storage_tests.liveserver_tests.helpers import calhelper, getserver
+import pytest
+pytest.register_assert_rewrite('fits_storage_tests.liveserver_tests.helpers')
+
+from fits_storage_tests.liveserver_tests.helpers import getserver, calhelper, \
+    associatedcalhelper
 
 
 # This dict of dicts defines the expected calibration associations.
@@ -35,3 +39,7 @@ cals_2022_f2 = {
 
 def test_f2cals():
     calhelper(getserver(), cals_2022_f2)
+
+
+def test_associated_f2_cals():
+    associatedcalhelper(getserver(), cals_2022_f2)

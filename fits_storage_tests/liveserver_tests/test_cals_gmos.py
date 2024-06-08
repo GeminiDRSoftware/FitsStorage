@@ -1,4 +1,8 @@
-from fits_storage_tests.liveserver_tests.helpers import calhelper, getserver
+import pytest
+pytest.register_assert_rewrite('fits_storage_tests.liveserver_tests.helpers')
+
+from fits_storage_tests.liveserver_tests.helpers import getserver, calhelper, \
+    associatedcalhelper
 
 
 # This dict of dicts defines the expected calibration associations.
@@ -44,3 +48,7 @@ cals_2022_gmos = {
 
 def test_gmoscals():
     calhelper(getserver(), cals_2022_gmos)
+
+
+def test_associated_gmoscals():
+    associatedcalhelper(getserver(), cals_2022_gmos)
