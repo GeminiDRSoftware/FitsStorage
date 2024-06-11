@@ -52,6 +52,10 @@ logger.info("***   local_delete_files.py - starting up at %s",
 if not options.dir:
     logger.error("You must specify a directory with --dir")
     exit(1)
+
+if not options.filepre:
+    logger.error("You mist specify a file prefix with --file-pre")
+    exit(1)
     
 # Get a list of files in the directory
 dirfiles = os.scandir(options.dir)
