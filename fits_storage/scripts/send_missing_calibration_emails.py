@@ -8,17 +8,14 @@ from email.mime.text import MIMEText
 import datetime
 from optparse import OptionParser
 
+from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.config import get_config
+fsc = get_config()
 
 parser = OptionParser()
 parser.add_option("--emailto", action="store", dest="toaddr",
                   default="gnda@gemini.edu",
                   help="Email Address to send to")
-parser.add_option("--emailfrom", action="store", dest="fromaddr",
-                  default="Missing Cal Check <fitsdata@gemini.edu>",
-                  help="Email Address to send from")
-parser.add_option("--replyto", action="store", dest="replyto",
-                  default="fitsadmin@gemini.edu",
-                  help="Set a Reply-To email header")
 parser.add_option("--ndays", action="store", type="int", dest="ndays",
                   default=14, help="Number of days to query")
 parser.add_option("--skipdays", action="store", type="int", dest="skipdays",
@@ -27,6 +24,14 @@ parser.add_option("--httpserver", action="store", dest="httpserver",
                   default="fits",
                   help="hostname of FitsStorage http server to query")
 (options, args) = parser.parse_args()
+
+# Logging level to debug? Include stdio log?
+setdebug(options.debug)
+setdemon(options.demon)
+
+if not fsc.email_from:
+    logger.error("No email_from defined in Fits Storage Configuration. Exiting")
+    exit(1)
 
 # Work out the date range to query
 utcnow = datetime.datetime.utcnow()
@@ -42,6 +47,7 @@ if options.ndays == 1:
 url = "http://%s/calibrations/GMOS/NotFail/%s/arc/warnings" % \
       (options.httpserver, daterange)
 
+logger.debug("URL is: %s", url)
 r = requests.get(url)
 html = r.text
 
@@ -50,11 +56,6 @@ crewarning = re.compile(r'Query generated (\d*) warnings')
 
 warnings = int(crewarning.search(html).group(1))
 missing = int(cremissing.search(html).group(1))
-
-# ISG have put local mail servers on these machines, that relay mail to the
-# main mail servers without requiring authentication. This also provides
-# a spooling queue if there's a network issue
-mailhost = "localhost"
 
 if missing == 0:
     if options.skipdays == 0:
@@ -75,13 +76,14 @@ part1 = MIMEText(text, 'html')
 part2 = MIMEText(html, 'html')
 
 msg['Subject'] = subject
-msg['From'] = options.fromaddr
+msg['From'] = fsc.email_from
 msg['To'] = options.toaddr
-msg['Reply-To'] = options.replyto
+if fsc.email_replyto:
+    msg['Reply-To'] = fsc.email_replyto
 
 msg.attach(part1)
 msg.attach(part2)
 
-smtp = smtplib.SMTP(mailhost)
-smtp.sendmail(options.fromaddr, [options.toaddr], msg.as_string())
+smtp = smtplib.SMTP(fsc.smtp_server)
+smtp.sendmail(fsc.email_from, [options.toaddr], msg.as_string())
 smtp.quit()
