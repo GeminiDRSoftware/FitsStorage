@@ -72,7 +72,7 @@ def test_pid_sci_regexes():
 # These are used for the class tests too
 pid_valid = ['GN-CAL20120123', 'CAL20031122', 'GN-2011A-ENG-191',
              'G-2001A-MON-F_2-20', 'GN-2000A-DD-3', 'GN-2011A-Q-12',
-             'G-2099B-COM-SCORPIO-1']
+             'G-2099B-COM-SCORPIO-1', 'G-2099A-0005-Q', 'G-2012B-1234-P']
 pid_invalid = ['GX-CAL20000131', 'Eng20221101', 'GN-2020A-foo-191',
                'GN-2001A-CAL-GMOS_N-20', 'G-2011A-Q-12', 'GN-2020A-1234-Q',
                'GS-2024A-Q-410-36']
@@ -142,6 +142,7 @@ def test_gp():
         assert gp.is_com is ('COM' in pid)
         assert gp.is_q is ('Q' in pid)
         assert gp.is_dd is ('DD' in pid)
+        assert gp.is_pw is ('-P' in pid)
         if '2011A' in pid:
             assert gp.semester == '2011A'
         if '20120123' in pid:
