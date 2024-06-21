@@ -12,6 +12,10 @@ from fits_storage.server.orm.notification import Notification
 from fits_storage.server.orm.program import Program
 from fits_storage.server.orm.obslog_comment import ObslogComment
 
+# Do not remove this import, it's needed by SQLalchemy to initialize the
+# Program ORM class because of the relationship() to Publication in there.
+from fits_storage.server.orm.publication import Publication, ProgramPublication
+
 from fits_storage.gemini_metadata_utils.progid_obsid_dl import GeminiProgram
 
 

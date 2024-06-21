@@ -180,7 +180,6 @@ url_map = Map([
     Rule('/ingest_programs', ingest_programs, methods=['POST']),
 
     # Publication handling
-    # Rule('/ingest_publications', ingest_publications, methods=['POST']),
     # Rule('/publication/ads/<bibcode>', publication_ads),
     # Rule('/list_publications', list_publications),
 
