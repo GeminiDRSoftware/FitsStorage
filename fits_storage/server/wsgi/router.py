@@ -64,6 +64,8 @@ from fits_storage.web.ingest_programs import ingest_programs
 
 from fits_storage.web.miscfiles import miscfiles
 
+from fits_storage.web.standards import standardobs
+
 from .routing import SequenceConverter, SelectionConverter
 
 from fits_storage.config import get_config
@@ -189,7 +191,7 @@ url_map = Map([
     # Rule('/miscfiles/validate_add', miscfiles.validate,
     #      methods=['POST']),
     #
-    # Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
+    Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
     Rule('/upload_file/<filename>', upload_file, methods=['POST']),   # The generic upload_file server
     Rule('/upload_processed_cal/<filename>',                        # The processed_cal upload server
         partial(upload_file, processed_cal=True), methods=['POST']),
