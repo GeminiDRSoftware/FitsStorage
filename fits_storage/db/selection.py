@@ -20,7 +20,7 @@ from fits_storage.core.orm.file import File
 from fits_storage.core.orm.footprint import Footprint
 from fits_storage.core.orm.photstandard import PhotStandardObs
 from fits_storage.server.orm.program import Program
-from fits_storage.server.orm.programpublication import ProgramPublication
+from fits_storage.server.orm.publication import Publication, ProgramPublication
 
 #from ..orm.target import TargetPresence
 
@@ -733,10 +733,10 @@ def queryselection(query, selection):
             query = query.filter(Header.central_wavelength > lower).filter(Header.central_wavelength < upper)
 
     if 'publication' in selection:
-        query = (
-            query.join(ProgramPublication, Header.program_id == ProgramPublication.program_text_id)
-                 .filter(ProgramPublication.bibcode == selection['publication'])
-            )
+        query = query.join(Program, Header.program_id == Program.program_id)\
+            .join(ProgramPublication, Program.id == ProgramPublication.program_id)\
+            .join(Publication, Publication.id == ProgramPublication.publication_id)\
+            .filter(Publication.bibcode == selection['publication'])
 
     if 'PIname' in selection or 'ProgramText' in selection:
         query = query.join(Program, Header.program_id == Program.program_id)
