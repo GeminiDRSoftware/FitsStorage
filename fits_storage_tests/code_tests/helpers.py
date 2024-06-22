@@ -5,12 +5,10 @@ import os
 import shutil
 import requests
 
-from fits_storage.core.orm.file import File
-from fits_storage.core.orm.diskfile import DiskFile
-
 from fits_storage.db import sessionfactory
 
 from fits_storage.config import get_config
+
 
 def fetch_file(filename, dest_dir):
     """
@@ -60,6 +58,9 @@ def make_diskfile(filename, tmpdir):
     -------
     a diskfile object for the file.
     """
+    from fits_storage.core.orm.file import File
+    from fits_storage.core.orm.diskfile import DiskFile
+
     storage_root = os.path.join(tmpdir, "storage_root")
     z_staging_dir = os.path.join(tmpdir, "z_staging")
     s3_staging_dir = os.path.join(tmpdir, "s3_staging")
@@ -77,6 +78,7 @@ def make_diskfile(filename, tmpdir):
                         s3_staging_dir=s3_staging_dir)
 
     return diskfile
+
 
 def make_empty_testing_db_env(tmpdir):
     """
@@ -119,7 +121,7 @@ def make_empty_testing_db_env(tmpdir):
         is_server = True
         export_destinations =
         """
-    fsc = get_config(configstring=configstring, builtinonly=True, reload=True)
+    get_config(configstring=configstring, builtinonly=True, reload=True)
 
     # Note - must do this import *after* the call to get_config() above this
     # import references the fsc at import time.
@@ -128,6 +130,7 @@ def make_empty_testing_db_env(tmpdir):
     session = sessionfactory(reload=True)
     drop_tables(session)
     create_tables(session)
+
 
 def get_test_config():
     """
@@ -139,4 +142,4 @@ def get_test_config():
             [DEFAULT]
             is_server = True
             """
-    get_config(configstring=configstring, builtinonly=True, reload=True)
+    return get_config(configstring=configstring, builtinonly=True, reload=True)
