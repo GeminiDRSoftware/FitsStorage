@@ -3,11 +3,10 @@
 from . import templating
 from .templating import SkipTemplateError
 
-from ..fits_storage_config import fits_system_status
+from fits_storage.server.orm.publication import Publication
 
-from ..orm.publication import Publication
-
-from ..utils.web import get_context, Return
+from fits_storage.server.wsgi.context import get_context
+from fits_storage.server.wsgi.returnobj import Return
 
 
 @templating.templated("publication_ads.txt", content_type='text/plain')
@@ -34,32 +33,27 @@ def publication_ads(bibcode=None):
         raise SkipTemplateError(Return.HTTP_NOT_FOUND)
     else:
         return dict(
-            bibcode = publication.bibcode,
-            author = publication.author,
-            journal = publication.journal,
-            year = publication.year,
-            title = publication.title
+            bibcode=publication.bibcode,
+            author=publication.author,
+            journal=publication.journal,
+            year=publication.year,
+            title=publication.title
         )
 
 
 @templating.templated("list_publications.txt", content_type='text/plain')
 def list_publications():
     ctx = get_context()
-    resp = ctx.resp
     session = ctx.session
 
     publications = list()
-    query = session.query(Publication).order_by(Publication.bibcode) # .filter(Publication.bibcode == bibcode)
+    query = session.query(Publication).order_by(Publication.bibcode)
     for publication in query:
         publications.append(dict(
-            bibcode = publication.bibcode,
+            bibcode=publication.bibcode,
         ))
     
-    # TODO this could be cleaner, or some sort of config setting for host url
-    if fits_system_status == 'development':
-        url = 'https://fits/'
-    else:
-        url = 'https://archive.gemini.edu/'
+    url = 'https://archive.gemini.edu/'
 
     return dict(
         url=url,
