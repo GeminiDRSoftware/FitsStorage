@@ -20,24 +20,24 @@ echo "[Service]" | sudo tee /etc/systemd/system/postgresql.service.d/fitsstorage
 echo "Environment=PGDATA=/data/postgres/pgdata" | sudo tee -a /etc/systemd/system/postgresql.service.d/fitsstorage.conf
 sudo systemctl daemon-reload
 sudo postgresql-setup --initdb
-sudo su - postgres
+sudo -i -u postgres
   vi /data/postgres/pgdata/postgresql.conf
     shared_buffers = 512MB    # 25% of ram if ram > 1GB
     effective_cache_size = 4GB   # 50% of ram size ish
 sudo systemctl start postgresql
 sudo systemctl status postgresql
 sudo systemctl enable postgresql
-sudo su - postgres
+sudo -i -u postgres
   /usr/bin/createuser --no-superuser --no-createrole --createdb fitsdata
   /usr/bin/createuser --no-superuser --no-createrole --no-createdb fitsweb
-sudo su - fitsdata
+sudo -i -u fitsdata
   createdb fitsdata
 
 
 # Anaconda install (as fitsdata)
 # Go to https://www.anaconda.com/download#downloads and get the latest URL
 wget https://repo.anaconda.com/archive/Anaconda3-2023.07-1-Linux-x86_64.sh
-sudo bash Anaconda3-2023.07-1-Linux-x86_64.sh
+bash Anaconda3-2023.07-1-Linux-x86_64.sh
 install location /opt/anaconda3
 do not activate
 sudo chgrp -R local-users /opt/anaconda3
@@ -108,10 +108,6 @@ sudo systemctl enable fits-uwsgi
 sudo chmod og+rx /var/log/nginx
 # Try and hit the web server. If you get error, look in /opt/uwsgi/fits.log
 
-S=/opt/FitsStorage/system_install_files/etc_systemd_system
-D=/etc/systemd/system
-sudo cp $S/fits-environment.txt $D
-sudo cp $S/fits-*.service $D
 sudo systemctl start fits-service_ingest_queue1
 sudo systemctl status fits-service_ingest_queue1
 tail /data/logs/service_ingest_queue.py-1.log
@@ -122,10 +118,6 @@ sudo systemctl status fits-service_fileops_queue1
 sudo systemctl enable fits-service_fileops_queue1
 tail /data/logs/service_fileops_queue.py
 
-sudo systemctl start fits-service_service_ingest_queue1
-sudo systemctl enable fits-service_service_ingest_queue1
-sudo systemctl start fits-service_fileops_queue1
-sudo systemctl enable fits-service_fileops_queue1
 # Same for other queues, if appropriate
 
 
