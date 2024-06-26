@@ -101,10 +101,13 @@ if options.relayto:
         req = rs.post(url, data=data, timeout=30)
     except requests.Timeout:
         logger.error(f"Timeout posting {url}", exc_info=True)
+        exit()
     except requests.ConnectionError:
         logger.error(f"ConnectionError posting {url}", exc_info=True)
+        exit()
     except requests.RequestException:
         logger.error(f"RequestException posting {url}", exc_info=True)
+        exit()
 
     logger.debug("Got http status %s and response %s",
                  req.status_code, req.text)
