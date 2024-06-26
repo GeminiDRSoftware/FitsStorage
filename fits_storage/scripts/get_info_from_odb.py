@@ -98,7 +98,7 @@ if options.relayto:
     url = "%s/ingest_programs" % options.relayto
     data = json.dumps(programs)
     try:
-        req = rs.post(url, data=data, timeout=30)
+        req = rs.post(url, data=data, timeout=120)
     except requests.Timeout:
         logger.error(f"Timeout posting {url}", exc_info=True)
         exit()
