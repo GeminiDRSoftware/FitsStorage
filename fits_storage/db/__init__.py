@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from datetime import date, datetime
 
+import sqlalchemy
 from sqlalchemy import create_engine, String, Date, DateTime
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
@@ -45,7 +46,7 @@ def sessionfactory(reload=False):
     return _saved_sessionfactory()
 
 
-Base = declarative_base()
+Base = sqlalchemy.orm.declarative_base()
 
 
 @contextmanager
