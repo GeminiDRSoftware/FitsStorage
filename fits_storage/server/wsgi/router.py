@@ -181,7 +181,12 @@ url_map = Map([
     # Rule('/ingest_files', ingest_files, methods=['POST']),
     Rule('/ingest_programs', ingest_programs, methods=['POST']),
 
-    # Publication handling
+    # Publication handling.
+    # It's not obvious what the uses for these are or who they were intended
+    # for. They get basically no hits on archive. Deprecating them now and will
+    # git rm the template files and code behind these, but will leave these
+    # entries commented here in case anyone comes looking soon. Remove these
+    # at next release if no one has asked for them back - PH 2024-06-27
     # Rule('/publication/ads/<bibcode>', publication_ads),
     # Rule('/list_publications', list_publications),
 
