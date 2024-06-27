@@ -224,6 +224,8 @@ class SQLAlchemyPatternFinder:
             "\\1get(\\2, \\3)",
         ),
         # From engine with future=True flag.
+        # TODO: Eventually, this will need to check that the sqlalchemy version is
+        # not >= 2 before reporting this.
         "(WARNING) create_engine future flag missing": (
             r"create_engine\((?!.*(,? ?future=True,?)).*\)",
             None,
