@@ -212,6 +212,7 @@ class SQLAlchemyPatternFinder:
     """Used for search/replace."""
 
     # {description: (pattern, replacement),}
+    # If replacement is None, the pattern will *not* be replaced.
     patterns = {
         # From Removedin20Warning fixes.
         "declarative base in orm namespace": (
@@ -224,8 +225,8 @@ class SQLAlchemyPatternFinder:
         ),
         # From engine with future=True flag.
         "(WARNING) create_engine future flag missing": (
-            r"create_engine\((.*)\)",
-            "\\0",  # Trivial replacement with match.
+            r"create_engine\((?!.*(,? ?future=True,?)).*\)",
+            None,
         ),
     }
 
@@ -236,24 +237,41 @@ class SQLAlchemyPatternFinder:
     }
 
     @classmethod
-    def replace(cls, text):
+    def replace(cls, text) -> tuple[str, list[str]]:
+        """Replace the patterns in the text.
+        
+        Raises
+        ------
+        ValueError
+            If the text matches a pattern and is supposed to be replaced, but
+            fails to replace anything in the string.
+        """
         # Search and replace using regex.
-        _match_found = False
+        _match_found = []
 
         pattern_iter = cls.patterns.items()
 
         for i, (key, (pattern, replacement)) in enumerate(pattern_iter):
             old_text = text
-            text = pattern.sub(replacement, old_text)
+
+            if replacement is not None:
+                text = pattern.sub(replacement, old_text)
 
             changed = text != old_text
 
-            if pattern.search(old_text) and text == old_text:
+            if (
+                replacement is not None
+                and pattern.search(old_text)
+                and not changed
+            ):
                 raise ValueError(
                     f"Pattern {key} matched but did not replace anything."
                 )
 
-        return text
+            if pattern.search(text):
+                _match_found.append(key)
+
+        return (text, _match_found)
 
     @classmethod
     def update_file(cls, file: os.PathLike, verbose=False):
@@ -262,20 +280,27 @@ class SQLAlchemyPatternFinder:
             lines = f.readlines()
 
         updated_lines = []
-        match_found = 0
+        matches_found = 0
         for i, line in enumerate(lines, start=1):
-            updated_lines.append(cls.replace(line))
+            new_line, match_found = cls.replace(line)
+            updated_lines.append(new_line)
 
             if verbose:
-                if updated_lines[-1] != line:
-                    if not match_found:
+                if match_found:
+                    if not matches_found:
                         print(f"Match found in {file}.")
 
-                    print(f"LINE {i}:")
-                    print(f" - {line.rstrip()}")
-                    print(f" + {updated_lines[-1].rstrip()}")
-                    match_found += 1
+                    print(f"LINE {file}:{i}:")
+                    if updated_lines[-1] != line:
+                        print(f" - {line.rstrip()}")
+                        print(f" + {updated_lines[-1].rstrip()}")
 
+                    else:
+                        print(f" - {line.rstrip()}")
+
+                    print(f" Matched by |=> {', '.join(match_found)}")
+
+                    matches_found += 1
 
         text = "".join(updated_lines)
 
@@ -286,7 +311,7 @@ class SQLAlchemyPatternFinder:
 @nox.session
 def update_sqlalchemy_patterns(session):
     """Update the SQLAlchemy patterns.
-    
+
     Usage
     -----
 
