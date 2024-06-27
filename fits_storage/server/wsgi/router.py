@@ -178,7 +178,6 @@ url_map = Map([
 
 
     Rule('/update_headers', update_headers, methods=['POST']),
-    # Rule('/ingest_files', ingest_files, methods=['POST']),
     Rule('/ingest_programs', ingest_programs, methods=['POST']),
 
     # Publication handling.
