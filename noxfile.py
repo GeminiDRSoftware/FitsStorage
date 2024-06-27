@@ -10,20 +10,14 @@ example:
     nox -s tests -- -k test_my_function
 """
 
-from dataclasses import dataclass
 from functools import wraps
-from itertools import chain
-import concurrent
-import concurrent.futures
-import functools
-import json
 import os
+import sys
 import re
 import warnings
 
 import nox
 
-import warnings
 from sqlalchemy import exc
 
 # for warnings not included in regex-based filter below, just log
@@ -230,6 +224,11 @@ class SQLAlchemyPatternFinder:
             r"create_engine\((?!.*(,? ?future=True,?)).*\)",
             None,
         ),
+        # From Session with future=True flag.
+        "(WARNING) Session instance future flag missing": (
+            r"(=\W*)(Session|sessionfactory)\(((?!.*(\,?\ ?future=True)).*)\)",
+            None
+        ),
     }
 
     # Pre-compile the patterns.
@@ -241,7 +240,7 @@ class SQLAlchemyPatternFinder:
     @classmethod
     def replace(cls, text) -> tuple[str, list[str]]:
         """Replace the patterns in the text.
-        
+
         Raises
         ------
         ValueError
@@ -306,8 +305,15 @@ class SQLAlchemyPatternFinder:
 
         text = "".join(updated_lines)
 
-        with open(file, "w") as f:
-            f.write(text)
+        if any(arg in ("-n", "--dry-run") for arg in sys.argv):
+            if matches_found:
+                print(f"DRY-RUN: Would write to {file}")
+
+            return
+
+        if matches_found:
+            with open(file, "w") as f:
+                f.write(text)
 
 
 @nox.session
