@@ -213,6 +213,7 @@ class SQLAlchemyPatternFinder:
 
     # {description: (pattern, replacement),}
     patterns = {
+        # From Removedin20Warning fixes.
         "declarative base in orm namespace": (
             r"sqlalchemy\.ext(?:.declarative_base)?(.*)declarative_base",
             "sqlalchemy.orm\\1declarative_base",
@@ -220,6 +221,11 @@ class SQLAlchemyPatternFinder:
         "get from query": (
             r"(session\.)?query\((.*)\)\.get\((.*)\)",
             "\\1get(\\2, \\3)",
+        ),
+        # From engine with future=True flag.
+        "(WARNING) create_engine future flag missing": (
+            r"create_engine\((.*)\)",
+            "\\0",  # Trivial replacement with match.
         ),
     }
 
@@ -232,9 +238,15 @@ class SQLAlchemyPatternFinder:
     @classmethod
     def replace(cls, text):
         # Search and replace using regex.
-        for key, (pattern, replacement) in cls.patterns.items():
+        _match_found = False
+
+        pattern_iter = cls.patterns.items()
+
+        for i, (key, (pattern, replacement)) in enumerate(pattern_iter):
             old_text = text
             text = pattern.sub(replacement, old_text)
+
+            changed = text != old_text
 
             if pattern.search(old_text) and text == old_text:
                 raise ValueError(
@@ -244,19 +256,26 @@ class SQLAlchemyPatternFinder:
         return text
 
     @classmethod
-    def update_file(cls, file: os.PathLike):
+    def update_file(cls, file: os.PathLike, verbose=False):
         """Update the file with the new patterns."""
         with open(file, "r") as f:
             lines = f.readlines()
 
         updated_lines = []
+        match_found = 0
         for i, line in enumerate(lines, start=1):
             updated_lines.append(cls.replace(line))
 
-            if updated_lines[-1] != lines[i - 1]:
-                print(f"Updated line {i}:")
-                print(f"  + {updated_lines[-1]}")
-                print(f"  - {lines[i - 1]}")
+            if verbose:
+                if updated_lines[-1] != line:
+                    if not match_found:
+                        print(f"Match found in {file}.")
+
+                    print(f"LINE {i}:")
+                    print(f" - {line.rstrip()}")
+                    print(f" + {updated_lines[-1].rstrip()}")
+                    match_found += 1
+
 
         text = "".join(updated_lines)
 
@@ -266,13 +285,29 @@ class SQLAlchemyPatternFinder:
 
 @nox.session
 def update_sqlalchemy_patterns(session):
-    """Update the SQLAlchemy patterns."""
+    """Update the SQLAlchemy patterns.
+    
+    Usage
+    -----
+
+    To check for patterns in the codebase, run:
+    ```terminal
+        nox -s update_sqlalchemy_patterns
+    ```
+
+    For verbose output, run:
+    ```terminal
+        nox -s update_sqlalchemy_patterns -- -v  # or --verbose
+    ```
+    """
     search_dirs = ("fits_storage", "fits_storage_tests")
+
+    verbose = any(arg in ("-v", "--verbose") for arg in session.posargs)
 
     for search_dir in search_dirs:
         for root, _, files in os.walk(search_dir):
             for file in files:
                 if file.endswith(".py"):
                     SQLAlchemyPatternFinder.update_file(
-                        os.path.join(root, file)
+                        os.path.join(root, file), verbose=verbose
                     )
