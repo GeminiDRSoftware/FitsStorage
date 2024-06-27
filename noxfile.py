@@ -150,12 +150,14 @@ def code_tests(session):
     command = [
         "pytest",
         "fits_storage_tests/test_code.py",
+        "-W",
+        "error::sqlalchemy.exc.RemovedIn20Warning",
         *session.posargs,
     ]
 
     # Environment variables for deprecating SQLAlchemy warnings.
     env = {
-        "SQLALCHEMY_WARN_20": 1,
+        "SQLALCHEMY_WARN_20": "1",
     }
 
     session.run(*command, env=env)
