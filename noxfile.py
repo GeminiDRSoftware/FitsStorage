@@ -158,10 +158,7 @@ def code_tests(session):
         "SQLALCHEMY_WARN_20": 1,
     }
 
-    for key, value in env.items():
-        session.env[key] = str(value)
-
-    session.run(*command)
+    session.run(*command, env=env)
 
 
 @nox.session(
@@ -225,9 +222,21 @@ class SQLAlchemyPatternFinder:
             None,
         ),
         # From Session with future=True flag.
+        # Since this has to be set after instantiation, but we need to remove
+        # this anyways, mark that the change has been made with an inline comment
+        # that the future flag is assigned.
+        # E.g.;
+        #   session = sessionfactory()  # future=True
+        #   session.future = True       |
+        #   # ^ This is the flag        + -- This is the change.
+        # Unlike Engine, it is not a kwarg!
+        #
+        # I know this is not ideal, it's just easy to implement and temporary
+        # anyway.
         "(WARNING) Session instance future flag missing": (
-            r"(=\W*)(Session|sessionfactory)\(((?!.*(\,?\ ?future=True)).*)\)",
-            None
+            r"(=\W*)(Session|sessionfactory)"
+            r"\(((?!.*(\,?\ ?future=True)).*)\)(?!.*(future\s*=\s*True))",
+            None,
         ),
     }
 
