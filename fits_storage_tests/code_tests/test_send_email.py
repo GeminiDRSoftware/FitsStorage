@@ -1,7 +1,7 @@
 import pytest
 import smtplib
 
-from fits_storage.logger import logger
+from fits_storage.logger import logger, setdemon
 
 from fits_storage.config import get_config
 
@@ -26,7 +26,7 @@ def test_send_email():
     server.quit()
 
 def test_logger_email():
-    logger.setdemon(True)
+    setdemon(True)
     logger.debug("This is a debug message and should not go in an email")
     logger.error("This is an error message and should go in an email")
     logger.critical("This is a critical message and should go in an email")
