@@ -52,8 +52,9 @@ smtphandler = logging.handlers.SMTPHandler(mailhost=fsc.smtp_server,
                                            toaddrs=[fsc.email_errors_to],
                                            subject=emailsubject)
 
-# The smtp handler should only do CRITICAL or worse
-smtphandler.setLevel(logging.CRITICAL)
+# The smtp handler should only do ERROR or worse. We could migrate to CRITICAL
+# here if we get flooded, but we don't currently use critical in the code much.
+smtphandler.setLevel(logging.ERROR)
 
 # Add formatter to handlers
 filehandler.setFormatter(formatter)
