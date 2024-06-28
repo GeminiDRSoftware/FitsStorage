@@ -42,7 +42,7 @@ def sessionfactory(reload=False):
         else:
             args = {'echo': fsc.database_debug}
         # TODO: SQLALCHEMY Remove future flag when upgraded to SQLAlchemy 2
-        _saved_engine = create_engine(fsc.database_url, future=True, **args)
+        _saved_engine = create_engine(fsc.database_url, **args)
         _saved_sessionfactory = sessionmaker(_saved_engine)
     return _saved_sessionfactory()
 

@@ -150,8 +150,8 @@ def code_tests(session):
     command = [
         "pytest",
         "fits_storage_tests/test_code.py",
-        "-W",
-        "error::sqlalchemy.exc.RemovedIn20Warning",
+        # "-W",
+        # "error::sqlalchemy.exc.RemovedIn20Warning",
         *session.posargs,
     ]
 
