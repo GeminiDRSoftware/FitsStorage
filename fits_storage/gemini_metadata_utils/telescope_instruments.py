@@ -386,8 +386,8 @@ def gemini_fitsfilename(string):
     """
     A utility function matching Gemini data fits filenames. If the string
     argument matches the format of a gemini data filename, with or without the
-    .fits on the end, this function will return the filename, with the .fits
-    on the end.
+    .fits on the end, and with or without a trailiing .bz2, this function will
+    return the filename, with the .fits on the end (but no .bz2)
 
     If the string does not look like a filename, we return an empty string.
     """
@@ -398,6 +398,8 @@ def gemini_fitsfilename(string):
     vfitsfilenamecre = re.compile(
         r'^(20)?(\d\d)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d\d)'
         r'_(\d+)(?P<fits>.fits)?$')
+
+    string = string.removesuffix('.bz2')
 
     retval = ''
     m = fitsfilenamecre.match(string) or vfitsfilenamecre.match(string)
