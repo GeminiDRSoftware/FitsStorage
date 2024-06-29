@@ -3,57 +3,26 @@
 # then run these tests pointing at it. The server needs to have
 # service_queue tasks running for ingest and fileops.
 
-import os.path
 import http
 import requests
-import time
 
 
 from fits_storage_tests.testserver_tests.helpers import getserver
-from fits_storage_tests.code_tests.helpers import fetch_file
+from fits_storage_tests.testserver_tests.helpers import _ensureuploaded, \
+    _uploadfile, _waitforingest
 
 
-def _jsonsummary(filename):
-    url = f"{getserver()}/jsonsummary/present/{filename}"
-    return requests.get(url).json()
-
-
-def test_upload_update(tmp_path):
-    server = getserver()
+def test_upload(tmp_path):
     filename = 'N20180329S0134.fits.bz2'
-    print('Fetching File')
-    fetch_file(filename, tmp_path)
+    resp = _uploadfile(tmp_path, filename)
 
-    # upload the file to the server
-    print("Uploading File...")
-    fpfn = os.path.join(tmp_path, filename)
-    url = f"{server}/upload_file/{filename}"
-    print(f"upload URL is {url}")
+    assert resp.status_code == http.HTTPStatus.OK
+    assert resp.text == '[{"filename": "N20180329S0134.fits.bz2", ' \
+                        '"size": 1059693, ' \
+                        '"md5": "1c1c2eb66af5a49218ea95a53b2b9f78"}]'
 
-    with open(fpfn, mode='rb') as f:
-        try:
-            req = requests.post(url, data=f, timeout=10)
-        except Exception:
-            print(f"Exception posting to {url}")
-            print(f"Response was: {req.text}")
-            raise
-        assert req.status_code == http.HTTPStatus.OK
-        assert req.text == '[{"filename": "N20180329S0134.fits.bz2", ' \
-                           '"size": 1059693, ' \
-                           '"md5": "1c1c2eb66af5a49218ea95a53b2b9f78"}]'
-
-    # Now we basically poll jsonsummary, waiting for the ingest to complete
-    print("Waiting for ingest to complete")
-    waiting = True
-    timeout = 20
-    js = None
-    while waiting:
-        time.sleep(1)
-        timeout -= 1
-        assert timeout > 0
-        js = _jsonsummary(filename)
-        if len(js) and js[0]['data_md5'] == '6a9688a89307afa7776bd23ea4ccae3f':
-            waiting = False
+    js = _waitforingest(filename, data_md5='6a9688a89307afa7776bd23ea4ccae3f')
+    assert js is not None
 
     # Sanity check initial values
     jsf = js[0]
@@ -67,7 +36,11 @@ def test_upload_update(tmp_path):
     assert jsf['object'] == 'J105553'
     assert jsf['qa_state'] == 'Pass'
 
-    print("Ingested OK")
+
+def test_update(tmp_path):
+    server = getserver()
+    filename = 'N20180329S0134.fits.bz2'
+    _ensureuploaded(tmp_path, filename, '6a9688a89307afa7776bd23ea4ccae3f')
 
     print("Testing old format header update by filename")
     # Create the header_update payload, old format
@@ -78,17 +51,8 @@ def test_upload_update(tmp_path):
     assert req.status_code == http.HTTPStatus.OK
     assert req.text == '{"result": true, "value": true, ' \
                        '"id": "N20180329S0134.fits"}'
-    print("Waiting for ingest to complete")
-    waiting = True
-    timeout = 20
-    while waiting:
-        time.sleep(1)
-        timeout -= 1
-        assert timeout > 0
-        js = _jsonsummary(filename)
-        if len(js) and js[0]['data_md5'] == 'd5f5b0c59ac7ba904d98ca1f343254a4':
-            waiting = False
-    print("Ingested OK")
+
+    js = _waitforingest(filename, data_md5='d5f5b0c59ac7ba904d98ca1f343254a4')
     jsf = js[0]
     assert jsf['qa_state'] == 'Usable'
 
@@ -101,17 +65,8 @@ def test_upload_update(tmp_path):
     assert req.status_code == http.HTTPStatus.OK
     assert req.text == '{"result": true, "value": true, ' \
                        '"id": "GN-2018A-FT-103-13-003"}'
-    print("Waiting for ingest to complete")
-    waiting = True
-    timeout = 20
-    while waiting:
-        time.sleep(1)
-        timeout -= 1
-        assert timeout > 0
-        js = _jsonsummary(filename)
-        if len(js) and js[0]['data_md5'] == '65a9baa43115b07d60b6d1eae73de0a5':
-            waiting = False
-    print("Ingested OK")
+
+    js = _waitforingest(filename, data_md5='65a9baa43115b07d60b6d1eae73de0a5')
     jsf = js[0]
     assert jsf['raw_iq'] == 100
 
@@ -125,17 +80,8 @@ def test_upload_update(tmp_path):
     assert req.status_code == http.HTTPStatus.OK
     assert req.text == '{"result": true, "value": true, ' \
                        '"id": "GN-2018A-FT-103-13-003"}'
-    print("Waiting for ingest to complete")
-    waiting = True
-    timeout = 20
-    while waiting:
-        time.sleep(1)
-        timeout -= 1
-        assert timeout > 0
-        js = _jsonsummary(filename)
-        if len(js) and js[0]['data_md5'] == '3c709f93be1bf20f6c59f64aa075b0cf':
-            waiting = False
-    print("Ingested OK")
+
+    js = _waitforingest(filename, data_md5='3c709f93be1bf20f6c59f64aa075b0cf')
     jsf = js[0]
     assert jsf['release'] == '2123-04-05'
 
@@ -149,17 +95,7 @@ def test_upload_update(tmp_path):
     assert req.status_code == http.HTTPStatus.OK
     assert req.text == '{"result": true, "value": true, ' \
                        '"id": "N20180329S0134.fits"}'
-    print("Waiting for ingest to complete")
-    waiting = True
-    timeout = 20
-    while waiting:
-        time.sleep(1)
-        timeout -= 1
-        assert timeout > 0
-        js = _jsonsummary(filename)
-        if len(js) and js[0]['data_md5'] == '16c3e280a405726ee62ea5ad18f3d03c':
-            waiting = False
-    print("Ingested OK")
+    js = _waitforingest(filename, data_md5='16c3e280a405726ee62ea5ad18f3d03c')
     jsf = js[0]
     assert jsf['raw_iq'] == 70
 
