@@ -66,6 +66,10 @@ def upload_file(filename, processed_cal=False):
     try:
         with open(fullfilename, 'wb') as f:
             fileuploadlog.ut_transfer_start = datetime.datetime.utcnow()
+            # wsgiref workaround to ensure initial read is not bigger than
+            # content_length if content_length is smaller than chunksize
+            chunksize = content_length \
+                if content_length and content_length < chunksize else chunksize
             while chunk := ctx.input.read(chunksize):
                 size += len(chunk)
                 m.update(chunk)
