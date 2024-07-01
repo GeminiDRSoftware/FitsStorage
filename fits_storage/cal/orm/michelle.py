@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Enum
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
 from fits_storage.core.orm.header import Header
@@ -51,7 +51,7 @@ class Michelle(Base):
     id = Column(Integer, primary_key=True)
     header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
                        index=True)
-    header = relation(Header, order_by=id)
+    header = relationship(Header, order_by=id)
     disperser = Column(DISPERSER_ENUM, index=True)
     filter_name = Column(FILTER_NAME_ENUM, index=True)
     read_mode = Column(READ_MODE_ENUM, index=True)

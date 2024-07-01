@@ -151,7 +151,8 @@ def code_tests(session):
         "pytest",
         "fits_storage_tests/test_code.py",
         "-W",
-        "error::sqlalchemy.exc.RemovedIn20Warning",
+        "error::DeprecationWarning",
+        # "error::sqlalchemy.exc.RemovedIn20Warning",
         *session.posargs,
     ]
 
@@ -214,31 +215,40 @@ class SQLAlchemyPatternFinder:
         ),
         "get from query": (
             r"(session\.)?query\((.*)\)\.get\((.*)\)",
-            "\\1get(\\2, \\3)",
+            r"\1get(\2, \3)",
         ),
-        # From engine with future=True flag.
-        # TODO: Eventually, this will need to check that the sqlalchemy version is
-        # not >= 2 before reporting this.
-        "(WARNING) create_engine future flag missing": (
-            r"create_engine\((?!.*(,? ?future=True,?)).*\)",
-            None,
+        # TODO: # From engine with future=True flag.
+        # TODO: # TODO: Eventually, this will need to check that the sqlalchemy version is
+        # TODO: # not >= 2 before reporting this.
+        # TODO: "(WARNING) create_engine future flag missing": (
+        # TODO:     r"create_engine\((?!.*(,? ?future=True,?)).*\)",
+        # TODO:     None,
+        # TODO: ),
+        # TODO: # From Session with future=True flag.
+        # TODO: # Since this has to be set after instantiation, but we need to remove
+        # TODO: # this anyways, mark that the change has been made with an inline comment
+        # TODO: # that the future flag is assigned.
+        # TODO: # E.g.;
+        # TODO: #   session = sessionfactory()  # future=True
+        # TODO: #   session.future = True       |
+        # TODO: #   # ^ This is the flag        + -- This is the change.
+        # TODO: # Unlike Engine, it is not a kwarg!
+        # TODO: #
+        # TODO: # I know this is not ideal, it's just easy to implement and temporary
+        # TODO: # anyway.
+        # TODO: "(WARNING) Session instance future flag missing": (
+        # TODO:     r"(=\W*)(Session|sessionfactory)"
+        # TODO:     r"\(((?!.*(\,?\ ?future=True)).*)\)(?!.*(future\s*=\s*True))",
+        # TODO:     None,
+        # TODO: ),
+        # relation -> relationship
+        "import 'relation' no longer supported": (
+            r"from sqlalchemy(.*)import(.*)relation(\W.*)",
+            None
         ),
-        # From Session with future=True flag.
-        # Since this has to be set after instantiation, but we need to remove
-        # this anyways, mark that the change has been made with an inline comment
-        # that the future flag is assigned.
-        # E.g.;
-        #   session = sessionfactory()  # future=True
-        #   session.future = True       |
-        #   # ^ This is the flag        + -- This is the change.
-        # Unlike Engine, it is not a kwarg!
-        #
-        # I know this is not ideal, it's just easy to implement and temporary
-        # anyway.
-        "(WARNING) Session instance future flag missing": (
-            r"(=\W*)(Session|sessionfactory)"
-            r"\(((?!.*(\,?\ ?future=True)).*)\)(?!.*(future\s*=\s*True))",
-            None,
+        "relation -> relationship": (
+            "^(.*=\s*)relation(.*)",
+            None
         ),
     }
 

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, Boolean, BigInteger
 
-from sqlalchemy.orm import relation, relationship
+from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
 
@@ -54,7 +54,7 @@ class TapeWrite(Base):
 
     id = Column(Integer, primary_key=True)
     tape_id = Column(Integer, ForeignKey('tape.id'), nullable=False, index=True)
-    tape = relation(Tape, order_by=id, back_populates="tapewrites")
+    tape = relationship(Tape, order_by=id, back_populates="tapewrites")
     filenum = Column(Integer, index=True)
     startdate = Column(DateTime(timezone=False))
     enddate = Column(DateTime(timezone=False))
@@ -78,7 +78,7 @@ class TapeFile(Base):
 
     id = Column(Integer, primary_key=True)
     tapewrite_id = Column(Integer, ForeignKey('tapewrite.id'), nullable=False, index=True)
-    tapewrite = relation(TapeWrite, order_by=id, back_populates="tapefiles")
+    tapewrite = relationship(TapeWrite, order_by=id, back_populates="tapefiles")
     filename = Column(Text, index=True)
     size = Column(BigInteger, index=True)
     md5 = Column(Text, index=True)
