@@ -1,10 +1,9 @@
 from contextlib import contextmanager
 from datetime import date, datetime
 
-import sqlalchemy
 from sqlalchemy import create_engine, String, Date, DateTime
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.sqltypes import NullType
 
@@ -41,13 +40,12 @@ def sessionfactory(reload=False):
                     'echo': fsc.database_debug}
         else:
             args = {'echo': fsc.database_debug}
-        # TODO: SQLALCHEMY Remove future flag when upgraded to SQLAlchemy 2
         _saved_engine = create_engine(fsc.database_url, **args)
         _saved_sessionfactory = sessionmaker(_saved_engine)
     return _saved_sessionfactory()
 
 
-Base = sqlalchemy.orm.declarative_base()
+Base = declarative_base()
 
 
 @contextmanager

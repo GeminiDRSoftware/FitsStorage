@@ -67,7 +67,7 @@ def do_std_obs(session, header_id):
         sql = "insert into photstandardobs (select nextval('photstandardobs_id_seq') as id, photstandard.id AS photstandard_id, footprint.id AS footprint_id from photstandard, footprint where photstandard.coords <@ footprint.area and footprint.header_id=%d)" % header_id
         result = session.execute(sql)
         if result.rowcount:
-            header = session.get(Header, header_id)
+            header = session.query(Header).get(header_id)
             header.phot_standard = True
         session.commit()
     except Exception:

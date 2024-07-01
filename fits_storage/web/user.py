@@ -170,7 +170,7 @@ minutes, so please do that promptly.</p>
 </body></html>
 """
 
-    user = get_context().session.get(User, userid)
+    user = get_context().session.query(User).get(userid)
     username = user.username
     email = user.email
     fullname = user.fullname
@@ -227,7 +227,7 @@ def password_reset(userid, token):
         return template_args
 
     # OK, seems possibly legit. Check with database
-    user = session.get(User, userid)
+    user = session.query(User).get(userid)
     try:
         if user is None:
             return template_args

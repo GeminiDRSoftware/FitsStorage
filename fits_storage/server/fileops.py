@@ -66,7 +66,7 @@ def ingest_upload(args, session, logger):
     logger.info("ingest_upload: filename: %s, fileuploadlog_id: %s, "
                 "processed_cal: %s", filename, fileuploadlog_id, processed_cal)
 
-    fileuploadlog = session.get(FileUploadLog, fileuploadlog_id)
+    fileuploadlog = session.query(FileUploadLog).get(fileuploadlog_id)
 
     # Move the file to its appropriate location in storage_root/path or S3
 

@@ -57,7 +57,7 @@ def tape(search=None):
         value = value.value
 
         if tapeid:
-            tape = session.get(Tape, tapeid)
+            tape = session.query(Tape).get(tapeid)
             if field == 'moveto':
                 tape.location = value
                 tape.lastmoved = datetime.datetime.utcnow()
