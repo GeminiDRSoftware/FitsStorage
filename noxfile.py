@@ -247,8 +247,8 @@ class SQLAlchemyPatternFinder:
             None
         ),
         "relation -> relationship": (
-            "^(.*=\s*)relation(.*)",
-            None
+            r"^(.*=\s*)relation(\b.*)",
+            r"\1relationship\2",
         ),
     }
 
