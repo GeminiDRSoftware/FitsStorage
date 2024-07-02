@@ -33,6 +33,23 @@ S20181018S0151.fits.bz2
 S20181219S0333.fits.bz2
 S20240320S0027.fits.bz2
 bpm_20220303_gmos-n_Ham_44_full_12amp.fits.bz2
+
+For F2 calibration testing:
+S20220101S0011.fits.bz2
+S20220101S0262.fits.bz2
+S20211230S0042.fits.bz2
+S20220101S0033.fits.bz2
+S20220101S0044.fits.bz2
+S20211226S0168.fits.bz2
+S20220101S0025.fits.bz2
+
+For GMOS calibration testing:
+N20220108S0004.fits.bz2
+N20220108S0179.fits.bz2
+N20220108S0041.fits.bz2
+N20220108S0145.fits.bz2
+N20220108S0234.fits.bz2
+N20220108S0043.fits.bz2
 ```
 
 `FITS_STORAGE_TEST_LIVESERVER` is the base URL for the "liveserver" tests, 
