@@ -703,9 +703,6 @@ dropdown_options = {
          ("JH", "JH"),
          ("HK", "HK"),
          ("J-lo", "J low")],
-    "igrins_filter_options":
-        [("H", "H"),
-         ("K", "K")],
     "nici_filter_options":
         [("Ks+H", "Ks+H"),
          ("CH4-H4L+CH4-H4S", "CH4-H4L+CH4-H4S"),
