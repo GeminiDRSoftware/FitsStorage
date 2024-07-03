@@ -591,7 +591,17 @@ dropdown_options = {
          ("Lya395", "Lya395"),
          ("ri", "ri"),
          ("DS920", "DS920"),
-         ("open", "Open")],
+         ("open", "Open"),
+         ("GG455", "GG455"),
+         ("OG515", "OG515"),
+         ("RG610", "RG610"),
+         ("RG780", "RG780"),
+         ("F396N", "F396N"),
+         ("JWL34", "JWL34"),
+         ("JWL38", "JWL38"),
+         ("JWL43", "JWL43"),
+         ("Stry", "Stry"),
+         ("Strb", "Strb")],
     "pre_image_options":
         [("preimage", "Pre-image"),],
     "gnirs_filter_options":
