@@ -119,7 +119,7 @@ def make_empty_testing_db_env(tmpdir):
         upload_staging_dir = {upload_staging_dir}
         database_url = sqlite:///{dbfile}
         is_server = True
-        export_destinations =
+        export_destinations = []
         """
     get_config(configstring=configstring, builtinonly=True, reload=True)
 

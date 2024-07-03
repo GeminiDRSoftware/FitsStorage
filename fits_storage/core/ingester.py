@@ -446,7 +446,8 @@ class Ingester(object):
             self.s.add(dfreport)
             self.s.commit()
         except:
-            message = "Exception adding DiskFileReport - see log file"
+            message = f"Exception adding DiskFileReport for " \
+                      f"{diskfile.filename} - see log file"
             self.l.error(message, exc_info=True)
             self.s.rollback()
             iqe.seterror(message)
@@ -458,7 +459,8 @@ class Ingester(object):
             self.s.add(ftheader)
             self.s.commit()
         except:
-            message = "Exception adding FullTextHeader - see log file"
+            message = f"Exception adding FullTextHeader for " \
+                      f"{diskfile.filename} - see log file"
             self.l.error(message, exc_info=True)
             self.s.rollback()
             iqe.seterror(message)
@@ -469,7 +471,8 @@ class Ingester(object):
             ingest_provenancehistory(diskfile, logger=self.l)
             self.s.commit()
         except:
-            message = "Exception adding Provenance and History - see log file"
+            message = f"Exception adding Provenance and History for " \
+                      f"{diskfile.filename}- see log file"
             self.l.error(message, exc_info=True)
             self.s.rollback()
             iqe.seterror(message)
@@ -481,7 +484,8 @@ class Ingester(object):
             self.s.add(header)
             self.s.commit()
         except:
-            message = "Exception adding Header - see log file"
+            message = f"Exception adding Header for {diskfile.filename} - " \
+                      f"see log file"
             self.l.error(message, exc_info=True)
             self.s.rollback()
             iqe.seterror(message)
