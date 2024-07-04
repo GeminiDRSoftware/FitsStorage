@@ -1,305 +1,173 @@
 import re
-import time
 import datetime
-from datetime import date, timedelta
 import dateutil.parser
 
-DATE_LIMIT_LOW = dateutil.parser.parse('19900101')
-DATE_LIMIT_HIGH = dateutil.parser.parse('20500101')
-ZERO_OFFSET = datetime.timedelta()
-ONEDAY_OFFSET = datetime.timedelta(days=1)
+DATE_LIMIT_LOW = datetime.datetime(1999, 1, 1, 0, 0, 0)
+DATE_LIMIT_HIGH = datetime.datetime(2100, 1, 1, 0, 0, 0)
 UT_DATETIME_SECS_EPOCH = datetime.datetime(2000, 1, 1, 0, 0, 0)
+ONEDAY_OFFSET = datetime.timedelta(days=1)
 
+# In Hawaii, where local time is HST == UTC-10, the UTC date rolls over at
+# 14:00 local time, and thus the UTC date makes a very convenient "Night label"
+# as the UTC date does not change during the observing night hours. In Chile,
+# where local time is CLT == UTC-4 (standard) or CLST == UTC-3 (summer), this is
+# not the case. In order to create a "Night Label" for Gemini South data, we
+# apply a timedelta of - 6 Hours to UTC, which gives us a "timezone" in which
+# the date doesn't change during a Gemini South observing night. This offset
+# value is used in selection.py when querying by night.
+CHILE_OFFSET = datetime.timedelta(hours=-6)
 
-def get_fake_ut(transit="14:00:00"):
+def gemini_date(string, as_date=False):
     """
-    Generate the fake UT date used to name Gemini data.
-
-    At Gemini the transit time is set to 14:00:00 local time.  For GN, that
-    corresponds to midnight UT so the dataset name is not faked, but for
-    GS, a transit of 14hr is totally artificial.
-
-    Before transit, UT of last night
-    After transit, UT of coming night
-
-    Note that the transit time is not hardcoded and the code should continue
-    to work if the Gemini's policy regarding the transit time were to change.
-
-    Parameters
-    ----------
-    transit : <str>
-        UT transit time to use.  Format: "hh:mm:ss".  Default: "14:00:00"
-
-    Returns
-    -------
-    fake_ut: <str>
-        Formatted date string: 'yyyymmdd'
-
-    --------
-    Original author:  Kathleen Labrie  31.10.2008  Based on CL script.
-    Original   code:  gempylocal.ops_suppor.ops_utils.get_fake_ut().
-
-    """
-    # Convert the transit time string into a datetime.time object
-    transittime = datetime.datetime.strptime(transit, "%H:%M:%S").time()
-
-    # Get the local and UTC date and time
-    dtlocal = datetime.datetime.now()
-    dtutc = datetime.datetime.utcnow()
-
-    # Generate the fake UT date
-    if dtlocal.time() < transittime:
-        # Before transit
-        if dtutc.date() == dtlocal.date():
-            fake_ut = ''.join(str(dtutc.date()).split('-'))
-        else:
-            # UT has changed before transit => fake the UT
-            oneday = datetime.timedelta(days=1)
-            fake_ut = ''.join(str(dtutc.date() - oneday).split('-'))
-    else:
-        # After or at transit
-        if dtutc.date() == dtlocal.date():
-            # UT has not changed yet; transit reached => fake the UT
-            oneday = datetime.timedelta(days=1)
-            fake_ut = ''.join(str(dtutc.date() + oneday).split('-'))
-        else:
-            fake_ut = ''.join(str(dtutc.date()).split('-'))
-
-    return fake_ut
-
-
-def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
-    """
-    A utility function for matching dates of the form YYYYMMDD
-    also supports today/tonight, yesterday/lastnight
-    returns the YYYYMMDD string, or '' if not a date.
+    A utility function for matching strings specifying dates of the form
+    YYYYMMDD. Also supports special values today, yesterday, tomorrow
+    returns None if it can't parse the string, the YYYYMMDD string, or a
+    datetime.datetime instance is as_date is True.
 
     Parameters
     ----------
     string: <str>
-        A string moniker indicating a day to convert to a gemini_date.
-        One of 'today', tomorrow', 'yesterday', 'lastnight' OR an actual
-        'yyyymmdd' string.
+        A string giving a date to parse.
+        One of 'today', tomorrow', 'yesterday', or an actual 'YYYYMMDD' string.
 
-    as_datetime: <bool>
-        return is a datetime object.
-        Default is False
-
-    offset: <datetime>
-        timezone offset from UT.
-        default is ZERO_OFFSET
+    as_date: <bool>
+        return a datetime.date object.
+        Default is False, returns a YYYYMMDD string
 
     Returns
     -------
-    <datetime>, <str>, <NoneType>
-        One of a datetime object; a Gemini date of the form 'YYYYMMDD';
-        None.
+    <date>, <str>, <NoneType>
+        One of a 'datetime.date' object, a string of the form 'YYYYMMDD',
+        or None.
 
     """
-    suffix = ''
-    if string.endswith('Z'):
-        # explicit request for UTC, set offset to zero
-        string = string[:-1]
-        offset = ZERO_OFFSET
-        suffix = 'Z'
 
-    dt_to_text = lambda x: x.date().strftime('%Y%m%d') + suffix
-    dt_to_text_full = lambda x: x.strftime('%Y-%m-%dT%H:%M:%S') + suffix
+    # This first if-elif... block ends with dt set to a datetime.date.
 
-    if string in {'today', 'tonight'}:
-        string = get_fake_ut()
-        # string = dt_to_text(datetime.datetime.utcnow())
-    elif string in {'yesterday', 'lastnight'}:
-        past = dateutil.parser.parse(get_fake_ut()) - ONEDAY_OFFSET
-        string = dt_to_text(past)
-        # string = dt_to_text(datetime.datetime.utcnow() - ONEDAY_OFFSET)
+    # Handle the 'special values' first
+    if string in ('yesterday', 'today', 'tomorrow'):
+        now = datetime.datetime.utcnow()
+        if string == 'today':
+            dt = now
+        elif string == 'yesterday':
+            dt = now - ONEDAY_OFFSET
+        elif string == 'tomorrow':
+            dt = now + ONEDAY_OFFSET
+        else:
+            return None  # To prevent warnings about dt being unset
+        dt = dt.replace(tzinfo=None).date()
 
-    if len(string) == 8 and string.isdigit():
-        # What we want here is to bracket from 2pm yesterday through 2pm today.
-        # That is, 20200415 should convert to 2020-04-14 14:00 local time, but
-        # in UTC.  The offset we are passed is what we need to add, including
-        # the 2pm offset as well as the timezone adjustment to convert back to
-        # UTC.
-        # Example (HST): 2020-04-15 0:00 -10 hrs =
-        #                    2020-04-14 2pm + 10 hrs = 2020-04-15 0:00
-        # Example (CL): 2020-04-15 0:00 -10 hrs =
-        #                    2020-04-14 2pm + 4 hrs = 2020-04-14 18:00
-        # offset (HST) = -10 + 10 = 0
-        # offset (CL) = -10 + 4 = -6
+    # Now handle YYYYMMDD
+    elif len(string) == 8:
         try:
-            dt = dateutil.parser.parse(string) + offset
-            dt = dt.replace(tzinfo=None)
-            if DATE_LIMIT_LOW <= dt < DATE_LIMIT_HIGH:
-                return dt_to_text(dt) if not as_datetime else dt
+            dt = dateutil.parser.parse(string)
         except ValueError:
-            pass
+            return None
 
-    if len(string) >= 14 and 'T' in string and ':' in string and \
-            '=' not in string:
-        # Parse an ISO style datestring, so 2019-12-10T11:22:33.444444
-        try:
-            # TODO this is dateutil bug #786, so for now we truncate to 6 digits
-            if '.' in string:
-                lastdot = string.rindex('.')
-                if len(string) - lastdot > 6:
-                    string = string[:lastdot - len(string)]
-            # TODO end of workaround
-            dt = dateutil.parser.isoparse("%sZ" % string) + offset
-            # strip out time zone as the rest of the code does not support it
-            dt = dt.replace(tzinfo=None)
-            if DATE_LIMIT_LOW <= dt < DATE_LIMIT_HIGH:
-                return dt_to_text_full(dt) if not as_datetime else dt
-        except ValueError:
-            pass
+        dt = dt.replace(tzinfo=None).date()
+        if dt < DATE_LIMIT_LOW.date() or dt > DATE_LIMIT_HIGH.date():
+            return None
 
-    if len(string) >= 14 and 'T' in string and ':' not in string and \
-            '=' not in string and '-' not in string:
-        # Parse a compressed style datestring, so 20191210T112233
-        try:
-            dt = dateutil.parser.isoparse("%s-%s-%sT%s:%s:%sZ" %
-                                          (string[0:4], string[4:6],
-                                           string[6:8], string[9:11],
-                                           string[11:13], string[13:15]))
-            # strip  out time zone as the rest of the code does not support it
-            dt = dt.replace(tzinfo=None)
-            if DATE_LIMIT_LOW <= dt < DATE_LIMIT_HIGH:
-                return dt_to_text_full(dt) if not as_datetime else dt
-        except ValueError:
-            pass
+    else:
+        return None
 
-    return '' if not as_datetime else None
+    if as_date:
+        return dt
+    else:
+        return dt.strftime('%Y%m%d')
 
 
-def gemini_daterange(string, as_datetime=False, offset=ZERO_OFFSET):
+def gemini_daterange(string, as_dates=False):
     """
-    A utility function for matching date ranges of the form YYYYMMDD-YYYYMMDD
-    Does not support 'today', yesterday', ...
-
-    Also this does not yet check for sensible date ordering returns the
-    YYYYMMDD-YYYYMMDD string, or '' if not a daterange.
+    A utility function for matching and parsing date ranges. These
+    are of the form YYYYMMDD-YYYYMMDD
 
     Parameters
     ----------
     string: <str>
         date range of the form YYYYMMDD-YYYYMMDD.
 
-    as_datetime: <bool>
-        If True, return a recognized daterange as a pair of datetime objects,
-        None if it's not a daterange.
-        Default is False.
-
-    offset: <datetime>
-        timezone offset from UT.
-        default is ZERO_OFFSET
+    as_dates: <bool>
+        Default is False. If True, return a pair of datetime.date objects,
+        otherwise returns a pair of string of the form 'YYYYMMDD', 'YYYYMMDD'
 
     Returns
     -------
-    <datetime>, <str>, <NoneType>
-        One of a <datetime> object; a Gemini date of the form 'YYYYMMDD';
-        None.
-
+        One of:
+        None, if the string cannot be parsed,
+        a (<date>, <date>) pair, if as_dates is true,
+        otherwise, a pair of strings of the form 'yyyymmdd', 'YYYYMMDD'
     """
+
     datea, sep, dateb = string.partition('-')
-    da = gemini_date(datea, as_datetime=True, offset=offset)
-    db = gemini_date(dateb, as_datetime=True, offset=offset)
-    if da and db:
-        if as_datetime:
-            return da, db
+    if sep != '-' or datea is None or dateb is None:
+        return None
 
-        return string
+    da = gemini_date(datea, as_date=True)
+    db = gemini_date(dateb, as_date=True)
+    if da is None or db is None:
+        return None
 
-    return '' if not as_datetime else None
+    if da > db:
+        # They're reversed, flip them round
+        da, db = db, da
+
+    if as_dates:
+        return da, db
+
+    return da.strftime('%Y%m%d'), db.strftime('%Y%m%d')
 
 
-def get_date_offset() -> timedelta:
+def get_time_period(start, end=None):
     """
-    This function is used to add set offsets to the dates. The aim is to get
-    the "current date" adjusting for the local time, taking into account the
-    different sites where Gemini is based.
-
-    Returns
-    -------
-    timedelta
-        The `timedelta` to use for this application/server.
-    """
-
-    # if db_config.use_utc:
-    #    return ZERO_OFFSET
-
-    # Calculate the proper offset to add to the date
-    # We consider the night boundary to be 14:00 local time
-    # This is midnight UTC in Hawaii, completely arbitrary in Chile
-    zone = time.altzone if time.daylight else time.timezone
-    # print datetime.timedelta(hours=16)
-    # print datetime.timedelta(seconds=zone)
-    # print ONEDAY_OFFSET
-
-    # return datetime.timedelta(hours=16) + datetime.timedelta(seconds=zone)
-    # - ONEDAY_OFFSET
-    # I think this interacted with the Chile today changes to cause the
-    # missing starts in Hawaii for summary
-    return datetime.timedelta(hours=14) + datetime.timedelta(seconds=zone)\
-        - ONEDAY_OFFSET
-
-
-def get_time_period(start: str, end: str = None, as_date: bool = False):
-    """
-    Get a time period from a given start and end date string.  The string
-    format for the inputs is YYYYMMDD or YYYY-MM-DDThh:mm:ss.
+    Get a start and end datetimes for a time period described by start and end.
+    start and end can be strings of the form YYYYMMDD or datetime.dates.
+    If end is not given, it is assumed to be the same as start.
+    The returned values will be datetimes representing 00:00:00 on the start
+    date and 00:00:00 on the day after the end date.
 
     Parameters
     ----------
-    start : str
-        Start of the time period
-    end : str
-        End of the time period
-    as_date: bool
-        If True, make return type `date` only, else return full `datetime`
-        objects, defaults to False
+    start : str or datetime.date
+        Start day of the time period
+    end : str or datetime.date
+        End day of the time period
 
     Returns
     -------
-    tuple
-        A tuple of `date` or `datetime` with the resulting parsed values,
-        defaults to False
+    A tuple of `datetime` with the resulting parsed values, or None if we
+    cannot parse the values.
     """
-    startdt = gemini_date(start, offset=get_date_offset(), as_datetime=True)
-    if end is None:
-        enddt = startdt
-    else:
-        enddt = gemini_date(end, offset=get_date_offset(), as_datetime=True)
-        # Flip them round if reversed
-        if startdt > enddt:
-            startdt, enddt = enddt, startdt
-    if end is None or 'T' not in end:
-        # day value, need to +1
-        enddt += ONEDAY_OFFSET
 
-    if as_date:
-        return startdt.date(), enddt.date()
+    if isinstance(start, datetime.date):
+        startd = start
+    else:
+        startd = gemini_date(start, as_date=True)
+        if startd is None:
+            return None
+
+    if end is None:
+        endd = startd
+    elif isinstance(end, datetime.date):
+        endd = end
+    else:
+        endd = gemini_date(end, as_date=True)
+        if endd is None:
+            return None
+
+        # Flip them round if reversed
+        if startd > endd:
+            startd, endd = endd, startd
+
+    # Make them into datetimes at 00:00:00 on that day
+    t = datetime.time(0, 0)
+    startdt = datetime.datetime.combine(startd, t)
+    enddt = datetime.datetime.combine(endd, t)
+
+    # Advance enddt to exactly one day later
+    enddt = enddt + datetime.timedelta(days=1)
 
     return startdt, enddt
-
-
-def gemini_time_period_from_range(rng: str, as_date: bool = False):
-    """
-    Get a time period from a passed in string representation
-
-    Parameters
-    ----------
-    rng : str
-        YYYYMMDD-YYYYMMDD style range
-    as_date : bool
-        If True, return tuple of `date`, else tuple of `datetime`, defaults to
-        False
-
-    Returns
-    -------
-    `tuple` of `datetime` or `tuple` of `date`
-        Start and stop time of the period as `date` or `datetime` per `as_date`
-    """
-    a, _, b = gemini_daterange(rng).partition('-')
-    return get_time_period(a, b, as_date)
 
 
 def gemini_semester(dt):

@@ -5,14 +5,12 @@ header object list by executing the query.
 """
 from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
-from fits_storage.server.orm.preview import Preview
 from fits_storage.core.orm.header import Header
 from fits_storage.server.orm.program import Program
 from fits_storage.server.orm.obslog import Obslog
-from fits_storage.server.orm.obslog_comment import ObslogComment
 from .selection import queryselection, openquery
 from fits_storage.gemini_metadata_utils import gemini_date, \
-    gemini_time_period_from_range
+    gemini_daterange, get_time_period
 from sqlalchemy import asc, desc, func, nullslast
 
 from fits_storage.server.wsgi.context import get_context
@@ -39,7 +37,6 @@ def list_headers(selection, orderby, session=None, unlimit=False):
 
     # Add the selection...
     query = queryselection(query, selection)
-
 
     # Do we have any order by arguments?
 
@@ -69,8 +66,6 @@ def list_headers(selection, orderby, session=None, unlimit=False):
             elif value in whichorderby:
                 thing = getattr(Header, value)
                 order_criteria.append(sortingfunc(thing))
-
-
 
     is_openquery = openquery(selection)
 
@@ -119,29 +114,30 @@ def list_obslogs(selection, orderby):
     session = get_context().session
 
     query = session.query(Obslog).select_from(Obslog, DiskFile)\
-                    .filter(Obslog.diskfile_id == DiskFile.id)
+        .filter(Obslog.diskfile_id == DiskFile.id)
 
     # Cant use queryselection as that assumes it's a header object.
     # Just do it here.
 
     if 'date' in selection:
-        date = gemini_date(selection['date'], as_datetime=True).date()
+        date = gemini_date(selection['date'], as_date=True)
         query = query.filter(Obslog.date == date)
 
     if 'daterange' in selection:
         # Get parsed start and end datetime objects
         daterange = selection['daterange']
-        try:
-            start, end = gemini_time_period_from_range(daterange)
-        except (TypeError, ValueError):
+        startd, endd = gemini_daterange(selection['daterange'],
+                                        as_dates=True)
+        if startd is None or endd is None:
             raise ValueError('Not a valid daterange: {0}'.format(daterange))
 
+        startdt, enddt = get_time_period(startd, endd)
+
         # check it's between these two
-        query = query.filter(Obslog.date >= start).filter(Obslog.date < end)
+        query = query.filter(Obslog.date >= startdt).filter(Obslog.date < enddt)
 
     if 'program_id' in selection:
         query = query.filter(Obslog.program_id == selection['program_id'])
-
 
     # Order by inverse date for now
     query = query.order_by(desc(Obslog.date))
@@ -173,16 +169,18 @@ def list_programs(selection):
     # Build the query here manually
 
     if 'program_id' in selection:
-        query = query.filter(Program.program_id==selection['program_id'])
+        query = query.filter(Program.program_id == selection['program_id'])
 
     if 'PIname' in selection:
         query = query.filter(
-            func.to_tsvector(Program.pi_coi_names).match(' & '.join(selection['PIname'].split()))
+            func.to_tsvector(Program.pi_coi_names)
+            .match(' & '.join(selection['PIname'].split()))
         )
 
     if 'ProgramText' in selection:
         query = query.filter(
-            func.to_tsvector(Program.title).match(' & '.join(selection['ProgramText'].split()))
+            func.to_tsvector(Program.title)
+            .match(' & '.join(selection['ProgramText'].split()))
         )
 
     return query.all()

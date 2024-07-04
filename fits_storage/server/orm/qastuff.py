@@ -81,7 +81,7 @@ class QAreport(Base, MetricDictMixin):
             Dictionary of values for a QA Report
         host : str
             Host submitting the QA report
-        time : datetime
+        time : datetime.datetime
             Time of the QA report
 
         Returns

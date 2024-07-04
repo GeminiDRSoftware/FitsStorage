@@ -7,11 +7,11 @@ import math
 import urllib.parse
 import urllib.error
 
-from sqlalchemy import or_, func
+from sqlalchemy import or_, and_, func
 
 import fits_storage.gemini_metadata_utils as gmu
 
-#TODO - get rid of this link into the GPI table
+# TODO - get rid of this link into the GPI table
 from fits_storage.cal.orm.gpi import Gpi
 
 from fits_storage.core.orm.header import Header
@@ -22,7 +22,6 @@ from fits_storage.core.orm.photstandard import PhotStandardObs
 from fits_storage.server.orm.program import Program
 from fits_storage.server.orm.publication import Publication, ProgramPublication
 
-#from ..orm.target import TargetPresence
 
 # A number of the choices in the getselection inner loop are just simple
 # checks that can be represented by a data structure. It's better to keep it
@@ -80,14 +79,13 @@ getselection_key_value = {
     'publication': 'publication',
     'PIname': 'PIname',
     'ProgramText': 'ProgramText',
-    'entrytime': 'entrytime',
     'raw_cc': 'raw_cc',
     'raw_iq': 'raw_iq',
     'ephemeris_target': 'ephemeris_target',
-    'lastmoddaterange': 'lastmoddaterange',
-    'entrytimedaterange': 'entrytimedaterange',
     'gain': 'gain',
     'readspeed': 'readspeed',
+    'night': 'night',
+    'nightrange': 'nightrange',
     }
 
 # Also, some entries set themselves as the value for a certain selection
@@ -130,8 +128,8 @@ getselection_booleans = {
     'mdbad': ('mdready', False),
     'gpi_astrometric_standard': ('gpi_astrometric_standard', True),
 
-     # this is basically a dummy value for the search form defaults
-     'includeengineering': ('engineering', 'Include'),
+    # this is basically a dummy value for the search form defaults
+    'includeengineering': ('engineering', 'Include'),
     }
 
 getselection_detector_roi = {
@@ -147,7 +145,7 @@ getselection_detector_roi = {
 
 def getselection(things):
     """
-    This takes a list of things from the URL, and returns a selection hash
+    This takes a list of things from the URL, and returns a selection dict
     that is used by the html generators. We disregard all but the most
     specific of a project id, observation id or datalabel.
 
@@ -203,14 +201,16 @@ def getselection(things):
             elif thing in {'Raw', 'Quick-Look', 'Science-Quality'}:
                 selection['processing'] = thing
             elif thing.lower() in getselection_detector_roi:
-                selection['detector_roi'] = getselection_detector_roi[thing.lower()]
+                selection['detector_roi'] = \
+                    getselection_detector_roi[thing.lower()]
             elif thing.lower() == 'preimage':
                 selection['pre_image'] = True
             elif thing.lower() == 'twilight':
                 selection['twilight'] = True
             elif thing.lower() == 'nottwilight':
                 selection['twilight'] = False
-            elif (len(thing) < 14) and (thing[:4] in {'N200', 'N201', 'N202', 'S200', 'S201', 'S202'}):
+            elif (len(thing) < 14) and (thing[:4] in {'N200', 'N201', 'N202',
+                                                      'S200', 'S201', 'S202'}):
                 # Good through 2029, don't match full filenames :-)
                 selection['filepre'] = thing
             elif key in {'object', 'Object'}:
@@ -226,7 +226,7 @@ def getselection(things):
                 else:
                     selection['notrecognised'] = thing
 
-    # Disregard all but the most specific of program_id, observation_id, data_label
+    # Delete all but the most specific of program_id, observation_id, data_label
     if 'data_label' in selection:
         selection.pop('observation_id', None)
         selection.pop('program_id', None)
@@ -234,14 +234,15 @@ def getselection(things):
         selection.pop('program_id', None)
     return selection
 
+
 sayselection_defs = {
     'program_id': 'Program ID',
     'observation_id': 'Observation ID',
     'data_label': 'Data Label',
     'date': 'Date',
     'daterange': 'Daterange',
-    'inst':'Instrument',
-    'observation_type':'ObsType',
+    'inst': 'Instrument',
+    'observation_type': 'ObsType',
     'observation_class': 'ObsClass',
     'filename': 'Filename',
     'processing': 'Processing',
@@ -278,7 +279,10 @@ sayselection_defs = {
     'coadds': 'Coadds',
     'mdready': 'MetaData OK',
     'gpi_astrometric_standard': 'GPI Astrometric Standard',
+    'night': 'Observing Night',
+    'nightrange': 'Observing Night Range',
     }
+
 
 def sayselection(selection):
     """
@@ -292,8 +296,7 @@ def sayselection(selection):
     # Collect simple associations of the 'key: value' type from the
     # sayselection_defs dictionary
     parts = ["%s: %s" % (sayselection_defs[key], selection[key])
-                for key in sayselection_defs
-                if key in selection]
+             for key in sayselection_defs if key in selection]
     
     if selection.get('site_monitoring'):
         parts.append('Is Site Monitoring Data')
@@ -326,15 +329,14 @@ def sayselection(selection):
     ret = '; '.join([''] + parts)
 
     if 'notrecognised' in selection:
-        return ret + ". WARNING: I didn't understand these (case-sensitive) words: %s" % selection['notrecognised']
+        return ret + ". WARNING: I didn't understand these (case-sensitive) " \
+                     "words: %s" % selection['notrecognised']
 
     return ret
 
-# import time module to get local timezone
-from types import MethodType
 
 queryselection_filters = (
-    ('present',               DiskFile.present), # Do want to select Header object for which diskfile.present is true?
+    ('present',               DiskFile.present),
     ('canonical',             DiskFile.canonical),
     ('science_verification',  Header.science_verification),
     ('program_id',            Header.program_id),
@@ -363,6 +365,14 @@ queryselection_filters = (
     ('processing',            Header.processing)
     )
 
+
+# This function is used to add the stuff to stop it finding data by coords
+# when the coords are proprietary.
+def querypropcoords(query):
+    return query.filter(or_(Header.proprietary_coordinates == False,
+                            Header.release <= func.now()))
+
+
 def queryselection(query, selection):
     """
     Given an sqlalchemy query object and a selection dictionary,
@@ -370,17 +380,9 @@ def queryselection(query, selection):
     and return the query object
     """
 
-    # This function is used to add the stuff to stop it finding data by
-    # coords when the coords are proprietary.
-    def querypropcoords(query):
-        return query.filter(or_(Header.proprietary_coordinates == False, Header.release <= func.now()))
-
     for key, field in queryselection_filters:
         if key in selection:
-            if isinstance(field, MethodType):
-                query = query.filter(field(selection[key]))
-            else:
-                query = query.filter(field == selection[key])
+            query = query.filter(field == selection[key])
 
     # For some bizarre reason, doing a .in_([]) with an empty list is really
     # slow, and postgres eats CPU for a while doing it.
@@ -397,103 +399,136 @@ def queryselection(query, selection):
     if selection.get('calprog') in (True, False):
         query = query.filter(Header.calibration_program == selection['calprog'])
 
-    if ('object' in selection) and (('ra' not in selection) and ('dec' not in selection)):
+    if ('object' in selection) and (
+            ('ra' not in selection) and ('dec' not in selection)):
         # Handle the "wildcards" allowed on the object name
         object = selection['object']
         if object.startswith('*') or object.endswith('*'):
-            # Wildcards are involved, replace with SQL wildcards and use ilike query
+            # Wildcards are used, replace with SQL wildcards and use ilike query
             object = object.replace('*', '%')
-        # ilike is a case insensitive version of like
+        # ilike is a case-insensitive version of like
         query = query.filter(Header.object.ilike(object))
         query = querypropcoords(query)
 
     # Should we query by date?
     if 'date' in selection:
-        # If this is an archive server, take the date very literally.
-        # For the local fits servers, we do some manipulation to treat
-        # it as an observing night...
+        # This is now a literal UTC date query. To query by observing night
+        # use the 'night' selection
 
         startdt, enddt = gmu.get_time_period(selection['date'])
 
         # check it's between these two
-        query = query.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime < enddt)
+        query = query.filter(Header.ut_datetime >= startdt)\
+            .filter(Header.ut_datetime < enddt)
 
     # Should we query by daterange?
     if 'daterange' in selection:
         # Parse the date to start and end datetime objects
-        startdt, enddt = gmu.gemini_time_period_from_range(selection['daterange'])
+        startd, endd = gmu.gemini_daterange(selection['daterange'],
+                                            as_dates=True)
+        startdt, enddt = gmu.get_time_period(startd, endd)
+
         # check it's between these two
-        query = query.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime < enddt)
+        query = query.filter(Header.ut_datetime >= startdt)\
+            .filter(Header.ut_datetime < enddt)
 
-    if 'lastmoddaterange' in selection:
-        try:
-            a, b = selection['lastmoddaterange'].split(' ')
-            startfiledt, endfiledt = gmu.get_time_period(a, b, False)
-            query = query.filter(DiskFile.lastmod >= startfiledt).filter(DiskFile.lastmod < endfiledt)
-        except Exception:
-            # parse error on datetime
-            pass
+    # Query by Observing Night
+    if 'night' in selection:
+        startdt, enddt = gmu.get_time_period(selection['night'])
+        query = query.filter(
+            or_(
+                and_(Header.telescope == 'Gemini-North',
+                     Header.ut_datetime >= startdt,
+                     Header.ut_datetime < enddt),
+                and_(Header.telescope == 'Gemini-South',
+                     Header.ut_datetime >= startdt + gmu.CHILE_OFFSET,
+                     Header.ut_datetime < enddt + gmu.CHILE_OFFSET)
+            )
+        )
 
-    if 'entrytimedaterange' in selection:
-        try:
-            a, b = selection['entrytimedaterange'].split(' ')
-            startfiledt, endfiledt = gmu.get_time_period(a, b, False)
-            query = query.filter(DiskFile.entrytime >= startfiledt).filter(DiskFile.entrytime < endfiledt)
-        except Exception:
-            # parse error on datetime
-            pass
+    # Query by nightrange
+    if 'nightrange' in selection:
+        startd, endd = gmu.gemini_daterange(selection['nightrange'],
+                                            as_dates=True)
+        startdt, enddt = gmu.get_time_period(startd, endd)
+        query = query.filter(
+            or_(
+                and_(Header.telescope == 'Gemini-North',
+                     Header.ut_datetime >= startdt,
+                     Header.ut_datetime < enddt),
+                and_(Header.telescope == 'Gemini-South',
+                     Header.ut_datetime >= startdt + gmu.CHILE_OFFSET,
+                     Header.ut_datetime < enddt + gmu.CHILE_OFFSET)
+        )
+    )
 
     if 'inst' in selection:
         if selection['inst'] == 'GMOS':
-            query = query.filter(or_(Header.instrument == 'GMOS-N', Header.instrument == 'GMOS-S'))
+            query = query.filter(or_(Header.instrument == 'GMOS-N',
+                                     Header.instrument == 'GMOS-S'))
         else:
             query = query.filter(Header.instrument == selection['inst'])
 
     if 'disperser' in selection:
         if 'inst' in selection and selection['inst'] == 'GNIRS':
             if selection['disperser'] == '10lXD':
-                query = query.filter(or_(Header.disperser == '10_mm&SXD', Header.disperser == '10_mm&LXD'))
+                query = query.filter(or_(Header.disperser == '10_mm&SXD',
+                                         Header.disperser == '10_mm&LXD'))
             elif selection['disperser'] == '32lXD':
-                query = query.filter(or_(Header.disperser == '32_mm&SXD', Header.disperser == '32_mm&LXD'))
+                query = query.filter(or_(Header.disperser == '32_mm&SXD',
+                                         Header.disperser == '32_mm&LXD'))
             elif selection['disperser'] == '111lXD':
-                query = query.filter(or_(Header.disperser == '111_mm&SXD', Header.disperser == '111_mm&LXD'))
+                query = query.filter(or_(Header.disperser == '111_mm&SXD',
+                                         Header.disperser == '111_mm&LXD'))
             else:
                 like_arg = selection['disperser'] + '_%'
-                query = query.filter(or_(Header.disperser == selection['disperser'], Header.disperser.like(like_arg)))
+                query = query.filter(
+                    or_(Header.disperser == selection['disperser'],
+                        Header.disperser.like(like_arg)))
         else:
             like_arg = selection['disperser'] + '_%'
-            query = query.filter(or_(Header.disperser == selection['disperser'], Header.disperser.like(like_arg)))
+            query = query.filter(
+                or_(Header.disperser == selection['disperser'],
+                    Header.disperser.like(like_arg)))
 
     if 'camera' in selection:
-        # Hack for GNIRS camera names - find both the Red and Blue options for each case
+        # Hack for GNIRS camera names
+        # - find both the Red and Blue options for each case
         if selection['camera'] == 'GnirsLong':
-            query = query.filter(or_(Header.camera == 'LongRed', Header.camera == 'LongBlue'))
+            query = query.filter(or_(Header.camera == 'LongRed',
+                                     Header.camera == 'LongBlue'))
         elif selection['camera'] == 'GnirsShort':
-            query = query.filter(or_(Header.camera == 'ShortRed', Header.camera == 'ShortBlue'))
+            query = query.filter(or_(Header.camera == 'ShortRed',
+                                     Header.camera == 'ShortBlue'))
         else:
             query = query.filter(Header.camera == selection['camera'])
 
     if 'focal_plane_mask' in selection:
         if 'inst' in list(selection.keys()) and selection['inst'] == 'TReCS':
-            # this gets round the quotes and options "+ stuff" in the TReCS mask names.
+            # handle the quotes and options "+ stuff" in the TReCS mask names.
             # the selection should only contain the "1.23" bit
-            query = query.filter(Header.focal_plane_mask.contains(selection['focal_plane_mask']))
+            query = query.filter(
+                Header.focal_plane_mask.contains(selection['focal_plane_mask']))
         if 'inst' in list(selection.keys()) and selection['inst'][:4] == 'GMOS':
-            # Make this a starts with for convenice finding multiple gmos masks for example
-            query = query.filter(Header.focal_plane_mask.startswith(selection['focal_plane_mask']))
+            # Make this startswith for convenience finding multiple gmos masks
+            query = query.filter(Header.focal_plane_mask.startswith(
+                selection['focal_plane_mask']))
         else:
-            query = query.filter(Header.focal_plane_mask == selection['focal_plane_mask'])
+            query = query.filter(Header.focal_plane_mask ==
+                                 selection['focal_plane_mask'])
 
     if 'pupil_mask' in selection:
         query = query.filter(Header.pupil_mask == selection['pupil_mask'])
 
     if 'qa_state' in selection and selection['qa_state'] != 'AnyQA':
         if selection['qa_state'] == 'Win':
-            query = query.filter(or_(Header.qa_state == 'Pass', Header.qa_state == 'Usable'))
+            query = query.filter(or_(Header.qa_state == 'Pass',
+                                     Header.qa_state == 'Usable'))
         elif selection['qa_state'] == 'NotFail':
             query = query.filter(Header.qa_state != 'Fail')
         elif selection['qa_state'] == 'Lucky':
-            query = query.filter(or_(Header.qa_state == 'Pass', Header.qa_state == 'Undefined'))
+            query = query.filter(or_(Header.qa_state == 'Pass',
+                                     Header.qa_state == 'Undefined'))
         elif selection['qa_state'] == 'UndefinedQA':
             query = query.filter(Header.qa_state == 'Undefined')
         else:
@@ -509,9 +544,12 @@ def queryselection(query, selection):
 
     if 'detector_roi' in selection:
         if selection['detector_roi'] == 'Full Frame':
-            query = query.filter(or_(Header.detector_roi_setting == 'Fixed', Header.detector_roi_setting == 'Full Frame'))
+            query = query.filter(
+                or_(Header.detector_roi_setting == 'Fixed',
+                    Header.detector_roi_setting == 'Full Frame'))
         else:
-            query = query.filter(Header.detector_roi_setting == selection['detector_roi'])
+            query = query.filter(Header.detector_roi_setting ==
+                                 selection['detector_roi'])
 
     if 'photstandard' in selection:
         query = query.filter(Footprint.header_id == Header.id)
@@ -532,7 +570,8 @@ def queryselection(query, selection):
     if 'el' in selection:
         a, b = _parse_range(selection['el'])
         if a is not None and b is not None:
-            query = query.filter(Header.elevation >= a).filter(Header.elevation < b)
+            query = query.filter(Header.elevation >= a).\
+                filter(Header.elevation < b)
             query = querypropcoords(query)
 
     # cosdec value is used in 'ra' code below to scale the search radius
@@ -546,19 +585,22 @@ def queryselection(query, selection):
             degs = gmu.dectodeg(selection['dec'])
             if degs is None:
                 # Invalid value.
-                selection['warning'] = 'Invalid Dec format. Ignoring your Dec constraint.'
+                selection['warning'] = 'Invalid Dec format. ' \
+                                       'Ignoring your Dec constraint.'
                 valid = False
             else:
                 # valid single value, get search radius
                 if 'sr' in list(selection.keys()):
                     sr = gmu.srtodeg(selection['sr'])
                     if sr is None:
-                        selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
+                        selection['warning'] = 'Invalid Search Radius, ' \
+                                               'defaulting to 3 arcmin'
                         selection['sr'] = '180'
                         sr = gmu.srtodeg(selection['sr'])
                 else:
                     # No search radius specified. Default it for them
-                    selection['warning'] = 'No Search Radius given, defaulting to 3 arcmin'
+                    selection['warning'] = 'No Search Radius given, ' \
+                                           'defaulting to 3 arcmin'
                     selection['sr'] = '180'
                     sr = gmu.srtodeg(selection['sr'])
                 lower = degs - sr
@@ -572,7 +614,8 @@ def queryselection(query, selection):
             lower = gmu.dectodeg(match.group(1))
             upper = gmu.dectodeg(match.group(2))
             if (lower is None) or (upper is None):
-                selection['warning'] = 'Invalid Dec range format. Ignoring your Dec constraint.'
+                selection['warning'] = 'Invalid Dec range format. ' \
+                                       'Ignoring your Dec constraint.'
                 valid = False
             else:
                 # Also set cosdec value here for use in 'ra' code below
@@ -580,11 +623,13 @@ def queryselection(query, selection):
                 cosdec = math.cos(math.radians(degs))
 
         if valid and (lower is not None) and (upper is not None):
-            # Negative dec ranges are usually specified backwards, eg -20 - -30...
+            # Negative dec ranges are usually specified backwards, eg -20 - -30
             if upper < lower:
-                query = query.filter(Header.dec >= upper).filter(Header.dec < lower)
+                query = query.filter(Header.dec >= upper)\
+                    .filter(Header.dec < lower)
             else:
-                query = query.filter(Header.dec >= lower).filter(Header.dec < upper)
+                query = query.filter(Header.dec >= lower)\
+                    .filter(Header.dec < upper)
             query = querypropcoords(query)
 
     if 'ra' in selection:
@@ -596,19 +641,22 @@ def queryselection(query, selection):
             degs = gmu.ratodeg(value[0])
             if degs is None:
                 # Invalid value.
-                selection['warning'] = 'Invalid RA format. Ignoring your RA constraint.'
+                selection['warning'] = 'Invalid RA format. ' \
+                                       'Ignoring your RA constraint.'
                 valid = False
             else:
                 # valid single value, get search radius
                 if 'sr' in list(selection.keys()):
                     sr = gmu.srtodeg(selection['sr'])
                     if sr is None:
-                        selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
+                        selection['warning'] = 'Invalid Search Radius, ' \
+                                               'defaulting to 3 arcmin'
                         selection['sr'] = '180'
                         sr = gmu.srtodeg(selection['sr'])
                 else:
                     # No search radius specified. Default it for them
-                    selection['warning'] = 'No Search Radius given, defaulting to 3 arcmin'
+                    selection['warning'] = 'No Search Radius given, ' \
+                                           'defaulting to 3 arcmin'
                     selection['sr'] = '180'
                     sr = gmu.srtodeg(selection['sr'])
 
@@ -626,17 +674,20 @@ def queryselection(query, selection):
             lower = gmu.ratodeg(value[0])
             upper = gmu.ratodeg(value[1])
             if (lower is None) or (upper is None):
-                selection['warning'] = 'Invalid RA range format. Ignoring your RA constraint.'
+                selection['warning'] = 'Invalid RA range format. ' \
+                                       'Ignoring your RA constraint.'
                 valid = False
 
         else:
             # Invalid string format for RA
-            selection['warning'] = 'Invalid RA format. Ignoring your RA constraint.'
+            selection['warning'] = 'Invalid RA format. ' \
+                                   'Ignoring your RA constraint.'
             valid = False
 
         if valid and (lower is not None) and (upper is not None):
             if upper > lower:
-                query = query.filter(Header.ra >= lower).filter(Header.ra < upper)
+                query = query.filter(Header.ra >= lower).\
+                    filter(Header.ra < upper)
             else:
                 query = query.filter(or_(Header.ra >= lower, Header.ra < upper))
             query = querypropcoords(query)
@@ -657,7 +708,8 @@ def queryselection(query, selection):
                 pass
             if expt is None:
                 # Invalid format
-                selection['warning'] = "Invalid format for exposure time, ignoring it."
+                selection['warning'] = "Invalid format for exposure time, " \
+                                       "ignoring it."
                 valid = False
             else:
                 # Valid single value. Set range
@@ -671,16 +723,19 @@ def queryselection(query, selection):
                 lower = float(match.group(1))
                 upper = float(match.group(2))
             except (ValueError, TypeError):
-                selection['warning'] = 'Invalid format for exposure time range. Ignoring it.'
+                selection['warning'] = 'Invalid format for exposure time ' \
+                                       'range. Ignoring it.'
                 valid = False
 
         if valid:
-            query = query.filter(Header.exposure_time >= lower).filter(Header.exposure_time <= upper)
+            query = query.filter(Header.exposure_time >= lower)\
+                .filter(Header.exposure_time <= upper)
 
     if 'crpa' in selection:
         a, b = _parse_range(selection['crpa'])
         if a is not None and b is not None:
-            query = query.filter(Header.cass_rotator_pa >= a).filter(Header.cass_rotator_pa < b)
+            query = query.filter(Header.cass_rotator_pa >= a)\
+                .filter(Header.cass_rotator_pa < b)
             query = querypropcoords(query)
 
     if 'filepre' in selection:
@@ -698,7 +753,8 @@ def queryselection(query, selection):
                 lower = value - 0.1
                 upper = value + 0.1
             except:
-                selection['warning'] = 'Central Wavelength value is invalid and has been ignored'
+                selection['warning'] = 'Central Wavelength value is invalid ' \
+                                       'and has been ignored'
                 valid = False
         elif len(value) == 2:
             # Range
@@ -706,14 +762,17 @@ def queryselection(query, selection):
                 lower = float(value[0])
                 upper = float(value[1])
             except:
-                selection['warning'] = 'Central Wavelength value is invalid and has been ignored'
+                selection['warning'] = 'Central Wavelength value is invalid ' \
+                                       'and has been ignored'
                 valid = False
         else:
-            selection['warning'] = 'Central Wavelength value is invalid and has been ignored'
+            selection['warning'] = 'Central Wavelength value is invalid ' \
+                                   'and has been ignored'
             valid = False
 
         if valid and not ((0.2 < lower < 30) and (0.2 < upper < 30)):
-            selection['warning'] = 'Invalid Central wavelength value. Value should be in microns, >0.2 and <30.0'
+            selection['warning'] = 'Invalid Central wavelength value. Value ' \
+                                   'should be in microns, >0.2 and <30.0'
             if lower > upper:
                 lower, upper = upper, lower
             if lower < 0.2:
@@ -721,16 +780,18 @@ def queryselection(query, selection):
             if upper > 30:
                 upper = 30
             if lower > 30 or upper < 0.2:
-                # only reject the terms outright if they are completely out of range
-                selection['warning'] = 'Invalid Central wavelength value. Value should be in microns, >0.2 and <30.0' \
-                                       ' - Ignoring terms'
+                # only reject the terms outright if they are out of range
+                selection['warning'] = 'Invalid Central wavelength value. ' \
+                                       'Value should be in microns, >0.2 and ' \
+                                       '<30.0 - Ignoring terms'
                 valid = False
 
         if valid and (lower > upper):
             lower, upper = upper, lower
 
         if valid:
-            query = query.filter(Header.central_wavelength > lower).filter(Header.central_wavelength < upper)
+            query = query.filter(Header.central_wavelength > lower)\
+                .filter(Header.central_wavelength < upper)
 
     if 'publication' in selection:
         query = query.join(Program, Header.program_id == Program.program_id)\
@@ -742,40 +803,44 @@ def queryselection(query, selection):
         query = query.join(Program, Header.program_id == Program.program_id)
         if 'PIname' in selection:
             query = query.filter(
-                func.to_tsvector(Program.pi_coi_names).match(' & '.join(selection['PIname'].split()))
+                func.to_tsvector(Program.pi_coi_names)
+                .match(' & '.join(selection['PIname'].split()))
                 )
         if 'ProgramText' in selection:
             query = query.filter(
-                func.to_tsvector(Program.title).match(' & '.join(selection['ProgramText'].split()))
+                func.to_tsvector(Program.title)
+                .match(' & '.join(selection['ProgramText'].split()))
                 )
-
-    #if 'ephemeris_target' in selection:
-    #    query = query.join(TargetPresence, TargetPresence.diskfile_id == DiskFile.id)
-    #    query = query.filter(TargetPresence.target_name == selection['ephemeris_target'])
 
     if 'gpi_astrometric_standard' in selection:
         query = query.join(Gpi, Gpi.header_id == Header.id)
-        query = query.filter(Gpi.astrometric_standard == selection['gpi_astrometric_standard'])
+        query = query.filter(Gpi.astrometric_standard ==
+                             selection['gpi_astrometric_standard'])
 
     if 'standard' in selection:
         query = query.filter(Header.types.ilike('%''STANDARD''%'))
 
     return query
 
+
 def openquery(selection):
     """
-    Returns a boolean to say if the selection is limited to a reasonable number of
-    results - ie does it contain a date, daterange, prog_id, obs_id etc
+    Returns a boolean to say if the selection is limited to a reasonable number
+    of results - ie does it contain a date, daterange, prog_id, obs_id etc.
     returns True if this selection will likely return a large number of results
     """
 
-    things = {'date', 'daterange', 'program_id', 'observation_id', 'data_label', 'filename', 'filepre', 'filelist'}
-    selection_keys = set(selection) # Makes a set out of selection.keys()
+    things = {'date', 'daterange', 'program_id', 'observation_id',
+              'data_label', 'filename', 'filepre', 'filelist'}
+    selection_keys = set(selection)  # Makes a set out of selection.keys()
 
     # Are the previous two sets disjoint?
     return len(things & selection_keys) == 0
 
+
 range_cre = re.compile(r'(-?\d*\.?\d*)-(-?\d*\.?\d*)')
+
+
 def _parse_range(string):
     """
     Expects a string in the form '12.345-67.89' as per the co-ordinate searches.
@@ -795,6 +860,7 @@ def _parse_range(string):
             pass
 
     return a, b
+
 
 def selection_to_URL(selection, with_columns=False):
     """
@@ -846,7 +912,8 @@ def selection_to_URL(selection, with_columns=False):
             # outside our control) will de-escape it for us and we'll be left
             # with, for instance, /s that we can't differentiate from those
             # in the path.
-            urlstring += '/object=%s' % urllib.parse.quote(selection[key]).replace('/', '%252F')
+            urlstring += '/object=%s' % urllib.parse.quote(
+                selection[key]).replace('/', '%252F')
         elif key == 'publication':
             urlstring += '/publication=%s' % urllib.parse.quote(selection[key])
         elif key == 'spectroscopy':
@@ -854,7 +921,10 @@ def selection_to_URL(selection, with_columns=False):
                 urlstring += '/spectroscopy'
             else:
                 urlstring += '/imaging'
-        elif key in {'ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera', 'exposure_time', 'coadds', 'pupil_mask', 'PIname', 'ProgramText', 'gain', 'readspeed', 'welldepth', 'readmode'}:
+        elif key in {'ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser',
+                     'camera', 'exposure_time', 'coadds', 'pupil_mask',
+                     'PIname', 'ProgramText', 'gain', 'readspeed',
+                     'welldepth', 'readmode', 'night', 'nightrange'}:
             urlstring += '/%s=%s' % (key, selection[key])
         elif key == 'cols':
             if with_columns:
