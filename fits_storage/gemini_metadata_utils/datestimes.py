@@ -89,7 +89,7 @@ def gemini_daterange(string, as_dates=False):
 
     as_dates: <bool>
         Default is False. If True, return a pair of datetime.date objects,
-        otherwise returns a pair of string of the form 'YYYYMMDD', 'YYYYMMDD'
+        otherwise returns a string of the form 'YYYYMMDD-YYYYMMDD'
 
     Returns
     -------
@@ -115,7 +115,7 @@ def gemini_daterange(string, as_dates=False):
     if as_dates:
         return da, db
 
-    return da.strftime('%Y%m%d'), db.strftime('%Y%m%d')
+    return f"{da.strftime('%Y%m%d')}-{db.strftime('%Y%m%d')}"
 
 
 def get_time_period(start, end=None):

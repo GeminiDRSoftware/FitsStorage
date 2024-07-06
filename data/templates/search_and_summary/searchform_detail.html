@@ -162,18 +162,16 @@
     </span>
     <br>
 
-    <label>UTC Date:</label>
+    <label>Date: </label>
     <input type="text" placeholder="(leave empty for Any)" name="date" value="{{ updated.date }}" />
-    {%- if prevday_search is defined %}
-        <a href="{{ prevday_search }}">[Prev. Day]</a>
-    {%- endif %}
-    {%- if nextday_search is defined %}
-        <a href="{{ nextday_search }}">[Next Day]</a>
-    {%- endif %}
+    <select id="datetype" name="datetype">
+        {{ generate_option_list(datetype_options, updated.datetype) }}
+    </select>
     <span class="help">(YYYYMMDD or start - end)
         <span class="helpleft">You can specify either an individual date in the form YYYYMMDD, or a date range in the form yyyymmdd - YYYYMMDD.
-            Examples: 20101231 or 20100101 - 20100131. Note that this searches for data taken on the <b>UTC date</b> specified, and that
-            Gemini South observing nights span two UTC dates.</span>
+            Examples: <b>20101231</b> or <b>20100101 - 20100131</b>. You can also specify whether to search strictly on <b>UTC</b> date (note that
+            Gemini South observing nights span two UTC dates) or on Observing <b>Night</b>, which will use the traditional Gemini scheme of
+            labelling observing nights by the UTC date at the start of the night.</span>
     </span>
     <br>
 

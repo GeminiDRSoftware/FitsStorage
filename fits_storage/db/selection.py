@@ -22,40 +22,40 @@ from fits_storage.core.orm.photstandard import PhotStandardObs
 from fits_storage.server.orm.program import Program
 from fits_storage.server.orm.publication import Publication, ProgramPublication
 
+from fits_storage.config import get_config
+fsc = get_config()
 
-# A number of the choices in the getselection inner loop are just simple
-# checks that can be represented by a data structure. It's better to keep it
-# like that to simplify updates without breaking the logic. If the first item
-# is callable, it's called, if it's a tuple it's considered a set of possible
-# values.
+# The getselection() function converts a list of elements from the URL
+# into a selection dictionary. We loop through the elements in the URL
+# and test each one against some criteria to decide how to handle it. Common
+# tests are grouped into different types and described by these dictionaries
+# up-front.
 
-getselection_test_pairs = (
-    (gmu.gemini_telescope, 'telescope'),
-    (gmu.gemini_date, 'date'),
-    (gmu.gemini_daterange, 'daterange'),
-    (gmu.gemini_fitsfilename, 'filename'),
-    (gmu.gemini_observation_type, 'observation_type'),
-    (gmu.gemini_observation_class, 'observation_class'),
-    (gmu.gemini_caltype, 'caltype'),
-    (gmu.gemini_processing_mode, 'processing'),
-    (gmu.gemini_reduction_state, 'reduction'),
-    (gmu.gmos_gratingname, 'disperser'),
-    (gmu.gmos_focal_plane_mask, 'focal_plane_mask'),
-    (gmu.gemini_binning, 'binning'),
-    (lambda x: gmu.gemini_instrument(x, gmos=True), 'inst'),
-    (gmu.gemini_gain_settings, 'gain'),
-    (gmu.gemini_readspeed_settings, 'readspeed'),
-    (gmu.gemini_welldepth_settings, 'welldepth'),
-    (gmu.gemini_readmode_settings, 'readmode')
-)
+# The key here is the selection key, and the value is either a callable or a
+# tuple. For callables, if the callable returns a value other than None, that
+# value is set as the value of that selection key. For tuples, if the element
+# is in the tuple, it is set as the value of that selection key.
+getselection_tests = {
+    'telescope': gmu.gemini_telescope,
+    'filename': gmu.gemini_fitsfilename,
+    'observation_type': gmu.gemini_observation_type,
+    'observation_class': gmu.gemini_observation_class,
+    'caltype': gmu.gemini_caltype,
+    'processing': gmu.gemini_processing_mode,
+    'reduction': gmu.gemini_reduction_state,
+    'disperser': gmu.gmos_gratingname,
+    'focal_plane_mask': gmu.gmos_focal_plane_mask,
+    'binning': gmu.gemini_binning,
+    'gain': gmu.gemini_gain_settings,
+    'readspeed': gmu.gemini_readspeed_settings,
+    'welldepth': gmu.gemini_welldepth_settings,
+    'readmode': gmu.gemini_readmode_settings,
+    'inst': (lambda x: gmu.gemini_instrument(x, gmos=True))
+}
 
-# Some other selections are of the key=value type and they're not tested; the
-# values are set without further check. Those can be moved straight to a
-# dictionary that defines the key we found and which selection to store its
-# value in.
-#
-# There are some complex associations, though (like progid or obsid),
-# which we'll leave for the if-ifelse block
+# Some other elements in the URL are of the key=value form - these values are
+# set without further check. They key in this dictionary is the keyword in the
+# URL element. The value is the key in the selection dictionary.
 
 getselection_key_value = {
     'filename': 'filename',
@@ -84,11 +84,14 @@ getselection_key_value = {
     'ephemeris_target': 'ephemeris_target',
     'gain': 'gain',
     'readspeed': 'readspeed',
+    'date': 'date',
+    'daterange': 'daterange',
     'night': 'night',
     'nightrange': 'nightrange',
     }
 
-# Also, some entries set themselves as the value for a certain selection
+# Some elements of the URL entries set themselves as the value for a
+# keyword in the selection dictionary.
 getselection_simple_associations = {
     'warnings': 'caloption',
     'missing': 'caloption',
@@ -107,7 +110,7 @@ getselection_simple_associations = {
     'NOTAO': 'ao',
     }
 
-# Some entries select a boolean...
+# Some elements set a certain selection entry to boolean value...
 getselection_booleans = {
     'imaging': ('spectroscopy', False),
     'spectroscopy': ('spectroscopy', True),
@@ -145,29 +148,30 @@ getselection_detector_roi = {
 
 def getselection(things):
     """
-    This takes a list of things from the URL, and returns a selection dict
-    that is used by the html generators. We disregard all but the most
-    specific of a project id, observation id or datalabel.
+    This takes a list of things from the URL, and returns a selection dict.
+    We disregard all but the most specific of a project id, observation id
+    or datalabel.
 
+    If a raw date, eg /YYYYMMDD is specified in the URL, whether it is treated
+    as a UTC date or a "night" date is configuration dependent.
     """
     selection = {}
     for thing in things:
-
-        for test, field in getselection_test_pairs:
-            if callable(test):
-                r = test(thing)
+        print(f"thing is {thing}")
+        for key in getselection_tests.keys():
+            if callable(getselection_tests[key]):
+                r = getselection_tests[key](thing)
                 if r:
-                    selection[field] = r
+                    selection[key] = r
                     break
             else:
-                if thing in test:
-                    selection[field] = thing
+                if thing in getselection_tests[key]:
+                    selection[key] = thing
                     break
 
         else:
             key, sep, value = thing.partition('=')
-            withKey = (sep == '=')
-            if not withKey:
+            if sep != '=':
                 value = thing
 
             if sep == '=' and key in getselection_key_value:
@@ -220,6 +224,21 @@ def getselection(things):
                 selection['spectroscopy'] = True
             elif thing.lower() == 'standard':
                 selection['standard'] = True
+            elif gmu.gemini_date(thing):
+                # Handle raw date strings in the URL
+                if fsc.is_archive:
+                    # On the archive, handle raw dates as UTC
+                    selection['date'] = thing
+                else:
+                    # On the summit servers, handle raw dates as Nights
+                    selection['night'] = thing
+            elif gmu.gemini_daterange(thing):
+                if fsc.is_archive:
+                    # On the archive, handle raw dates as UTC
+                    selection['daterange'] = thing
+                else:
+                    # On the summit servers, handle raw dates as Nights
+                    selection['nightrange'] = thing
             else:
                 if 'notrecognised' in selection:
                     selection['notrecognised'] += " "+thing
@@ -379,7 +398,6 @@ def queryselection(query, selection):
     add filters to the query for the items in the selection
     and return the query object
     """
-
     for key, field in queryselection_filters:
         if key in selection:
             query = query.filter(field == selection[key])
@@ -866,9 +884,10 @@ def selection_to_URL(selection, with_columns=False):
     """
     Receives a selection dictionary, parses values and converts to URL string
     """
+    fsc = get_config()
     urlstring = ''
 
-    # We go only want one of data_label, observation_id, program_id in the URL,
+    # We only want one of data_label, observation_id, program_id in the URL,
     # the most specific one should carry.
     if 'data_label' in selection:
         selection.pop('observation_id', None)
@@ -923,8 +942,8 @@ def selection_to_URL(selection, with_columns=False):
                 urlstring += '/imaging'
         elif key in {'ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser',
                      'camera', 'exposure_time', 'coadds', 'pupil_mask',
-                     'PIname', 'ProgramText', 'gain', 'readspeed',
-                     'welldepth', 'readmode', 'night', 'nightrange'}:
+                     'PIname', 'ProgramText', 'gain', 'readspeed', 'welldepth',
+                     'readmode', 'date', 'daterange', 'night', 'nightrange'}:
             urlstring += '/%s=%s' % (key, selection[key])
         elif key == 'cols':
             if with_columns:
