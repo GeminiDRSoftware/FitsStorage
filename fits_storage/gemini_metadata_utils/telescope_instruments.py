@@ -170,7 +170,7 @@ def gemini_instrument(string, gmos=False, other=False):
 
 # These are the new (2024) official processing modes. As used in the
 # FitsStorage reduction table, and thus archive.
-gemini_processing_modes = ('Raw', 'Fail', 'Science-Quality', 'Quick-Look')
+gemini_processing_modes = ('Raw', 'Failed', 'Science-Quality', 'Quick-Look')
 
 
 def gemini_processing_mode(string: str) -> str:
