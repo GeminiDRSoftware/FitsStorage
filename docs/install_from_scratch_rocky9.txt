@@ -120,5 +120,6 @@ tail /data/logs/service_fileops_queue.py
 
 # Same for other queues, if appropriate
 
-
+# If you cycle the magic download cookie, let Kathleen know, it's needed by
+# SCALes (for processing pre-imaging) and stored on the scales server.
 
