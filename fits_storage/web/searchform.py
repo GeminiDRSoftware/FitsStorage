@@ -154,7 +154,7 @@ def searchform(things, orderby):
         thing_string   = thing_string,
         args_string    = args_string,
         updated        = updated,  # updateform(selection),
-        debugging      = True, # Enable this to show some debugging data
+        debugging      = False, # Enable this to show some debugging data
         selection      = selection,
         col_sel        = column_selection,
         # Look at the end of the file for this
