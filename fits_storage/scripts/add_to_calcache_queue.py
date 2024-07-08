@@ -73,6 +73,9 @@ with session_scope() as session:
                 datetime.timedelta(days=options.lastdays)
         query = query.filter(Header.ut_datetime > then)
 
+    if options.instrument:
+        query = query.filter(Header.instrument == options.instrument)
+
     headers = query.all()
 
     logger.info("Got %d header items to queue" % len(headers))
