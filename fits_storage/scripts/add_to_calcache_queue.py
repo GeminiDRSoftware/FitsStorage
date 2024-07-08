@@ -28,6 +28,8 @@ parser.add_option("--lastdays", action="store", type="int", dest="lastdays",
                   help="queue observations with ut_datetime in last n days")
 parser.add_option("--instrument", action="store", dest="instrument",
                   type="string", help="Only add files for this instrument")
+parser.add_option("--include-eng", action="store", dest="include_eng",
+                  default=False, help="Include engineering files")
 parser.add_option("--all", action="store_true", dest="all",
                   help="queue all observations in database. Use with Caution")
 parser.add_option("--ignore-mdbad", action="store_true", dest="ignore_mdbad",
@@ -75,6 +77,11 @@ with session_scope() as session:
 
     if options.instrument:
         query = query.filter(Header.instrument == options.instrument)
+
+    if options.include_eng:
+        pass
+    else:
+        query = query.filter(Header.engineering == False)
 
     headers = query.all()
 
