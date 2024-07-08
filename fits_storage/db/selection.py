@@ -157,7 +157,6 @@ def getselection(things):
     """
     selection = {}
     for thing in things:
-        print(f"thing is {thing}")
         for key in getselection_tests.keys():
             if callable(getselection_tests[key]):
                 r = getselection_tests[key](thing)
