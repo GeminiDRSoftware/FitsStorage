@@ -17,6 +17,7 @@ ONEDAY_OFFSET = datetime.timedelta(days=1)
 # value is used in selection.py when querying by night.
 CHILE_OFFSET = datetime.timedelta(hours=-6)
 
+
 def gemini_date(string, as_date=False):
     """
     A utility function for matching strings specifying dates of the form
@@ -57,17 +58,18 @@ def gemini_date(string, as_date=False):
             return None  # To prevent warnings about dt being unset
         dt = dt.replace(tzinfo=None).date()
 
-    # Now handle YYYYMMDD
-    elif len(string) == 8:
+    # Now handle YYYYMMDD and YYYYMMDDThhmmss[.sss]
+    elif len(string) == 8 or (len(string) >= 15 and string[8 == 'T']):
         try:
             dt = dateutil.parser.parse(string)
         except ValueError:
             return None
 
-        dt = dt.replace(tzinfo=None).date()
-        if dt < DATE_LIMIT_LOW.date() or dt > DATE_LIMIT_HIGH.date():
+        if dt < DATE_LIMIT_LOW or dt > DATE_LIMIT_HIGH:
             return None
 
+        if len(string) == 8:
+            dt = dt.date()
     else:
         return None
 
@@ -77,34 +79,52 @@ def gemini_date(string, as_date=False):
         return dt.strftime('%Y%m%d')
 
 
+simple_daterange_cre = re.compile(
+    r"(?P<start>20\d\d[01]\d[0123]\d)-(?P<end>20\d\d[01]\d[0123]\d)")
+iso_daterange_cre = re.compile(
+    r"(?P<start>20\d\d[01]\d[0123]\dT[012]\d[012345]\d[0123456]\d(.\d*)?)"
+    r"-(?P<end>20\d\d[01]\d[0123]\dT[012]\d[012345]\d[0123456]\d(.\d*)?)")
+
+
 def gemini_daterange(string, as_dates=False):
     """
     A utility function for matching and parsing date ranges. These
-    are of the form YYYYMMDD-YYYYMMDD
+    are of the form YYYYMMDD-YYYYMMDD. Also accepted is a date/time range with
+    two '-' separated strings in the form YYYYMMDDThhmmss[.s...] where the T
+    is a literal 'T', which is a specific variant of ISO 8601 format.
 
     Parameters
     ----------
     string: <str>
-        date range of the form YYYYMMDD-YYYYMMDD.
+        date range of the form YYYYMMDD-YYYYMMDD or
+        yyyymmddThhmmss[.s...]-YYYYMMDDTHHMMSS[.S...]
 
     as_dates: <bool>
-        Default is False. If True, return a pair of datetime.date objects,
-        otherwise returns a string of the form 'YYYYMMDD-YYYYMMDD'
+        Default is False, in which case return a string of the form
+        'YYYYMMDD-YYYYMMDD'.
+        If True, return a pair of datetime.date objects if the input is
+        of the form 'YYYYMMDD-YYYYMMDD' or a pair of datetime.datetime objects
+        if the input is the date/time ISO format.
 
     Returns
     -------
         One of:
         None, if the string cannot be parsed,
-        a (<date>, <date>) pair, if as_dates is true,
-        otherwise, a pair of strings of the form 'yyyymmdd', 'YYYYMMDD'
+        a string of the form 'YYYYMMDD-YYYYMMDD' if as_dates is False
+        a (<date>, <date>) pair, if as_dates is true and YYYYMMDD format input,
+        a (<datetime>, <datetime> pair, if as_dates is true and ISO format input
     """
 
-    datea, sep, dateb = string.partition('-')
-    if sep != '-' or datea is None or dateb is None:
+    sm = simple_daterange_cre.match(string)
+    im = iso_daterange_cre.match(string)
+    m = sm if sm is not None else im
+
+    if m is None:
         return None
 
-    da = gemini_date(datea, as_date=True)
-    db = gemini_date(dateb, as_date=True)
+    da = gemini_date(m.group('start'), as_date=True)
+    db = gemini_date(m.group('end'), as_date=True)
+
     if da is None or db is None:
         return None
 
@@ -115,22 +135,25 @@ def gemini_daterange(string, as_dates=False):
     if as_dates:
         return da, db
 
-    return f"{da.strftime('%Y%m%d')}-{db.strftime('%Y%m%d')}"
+    return string
 
 
 def get_time_period(start, end=None):
     """
     Get a start and end datetimes for a time period described by start and end.
-    start and end can be strings of the form YYYYMMDD or datetime.dates.
+    start and end can be strings of the form YYYYMMDD or datetime.date
+    instances or datetime.datetime instances.
     If end is not given, it is assumed to be the same as start.
-    The returned values will be datetimes representing 00:00:00 on the start
+    If the inputs are datetime.datetime instances, they are returned unmodified.
+    If the inputs are datetime.date instances or strings representing dates,
+    the returned values will be datetimes representing 00:00:00 on the start
     date and 00:00:00 on the day after the end date.
 
     Parameters
     ----------
-    start : str or datetime.date
+    start : str or datetime.date or datetime.datetime
         Start day of the time period
-    end : str or datetime.date
+    end : str or datetime.date or datetime.datetime
         End day of the time period
 
     Returns
@@ -138,6 +161,10 @@ def get_time_period(start, end=None):
     A tuple of `datetime` with the resulting parsed values, or None if we
     cannot parse the values.
     """
+
+    if isinstance(start, datetime.datetime) and \
+            isinstance(end, datetime.datetime):
+        return start, end
 
     if isinstance(start, datetime.date):
         startd = start

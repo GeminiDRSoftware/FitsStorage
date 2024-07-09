@@ -168,10 +168,12 @@
         {{ generate_option_list(datetype_options, updated.datetype) }}
     </select>
     <span class="help">(YYYYMMDD or start - end)
-        <span class="helpleft">You can specify either an individual date in the form YYYYMMDD, or a date range in the form yyyymmdd - YYYYMMDD.
-            Examples: <b>20101231</b> or <b>20100101 - 20100131</b>. You can also specify whether to search strictly on <b>UTC</b> date (note that
-            Gemini South observing nights span two UTC dates) or on Observing <b>Night</b>, which will use the traditional Gemini scheme of
-            labelling observing nights by the UTC date at the start of the night.</span>
+        <span class="helpleft">You can specify 1) an individual date in the form YYYYMMDD, 2) a date range in the form yyyymmdd-YYYYMMDD, or
+            3) a date-time range in the form yyyymmddThhmmss[.s...]-YYYYMMDDTHHMMSS[.S...].
+            Examples: <b>20101231</b> or <b>20100101 - 20100131</b> or <b>20101122T012345-20101231T231234</b>.
+            You can also specify whether to search strictly on <b>UTC</b> date (note tha Gemini South observing nights span two UTC dates) or
+            on Observing <b>Night</b>, which will use the traditional Gemini scheme of labelling observing nights by the UTC date at the start
+            of the night with a 1400 (+- daylight savings in Chile) local time date rollover.</span>
     </span>
     <br>
 
