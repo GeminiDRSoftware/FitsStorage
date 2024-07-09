@@ -234,6 +234,22 @@ class CalibrationGHOST(Calibration):
                                Ghost.gain_setting)\
             .max_interval(days=90)
 
+        # We need to not bother finding biases for the slitv arm in ghost
+        # bundles. The slitv detector only has one configuration so all
+        # biases are created equal and any will do. If we do the regular
+        # association, we end up polution the results with lots of superflous
+        # biases because they match for the slitv and they're slightly closer
+        # in time than the science frame bias files (which have perfectly
+        # good slitv biases in them). This only applies to bundles. For split
+        # files, we can go ahead and associate biases in the normal manner.
+
+        # OK, this solution is a bit of a hack, but it avoids having to add an
+        # argument to the non-ghost-specific query object init. We check for the
+        # presence of this attribute in the GHOSTCalQuery instance. If query
+        # is a normal CalQuery, this will be harmless and ignored.
+
+        query.ghost_ignore_slitv = True
+
         return query.all(howmany)
 
     def imaging_flat(self, processed, howmany, flat_descr, filt, sf=False):
@@ -597,6 +613,8 @@ class GHOSTCalQuery(object):
         self.descriptors = descriptors
         self.procmode = procmode
 
+        self.ghost_ignore_slitv = False
+
         # We don't have ad.tags to check for 'BUNDLE' at this point, so we'll
         # use the arm descriptor being None as a proxy.
         if descriptors['arm'] is not None:
@@ -647,12 +665,19 @@ class GHOSTCalQuery(object):
         to gloss over for now. We can't use a set here as then the ordering
         gets totally scrambled, so we simply interleave the results into a
         list, doing deduplication on the way.
+
+        If ghost_ignore_slitv attribute is True, then we ignore the slitv
+        results. See the GHOST bias method for rationale.
         """
 
-        # We form a list of lists here... A list of cal results for each cq
+        # We form a list of lists here. A list of cal results for each calquery.
+        # if ignore_slitv is True, we ignore the calquery for the slitv arm.
         lol = []
         for cq in self.calqueries:
-            lol.append(cq.all(*args, **kwargs))
+            if self.ghost_ignore_slitv and cq.descr['arm'] == 'slitv':
+                pass
+            else:
+                lol.append(cq.all(*args, **kwargs))
 
         # The lists may not all be the same length, or course. :-)
         # We walk through the lists round-robin style popping the first value
