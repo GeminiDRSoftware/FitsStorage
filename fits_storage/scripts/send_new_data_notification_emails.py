@@ -105,8 +105,8 @@ with session_scope() as session:
             selection = notif.selection
             if options.check:
                 selection += '/CHECK'
-            url = f"{url_base}/summary/nolinks/{options.date}/{selection}"
-            searchform_url = f"{url_base}/searchform/{options.date}" \
+            url = f"{url_base}/summary/nolinks/night={options.date}/{selection}"
+            searchform_url = f"{url_base}/searchform/night={options.date}" \
                              f"/{notif.selection}"
 
             logger.debug("URL is: %s", url)
