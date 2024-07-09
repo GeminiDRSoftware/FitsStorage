@@ -5,6 +5,7 @@ from fits_storage_tests.code_tests.helpers import make_empty_testing_db_env, \
     fetch_file
 
 from fits_storage.db import sessionfactory
+from fits_storage.config import get_config
 from fits_storage.logger import DummyLogger
 
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
@@ -15,7 +16,7 @@ from fits_storage.core.orm.header import Header
 
 def test_ingester(tmp_path):
     make_empty_testing_db_env(tmp_path)
-    fsc = get_test_config()
+    fsc = get_config()
     session = sessionfactory()
     logger = DummyLogger()
     filename = 'N20200127S0023.fits.bz2'
