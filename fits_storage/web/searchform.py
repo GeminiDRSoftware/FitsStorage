@@ -69,13 +69,14 @@ def searchform(things, orderby):
     prevday_search = None
 
     if formdata:
-        if ((len(formdata) == 6) and
-            ('engineering' in list(formdata.keys())) and (formdata['engineering'].value == 'EngExclude') and
-            ('science_verification' in list(formdata.keys())) and (formdata['science_verification'].value == 'SvInclude') and
-            ('qa_state' in list(formdata.keys())) and (formdata['qa_state'].value == 'NotFail') and
-            ('col_selection' in list(formdata.keys())) and
-            ('site_monitoring' in list(formdata.keys())) and (formdata['site_monitoring'].value == 'SmExclude') and
-            ('Search' in list(formdata.keys())) and (formdata['Search'].value == 'Search')):
+        if (len(formdata) == 7 and
+                ('engineering' in list(formdata.keys())) and (formdata['engineering'].value == 'EngExclude') and
+                ('science_verification' in list(formdata.keys())) and (formdata['science_verification'].value == 'SvInclude') and
+                ('qa_state' in list(formdata.keys())) and (formdata['qa_state'].value == 'NotFail') and
+                ('col_selection' in list(formdata.keys())) and
+                ('site_monitoring' in list(formdata.keys())) and (formdata['site_monitoring'].value == 'SmExclude') and
+                ('datetype') in list(formdata.keys()) and
+                ('Search' in list(formdata.keys())) and (formdata['Search'].value == 'Search')):
             # This is the default form state, someone just hit submit without doing anything.
             pass
         elif list(formdata.keys()) == ['orderby']:
@@ -180,7 +181,14 @@ def updateform(selection):
     passed to the searchform template in order to update the form.
 
     """
+    fsc = get_config()
+
     dct = {}
+
+    # Set the default value of the datetype pull-down. It will get re-set later
+    # if it has actually been changed and night or date etc is in the selection
+    dct['datetype'] = 'UTC' if fsc.is_archive else 'night'
+
     for key, value in list(selection.items()):
         if key in {'program_id', 'observation_id', 'data_label'}:
             # Program id etc
@@ -295,7 +303,6 @@ def updateselection(formdata, selection):
     Updates the selection dictionary with user input values in formdata
     Handles many specific cases
     """
-    fsc = get_config()
 
     # Populate selection dictionary with values from form input
     for key in formdata:
