@@ -28,7 +28,7 @@ class CalCacheQueue(Queue):
         """
 
         # Get the Header object
-        header = self.session.query(Header).get(obs_hid)
+        header = self.session.get(Header, obs_hid)
 
         if None in [header.instrument, header.ut_datetime]:
             return

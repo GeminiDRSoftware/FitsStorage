@@ -214,8 +214,12 @@ class SQLAlchemyPatternFinder:
             "sqlalchemy.orm\\1declarative_base",
         ),
         "get from query": (
-            r"(session\.)?query\((.*)\)\.get\((.*)\)",
-            r"\1get(\2, \3)",
+            r"(session).query\((.*)\).get\((.*)\)",
+            r"\1.get(\2, \3)",
+        ),
+        "add from query": (
+            r"(session).query\((.*)\).add\((.*)\)",
+            r"\1.add(\2, \3)",
         ),
         # TODO: # From engine with future=True flag.
         # TODO: # TODO: Eventually, this will need to check that the sqlalchemy version is
@@ -322,7 +326,8 @@ class SQLAlchemyPatternFinder:
 
                     print(f" Matched by |=> {', '.join(match_found)}")
 
-                    matches_found += 1
+            if match_found:
+                matches_found += 1
 
         text = "".join(updated_lines)
 
@@ -360,8 +365,8 @@ def update_sqlalchemy_patterns(session):
 
     for search_dir in search_dirs:
         for root, _, files in os.walk(search_dir):
+            files = (f for f in files if f.endswith(".py"))
             for file in files:
-                if file.endswith(".py"):
-                    SQLAlchemyPatternFinder.update_file(
-                        os.path.join(root, file), verbose=verbose
-                    )
+                SQLAlchemyPatternFinder.update_file(
+                    os.path.join(root, file), verbose=verbose
+                )
