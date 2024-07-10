@@ -73,7 +73,7 @@ fsc = get_config()
 
 url_map = Map([
     # Queries to the root should redirect to a sensible page
-    Rule('/', redirect_to=('/searchform' if fsc.is_archive else '/static/usage.html')),
+    Rule('/', redirect_to=('/searchform')),
 
     # Debugging and testing
     Rule('/debug', debugmessage),
