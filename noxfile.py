@@ -10,19 +10,15 @@ example:
     nox -s tests -- -k test_my_function
 """
 
-from functools import wraps
 import os
-import sys
 import re
-import warnings
+import sys
+from functools import wraps
 
 import nox
 
-from sqlalchemy import exc
-
-
 nox.options.sessions = [
-    "code_tests"
+    "code_tests",
 ]  # , "live_server_tests", "test_test_server"]
 nox.options.reuse_existing_virtualenvs = True
 nox.options.error_on_missing_interpreters = True
@@ -44,7 +40,7 @@ class DRAGONSChannels:
 
     for name, value in locals().copy().items():
         if re.match(r"_.+_channel[s]?$", name):
-            assert isinstance(value, str) or isinstance(value, list)
+            assert isinstance(value, (list, str))
 
             if isinstance(value, str):
                 channels.append(value)
@@ -82,11 +78,11 @@ def dependencies_decorator(func):
         # Bit fragile (just looks for reduce in venv), but it works.
         # TODO: Make this more robust based on nox?
         if nox.options.reuse_existing_virtualenvs and os.path.exists(
-            os.path.join(session.virtualenv.location, "bin/reduce")
+            os.path.join(session.virtualenv.location, "bin/reduce"),
         ):
             print(
                 f"Reusing existing virtual environment at "
-                f"{session.virtualenv.location}. Not installing dependencies."
+                f"{session.virtualenv.location}. Not installing dependencies.",
             )
 
         else:
@@ -148,14 +144,16 @@ def code_tests(session):
 
     # Checking the sqlalchemy version used by the session.
     sqlalchemy_version_code_lines = (
-    "# Check the SQLAlchemy version.",
-    "import sqlalchemy",
-    "print(sqlalchemy.__version__)",
+        "# Check the SQLAlchemy version.",
+        "import sqlalchemy",
+        "print(sqlalchemy.__version__)",
     )
 
     sqlalchemy_version_code = "\n".join(sqlalchemy_version_code_lines)
 
-    result = session.run("python", "-c", f"{sqlalchemy_version_code}", silent=True)
+    result = session.run(
+        "python", "-c", f"{sqlalchemy_version_code}", silent=True
+    )
     print(f"SQLAlchemy version: {result.strip()}")
     assert result.strip()[0] == "2", "SQLAlchemy version is not 2.0."
 
@@ -222,7 +220,7 @@ class SQLAlchemyPatternFinder:
         # relation -> relationship
         "import 'relation' no longer supported": (
             r"from sqlalchemy(.*)import(.*)relation(\W.*)",
-            None
+            None,
         ),
         "relation -> relationship": (
             r"^(.*=\s*)relation(\b.*)",
@@ -230,8 +228,8 @@ class SQLAlchemyPatternFinder:
         ),
         "sessionmaker without future=True": (
             r"^[^#]*(sessionmaker\(.*)$",
-            None
-        )
+            None,
+        ),
     }
 
     # Pre-compile the patterns.
@@ -249,6 +247,7 @@ class SQLAlchemyPatternFinder:
         ValueError
             If the text matches a pattern and is supposed to be replaced, but
             fails to replace anything in the string.
+
         """
         # Search and replace using regex.
         _match_found = []
@@ -269,7 +268,7 @@ class SQLAlchemyPatternFinder:
                 and not changed
             ):
                 raise ValueError(
-                    f"Pattern {key} matched but did not replace anything."
+                    f"Pattern {key} matched but did not replace anything.",
                 )
 
             if pattern.search(text):
@@ -280,7 +279,7 @@ class SQLAlchemyPatternFinder:
     @classmethod
     def update_file(cls, file: os.PathLike, verbose=False):
         """Update the file with the new patterns."""
-        with open(file, "r") as f:
+        with open(file) as f:
             lines = f.readlines()
 
         updated_lines = []
@@ -337,6 +336,20 @@ def update_sqlalchemy_patterns(session):
         nox -s update_sqlalchemy_patterns -- -v  # or --verbose
     ```
     """
+    # Check the sqlalchemy version in requirements.txt.
+    with open("requirements.txt") as f:
+        requirements = f.readlines()
+
+    for line in requirements:
+        if "sqlalchemy" in line:
+            sqlalchemy_version = line.split("==")[1].strip()
+            break
+
+    if sqlalchemy_version[0] == "2":
+        print(
+            "Aborting: Sqlalchemy version is 2.0. Any errors should "
+            "raise properly."
+        )
     search_dirs = ("fits_storage", "fits_storage_tests")
 
     verbose = any(arg in ("-v", "--verbose") for arg in session.posargs)
@@ -346,5 +359,6 @@ def update_sqlalchemy_patterns(session):
             files = (f for f in files if f.endswith(".py"))
             for file in files:
                 SQLAlchemyPatternFinder.update_file(
-                    os.path.join(root, file), verbose=verbose
+                    os.path.join(root, file),
+                    verbose=verbose,
                 )
