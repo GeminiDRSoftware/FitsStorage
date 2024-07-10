@@ -20,24 +20,6 @@ import nox
 
 from sqlalchemy import exc
 
-# for warnings not included in regex-based filter below, just log
-warnings.filterwarnings("always", category=exc.RemovedIn20Warning)
-
-# for warnings related to execute() / scalar(), raise
-for msg in [
-    r"The (?:Executable|Engine)\.(?:execute|scalar)\(\) function",
-    r"The current statement is being autocommitted using implicit autocommit,",
-    r"The connection.execute\(\) method in SQLAlchemy 2.0 will accept "
-    "parameters as a single dictionary or a single sequence of "
-    "dictionaries only.",
-    r"The Connection.connect\(\) function/method is considered legacy",
-    r".*DefaultGenerator.execute\(\)",
-]:
-    warnings.filterwarnings(
-        "error",
-        message=msg,
-        category=exc.RemovedIn20Warning,
-    )
 
 nox.options.sessions = [
     "code_tests"
@@ -84,6 +66,9 @@ def install_dependencies(session):
 
     # Install the package in editable mode, with no dependencies.
     session.install("-e", ".", "--no-deps")
+
+    # Ensure SQLAlchemy 2.0 is installed. DRAGONS will try to install 1.4.
+    session.install("sqlalchemy>=2.0")
 
     # Report the installed versions.
     session.run("conda", "list")
@@ -161,6 +146,19 @@ def code_tests(session):
         "SQLALCHEMY_WARN_20": "1",
     }
 
+    # Checking the sqlalchemy version used by the session.
+    sqlalchemy_version_code_lines = (
+    "# Check the SQLAlchemy version.",
+    "import sqlalchemy",
+    "print(sqlalchemy.__version__)",
+    )
+
+    sqlalchemy_version_code = "\n".join(sqlalchemy_version_code_lines)
+
+    result = session.run("python", "-c", f"{sqlalchemy_version_code}", silent=True)
+    print(f"SQLAlchemy version: {result.strip()}")
+    assert result.strip()[0] == "2", "SQLAlchemy version is not 2.0."
+
     session.run(*command, env=env)
 
 
@@ -221,30 +219,6 @@ class SQLAlchemyPatternFinder:
             r"(session).query\((.*)\).add\((.*)\)",
             r"\1.add(\2, \3)",
         ),
-        # TODO: # From engine with future=True flag.
-        # TODO: # TODO: Eventually, this will need to check that the sqlalchemy version is
-        # TODO: # not >= 2 before reporting this.
-        # TODO: "(WARNING) create_engine future flag missing": (
-        # TODO:     r"create_engine\((?!.*(,? ?future=True,?)).*\)",
-        # TODO:     None,
-        # TODO: ),
-        # TODO: # From Session with future=True flag.
-        # TODO: # Since this has to be set after instantiation, but we need to remove
-        # TODO: # this anyways, mark that the change has been made with an inline comment
-        # TODO: # that the future flag is assigned.
-        # TODO: # E.g.;
-        # TODO: #   session = sessionfactory()  # future=True
-        # TODO: #   session.future = True       |
-        # TODO: #   # ^ This is the flag        + -- This is the change.
-        # TODO: # Unlike Engine, it is not a kwarg!
-        # TODO: #
-        # TODO: # I know this is not ideal, it's just easy to implement and temporary
-        # TODO: # anyway.
-        # TODO: "(WARNING) Session instance future flag missing": (
-        # TODO:     r"(=\W*)(Session|sessionfactory)"
-        # TODO:     r"\(((?!.*(\,?\ ?future=True)).*)\)(?!.*(future\s*=\s*True))",
-        # TODO:     None,
-        # TODO: ),
         # relation -> relationship
         "import 'relation' no longer supported": (
             r"from sqlalchemy(.*)import(.*)relation(\W.*)",
@@ -254,6 +228,10 @@ class SQLAlchemyPatternFinder:
             r"^(.*=\s*)relation(\b.*)",
             r"\1relationship\2",
         ),
+        "sessionmaker without future=True": (
+            r"^[^#]*(sessionmaker\(.*)$",
+            None
+        )
     }
 
     # Pre-compile the patterns.
