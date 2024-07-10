@@ -15,7 +15,7 @@ MAILTO=fitsadmin@gemini.edu
 #5 8 * * * python3 /opt/FitsStorage/fits_storage/scripts/delete_files.py --auto --yesimsure --demon --emailto='fitsadmin@gemini.edu'
 #10 8 * * * python3 /opt/FitsStorage/fits_storage/scripts/local_delete_files.py --demon --dir=/sci/dhs --nomd5 --mintapes=1
 #1 * * * * python3 /opt/FitsStorage/fits_storage/scripts/rollcall.py --limit 25000 --demon
-#0 9 * * * python3 /opt/FitsStorage/fits_storage/scripts/diskspace_check.py --email_to=fitsadmin@gemini.edu --demon
+#0 9 * * * python3 /opt/FitsStorage/fits_storage/scripts/diskspace_check.py --email-to=fitsadmin@gemini.edu --demon
 #
 # Notifications
 #50 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=auto
