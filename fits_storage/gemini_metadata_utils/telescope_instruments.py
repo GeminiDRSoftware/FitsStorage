@@ -45,10 +45,10 @@ gemini_readmode_settings = ('Classic',
 # next in priority. This allows for example to prioritize science files over
 # site monitoring data. The regexes should be compiled here for efficiency.
 
-_standard_filename_re = re.compile('[NS](?P<date>\d{8})\w(?P<num>\d+).*')
-_igrins_filename_re = re.compile('SDC[SHK]_(?P<date>\d{8})_(?P<num>\d+).*')
-_skycam_filename_re = re.compile('img_(?P<date>\d{8})_(?P<num>\w+).*')
-_obslog_filename_re = re.compile('(?P<date>\d{8})_(?P<num>.*)_obslog.txt')
+_standard_filename_re = re.compile(r'[NS](?P<date>\d{8})\w(?P<num>\d+).*')
+_igrins_filename_re = re.compile(r'SDC[SHK]_(?P<date>\d{8})_(?P<num>\d+).*')
+_skycam_filename_re = re.compile(r'img_(?P<date>\d{8})_(?P<num>\w+).*')
+_obslog_filename_re = re.compile(r'(?P<date>\d{8})_(?P<num>.*)_obslog.txt')
 sortkey_regex_dict = {_standard_filename_re: 'z',
                       _igrins_filename_re: 'z',
                       _obslog_filename_re: 'x',
