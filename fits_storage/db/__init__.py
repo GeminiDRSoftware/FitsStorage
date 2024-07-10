@@ -40,7 +40,7 @@ def sessionfactory(reload=False):
                     'echo': fsc.database_debug}
         else:
             args = {'echo': fsc.database_debug}
-        _saved_engine = create_engine(fsc.database_url, **args)
+        _saved_engine = create_engine(fsc.database_url, future=True, **args)
         _saved_sessionfactory = sessionmaker(_saved_engine)
     return _saved_sessionfactory()
 
