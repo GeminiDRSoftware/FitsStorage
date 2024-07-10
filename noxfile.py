@@ -19,6 +19,7 @@ import nox
 
 nox.options.sessions = [
     "code_tests",
+    "lint_noxfile",
 ]  # , "live_server_tests", "test_test_server"]
 nox.options.reuse_existing_virtualenvs = True
 nox.options.error_on_missing_interpreters = True
@@ -152,12 +153,39 @@ def code_tests(session):
     sqlalchemy_version_code = "\n".join(sqlalchemy_version_code_lines)
 
     result = session.run(
-        "python", "-c", f"{sqlalchemy_version_code}", silent=True
+        "python",
+        "-c",
+        f"{sqlalchemy_version_code}",
+        silent=True,
     )
     print(f"SQLAlchemy version: {result.strip()}")
     assert result.strip()[0] == "2", "SQLAlchemy version is not 2.0."
 
     session.run(*command, env=env)
+
+
+@nox.session()
+def lint_noxfile(session):
+    """Just lints the noxfile to keep it self-consistent with formatting."""
+    session.install("ruff")
+    selection = [
+        "F",
+        "E",
+        "W",
+        "I",
+        "N",
+    ]
+
+    session.run("ruff", "format", "--line-length", "79", "noxfile.py")
+    session.run(
+        "ruff",
+        "check",
+        "--select",
+        ",".join(selection),
+        "--fix",
+        "noxfile.py",
+        silent=True,
+    )
 
 
 @nox.session(
@@ -348,7 +376,7 @@ def update_sqlalchemy_patterns(session):
     if sqlalchemy_version[0] == "2":
         print(
             "Aborting: Sqlalchemy version is 2.0. Any errors should "
-            "raise properly."
+            "raise properly.",
         )
     search_dirs = ("fits_storage", "fits_storage_tests")
 
