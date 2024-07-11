@@ -4,6 +4,7 @@ from optparse import OptionParser
 import os
 import smtplib
 import json
+import socket
 
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.config import get_config
@@ -43,7 +44,9 @@ except json.decoder.JSONDecodeError:
     logger.debug("Error parsing JSON: %s", fsc.diskspace_check)
     disks = None
 
-message = "Diskspace Check script messages:\n\n"
+message = f"Diskspace Check script messages:\n" \
+          f"Hostname: {socket.gethostname()}\n" \
+          f"Fits Server Title: {fsc.fits_server_title}\n\n"
 if disks is None:
     domsg("Unable to parse JSON diskspace_check configuration string.")
 
@@ -61,7 +64,8 @@ for disk in disks.keys():
         domsg("Disk %38s is fine: %.2f GB free\n\n" % (disk, gbavail))
 
 if options.emailto:
-    subject = "Urgent: LOW DISK SPACE" if low else "Diskspace check OK"
+    subject = "Urgent: LOW DISK SPACE" if low else "Diskspace check OK - "
+    subject += socket.gethostname()
     mailto = [options.emailto]
     msg = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % \
           (fsc.email_from, ", ".join(mailto), subject, message)
