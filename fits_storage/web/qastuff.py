@@ -213,7 +213,7 @@ def qaforgui(date):
                 })
 
         if (datestamp is None) or \
-                (header and (datestamp < header.ut_datetime < enddatestamp)):
+                (header and (datestamp <= header.ut_datetime.date() <= enddatestamp)):
             # Look for IQ metrics to report. Going to need to do the same
             # merging trick here
             query = session.query(QAmetricIQ).select_from(QAmetricIQ, QAreport)\
