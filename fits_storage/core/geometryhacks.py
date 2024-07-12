@@ -6,7 +6,7 @@ in the future.
 """
 import sys
 import traceback
-
+from sqlalchemy import text
 from .orm.header import Header
 
 
@@ -27,7 +27,7 @@ def add_footprint(session, id, fp):
 
     fptext = form1.format(fp[0][0], fp[0][1], fp[1][0], fp[1][1], fp[2][0],
                           fp[2][1], fp[3][0], fp[3][1])
-    session.execute("UPDATE footprint set area = {} where id={}".format(fptext, id))
+    session.execute(text("UPDATE footprint set area = {} where id={}".format(fptext, id)))
 
 def add_point(session, id, x, y):
     """
@@ -46,8 +46,8 @@ def add_point(session, id, x, y):
         Y coordinate
     """
     ptext = "'({}, {})'".format(x, y)
-    session.execute("UPDATE photstandard set coords = {} WHERE id={}".
-                    format(ptext, id))
+    session.execute(text("UPDATE photstandard set coords = {} WHERE id={}".
+                    format(ptext, id)))
     session.commit()
 
 
@@ -65,7 +65,7 @@ def do_std_obs(session, header_id):
     """
     try:
         sql = "insert into photstandardobs (select nextval('photstandardobs_id_seq') as id, photstandard.id AS photstandard_id, footprint.id AS footprint_id from photstandard, footprint where photstandard.coords <@ footprint.area and footprint.header_id=%d)" % header_id
-        result = session.execute(sql)
+        result = session.execute(text(sql))
         if result.rowcount:
             header = session.get(Header, header_id)
             header.phot_standard = True
