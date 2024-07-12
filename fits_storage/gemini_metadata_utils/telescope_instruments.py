@@ -169,8 +169,12 @@ def gemini_instrument(string, gmos=False, other=False):
 
 
 # These are the new (2024) official processing modes. As used in the
-# FitsStorage reduction table, and thus archive.
-gemini_processing_modes = ('Raw', 'Failed', 'Science-Quality', 'Quick-Look')
+# FitsStorage reduction table, and thus archive. Note, the order is significant
+# here as this is used directly to create the enumerated SQL type and sorting
+# by that type in postgres will respect the order in the enum, which is the
+# order here. We use this sort to return calibrations "processed first", so the
+# order should generally be from least to most processed.
+gemini_processing_modes = ('Failed', 'Raw', 'Quick-Look', 'Science-Quality')
 
 
 def gemini_processing_mode(string: str) -> str:
