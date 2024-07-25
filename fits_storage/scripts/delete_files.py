@@ -150,6 +150,7 @@ with session_scope() as session:
     firstfile = None
     lastfile = None
 
+    logger.info("Looping through files...")
     for diskfile in query:
         logger.debug("Full path filename: %s", diskfile.fullpath)
         if not diskfile.file_exists():
