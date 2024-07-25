@@ -99,7 +99,7 @@ if options.filepre:
 
 numfiles = 0
 for candidate in candidates:
-    logger.debug('Considering: %d', candidate)
+    logger.debug('Considering: %s', candidate)
     fullpath = os.path.join(options.dir, candidate)
 
     if options.skipmd5:
