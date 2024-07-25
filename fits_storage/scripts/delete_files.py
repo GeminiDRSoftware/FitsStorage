@@ -199,7 +199,8 @@ with session_scope() as session:
                         diskfile.fullpath)
         else:
             try:
-                logger.info("Deleting file %s", diskfile.fullpath)
+                logger.info("Deleting file %s [%d tapes: %s",
+                            diskfile.fullpath, len(tape_ids), str(tape_ids))
                 os.unlink(diskfile.fullpath)
                 logger.debug("Marking diskfile id %d as not present",
                              diskfile.id)
