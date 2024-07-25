@@ -150,7 +150,6 @@ with session_scope() as session:
     firstfile = None
     lastfile = None
 
-    logger.info("Looping through files...")
     for diskfile in query:
         logger.debug("Full path filename: %s", diskfile.fullpath)
         if not diskfile.file_exists():
@@ -201,7 +200,7 @@ with session_scope() as session:
                         diskfile.fullpath)
         else:
             try:
-                logger.debug("Deleting file %s", diskfile.fullpath)
+                logger.info("Deleting file %s", diskfile.fullpath)
                 os.unlink(diskfile.fullpath)
                 logger.debug("Marking diskfile id %d as not present",
                              diskfile.id)
