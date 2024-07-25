@@ -121,7 +121,8 @@ for candidate in candidates:
         logger.info("Dryrun: not actually deleting file %s", candidate)
     else:
         try:
-            logger.info("Deleting file %s", fullpath)
+            logger.info("Deleting file %s which is on %d tapes (%s)",
+                        fullpath, len(tape_ids), str(tape_ids))
             os.unlink(fullpath)
             numfiles += 1
 
