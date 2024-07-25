@@ -122,7 +122,7 @@ with session_scope() as session:
              datetime.timedelta(days=options.olderthan)
         query = query.filter(oldby < dt)
 
-    query = query.order_by(oldby)
+    query = query.order_by(desc(oldby))
 
     if options.maxnum:
         query = query.limit(options.maxnum)
