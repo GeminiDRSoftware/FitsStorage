@@ -269,6 +269,8 @@ class Exporter(object):
                 self.s.commit()
 
             self.l.debug("Transfer Verification succeeded")
+            self.s.delete(self.eqe)
+            self.s.commit()
 
     def get_df(self):
         """
