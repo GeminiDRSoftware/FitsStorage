@@ -7,8 +7,8 @@ from optparse import OptionParser
 
 
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.server.header_fixer2 import AlopekeVIHelper, ZorroVIHelper, \
-    IGRINSVIHelper
+from fits_storage.server.visitor_instrument_helper import AlopekeVIHelper, \
+    ZorroVIHelper, IGRINSVIHelper
 from fits_storage.queues.queue.ingestqueue import IngestQueue
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
 
