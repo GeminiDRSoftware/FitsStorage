@@ -59,12 +59,12 @@ for disk in disks.keys():
     if gbavail < disks[disk]:
         low += 1
         domsg("Disk %s is LOW ON SPACE - Free space = %.2f GB, should be at "
-              "least %.2f GB\n\n" % (disk, gbavail, disks[disk]))
+              "least %.2f GB\n" % (disk, gbavail, disks[disk]))
     else:
-        domsg("Disk %38s is fine: %.2f GB free\n\n" % (disk, gbavail))
+        domsg("Disk %38s is fine: %.2f GB free\n" % (disk, gbavail))
 
 if options.emailto:
-    subject = "Urgent: LOW DISK SPACE" if low else "Diskspace check OK - "
+    subject = "Urgent: LOW DISK SPACE" if low else "Diskspace OK - "
     subject += socket.gethostname()
     mailto = [options.emailto]
     msg = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % \
