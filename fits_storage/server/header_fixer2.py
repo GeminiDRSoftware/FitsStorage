@@ -1,14 +1,15 @@
-import smtplib
-
 import astropy.io.fits as pf
-from bz2 import BZ2File
 import os
-from argparse import ArgumentParser
+import re
+import json
+
 from datetime import datetime, timedelta
 
+from fits_storage.logger import DummyLogger
+from fits_storage.config import get_config
 
 """
-Utilities for cleaning up headers from unreliable sources.
+Utilities for cleaning up headers from visitor instruments.
 
 The visiting instruments have had trouble with providing us
 our requested header keywords.  As much as we'd prefer that
@@ -16,80 +17,9 @@ they create datafiles to the spec, we don't want to hold up
 support for their data over it.  So, these utilities look
 for known issues in the files and correct for them.
 
-Eventually, the hope is these methods would see perfect
+Eventually, the hope is these methods would see compliant
 datafiles and not have to make any changes.
 """
-
-from fits_storage.config import get_config
-from fits_storage.server.emailutils import sendmail
-
-_missing_end_files = list()
-
-
-def open_image(path):
-    """
-    Open the given datafile.
-
-    This opens the provided datafile.  If it is a `.bz2` file,
-    it will wrap it appropriately.
-
-    Parameters
-    ----------
-    path : str
-        Path to file
-
-    Returns
-    -------
-    file-like object
-    """
-    if path.endswith('.bz2'):
-        return BZ2File(path)
-
-    return open(path, 'rb')
-
-
-def output_file(path):
-    """
-    Create writeable file handle for given path.
-
-    This creates a file-like object for writing out to.  If
-    we are writing a `.bz2` file, it encapsulates the compression
-    for us.
-    """
-    if path.endswith('.bz2'):
-        return BZ2File(path, 'wb')
-
-    return open(path, 'wb')
-
-
-def check_end(filename):
-    if not filename.endswith('.fits'):
-        # we don't need to validate, not a FITS file
-        return True
-
-    f = open(filename, 'r')
-
-    endcheck = ''
-
-    idx = 0
-
-    try:
-        while 1:
-            try:
-                char = f.read(1)
-                if not char:
-                    return False
-                endcheck = endcheck + char
-                if endcheck == 'END':
-                    return True
-                else:
-                    if endcheck != 'EN' and endcheck != 'E':
-                        endcheck = ''
-                idx = idx + 1
-            except UnicodeDecodeError:
-                return False
-    finally:
-        f.close()
 
 
 def fix_zorro_or_alopeke(fits, instr, telescope):
@@ -98,7 +28,7 @@ def fix_zorro_or_alopeke(fits, instr, telescope):
 
     Parameters
     ----------
-    fits : `~Astrodata`
+    fits : astropy.io.fits hdulist
         File to read data from
     instr : str
         Which instrument, `zorro` or `alopeke`
@@ -160,7 +90,8 @@ def fix_zorro_or_alopeke(fits, instr, telescope):
     if 'TELESCOP' not in pheader:
         pheader['TELESCOP'] = telescope
         retval = True
-    # per Andrew S, we always update the RELEASE keyword, it was not reliably being set
+    # per Andrew S, we always update the RELEASE keyword, it was not reliably
+    # being set correctly
     if 'DATE-OBS' in pheader and pheader['DATE-OBS'] is not None:
         try:
             dateobs = pheader['DATE-OBS']
@@ -168,51 +99,15 @@ def fix_zorro_or_alopeke(fits, instr, telescope):
             if 'CAL' in pheader['OBSID']:
                 pheader['RELEASE'] = dt.strftime('%Y-%m-%d')
             elif '-FT-' in pheader['OBSID']:
-                pheader['RELEASE'] = (dt + timedelta(days=183)).strftime('%Y-%m-%d')
+                pheader['RELEASE'] = (dt + timedelta(days=183)).\
+                    strftime('%Y-%m-%d')
             else:
-                pheader['RELEASE'] = (dt + timedelta(days=365)).strftime('%Y-%m-%d')
-        except Exception as e:
-                #print("Unable to determine release date, continuing")
-                pass
+                pheader['RELEASE'] = (dt + timedelta(days=365)).\
+                    strftime('%Y-%m-%d')
+        except Exception:
+            # print("Unable to determine release date, continuing")
+            pass
     return retval
-
-
-def fix_zorro(fits):
-    """
-    Fix Zorro datafile.
-
-    This just wraps the call to `fix_zorro_or_alopeke` with the
-    appropriate instrument and telescope.
-
-    Parameters
-    ----------
-    fits : astrodata
-        Astrodata object with Zorro data to check
-
-    Returns
-    -------
-    True if we had to modify the file, False if it was fine
-    """
-    return fix_zorro_or_alopeke(fits, 'Zorro', 'Gemini-South')
-
-
-def fix_alopeke(fits):
-    """
-    Fix Alopeke datafile.
-
-    This just wraps the call to `fix_zorro_or_alopeke` with the
-    appropriate instrument and telescope.
-
-    Parameters
-    ----------
-    fits : astrodata
-        Astrodata object with Alopeke data to check
-
-    Returns
-    -------
-    True if we had to modify the file, False if it was fine
-    """
-    return fix_zorro_or_alopeke(fits, 'Alopeke', 'Gemini-North')
 
 
 def fix_igrins(fits):
@@ -221,8 +116,7 @@ def fix_igrins(fits):
 
     Parameters
     ----------
-    fits : astrodata
-        Astrodata object with IGRINS data to check
+    fits : astropy.io.fits hdulist
 
     Returns
     -------
@@ -239,7 +133,6 @@ def fix_igrins(fits):
         pheader['TELESCOP'] = 'Gemini-South'
         retval = True
     if 'OBSERVAT' not in pheader or pheader['OBSERVAT'] is None:
-        #print("fixing OBSERVAT")
         pheader['OBSERVAT'] = "Gemini-South"
         retval = True
     progid = None
@@ -259,140 +152,222 @@ def fix_igrins(fits):
             pheader['DATALAB'] = "%s-0" % pheader['OBSID']
             retval = True
     # fix RELEASE header if missing, we base this on DATE-OBS + 1 year
-    if 'RELEASE' not in pheader and 'DATE-OBS' in pheader and pheader['DATE-OBS'] is not None:
+    if 'RELEASE' not in pheader and 'DATE-OBS' in pheader \
+            and pheader['DATE-OBS'] is not None:
         try:
             dateobs = pheader['DATE-OBS']
             if len(dateobs) >= 10:
                 dateobs = dateobs[0:10]
                 dt = datetime.strptime(dateobs, '%Y-%m-%d')
-                pheader['RELEASE'] = (dt + timedelta(days=365)).strftime('%Y-%m-%d')
+                pheader['RELEASE'] = (dt + timedelta(days=365))\
+                    .strftime('%Y-%m-%d')
                 retval = True
             else:
-                #print("RELEASE not set and DATE-OBS in unrecognized format")
+                # print("RELEASE not set and DATE-OBS in unrecognized format")
                 pass
-        except Exception as e:
-            #print("Unable to determine release date, continuing")
+        except Exception:
+            # print("Unable to determine release date, continuing")
             pass
     return retval
 
 
-def fix_and_copy(src_dir, dest_dir, fn, compress=True, mailfrom=None, mailto=None):
-    """
-    Fix and copy the given file from the visiting instrument staging folder to
-    the appropriate dataflow location.
+DATE_CRE = re.compile(r'20\d\d[01]\d[0123]\d')
+fsc = get_config()
+vi_staging_path = json.loads(fsc.vi_staging_paths)
 
-    Parameters
-    ----------
-    src_dir : str
-        Location of file in the visitor instrument staging area
-    dest_dir : str
-        Location in dataflow to put the file with any required fixes
-    fn : str
-        Name of the file
-    compress : bool
-        If True, we should compress the file on dataflow
-    mailfrom : str
-        If set, use this as the FROM address for any alert emails
-    mailto : str
-        If set, send any alert emails to this address
-    """
-    if fn in _missing_end_files:
-        # fail fast, it had no END keyword
-        return False
 
-    path = os.path.join(src_dir, fn)
-    tmppath = None
-    fsc = get_config()
-    if fn.endswith('.bz2'):
-        tmppath = os.path.join(fsc.z_staging_dir, fn[:-4])
-        os.system('bzcat -s %s > %s' % (path, tmppath))
+class VisitorInstrumentHelper(object):
+    def __init__(self, staging_dir=None, dest_dir=None, logger=None):
+        # Staging dir is the "root" directory of the visiting instrument
+        # staging area. This dir should contain subdirectories by date with
+        # the files from that date inside.
+        self.staging_dir = staging_dir
 
-    if tmppath and not check_end(tmppath):
-        _missing_end_files.append(fn)
-        if fsc.smtp_server:
-            # First time it fails, send an email error message
-            # we don't want to continually spam it and we will be retrying...
-            subject = "ERROR - header_fixer2 saw no END keyword for file %s, will ignore" % fn
+        # dest_dir is the "root" directory of dataflow
+        self.dest_dir = fsc.storage_root if dest_dir is None else dest_dir
 
-            mailfrom = 'fitsdata@gemini.edu'
-            mailto = ['fitsdata@gemini.edu']
+        self.logger = logger if logger is not None else DummyLogger()
 
-            message = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (
-                mailfrom, ", ".join(mailto), subject, "Ignoring bad FITS file.  The system will not try to copy "
-                                                      "this file again until the copy from visiting instrument "
-                                                      "service is restarted." % fn)
+        # if defined, this is a compiled regular expression that should match
+        # the raw filenames from this instrument. This is defined in the
+        # subclasses
+        self.filename_cre = None
 
-            server = smtplib.SMTP(fsc.smtp_server)
-            server.sendmail(mailfrom, mailto, message)
-            server.quit()
-        os.unlink(tmppath)
-        return False
+        self.subdir = None
 
-    df = os.path.join(dest_dir, fn)
-    if df.endswith('.bz2'): # and not compress:  # let's do it anyway and compress after
-        df = df[:-4]
+        self.instrument_name = None
 
-    try:
-        if tmppath:
-            # fits = pf.open(open_image(tmppath), do_not_scale_image_data=True)
-            fits = pf.open(tmppath, do_not_scale_image_data=True, mode='readonly', memmap=True)
+    def fixheader(self, hdulist):
+        self.logger.error('fixheader() called on generic VI helper instance')
+
+    def file_exists(self, filename):
+        """
+        Check if the file exists in dest_dir / subdir and is readable,
+        with or without a .bz2
+
+        Returns True if file exists, is a file, and is readable
+        """
+
+        dest_path = os.path.join(self.dest_dir, self.subdir, filename)
+        if os.access(dest_path, os.F_OK | os.R_OK):
+            return True
+
+        if filename.endswith('.bz2'):
+            fn = filename.rstrip('bz2')
+            dest_path = os.path.join(self.dest_dir, self.subdir, fn)
+            if os.access(dest_path, os.F_OK | os.R_OK):
+                return True
         else:
-            # fits = pf.open(open_image(path), do_not_scale_image_data=True)
-            import astrodata
-            adtest = astrodata.open(path)
-            fits = pf.open(path, do_not_scale_image_data=True, mode='readonly', memmap=True)
-        if 'zorro' in dest_dir.lower():
-            if fix_zorro(fits):
-                fits[0].header['HISTORY'] = 'Corrected metadata: Zorro fixes'
-        if 'alopeke' in dest_dir.lower():
-            if fix_alopeke(fits):
-                fits[0].header['HISTORY'] = 'Corrected metadata: Alopeke fixes'
-        if fix_igrins(fits):
-            fits[0].header['HISTORY'] = 'Corrected metadata: IGRINS fixes'
-        fits.writeto(output_file(df), output_verify='silentfix+exception')
-        if compress:
-            # compress the file, then cleanup the .fits
-            os.system('cat %s | bzip2 -sc > %s' % (df, '%s.bz2' % df))
-            os.unlink(df)
-        return True
-    except (IOError, ValueError) as e:
-        if mailfrom and mailto:
-            message = ["ERROR - Unable to fix visiting instrument data",
-                       "file: %s" % fn,
-                       "(from %s to %s)" % (src_dir, dest_dir)]
-            sendmail("ERROR - Unable to import visiting instrument file %s" % fn,
-                     mailfrom, mailto, message)
-        #print('{0} >> {1}'.format(fn, e))
-        if os.path.exists(df):
-            os.unlink(df)
-        if os.path.exists('%s.bz2' % df):
-            os.unlink('%s.bz2' % df)
-    finally:
-        if tmppath is not None:
-            os.unlink(tmppath)
+            fn = filename + '.bz2'
+            dest_path = os.path.join(self.dest_dir, self.subdir, fn)
+            if os.access(dest_path, os.F_OK | os.R_OK):
+                return True
+        return False
+
+    def too_new(self, filename):
+        """
+        Get the lastmod time of filename in the source directory.
+        If within 5 seconds of now, return True, else False
+        """
+
+        src_path = os.path.join(self.staging_dir, self.subdir, filename)
+        lastmod = datetime.fromtimestamp(os.path.getmtime(src_path))
+
+        age = datetime.now() - lastmod
+        age = age.total_seconds()
+        if age < 5:
+            self.logger.debug("%s is too new (%.1f)- skipping this time round",
+                              filename, age)
+            return True
+        else:
+            return False
+
+    def fix_and_copy(self, filename, compress=None):
+        """
+        Fix and copy the visitor instrument file 'filename'. You should have
+        already set the subdir to work in by calling subdir() on this instance.
+
+        If compress is None, the output file will be compressed if the input
+        file is. If compress is True or False, that will determine whether we
+        compress the output file.
+
+        Returns True on success, False on Failure
+
+        """
+        src_path = os.path.join(self.staging_dir, self.subdir, filename)
+
+        if compress is None:
+            dest_filename = filename
+        else:
+            if compress:
+                # Ensure the destination filename ends in .bz2
+                dest_filename = filename if filename.endswith('.bz2') else \
+                    filename + '.bz2'
+            else:
+                # Ensure the destination filename does not end in .bz2
+                dest_filename = filename.rstrip('.bz2')
+        dest_path = os.path.join(self.dest_dir, self.subdir, dest_filename)
+
+        # Ensure destination directory exists
+        dd = os.path.join(self.dest_dir, self.subdir)
+        if not (os.path.isdir(dd) and os.access(dd, os.W_OK)):
+            os.mkdir(dd)
+
+        self.logger.info("Copying %s file: %s", self.instrument_name, filename)
+        self.logger.debug("Reading visitor instrument data from: %s", src_path)
+        self.logger.debug("Writing visitor instrument data to: %s", dest_path)
+
+        try:
+            hdulist = pf.open(src_path, do_not_scale_image_data=True,
+                              mode='readonly')
+
+            if self.fixheader(hdulist):
+                self.logger.debug("Applied %s header fixes",
+                                  self.instrument_name)
+                hdulist[0].header['HISTORY'] = f'Corrected metadata: ' \
+                                               f'{self.instrument_name} fixes'
+
+            hdulist.writeto(dest_path, output_verify='silentfix+exception')
+            return True
+        except Exception:
+            self.logger.error("Exception copying and fixing Visitor Instrument "
+                              "file %s", filename, exc_info=True)
+            if os.path.exists(dest_path):
+                os.unlink(dest_path)
+            return False
+
+    def list_files(self):
+        # List the files in self.subdir that match the filename format for this
+        # instrument
+        dirpath = os.path.join(self.staging_dir, self.subdir)
+        for i in os.listdir(dirpath):
+            if self.filename_cre is None:
+                yield i
+            elif self.filename_cre.match(i):
+                self.logger.debug("Filename %s matches instrument filename_cre",
+                                  i)
+                yield i
+            else:
+                self.logger.debug("Filename %s does not match instrument "
+                                  "filename_cre - skipping", i)
+                pass
+
+    def list_datedirs(self):
+        # Generate a list of the YYYYMMDD "date" directories in staging_dir
+        for i in os.listdir(self.staging_dir):
+            if DATE_CRE.match(i):
+                yield i
 
 
-if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument("--src", action="store", type=str, dest="src_dir",
-                        help="Source directory")
-    parser.add_argument("--dest", action="store", type=str, dest="dest_dir",
-                        help="Destination directory")
-    parser.add_argument("--compress", action="store_true", default=False, dest="compress",
-                        help="Compress output file as .bz2")
-    parser.add_argument("--file-re", action="store", type=str, dest="file_prefix",
-                        help="Prefix of filename to match on")
-    parser.add_argument('path', nargs='+', help='Path of a file or a folder of files.')
-    options = parser.parse_args()
-    src_dir = options.src_dir
-    dest_dir = options.dest_dir
-    compress = options.compress
-    file_prefix = options.file_prefix
+class AlopekeVIHelper(VisitorInstrumentHelper):
+    def __init__(self, staging_dir=None, logger=None):
+        super(AlopekeVIHelper, self).__init__(staging_dir=staging_dir,
+                                              logger=logger)
 
-    if src_dir == dest_dir:
-        print('destination cannot be the same as the source')
-    files = options.path
+        if self.staging_dir is None:
+            self.staging_dir = vi_staging_path.get('ALOPEKE')
 
-    for fn in files:
-        if file_prefix is None or file_prefix=='' or fn.startswith(file_prefix):
-            fix_and_copy(src_dir, dest_dir, fn, compress=compress)
+        self.filename_cre = re.compile(
+            r'^N20\d\d[01]\d[0123]\dA\d\d\d\d[br].fits(.bz2)?')
+
+        self.instrument_name = 'ALOPEKE'
+        self.dest_dir = os.path.join(self.dest_dir, 'alopeke')
+
+    def fixheader(self, hdulist):
+        return fix_zorro_or_alopeke(hdulist, 'ALOPEKE', 'Gemini-North')
+
+
+class ZorroVIHelper(VisitorInstrumentHelper):
+    def __init__(self, staging_dir=None, logger=None):
+        super(ZorroVIHelper, self).__init__(staging_dir=staging_dir,
+                                            logger=logger)
+
+        if self.staging_dir is None:
+            self.staging_dir = vi_staging_path.get('ZORRO')
+
+        self.filename_cre = re.compile(
+            r'^N20\d\d[01]\d[0123]\dZ\d\d\d\d[br].fits(.bz2)?')
+
+        self.instrument_name = 'ZORRO'
+        self.dest_dir = os.path.join(self.dest_dir, 'zorro')
+
+    def fixheader(self, hdulist):
+        return fix_zorro_or_alopeke(hdulist, 'ZORRO', 'Gemini-South')
+
+
+class IGRINSVIHelper(VisitorInstrumentHelper):
+    def __init__(self, staging_dir=None, logger=None):
+        super(IGRINSVIHelper, self).__init__(staging_dir=staging_dir,
+                                             logger=logger)
+
+        if self.staging_dir is None:
+            self.staging_dir = vi_staging_path.get('IGRINS')
+
+        self.filename_cre = re.compile(
+            r'^SDC[HKS]_20\d\d[01]\d[0123]\d_\d{4}.fits(.bz2)?')
+
+        self.instrument_name = 'IGRINS'
+        self.dest_dir = os.path.join(self.dest_dir, 'igrins')
+
+    def fixheader(self, hdulist):
+        return fix_igrins(hdulist)
