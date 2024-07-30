@@ -346,7 +346,7 @@ class ZorroVIHelper(VisitorInstrumentHelper):
             self.staging_dir = vi_staging_path.get('ZORRO')
 
         self.filename_cre = re.compile(
-            r'^N20\d\d[01]\d[0123]\dZ\d\d\d\d[br].fits(.bz2)?')
+            r'^S20\d\d[01]\d[0123]\dZ\d\d\d\d[br].fits(.bz2)?')
 
         self.instrument_name = 'ZORRO'
         self.dest_dir = os.path.join(self.dest_dir, 'zorro')
