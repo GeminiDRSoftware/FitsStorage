@@ -188,7 +188,8 @@ with session_scope() as session:
                     logger.debug("Copy appeared to succeed")
                     # Add to ingest queue?
                     if not options.noqueue:
-                        path = f"{vihelper.instrument_name}/{vihelper.subdir}"
+                        path = f"{vihelper.instrument_name.lower()}/" \
+                               f"{vihelper.subdir}"
                         logger.info("Adding %s in %s to ingest queue",
                                     filename, path)
                         iq.add(filename, path)
