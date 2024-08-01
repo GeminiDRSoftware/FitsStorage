@@ -39,7 +39,7 @@ _yesterday_str = gemini_date('yesterday')
 def get_fake_ut():
     ut = datetime.datetime.utcnow()
     if 'cpo' in socket.gethostname():
-        ut += CHILE_OFFSET
+        ut -= CHILE_OFFSET
     return ut.date().strftime('%Y%m%d')
 
 
