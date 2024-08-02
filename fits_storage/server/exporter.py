@@ -217,6 +217,7 @@ class Exporter(object):
             url = "%s/upload_file/%s" % (destination, destination_filename)
 
             self.l.debug("POSTing data to %s", url)
+            starttime = datetime.datetime.utcnow()
             try:
                 req = self.rs.post(url, data=flo, timeout=self.timeout)
             except requests.Timeout:
@@ -229,6 +230,16 @@ class Exporter(object):
                 self.logeqeerror(f"RequestException posting {url}",
                                  exc_info=True)
                 return
+            enddtime = datetime.datetime.utcnow()
+
+            secs = (enddtime - starttime).total_seconds()
+            bytes_transferred = flo.bytes_output \
+                if isinstance(flo, StreamBz2Compressor) else flo.tell()
+            mbytes_transferred = bytes_transferred / 1048576
+
+            self.l.info(f"Transfer completed: {mbytes_transferred:.2f} MB "
+                        f"in {secs:.1f} secs - "
+                        f"{mbytes_transferred/secs:.2f} MB/sec")
 
             self.l.debug("Got http status %s and response %s",
                          req.status_code, req.text)
