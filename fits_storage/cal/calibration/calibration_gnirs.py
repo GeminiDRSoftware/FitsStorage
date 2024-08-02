@@ -22,7 +22,8 @@ class CalibrationGNIRS(Calibration):
         'disperser',
         'focal_plane_mask',
         'camera',
-        'filter_name'
+        'filter_name',
+        'array_name'
         )
 
     def set_applicable(self):
@@ -110,7 +111,9 @@ class CalibrationGNIRS(Calibration):
         query = self.get_query() \
                     .bpm(processed) \
                     .add_filters(*filters) \
-                    .match_descriptors(Header.instrument, Header.detector_binning)
+                    .match_descriptors(Header.instrument,
+                                       Header.detector_binning,
+                                       Gnirs.array_name)
 
         return query.all(howmany)
 
@@ -144,6 +147,7 @@ class CalibrationGNIRS(Calibration):
                 .match_descriptors(Header.exposure_time,
                                    Gnirs.read_mode,
                                    Gnirs.well_depth_setting,
+                                   Gnirs.array_name,
                                    Header.coadds)
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
@@ -181,6 +185,7 @@ class CalibrationGNIRS(Calibration):
             .match_descriptors(Gnirs.disperser,
                                Gnirs.camera,
                                Gnirs.filter_name,
+                               Gnirs.array_name,
                                Gnirs.well_depth_setting) \
             .if_(self.descriptors['spectroscopy'], 'tolerance',
                  central_wavelength=0.001)
@@ -343,6 +348,7 @@ class CalibrationGNIRS(Calibration):
                 .match_descriptors(Gnirs.disperser,
                                    Gnirs.focal_plane_mask,
                                    Gnirs.filter_name,
+                                   Gnirs.array_name,
                                    Gnirs.camera)
                 .tolerance(central_wavelength=0.001)
                 # Absolute time separation must be within 1 year
@@ -378,7 +384,8 @@ class CalibrationGNIRS(Calibration):
                 # Must totally match: disperser, central_wavelength, camera, (only for cross dispersed mode?)
                 .match_descriptors(Header.central_wavelength,
                                    Gnirs.disperser,
-                                   Gnirs.camera)
+                                   Gnirs.camera,
+                                   Gnirs.array_name)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
             )
@@ -449,6 +456,7 @@ class CalibrationGNIRS(Calibration):
                                    Gnirs.disperser,
                                    Gnirs.focal_plane_mask,
                                    Gnirs.camera,
+                                   Gnirs.array_name,
                                    Gnirs.filter_name)
                 # Usable is not OK for these - may be partly saturated for example
                 .add_filters(or_(Header.qa_state == 'Pass', Header.qa_state == 'Undefined'))
