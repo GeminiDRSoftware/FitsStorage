@@ -38,9 +38,10 @@ class FitsStorageConfig(dict):
     configuration files will be read.
 
     If builtinonly is not True, the following are read in this order:
-    * /etc/fits_storage.conf
     * /opt/FitsStorageConfig/fits_storage.conf
+    * /etc/fits_storage.conf
     * ~/.fits_storage.conf
+
 
     When reading configuration values from multiple places, any values read
     later will take precedence over values read earlier.
@@ -95,8 +96,8 @@ class FitsStorageConfig(dict):
                                 'fits_storage.conf')
 
         # Places to look for config files. Later ones take precedence
-        self._configfiles = ['/etc/fits_storage.conf',
-                             '/opt/FitsStorageConfig/fits_storage.conf',
+        self._configfiles = ['/opt/FitsStorageConfig/fits_storage.conf',
+                             '/etc/fits_storage.conf',
                              os.path.expanduser('~/.fits_storage.conf')]
 
         # This can be read back to see which config files were actually used.
