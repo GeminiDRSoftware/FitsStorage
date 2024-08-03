@@ -320,9 +320,9 @@ class VisitorInstrumentHelper(object):
 
 
 class AlopekeVIHelper(VisitorInstrumentHelper):
-    def __init__(self, staging_dir=None, logger=None):
+    def __init__(self, staging_dir=None, dest_dir=None, logger=None):
         super(AlopekeVIHelper, self).__init__(staging_dir=staging_dir,
-                                              logger=logger)
+                                              dest_dir=dest_dir, logger=logger)
 
         if self.staging_dir is None:
             self.staging_dir = vi_staging_path.get('ALOPEKE')
@@ -338,9 +338,9 @@ class AlopekeVIHelper(VisitorInstrumentHelper):
 
 
 class ZorroVIHelper(VisitorInstrumentHelper):
-    def __init__(self, staging_dir=None, logger=None):
+    def __init__(self, staging_dir=None, dest_dir=None, logger=None):
         super(ZorroVIHelper, self).__init__(staging_dir=staging_dir,
-                                            logger=logger)
+                                            dest_dir=dest_dir, logger=logger)
 
         if self.staging_dir is None:
             self.staging_dir = vi_staging_path.get('ZORRO')
@@ -356,9 +356,9 @@ class ZorroVIHelper(VisitorInstrumentHelper):
 
 
 class IGRINSVIHelper(VisitorInstrumentHelper):
-    def __init__(self, staging_dir=None, logger=None):
+    def __init__(self, staging_dir=None, dest_dir=None, logger=None):
         super(IGRINSVIHelper, self).__init__(staging_dir=staging_dir,
-                                             logger=logger)
+                                             dest_dir=dest_dir, logger=logger)
 
         if self.staging_dir is None:
             self.staging_dir = vi_staging_path.get('IGRINS')

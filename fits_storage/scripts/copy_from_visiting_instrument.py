@@ -82,10 +82,14 @@ parser.add_option("--igrins", action="store_true", dest="igrins",
                   default=False, help="Copy IGRINS data")
 parser.add_option("--datepre", action="store", dest="datepre", default=None,
                   help="Date prefix to filter directory names on")
-parser.add_option("--onepass", action="store_true",
+parser.add_option("--onepass", action="store_true", dest="onepass",
                   help="Perform a single pass rather than looping indefinately")
-parser.add_option("--noqueue", action="store_true",
+parser.add_option("--noqueue", action="store_true", dest="noqueue",
                   help="Do not add copied files to ingest queue")
+parser.add_option("--srcdir", action="store", default=None, dest="srcdir",
+                  help="Source Directory to copy from (omit for default)")
+parser.add_option("--destdir", action="store", default=None, dest="destdir",
+                  help="Destination Directory to copy to (omit for default)")
 (options, args) = parser.parse_args()
 
 # Logging level to debug?
@@ -141,11 +145,14 @@ if int(options.alopeke) + int(options.zorro) + int(options.igrins) != 1:
 # Get the VI Helper instance
 vihelper = None
 if options.alopeke:
-    vihelper = AlopekeVIHelper(logger=logger)
+    vihelper = AlopekeVIHelper(logger=logger, staging_dir=options.srcdir,
+                               dest_dir=options.destdir)
 elif options.zorro:
-    vihelper = ZorroVIHelper(logger=logger)
+    vihelper = ZorroVIHelper(logger=logger, staging_dir=options.srcdir,
+                               dest_dir=options.destdir)
 elif options.igrins:
-    vihelper = IGRINSVIHelper(logger=logger)
+    vihelper = IGRINSVIHelper(logger=logger, staging_dir=options.srcdir,
+                               dest_dir=options.destdir)
 
 
 with session_scope() as session:
@@ -153,51 +160,55 @@ with session_scope() as session:
     while loop:
         if options.onepass:
             loop = False
-        # Did we actually do anything this pass?
-        did_something = False
-        # Loop over date directories:
-        for datedir in vihelper.list_datedirs():
-            if options.datepre and not datedir.startswith(options.datepre):
-                logger.debug("Skipping date dir %s as doesn't match datepre",
-                             datedir)
-                continue
-
-            vihelper.subdir = datedir
-            # Loop over matching files in this datedir
-            for filename in vihelper.list_files():
-                if not options.force and vihelper.file_exists(filename):
-                    logger.debug("File %s already exists on destination, "
-                                 "skipping", filename)
+        try:
+            # Did we actually do anything this pass?
+            did_something = False
+            # Loop over date directories:
+            for datedir in vihelper.list_datedirs():
+                if options.datepre and not datedir.startswith(options.datepre):
+                    logger.debug("Skipping date dir %s as doesn't match datepre",
+                                 datedir)
                     continue
 
-                # If we got here, there was at least one actionable file
-                # this pass
-                did_something = True
+                vihelper.subdir = datedir
+                # Loop over matching files in this datedir
+                for filename in vihelper.list_files():
+                    if not options.force and vihelper.file_exists(filename):
+                        logger.debug("File %s already exists on destination, "
+                                     "skipping", filename)
+                        continue
 
-                # If lastmod time is within 5 secs, it may be still being
-                # written to, skip it
-                if vihelper.too_new(filename):
-                    continue
+                    # If we got here, there was at least one actionable file
+                    # this pass
+                    did_something = True
 
-                if options.dryrun:
-                    logger.info("Dry run, not actually copying %s", filename)
-                    continue
+                    # If lastmod time is within 5 secs, it may be still being
+                    # written to, skip it
+                    if vihelper.too_new(filename):
+                        continue
 
-                logger.info("Copying %s", filename)
-                if vihelper.fix_and_copy(filename):
-                    logger.debug("Copy appeared to succeed")
-                    # Add to ingest queue?
-                    if not options.noqueue:
-                        path = f"{vihelper.instrument_name.lower()}/" \
-                               f"{vihelper.subdir}"
-                        logger.info("Adding %s in %s to ingest queue",
-                                    filename, path)
-                        iq.add(filename, path)
-                        session.commit()
-                else:
-                    logger.debug("Copy failed")
+                    if options.dryrun:
+                        logger.info("Dry run, not actually copying %s", filename)
+                        continue
 
-        # If we didn't do anything, wait a while before looping
-        if loop and not did_something:
-            logger.info("No action taken this pass, waiting 60 secs")
-            time.sleep(60)
+                    logger.info("Copying %s", filename)
+                    if vihelper.fix_and_copy(filename):
+                        logger.debug("Copy appeared to succeed")
+                        # Add to ingest queue?
+                        if not options.noqueue:
+                            path = f"{vihelper.instrument_name.lower()}/" \
+                                   f"{vihelper.subdir}"
+                            logger.info("Adding %s in %s to ingest queue",
+                                        filename, path)
+                            iq.add(filename, path)
+                            session.commit()
+                    else:
+                        logger.debug("Copy failed")
+
+            # If we didn't do anything, wait a while before looping
+            if loop and not did_something:
+                logger.info("No action taken this pass, waiting 60 secs")
+                time.sleep(60)
+
+        except KeyboardInterrupt:
+            loop=False
