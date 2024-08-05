@@ -225,6 +225,8 @@ class Exporter(object):
                         break
                     tmpfile.write(chunk)
                 tmpfile.seek(0)
+                tmpfile.bytes_output = flo.bytes_output
+                tmpfile.md5sum_output = flo.md5sum_output
                 flo = tmpfile
             # Construct upload URL.
             url = "%s/upload_file/%s" % (destination, destination_filename)
