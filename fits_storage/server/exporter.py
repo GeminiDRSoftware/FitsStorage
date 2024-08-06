@@ -8,6 +8,7 @@ import requests.utils
 import json
 import datetime
 import os
+import time
 
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
@@ -262,6 +263,15 @@ class Exporter(object):
             if req.status_code != http.HTTPStatus.OK:
                 self.logeqeerror(f"Bad HTTP status: {req.status_code} from "
                                  f"upload post to url: {url}")
+                # Insert a sleep here, to prevent rapid-fire failures in the
+                # case where the server is in a bad state. This isn't ideal as
+                # there may be exports to other destinations in the queue, and
+                # it would be preferable to continue with those.
+                # TODO - after we switch to sqlalchemy-2, change this to do a
+                # TODO - bulk UPDATE on the exportqueue table to set after to
+                # TODO - now()+30s where destination == self.destination.
+                self.l.info("Waiting 30 seconds to prevent rapid-fire failures")
+                time.sleep(30)
                 return
 
             # The response should be a short json document
