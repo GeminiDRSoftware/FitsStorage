@@ -43,10 +43,11 @@ class CalibrationIgrins2(Calibration):
         return query.all(howmany)
     
     def flat(self, processed=False, howmany=None):
-        # Default 20 flats, from the day before
+        # Default 20 flats, closest in time. Note this will split some flat
+        # observations if the science frame is mid-way between 2 groups of flats
         howmany = howmany if howmany else 20
 
-        filters = [Header.ut_datetime <= self.descriptors['ut_datetime'], ]
+        filters = []
         query = self.get_query() \
             .flat(processed) \
             .add_filters(*filters) \
