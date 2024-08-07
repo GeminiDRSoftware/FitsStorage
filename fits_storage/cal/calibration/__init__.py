@@ -11,6 +11,7 @@ from .calibration_gsaoi import CalibrationGSAOI
 from .calibration_nici import CalibrationNICI
 from .calibration_gpi import CalibrationGPI
 from .calibration_ghost import CalibrationGHOST
+from .calibration_igrins2 import CalibrationIgrins2
 
 from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
@@ -33,6 +34,7 @@ inst_class = {
     'NICI':     CalibrationNICI,
     'NIFS':     CalibrationNIFS,
     'NIRI':     CalibrationNIRI,
+    'IGRINS-2': CalibrationIgrins2,
 }
 
 

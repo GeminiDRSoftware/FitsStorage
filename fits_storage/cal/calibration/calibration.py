@@ -105,8 +105,11 @@ class CalQuery(object):
         self.procmode = procmode
         self.descr = descriptors
 
-        query = session.query(Header)\
-            .select_from(join(join(instrClass, Header), DiskFile))
+        if instrClass is not None:
+            query = session.query(Header)\
+                .select_from(join(join(instrClass, Header), DiskFile))
+        else:
+            query = session.query(Header).select_from(join(Header, DiskFile))
 
         if procmode == 'Science-Quality':
             query = query.filter(Header.processing == procmode)
@@ -559,7 +562,7 @@ class Calibration(object):
         self.procmode = procmode
 
         # Populate the descriptors dictionary for header
-        if self.descriptors is None and self.instrClass is not None:
+        if self.descriptors is None:
             self.from_descriptors = True
             self.types = literal_eval(self.header.types)
             self.descriptors = {
@@ -585,7 +588,7 @@ class Calibration(object):
                 'engineering':          self.header.engineering
                 }
 
-            if instinit:
+            if self.instrClass is not None and instinit:
                 query = session.query(self.instrClass)\
                     .filter(self.instrClass.header_id ==
                             self.descriptors['header_id'])
