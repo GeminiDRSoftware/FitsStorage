@@ -84,7 +84,7 @@ git clone git@github.com:/GeminiDRSoftware/DRAGONS .
 git fetch
 git switch release/3.2.x  # or master, depending what you want...
 cd /opt/FitsStorage
-git clone git@github.com:/phirstgemini/FitsStorage2 .
+git clone git@github.com:GeminiDRSoftware/FitsStorage.git .
 cd /opt/FitsStorageConfigurations
 git clone git@github.com:/phirstgemini/FitsStorageConfigurations .
 create_tables.py
