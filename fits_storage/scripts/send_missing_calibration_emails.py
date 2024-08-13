@@ -23,6 +23,11 @@ parser.add_option("--skipdays", action="store", type="int", dest="skipdays",
 parser.add_option("--httpserver", action="store", dest="httpserver",
                   default="fits",
                   help="hostname of FitsStorage http server to query")
+parser.add_option("--debug", action="store_true", dest="debug",
+                  help="Increase log level to debug")
+parser.add_option("--demon", action="store_true", dest="demon",
+                  help="Run as a background demon, do not generate stdout")
+
 (options, args) = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
