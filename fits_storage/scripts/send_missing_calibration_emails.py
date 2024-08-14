@@ -86,9 +86,14 @@ msg['To'] = options.toaddr
 if fsc.email_replyto:
     msg['Reply-To'] = fsc.email_replyto
 
+tolist = [options.toaddr]
+
+# Bcc fitsadmin on all the emails...
+tolist.append('fitsadmin@gemini.edu')
+
 msg.attach(part1)
 msg.attach(part2)
 
 smtp = smtplib.SMTP(fsc.smtp_server)
-smtp.sendmail(fsc.email_from, [options.toaddr], msg.as_string())
+smtp.sendmail(fsc.email_from, tolist, msg.as_string())
 smtp.quit()
