@@ -51,7 +51,7 @@ def add_point(session, id, x, y):
     session.commit()
 
 
-def do_std_obs(session, header_id):
+def do_std_obs(session, header_id, commit=True):
     """
     Populates the PhotStandardObs table wrt reference to the given header id
     Also sets the flag in the Header table to say it has a standard.
@@ -69,7 +69,9 @@ def do_std_obs(session, header_id):
         if result.rowcount:
             header = session.query(Header).get(header_id)
             header.phot_standard = True
-        session.commit()
+
+        if commit:
+            session.commit()
     except Exception:
         traceback.print_exc(file=sys.stdout)
         session.rollback()
