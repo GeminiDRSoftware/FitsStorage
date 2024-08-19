@@ -24,6 +24,7 @@ sudo -i -u postgres
   vi /data/postgres/pgdata/postgresql.conf
     shared_buffers = 512MB    # 25% of ram if ram > 1GB
     effective_cache_size = 4GB   # 50% of ram size ish
+    max_connections = 200  # we're using 100 for uwsgi, plus scripts.
 sudo systemctl start postgresql
 sudo systemctl status postgresql
 sudo systemctl enable postgresql
