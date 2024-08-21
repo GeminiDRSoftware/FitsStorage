@@ -242,7 +242,11 @@ class Response(object):
         Takes an object and appends to the contents a serialized
         representation of it, encoded in JSON format. Any additional keyword
         arguments will be passed verbatim to :py:meth:`json.dumps`.
+
+        Sets the content-type to application/json
         """
+        if 'json' not in self._content_type:
+            self.content_type = 'application/json'
         self._content.append(json.dumps(obj, cls=SetEncoder, **kw))
         return self
 
@@ -265,30 +269,7 @@ class Response(object):
 
         json.dump(obj, StreamingObject(self._write_callback), **kw)
 
-    @only_if_not_started_response
-    @contextmanager
-    def streamed_json(self, **kw):
-        """
-        Stream a collection of JSON objects. Intended for multiple individual
-        responses to a query. This is not the intended way to work with
-        WSGI... but not much we can do about it.
-        """
-        if 'json' not in self._content_type:
-            self.content_type = 'application/json'
 
-        try:
-            self.start_response()
-            sobj = JsonArrayStreamingObject(self._write_callback)
-            yield sobj
-        except Exception as e:
-            try:
-                self._env.log(str(e))
-                self._env.log(traceback.format_exc())
-            except AttributeError:
-                # TODO track down why this is missing during update_headers call
-                pass
-        finally:
-            sobj.close()
 
     def sendfile(self, path):
         """
