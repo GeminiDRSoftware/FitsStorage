@@ -17,9 +17,11 @@ def test_upload(tmp_path):
     resp = _uploadfile(tmp_path, filename)
 
     assert resp.status_code == http.HTTPStatus.OK
+    assert resp.headers['content-type'] == 'application/json'
     assert resp.text == '[{"filename": "N20180329S0134.fits.bz2", ' \
                         '"size": 1059693, ' \
                         '"md5": "1c1c2eb66af5a49218ea95a53b2b9f78"}]'
+
 
     js = _waitforingest(filename, data_md5='6a9688a89307afa7776bd23ea4ccae3f')
     assert js is not None
@@ -49,8 +51,7 @@ def test_update(tmp_path):
     url = f"{server}/update_headers"
     req = requests.post(url, data=msg, timeout=10)
     assert req.status_code == http.HTTPStatus.OK
-    assert req.text == '{"result": true, "value": true, ' \
-                       '"id": "N20180329S0134.fits"}'
+    assert req.text == '[{"result": true, "id": "N20180329S0134.fits"}]'
 
     js = _waitforingest(filename, data_md5='d5f5b0c59ac7ba904d98ca1f343254a4')
     jsf = js[0]
@@ -63,8 +64,8 @@ def test_update(tmp_path):
     url = f"{server}/update_headers"
     req = requests.post(url, data=msg, timeout=10)
     assert req.status_code == http.HTTPStatus.OK
-    assert req.text == '{"result": true, "value": true, ' \
-                       '"id": "GN-2018A-FT-103-13-003"}'
+    assert req.headers['content-type'] == 'application/json'
+    assert req.text == '[{"result": true, "id": "GN-2018A-FT-103-13-003"}]'
 
     js = _waitforingest(filename, data_md5='65a9baa43115b07d60b6d1eae73de0a5')
     jsf = js[0]
@@ -78,8 +79,8 @@ def test_update(tmp_path):
     url = f"{server}/update_headers"
     req = requests.post(url, data=msg, timeout=10)
     assert req.status_code == http.HTTPStatus.OK
-    assert req.text == '{"result": true, "value": true, ' \
-                       '"id": "GN-2018A-FT-103-13-003"}'
+    assert req.headers['content-type'] == 'application/json'
+    assert req.text == '[{"result": true, "id": "GN-2018A-FT-103-13-003"}]'
 
     js = _waitforingest(filename, data_md5='3c709f93be1bf20f6c59f64aa075b0cf')
     jsf = js[0]
@@ -93,8 +94,8 @@ def test_update(tmp_path):
     url = f"{server}/update_headers"
     req = requests.post(url, data=msg, timeout=10)
     assert req.status_code == http.HTTPStatus.OK
-    assert req.text == '{"result": true, "value": true, ' \
-                       '"id": "N20180329S0134.fits"}'
+    assert req.headers['content-type'] == 'application/json'
+    assert req.text == '[{"result": true, "id": "N20180329S0134.fits"}]'
     js = _waitforingest(filename, data_md5='16c3e280a405726ee62ea5ad18f3d03c')
     jsf = js[0]
     assert jsf['raw_iq'] == 70
@@ -106,6 +107,15 @@ def test_update(tmp_path):
           '"batch": false}'
     url = f"{server}/update_headers"
     req = requests.post(url, data=msg, timeout=10)
-    assert req.status_code == http.HTTPStatus.BAD_REQUEST
-    assert req.text == '{"result": false, ' \
-                       '"value": "No filename or datalabel given"}'
+    assert req.headers['content-type'] == 'application/json'
+    assert req.text == '[{"result": false, ' \
+                       '"error": "No filename or data_label given"}]'
+
+    print("Testing non-existent file")
+    msg = '[{"filename": "N20991231S9999.fits", ' \
+          '"values": {"qa_state": "Usable"}}]'
+    url = f"{server}/update_headers"
+    req = requests.post(url, data=msg, timeout=10)
+    assert req.status_code == http.HTTPStatus.OK
+    assert req.text == '[{"result": false, "error": "No present file found for ' \
+                       'filename or datalabel", "id": "N20991231S9999.fits"}]'
