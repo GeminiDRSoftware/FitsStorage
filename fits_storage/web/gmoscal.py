@@ -3,7 +3,6 @@ This module contains the gmoscal html generator function.
 """
 from . import templating
 from math import fabs
-import os
 import datetime
 import time
 from collections import defaultdict, namedtuple
@@ -71,43 +70,6 @@ def gmoscal(selection):
 
     session = get_context().session
 
-    # Was a date provided by user?
-    datenotprovided = ('date' not in selection) and \
-                      ('daterange' not in selection)
-    # If no date or daterange, look on endor or josie to get the last
-    # processing date
-
-    def autodetect_range(checkfile, selection):
-        base_dir = fsc.das_calproc_path
-        enddate = datetime.datetime.now().date()
-        date = enddate
-        found = -1000
-        startdate = None
-
-        ret = None
-        while found < 0:
-            datestr = date.strftime("%Y%b%d").lower()
-            file = os.path.join(base_dir, datestr, checkfile)
-            if os.path.exists(file):
-                found = 1
-                startdate = date
-            date -= ONEDAY_OFFSET
-            found += 1
-
-            if startdate:
-                # Start the day after the last reduction
-                startdate += ONEDAY_OFFSET
-                ret = "%s-%s" % (startdate.strftime("%Y%m%d"),
-                                 enddate.strftime("%Y%m%d"))
-                selection['daterange'] = ret
-
-        return ret
-
-    if datenotprovided:
-        res = autodetect_range('Basecalib/flatall.list', selection)
-        if res:
-            result['flat_autodetected_range'] = res
-
     # We do this twice, first for the science data, then for the twilight
     # flat data These are differentiated by being science or dayCal
 
@@ -166,11 +128,6 @@ def gmoscal(selection):
         datething = selection['date']
     if 'daterange' in selection:
         datething = selection['daterange']
-
-    if datenotprovided:
-        res = autodetect_range('Basecalib/biasall.list', selection)
-        if res:
-            result['bias_autodetected_range'] = res
 
     tzoffset = datetime.timedelta(seconds=(time.altzone if time.daylight else
                                            time.timezone))
