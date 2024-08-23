@@ -50,18 +50,20 @@ with session_scope() as session:
     for header in headers:
         i += 1
 
-        diskfile = header.diskfile
-        ad = diskfile.get_ad_object
+        try:
+            ad = header.diskfile.get_ad_object
 
-        for label, fp in footprints(ad, logger).items():
-            footprint = Footprint(header, label)
-            session.add(footprint)
-            session.flush()
-            add_footprint(session, footprint.id, fp)
-            session.commit()
-        if i % 1000 == 0:
-            logger.info("Processed hid %d (%d / %d)", header.id, i, n)
-
+            for label, fp in footprints(ad, logger).items():
+                footprint = Footprint(header, label)
+                session.add(footprint)
+                session.flush()
+                add_footprint(session, footprint.id, fp)
+                session.commit()
+            if i % 1000 == 0:
+                logger.info("Processed hid %d (%d / %d)", header.id, i, n)
+        except:
+            pass
+        
     logger.info("Processed hid %d (%d / %d)", header.id, i, n)
 
 logger.info("***   rebuild_footprints.py - exiting up at %s", datetime.now())
