@@ -14,6 +14,8 @@ from fits_storage.core.orm.footprint import Footprint, footprints
 
 from fits_storage.core.geometryhacks import add_footprint
 
+from sqlalchemy import desc
+
 parser = ArgumentParser(
     description="This script is used to rebuild the footprints table. "
                 "It is needed after improvements or bugfixes that affect"
@@ -22,9 +24,7 @@ parser.add_argument("--debug", action="store_true", dest="debug",
                     help="Increase log level to debug")
 parser.add_argument("--demon", action="store_true", dest="demon",
                     help="Run as a background demon, do not generate stdout")
-parser.add_argument("--canonical", action="store_true", dest="canonical",
-                    help="Only add entries for footprints from canonical "
-                         "diskfiles")
+
 args = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
@@ -37,8 +37,10 @@ logger.info("***   rebuild_footprints.py - starting up at %s", datetime.now())
 with session_scope() as session:
     # First up, we need to get a list of Headers that we're going to process.
     query = session.query(Header)
-    if args.canonical:
-        query = query.join(DiskFile).filter(DiskFile.canonical == True)
+    # We need access to the file so can only do present files.
+    query = query.join(DiskFile).filter(DiskFile.present == True)
+    query = query.order_by(desc(Header.ut_datetime))
+
 
     headers = query.all()
     n = len(headers)
@@ -56,9 +58,10 @@ with session_scope() as session:
             session.add(footprint)
             session.flush()
             add_footprint(session, footprint.id, fp)
+            session.commit()
         if i % 1000 == 0:
             logger.info("Processed hid %d (%d / %d)", header.id, i, n)
-            session.commit()
 
     logger.info("Processed hid %d (%d / %d)", header.id, i, n)
-    session.commit()
+
+logger.info("***   rebuild_footprints.py - exiting up at %s", datetime.now())
