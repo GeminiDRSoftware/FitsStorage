@@ -37,20 +37,23 @@ logger.info("***   rebuild_footprints.py - starting up at %s", datetime.now())
 
 with session_scope() as session:
     # First up, we need to get a list of Headers that we're going to process.
-    query = session.query(Header).join(DiskFile)
+    query = session.query(Header.id).join(DiskFile)
     # We need access to the file so can only do present files.
     query = query.filter(DiskFile.present == True)
     query = query.order_by(desc(Header.ut_datetime))
 
-    headers = query.all()
-    n = len(headers)
+    hids = query.all()
+    n = len(hids)
     logger.info("Got %d headers to process", n)
 
     i = 0
-    for header in headers:
+    for hid in hids:
         i += 1
-        logger.info("Processing %s (%d / %d)", header.diskfile.filename, i, n)
         try:
+            header = session.query(Header).filter(Header.id == hid[0]).one()
+            logger.info("Processing %s (%d / %d)",
+                        header.diskfile.filename, i, n)
+
             ad = header.diskfile.get_ad_object
 
             for label, fp in footprints(ad, logger).items():
