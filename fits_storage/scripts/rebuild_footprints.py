@@ -49,9 +49,9 @@ with session_scope() as session:
         i += 1
 
         diskfile = header.diskfile
-        ad = diskfile.get_ad_object()
+        ad = diskfile.get_ad_object
 
-        for label, fp in footprints(diskfile.ad_object, logger).items():
+        for label, fp in footprints(ad, logger).items():
             footprint = Footprint(header, label)
             session.add(footprint)
             session.flush()
