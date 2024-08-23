@@ -513,7 +513,8 @@ class Ingester(object):
                     # This is a bit quirky because SQLAlchemy doesn't natively
                     # support the geometry types that we use.
                     # Hence, the geometryhacks.py module...
-                    footprint = Footprint(header, label)
+                    footprint = Footprint(header)
+                    footprint.extension = label
                     self.s.add(footprint)
                     self.s.flush()
                     geometryhacks.add_footprint(self.s, footprint.id, fp)
