@@ -54,7 +54,8 @@ with session_scope() as session:
             ad = header.diskfile.get_ad_object
 
             for label, fp in footprints(ad, logger).items():
-                footprint = Footprint(header, label)
+                footprint = Footprint(header)
+                footprint.extension = label
                 session.add(footprint)
                 session.flush()
                 add_footprint(session, footprint.id, fp)
@@ -63,7 +64,7 @@ with session_scope() as session:
                 logger.info("Processed hid %d (%d / %d)", header.id, i, n)
         except:
             pass
-        
+
     logger.info("Processed hid %d (%d / %d)", header.id, i, n)
 
 logger.info("***   rebuild_footprints.py - exiting up at %s", datetime.now())
