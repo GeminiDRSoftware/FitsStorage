@@ -19,7 +19,8 @@ from sqlalchemy import desc
 parser = ArgumentParser(
     description="This script is used to rebuild the footprints table. "
                 "It is needed after improvements or bugfixes that affect"
-                "calculation of footprints.")
+                "calculation of footprints. You will need to run "
+                "rebuild_stdstarobs.py after running rebuild_footprints.py")
 parser.add_argument("--debug", action="store_true", dest="debug",
                     help="Increase log level to debug")
 parser.add_argument("--demon", action="store_true", dest="demon",
@@ -49,22 +50,20 @@ with session_scope() as session:
     i = 0
     for header in headers:
         i += 1
-
         try:
             ad = header.diskfile.get_ad_object
 
             for label, fp in footprints(ad, logger).items():
+                logger.info("Processing %s (%d / %d)",
+                            header.diskfile.filename, i, n)
+
                 footprint = Footprint(header)
                 footprint.extension = label
                 session.add(footprint)
                 session.flush()
                 add_footprint(session, footprint.id, fp)
                 session.commit()
-            if i % 1000 == 0:
-                logger.info("Processed hid %d (%d / %d)", header.id, i, n)
         except:
-            pass
-
-    logger.info("Processed hid %d (%d / %d)", header.id, i, n)
+            logger.info("Failed on filename %s", header.diskfile.filename)
 
 logger.info("***   rebuild_footprints.py - exiting up at %s", datetime.now())
