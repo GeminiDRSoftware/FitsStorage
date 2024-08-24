@@ -498,10 +498,7 @@ def queryselection(query, selection):
                 query = query.filter(or_(Header.disperser == '111_mm&SXD',
                                          Header.disperser == '111_mm&LXD'))
             else:
-                like_arg = selection['disperser'] + '_%'
-                query = query.filter(
-                    or_(Header.disperser == selection['disperser'],
-                        Header.disperser.like(like_arg)))
+                query = query.filter(Header.disperser == selection['disperser'])
         else:
             like_arg = selection['disperser'] + '_%'
             query = query.filter(
