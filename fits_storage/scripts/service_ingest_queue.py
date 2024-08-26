@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.server.pidfile import PidFile, PidFileError
 
-from fits_storage.db import session_scope
+from fits_storage.db import sessionfactory
 from fits_storage.queues.queue import IngestQueue
 
 from fits_storage.core.ingester import Ingester
@@ -115,8 +115,8 @@ if __name__ == "__main__":
     logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
 
     try:
-        with PidFile(logger, name=options.name, dummy=not options.lockfile) as pidfile, \
-                session_scope() as session:
+        with PidFile(logger, name=options.name, dummy=not options.lockfile) as pidfile:
+            session = sessionfactory()
 
             ingest_queue = IngestQueue(session, logger)
             ingester = Ingester(session, logger, skip_fv=options.skip_fv,
