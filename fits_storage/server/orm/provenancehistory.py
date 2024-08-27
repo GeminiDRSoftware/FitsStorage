@@ -10,16 +10,25 @@ from fits_storage.logger import DummyLogger
 
 __all__ = ["Provenance", "History", "ingest_provenancehistory"]
 
-
+# Sometimes we get files that do not have the fractional seconds.
+# There doesn't seem to be an elegant way to handle that.
 PROVENANCE_DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+PROVENANCE_DATE_FORMAT_NOFRAC = "%Y-%m-%d %H:%M:%S"
 PROVENANCE_DATE_FORMAT_ISO = "%Y-%m-%dT%H:%M:%S.%f"
+PROVENANCE_DATE_FORMAT_ISO_NOFRAC = "%Y-%m-%dT%H:%M:%S"
 
 
 def _parse_timestamp(ts_str):
     if 'T' in ts_str:
-        return datetime.strptime(ts_str, PROVENANCE_DATE_FORMAT_ISO)
+        try:
+            return datetime.strptime(ts_str, PROVENANCE_DATE_FORMAT_ISO)
+        except ValueError:
+            return datetime.strptime(ts_str, PROVENANCE_DATE_FORMAT_ISO_NOFRAC)
     else:
-        return datetime.strptime(ts_str, PROVENANCE_DATE_FORMAT)
+        try:
+            return datetime.strptime(ts_str, PROVENANCE_DATE_FORMAT)
+        except ValueError:
+            return datetime.strptime(ts_str, PROVENANCE_DATE_FORMAT_NOFRAC)
 
 
 class Provenance(Base):
