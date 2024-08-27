@@ -902,7 +902,7 @@ class GHOSTFileParser(AstroDataFileParser):
 
     def gain_setting(self):
         gs = super().gain_setting()
-        if isinstance(gs, dict) or gs.startswith('{'):
+        if gs is None or isinstance(gs, dict) or gs.startswith('{'):
             return None
         return gs
 
