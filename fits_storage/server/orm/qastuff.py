@@ -122,7 +122,7 @@ class QAmetricIQ(Base, MetricDictMixin):
 
     id = Column(Integer, primary_key=True)
     qareport_id = Column(Integer, ForeignKey('qareport.id'))
-    datalabel = Column(Text)
+    datalabel = Column(Text, index=True)
     filename = Column(Text)
     detector = Column(Text)
     # Image Quality Values
@@ -258,7 +258,7 @@ class QAmetricZP(Base, MetricDictMixin):
 
     id = Column(Integer, primary_key=True)
     qareport_id = Column(Integer, ForeignKey('qareport.id'))
-    datalabel = Column(Text)
+    datalabel = Column(Text, index=True)
     filename = Column(Text)
     detector = Column(Text)
     # Photometry
@@ -387,7 +387,7 @@ class QAmetricSB(Base, MetricDictMixin):
 
     id = Column(Integer, primary_key=True)
     qareport_id = Column(Integer, ForeignKey('qareport.id'))
-    datalabel = Column(Text)
+    datalabel = Column(Text, index=True)
     filename = Column(Text)
     detector = Column(Text)
     # Sky Background
@@ -521,7 +521,7 @@ class QAmetricPE(Base, MetricDictMixin):
 
     id = Column(Integer, primary_key=True)
     qareport_id = Column(Integer, ForeignKey('qareport.id'))
-    datalabel = Column(Text)
+    datalabel = Column(Text, index=True)
     filename = Column(Text)
     detector = Column(Text)
     # Astrometric Pointing Error
