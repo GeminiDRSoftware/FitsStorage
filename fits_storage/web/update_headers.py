@@ -64,7 +64,7 @@ def update_headers():
 
             if fn is None and dl is None:
                 response = {'result': False, 'value': 'No filename or datalabel given'}
-                resp.append_json(response)
+                resp.append_json([response])
                 resp.status = Return.HTTP_BAD_REQUEST
                 return
 
@@ -75,7 +75,7 @@ def update_headers():
             fq.add(fqrq, filename=fn, response_required=False)
             response = {'result': True, 'value': True}
             response['id'] = fn if fn else dl
-            resp.append_json(response)
+            resp.append_json([response])
 
         resp.status = Return.HTTP_OK
 
