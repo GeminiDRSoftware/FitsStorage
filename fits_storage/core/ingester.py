@@ -6,7 +6,7 @@ import os
 import dateutil.parser
 
 from sqlalchemy import or_
-from sqlalchemy.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.exc import NoResultFound, MultipleResultsFound, IntegrityError
 
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
 from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
@@ -214,10 +214,12 @@ class Ingester(object):
                 for destination in self.export_destinations:
                     self.l.info("Adding %s to exportqueue for destination: %s",
                                 iqe.filename, destination)
-                    eqe = ExportQueueEntry(iqe.filename, iqe.path, destination)
-                    self.s.add(eqe)
-                self.s.commit()
-
+                    try:
+                        eqe = ExportQueueEntry(iqe.filename, iqe.path, destination)
+                        self.s.add(eqe)
+                        self.s.commit()
+                    except IntegrityError:
+                        self.l.info("Alredy on export queue")
         # Finally, delete the iqe we have just completed
         if iqe.failed is False:
             self.s.delete(iqe)
