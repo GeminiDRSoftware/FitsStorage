@@ -6,13 +6,12 @@ import os
 import dateutil.parser
 
 from sqlalchemy import or_
-from sqlalchemy.exc import NoResultFound, MultipleResultsFound, IntegrityError
+from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
-from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
-from fits_storage.queues.orm.previewqueueentry import PreviewQueueEntry
-from fits_storage.queues.orm.calcachequeueentry import CalCacheQueueEntry
-
+from fits_storage.queues.queue.exportqueue import ExportQueue
+from fits_storage.queues.queue.calcachequeue import CalCacheQueue
+from fits_storage.queues.queue.previewqueue import PreviewQueue
 
 from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
@@ -90,6 +89,13 @@ class Ingester(object):
             self.s3 = Boto3Helper(logger=self.l,
                                   storage_root=fsc.s3_staging_dir)
             self.local_copy_of_s3_file = None
+
+        # Instantiate some queue manager objects here
+        self.exportqueue = ExportQueue(session, logger=self.l)
+        if self.is_archive:
+            self.calcachequeue = CalCacheQueue(session, logger=self.l)
+        if self.using_previews:
+            self.previewqueue = PreviewQueue(session, logger=self.l)
 
     def ingest_file(self, iqe: IngestQueueEntry):
         """
@@ -214,12 +220,8 @@ class Ingester(object):
                 for destination in self.export_destinations:
                     self.l.info("Adding %s to exportqueue for destination: %s",
                                 iqe.filename, destination)
-                    try:
-                        eqe = ExportQueueEntry(iqe.filename, iqe.path, destination)
-                        self.s.add(eqe)
-                        self.s.commit()
-                    except IntegrityError:
-                        self.l.info("Alredy on export queue")
+                    self.exportqueue.add(iqe.filename, iqe.path, destination)
+
         # Finally, delete the iqe we have just completed
         if iqe.failed is False:
             self.s.delete(iqe)
@@ -578,25 +580,20 @@ class Ingester(object):
                                      diskfile.filename)
                 else:
                     self.l.info(f"Adding {diskfile.filename} to preview queue")
-                    pqe = PreviewQueueEntry(diskfile)
-                    self.s.add(pqe)
-                    self.s.commit()
+                    if not self.previewqueue.add(diskfile):
+                        self.l.info("Error adding to PreviewQueue")
         except:
             self.l.error("Error adding Previews", exc_info=True)
             # We don't consider this an ingest failure
             # Just log the error and press on
 
-        try:
-            # If we are in archive mode, add to calcachequeue here
-            if self.is_archive:
-                self.l.info("Adding header id %d to calcachequeue" % header.id)
-                ccqe = CalCacheQueueEntry(header.id, diskfile.filename)
-                self.s.add(ccqe)
-                self.s.commit()
-        except:
-            self.l.error("Error adding to CalCacheQueue", exc_info=True)
-            # We don't consider this an ingest failure
-            # Just log the error and press on
+        # If we are in archive mode, add to calcachequeue here
+        if self.is_archive:
+            self.l.info("Adding header id %d to calcachequeue" % header.id)
+            if not self.calcachequeue.add(header.id, diskfile.filename):
+                self.l.error("Error adding to CalCacheQueue")
+                # We don't consider this an ingest failure
+                # Just log the error and press on
 
         # Yay. If we got here, we successfully ingested the file.
         # Delete any iqe entries for this filename that are marked as failed

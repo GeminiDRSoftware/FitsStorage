@@ -10,11 +10,38 @@ from fits_storage.cal.calibration import get_cal_object
 from fits_storage.cal.orm.calcache import CalCache
 from fits_storage.cal.associate_calibrations import associate_cals
 
+from sqlalchemy.exc import IntegrityError
+
 
 class CalCacheQueue(Queue):
 
     def __init__(self, session, logger=None):
         super().__init__(session, ormclass=CalCacheQueueEntry, logger=logger)
+
+    def add(self, hid, filename):
+        """
+        Add and entry to the CalCacheQueue. This instantiates a
+        CalCacheQueueEntry instance, adds it to the database and commits
+        the session.
+
+        Returns
+        -------
+        False on error
+        True on success
+        """
+        cqe = CalCacheQueueEntry(hid, filename)
+
+        self.session.add(cqe)
+
+        try:
+            self.session.commit()
+            return True
+        except IntegrityError:
+            self.logger.debug(f"Integrity error adding file {filename} "
+                              f"to CalCache Queue. Most likely, file is already"
+                              f"on queue. Silently rolling back.")
+            self.session.rollback()
+            return False
 
     def cache_associations(self, obs_hid):
         """
