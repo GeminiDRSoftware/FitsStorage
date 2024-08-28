@@ -225,6 +225,8 @@ class Ingester(object):
             self.s.delete(iqe)
         self.s.commit()
 
+        return True
+
     def need_to_add_diskfile(self, iqe, fileobj):
         """
         Determine whether we need to add a diskfile for this file object and
