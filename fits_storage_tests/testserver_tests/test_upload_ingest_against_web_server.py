@@ -22,7 +22,6 @@ def test_upload(tmp_path):
                         '"size": 1059693, ' \
                         '"md5": "1c1c2eb66af5a49218ea95a53b2b9f78"}]'
 
-
     js = _waitforingest(filename, data_md5='6a9688a89307afa7776bd23ea4ccae3f')
     assert js is not None
 
@@ -117,5 +116,35 @@ def test_update(tmp_path):
     url = f"{server}/update_headers"
     req = requests.post(url, data=msg, timeout=10)
     assert req.status_code == http.HTTPStatus.OK
-    assert req.text == '[{"result": false, "error": "No present file found for ' \
-                       'filename or datalabel", "id": "N20991231S9999.fits"}]'
+    assert req.text == '[{"result": false, "error": "No present file found ' \
+                       'for filename or datalabel", "id": ' \
+                       '"N20991231S9999.fits"}]'
+
+def test_multi_update(tmp_path):
+    server = getserver()
+    filename1 = 'N20180329S0134.fits.bz2'
+    filename2 = 'N20180524S0117.fits.bz2'
+    _ensureuploaded(tmp_path, filename1, '6a9688a89307afa7776bd23ea4ccae3f')
+    _ensureuploaded(tmp_path, filename2, '760f4ab19268b8171e4cfd12a71ba4b4')
+
+    print("Testing new format multi header update by filename")
+    # Create the header_update payload, old format
+    msg = '{"request": [' \
+          '{"filename": "N20180329S0134.fits", ' \
+          '"values": {"raw_site": "iq70"}, ' \
+          '"reject_new": true},' \
+          '{"filename": "N20180524S0117.fits", ' \
+          '"values": {"raw_site": "iq20"}, ' \
+          '"reject_new": true}], ' \
+          '"batch": false}'
+    url = f"{server}/update_headers"
+    req = requests.post(url, data=msg, timeout=10)
+    assert req.status_code == http.HTTPStatus.OK
+    assert req.headers['content-type'] == 'application/json'
+    assert req.text == '[{"result": true, "id": "N20180329S0134.fits"}, {"result": true, "id": "N20180524S0117.fits"}]'
+    js = _waitforingest(filename1, data_md5='3e24bd3a4c1171ae7b76ccba9d1c8f53')
+    jsf = js[0]
+    assert jsf['raw_iq'] == 70
+    js = _waitforingest(filename2, data_md5='2375eea8e4448f3d1fbbd7c1a1a2f4a6')
+    jsf = js[0]
+    assert jsf['raw_iq'] == 20
