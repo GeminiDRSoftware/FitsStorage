@@ -49,4 +49,4 @@ def test_jsonqastate(tmp_path):
     assert j['data_label'] == 'GN-2018A-FT-103-13-003'
     assert j['filename'] == filename
     assert len(j['data_md5']) == 32
-    assert j['qa_state'] in ('Pass', 'Fail', 'Usable', 'Check', 'Undefined')
+    assert j['qa_state'] in ('Pass', 'Fail', 'Usable', 'CHECK', 'Undefined')
