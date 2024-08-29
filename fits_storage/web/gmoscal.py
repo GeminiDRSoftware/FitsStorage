@@ -73,12 +73,17 @@ def gmoscal(selection):
 
     # Was a date provided by user?
     datenotprovided = ('date' not in selection) and \
-                      ('daterange' not in selection)
+                      ('daterange' not in selection) and \
+                      ('night' not in selection) and \
+                      ('nightrange' not in selection)
+
     # If no date or daterange, look on endor or josie to get the last
     # processing date
 
     def autodetect_range(checkfile, selection):
         base_dir = fsc.das_calproc_path
+        if not base_dir:
+            return None
         enddate = datetime.datetime.now().date()
         date = enddate
         found = -1000
