@@ -105,6 +105,7 @@ if fsc.is_server:
         QAmetricIQ, QAmetricZP, QAmetricSB, QAmetricPE
 
     from fits_storage.server.orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
+    from fits_storage.server.orm.ipprefix import IPPrefix
 
 # Calcache table
 if fsc.is_archive:
