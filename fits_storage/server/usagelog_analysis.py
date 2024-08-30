@@ -30,19 +30,41 @@ def _score_obs(url_words, obsthings):
     return score
 
 
-def score_url(url):
+def score_uri(uri):
     """
-    Generate a "badness" score for a URL. 0 is neutral, positive score suggests
-    URL may come from a malevolent robot or user. negative score suggests
-    benevolent user.
+    Generate a "badness" score for a URI. 0 is neutral, negative score suggests
+    URL may come from a good robot or user. positive score suggests
+    bad user.
 
     Multiple obsclasses or obstypes in the URL very much suggest this is
     blind link following (ie a rampaging robot)
     """
-    url_words = url.split('/')
+    uri_words = uri.split('/')
     score = 0
 
-    score += _score_obs(url_words, obs_classes)
-    score += _score_obs(url_words, obs_types)
+    score += _score_obs(uri_words, obs_classes)
+    score += _score_obs(uri_words, obs_types)
 
     return score
+
+
+def score_referrer(ref):
+    """
+    Generate a "badness" score for a http referrer. 0 is neutral, positive
+    score is bad.
+
+    Not implemented yet. Will likely need to be driven by a lookup, avoid
+    hard-coding values here.
+    """
+    return 0
+
+
+def score_agent(agent):
+    """
+        Generate a "badness" score for a http user agent. 0 is neutral, positive
+        score is bad.
+
+        Not implemented yet. Will likely need to be driven by a lookup, avoid
+        hard-coding values here.
+        """
+    return 0

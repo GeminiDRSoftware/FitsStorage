@@ -1,6 +1,5 @@
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text, DateTime, Boolean
-from sqlalchemy.dialects.postgresql import CIDR
 
 from fits_storage.core.orm import Base
 from fits_storage.config import get_config

@@ -291,4 +291,3 @@ class ArinApi(object):
         except Exception:
             self.logger.error("Exception handling arin data.", exc_info=True)
             return None
-

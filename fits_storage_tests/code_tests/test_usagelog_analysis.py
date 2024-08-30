@@ -1,7 +1,7 @@
-from fits_storage.server.usagelog_analysis import score_url
+from fits_storage.server.usagelog_analysis import *
 
 
-def test_score_url():
+def test_score_uri():
     tests = {'foo/FLAT/FLAT/bar': 6,
              'foo/FLAT/dayCal/bar': 0,
              'foo/bar': 0,
@@ -10,4 +10,10 @@ def test_score_url():
              }
 
     for url, score in tests.items():
-        assert score_url(url) == score
+        assert score_uri(url) == score
+
+def test_score_agent():
+    assert score_agent("") == 0
+
+def test_score_referer():
+    assert score_referrer("") == 0
