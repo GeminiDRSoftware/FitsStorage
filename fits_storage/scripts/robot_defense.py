@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from fits_storage.logger import logger, setdebug, setdemon
 
 from fits_storage.db import sessionfactory
-from fits_storage.server.robot_defense_helpers import get_ipprefix
+from fits_storage.server.robot_defense import get_ipprefix
 from fits_storage.server.orm.ipprefix import IPPrefix
 
 parser = ArgumentParser()

@@ -5,7 +5,7 @@ from fits_storage_tests.code_tests.helpers import make_empty_pg_testing_db
 
 from fits_storage.config import get_config
 
-from fits_storage.server.robot_defense_helpers import get_ipprefix
+from fits_storage.server.robot_defense import get_ipprefix
 from fits_storage.server.orm.ipprefix import IPPrefix
 
 # These test call the bgpview API. Repeated API calls with the same query
