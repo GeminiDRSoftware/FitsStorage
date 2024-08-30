@@ -43,3 +43,4 @@ from fits_storage_tests.code_tests.test_pubdb_interface import *
 from fits_storage_tests.code_tests.test_selection import *
 from fits_storage_tests.code_tests.test_ipprefix import *
 from fits_storage_tests.code_tests.test_robot_defense import *
+from fits_storage_tests.code_tests.test_usagelog_analysis import *
