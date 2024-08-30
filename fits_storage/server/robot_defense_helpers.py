@@ -9,6 +9,7 @@ from fits_storage.logger import DummyLogger
 
 from fits_storage.server.orm.ipprefix import IPPrefix
 
+
 def get_ipprefix_from_db(session, ip, logger=DummyLogger()):
     """
     Query for and return an IPPrefix instance from the database that contains
@@ -23,7 +24,13 @@ def get_ipprefix_from_db(session, ip, logger=DummyLogger()):
     # end up with that not being the case, so let's handle that reasonably.
     ipp = query.order_by(IPPrefix.id).first()
 
+    if ipp:
+        logger.debug("Found Prefix for %s in database: %s", ip, ipp)
+    else:
+        logger.debug("No prefix for %s found in database", ip)
+
     return ipp
+
 
 def get_ipprefix(session, ip, api=None, logger=DummyLogger()):
     """
@@ -33,8 +40,8 @@ def get_ipprefix(session, ip, api=None, logger=DummyLogger()):
     then re-do the search and return the prefix containing the given ip address.
 
     The second search should obviously always give a result, but given the 
-    wierdness we see in the BGP data sometimes, handle the case where it doesn't
-    by returning None    
+    wierdness we see in the BGP data sometimes, handle the case where it
+    doesn't, by returning None
     """
 
     ipp = get_ipprefix_from_db(session, ip, logger=logger)
@@ -43,6 +50,7 @@ def get_ipprefix(session, ip, api=None, logger=DummyLogger()):
 
     ipps = get_prefixes(ip, api=api, logger=logger)
     for ipp in ipps:
+        logger.debug("Adding prefix to database: %s", ipp)
         session.add(ipp)
     session.commit()
 
@@ -125,7 +133,7 @@ class BgpViewApi(object):
         url = self.urlbase + 'ip/' + ip
         j = self.getjson(url)
 
-        # We get a "chain" of ASNs in the response - eg the company to which
+        # We get a "chain" of ASNs in the response - e.g. the company to which
         # the IP address belongs, and then the ISP of that company, and the
         # ISP of that ISP, and so on.
         # Find the ASN with the largest (most specific) cidr (netmask)
@@ -150,7 +158,8 @@ class BgpViewApi(object):
         j = self.getjson(url)
 
         # OK, this is a bit messy. See the note on the broad flag in init.
-        # Some of the parent entries in the json don't seem to make sense.
+        # Some parent entries in the json don't seem to make sense, ie the
+        # parent stated is not a supernet of the prefix in question.
         # Make a dict where the prefix as an ip_network instance is the key,
         # and the value is a dict of metadata items we'll need later
         ipnets = {}
@@ -208,7 +217,6 @@ class BgpViewApi(object):
                           len(supernets), len(subnets))
         # self.logger.debug("Supernets: %s", supernets)
         # self.logger.debug("Subnets: %s", subnets)
-
 
         # If we are in "broad" mode, return the parents, if we are in "narrow"
         # mode, return the children
