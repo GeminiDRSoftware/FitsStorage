@@ -1,4 +1,13 @@
-from fits_storage.server.usagelog_analysis import *
+from fits_storage.server.orm.usagelog_analysis import *
+
+
+def test_usagelog_analysis_orm_init():
+    ula = UsageLogAnalysis(1)
+    assert ula.usagelog_id == 1
+    assert ula.uri_score == 0
+    assert ula.agent_score == 0
+    assert ula.referer_score == 0
+    assert ula.total_score == 0
 
 
 def test_score_uri():
@@ -12,8 +21,11 @@ def test_score_uri():
     for url, score in tests.items():
         assert score_uri(url) == score
 
+
 def test_score_agent():
     assert score_agent("") == 0
 
+
 def test_score_referer():
     assert score_referrer("") == 0
+    
