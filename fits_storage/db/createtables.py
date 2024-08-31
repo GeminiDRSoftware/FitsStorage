@@ -105,11 +105,12 @@ if fsc.is_server:
         QAmetricIQ, QAmetricZP, QAmetricSB, QAmetricPE
 
     from fits_storage.server.orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
-    from fits_storage.server.orm.ipprefix import IPPrefix
 
-# Calcache table
+# Archive specific tables
 if fsc.is_archive:
     from fits_storage.cal.orm.calcache import CalCache
+    from fits_storage.server.orm.ipprefix import IPPrefix
+    from fits_storage.server.orm.usagelog_analysis import UsageLogAnalysis
 
 def get_fitsweb_granthelper():
     # Define server database permissions here for clarity. Using helper class

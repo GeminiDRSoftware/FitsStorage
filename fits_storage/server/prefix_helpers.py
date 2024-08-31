@@ -2,6 +2,7 @@
 This module contains helper code for the archive robot defenses.
 """
 import datetime
+import time
 import requests
 from ipaddress import ip_network
 
@@ -64,8 +65,8 @@ def get_prefixes(ip, api=None, logger=DummyLogger()):
     or any other value will try bgpview first then fall back to arin
     """
 
-    bgpview = BgpViewApi(logger=logger)
-    arin = ArinApi(logger=logger)
+    bgpview = get_bgpviewapi(logger=logger)
+    arin = get_arinapi(logger=logger)
 
     if api == 'bgpview':
         apis = [bgpview]
@@ -85,6 +86,26 @@ def get_prefixes(ip, api=None, logger=DummyLogger()):
 # logger argument, then called with an IP address, and return a list of
 # IPPrefix instances to add to the database.
 
+# The bgpview API at least implements rate limiting on the server side, so we
+# need to keep track of when the last call was. Thus, these should be treated
+# as singletons, and these module-level helper functions implement that.
+_BGPVIEWAPI = None
+_ARINAPI = None
+
+
+def get_bgpviewapi(broad=True, logger=DummyLogger()):
+    global _BGPVIEWAPI
+    if _BGPVIEWAPI is None:
+        _BGPVIEWAPI = BgpViewApi(broad=broad, logger=logger)
+    return _BGPVIEWAPI
+
+
+def get_arinapi(logger=DummyLogger()):
+    global _ARINAPI
+    if _ARINAPI is None:
+        _ARINAPI = ArinApi(logger=logger)
+    return _ARINAPI
+
 
 class BgpViewApi(object):
     """
@@ -93,6 +114,9 @@ class BgpViewApi(object):
     def __init__(self, broad=True, logger=DummyLogger()):
         self.logger = logger
         self.urlbase = 'https://api.bgpview.io/'
+        self.lastcall = datetime.datetime.utcnow()
+
+        # The lastcall value is used to rate limit calls to the API
 
         # The "broad" flag says whether to capture the "broad" or "narrow"
         # prefixes from the ASN. For example UH lists 121.178.0.0/16 but then
@@ -105,7 +129,15 @@ class BgpViewApi(object):
     def __call__(self, ip):
         return self.get_prefixes_from_ip(ip)
 
+    def ratelimit(self):
+        t = datetime.datetime.utcnow() - self.lastcall
+        if t.total_seconds() < 1.0:
+            self.logger.debug("Rate limiting call to BgpView API...")
+            time.sleep(1)
+        self.lastcall = datetime.datetime.utcnow()
+
     def getjson(self, url):
+        self.ratelimit()
         self.logger.debug("Getting %s", url)
         r = requests.get(url)
         if r.status_code != 200:
@@ -166,12 +198,24 @@ class BgpViewApi(object):
         for p in j['data']['ipv4_prefixes']:
             try:
                 ipn = ip_network(p['prefix'])
+                # Validate the parent prefix. We see invalid ones, and they
+                # cannot be stored in the database.
+                try:
+                    pp = p['parent']['prefix']
+                    ip_network(pp)
+                except ValueError:
+                    self.logger.debug("Ignoring invalid parent prefix: %s",
+                                      p['parent']['prefix'])
+                    pp = None
                 meta = {'name': p['name'],
                         'description': p['description'],
-                        'parent': p['parent']['prefix']}
+                        'parent': pp}
                 ipnets[ipn] = meta
             except KeyError:
                 self.logger.error("Error processing prefix %s", p)
+                continue
+            except ValueError:
+                self.logger.error("Invalid prefix, ignoring: %s", p)
                 continue
         self.logger.debug("Got %d prefixes to process", len(ipnets))
 

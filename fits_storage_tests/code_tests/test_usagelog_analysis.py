@@ -28,4 +28,3 @@ def test_score_agent():
 
 def test_score_referer():
     assert score_referrer("") == 0
-    
