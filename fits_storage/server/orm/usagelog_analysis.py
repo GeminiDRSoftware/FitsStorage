@@ -63,26 +63,27 @@ class UsageLogAnalysis(Base):
         self.utc_analysed = datetime.datetime.utcnow()
 
         self.uri_score = score_uri(self.usagelog.uri)
-        logger.debug("URI score: %d", self.uri_score)
-
         self.agent_score = score_agent(self.usagelog.user_agent)
-        logger.debug("Agent score: %d", self.agent_score)
-
         self.referer_score = score_referrer(self.usagelog.referer)
-        logger.debug("Referer score: %d", self.referer_score)
+
+        # We don't need a column to store this, as it's a direct lookup
+        # from usagelog. Invalid URLs incur a 5 point penalty
+        status_score = 5 if self.usagelog.status == 404 else 0
 
         self.total_score = self.uri_score + self.agent_score + \
-                           self.referer_score
+                           self.referer_score + status_score
+        logger.debug("Total score: %d", self.total_score)
 
         try:
-            session = sessionfactory()
-            ipp = get_ipprefix(session, self.usagelog.ip_address, api=api,
-                               logger=logger)
-            if ipp is not None:
-                self.prefix_id = ipp.id
-                self.asn = ipp.asn
+            with sessionfactory() as session:
+                ipp = get_ipprefix(session, self.usagelog.ip_address, api=api,
+                                   logger=logger)
+                if ipp is not None:
+                    self.prefix_id = ipp.id
+                    self.asn = ipp.asn
         except Exception:
             logger.error("Exception getting prefix.", exc_info=True)
+
 
 def _score_obs(url_words, obsthings):
     """

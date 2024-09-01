@@ -6,6 +6,8 @@ import time
 import requests
 from ipaddress import ip_network
 
+from sqlalchemy.exc import IntegrityError
+
 from fits_storage.logger import DummyLogger
 
 from fits_storage.server.orm.ipprefix import IPPrefix
@@ -52,8 +54,12 @@ def get_ipprefix(session, ip, api=None, logger=DummyLogger()):
     ipps = get_prefixes(ip, api=api, logger=logger)
     for ipp in ipps:
         logger.debug("Adding prefix to database: %s", ipp)
-        session.add(ipp)
-    session.commit()
+        try:
+            session.add(ipp)
+            session.commit()
+        except IntegrityError:
+            logger.warning("Duplicate entry adding ippprefix %s.", ipp)
+            session.rollback()
 
     return get_ipprefix_from_db(session, ip, logger=logger)
 
@@ -115,6 +121,7 @@ class BgpViewApi(object):
         self.logger = logger
         self.urlbase = 'https://api.bgpview.io/'
         self.lastcall = datetime.datetime.utcnow()
+        self.ratelimit_secs = 1.0
 
         # The lastcall value is used to rate limit calls to the API
 
@@ -131,16 +138,22 @@ class BgpViewApi(object):
 
     def ratelimit(self):
         t = datetime.datetime.utcnow() - self.lastcall
-        if t.total_seconds() < 1.0:
+        if t.total_seconds() < self.ratelimit_secs:
             self.logger.debug("Rate limiting call to BgpView API...")
-            time.sleep(1)
+            time.sleep(self.ratelimit_secs)
         self.lastcall = datetime.datetime.utcnow()
 
     def getjson(self, url):
         self.ratelimit()
         self.logger.debug("Getting %s", url)
         r = requests.get(url)
-        if r.status_code != 200:
+        if r.status_code == 429:
+            # Too many tries
+            self.logger.error("HTTP 429 - Too Many Requests from bgpview")
+            self.logger.debug("Headers were: %s", r.headers)
+            self.ratelimit_secs += 2
+            return None
+        elif r.status_code != 200:
             self.logger.error("Bad status code %d from %s", r.status_code, url)
             return None
         try:
