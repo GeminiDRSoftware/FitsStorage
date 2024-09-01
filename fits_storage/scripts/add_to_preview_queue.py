@@ -69,7 +69,7 @@ with session_scope() as session:
     i = 0
     for dfidl in dfids:
         dfid = dfidl[0]
-        df = session.get(DiskFile, id)
+        df = session.query(DiskFile).get(dfid)
         pqe = PreviewQueueEntry(df, force=options.force,
                                 scavengeonly=options.scavengeonly)
         i += 1
