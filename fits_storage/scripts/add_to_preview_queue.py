@@ -29,7 +29,7 @@ parser.add_option("--scavengeonly", action="store_true", dest="scavengeonly",
                   default=False, help="Do not create new previews, only "
                                       "scavenge existing preview files")
 parser.add_option("--bulk-add", action="store_true", dest="bulk_add",
-                  help="Add all the entries in one database commit. This is a"
+                  help="Commit the entries in batches. This is a"
                        "lot faster for a large number of entries, but if any"
                        "one of them has an error, they will all fail to add")
 
@@ -48,8 +48,9 @@ if not (options.file_pre or options.all):
     sys.exit(1)
 
 with session_scope() as session:
-    # Get a list of diskfile IDs to queue.
-    query = session.query(DiskFile)
+    # Get a list of diskfile IDs to queue. Looping through a long list of
+    # ORM objects is really low, get the ids.
+    query = session.query(DiskFile.id)
 
     if options.instrument:
         query = query.select_from(DiskFile, Header).\
@@ -60,24 +61,28 @@ with session_scope() as session:
 
     if options.file_pre:
         query = query.filter(DiskFile.filename.startswith(options.file_pre))
-    dfs = query.all()
+    dfids = query.all()
 
-    num = len(dfs)
+    num = len(dfids)
     logger.info("Got %d diskfiles to queue", num)
 
     i = 0
-    for df in dfs:
+    for dfidl in dfids:
+        dfid = dfidl[0]
+        df = session.get(DiskFile, id)
         pqe = PreviewQueueEntry(df, force=options.force,
                                 scavengeonly=options.scavengeonly)
-        session.add(pqe)
-        if not options.bulk_add:
-            session.commit()
         i += 1
         logger.debug("Adding %s to preview queue (%s/%s)", df.filename, i, num)
+        session.add(pqe)
+        if options.bulk_add:
+            if i % 1000 == 0:
+                logger.info("Committing %d / %d", i, num)
+                session.commit()
+        else:
+            session.commit()
+    session.commit()
     logger.info("Added %s entries to preview queue", i)
-    if options.bulk_add:
-        logger.info("Doing bulk database commit...")
-        session.commit()
 
 logger.info("*** add_to_preview_queue.py exiting normally at %s",
             datetime.datetime.now())
