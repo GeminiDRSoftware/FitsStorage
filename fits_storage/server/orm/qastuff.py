@@ -121,7 +121,7 @@ class QAmetricIQ(Base, MetricDictMixin):
     __tablename__ = 'qametriciq'
 
     id = Column(Integer, primary_key=True)
-    qareport_id = Column(Integer, ForeignKey('qareport.id'))
+    qareport_id = Column(Integer, ForeignKey('qareport.id'), index=True)
     datalabel = Column(Text, index=True)
     filename = Column(Text)
     detector = Column(Text)
@@ -257,7 +257,7 @@ class QAmetricZP(Base, MetricDictMixin):
     __tablename__ = 'qametriczp'
 
     id = Column(Integer, primary_key=True)
-    qareport_id = Column(Integer, ForeignKey('qareport.id'))
+    qareport_id = Column(Integer, ForeignKey('qareport.id'), index=True)
     datalabel = Column(Text, index=True)
     filename = Column(Text)
     detector = Column(Text)
@@ -386,7 +386,7 @@ class QAmetricSB(Base, MetricDictMixin):
     __tablename__ = 'qametricsb'
 
     id = Column(Integer, primary_key=True)
-    qareport_id = Column(Integer, ForeignKey('qareport.id'))
+    qareport_id = Column(Integer, ForeignKey('qareport.id'), index=True)
     datalabel = Column(Text, index=True)
     filename = Column(Text)
     detector = Column(Text)
@@ -520,7 +520,7 @@ class QAmetricPE(Base, MetricDictMixin):
     __tablename__ = 'qametricpe'
 
     id = Column(Integer, primary_key=True)
-    qareport_id = Column(Integer, ForeignKey('qareport.id'))
+    qareport_id = Column(Integer, ForeignKey('qareport.id'), index=True)
     datalabel = Column(Text, index=True)
     filename = Column(Text)
     detector = Column(Text)
