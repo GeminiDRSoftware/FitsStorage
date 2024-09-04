@@ -24,7 +24,7 @@ FETCH_SIZE = 50000
 
 
 parser = argparse.ArgumentParser(description='Copy data to Glacier')
-parser.add_argument('--file-pre', dest='filepre', action='store',
+parser.add_argument('--filepre', dest='filepre', action='store',
                     help="Select files with given filename prefix")
 parser.add_argument('--daysold', dest='daysold', action='store', type=int,
                     default=14, help="Select files with a lastmod time more "
@@ -50,6 +50,12 @@ logger.info("***   copy_to_glacier.py - starting up at %s",
             datetime.datetime.now())
 
 s3 = get_helper(logger=logger)
+
+if fsc.s3_glacier_bucket_name:
+    logger.info("Will copy to bucket: %s", fsc.s3_glacier_bucket_name)
+else:
+    logger.error("No s3_glacier_bucket_name config defined. Exiting")
+    exit(1)
 
 try:
     with PidFile(logger) as pidfile:
@@ -92,6 +98,8 @@ try:
 
         if args.limit:
             query = query.limit(args.limit)
+
+        logger.info("Found %d files to copy", query.count())
 
         for diskfile in query.yield_per(FETCH_SIZE):
             if args.dryrun:
