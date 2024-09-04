@@ -85,7 +85,6 @@ if fsc.is_server:
     from fits_storage.server.orm.preview import Preview
     from fits_storage.server.orm.provenancehistory import Provenance, History
     from fits_storage.server.orm.miscfile import MiscFile
-    from fits_storage.server.orm.glacier import Glacier
     from fits_storage.server.orm.user import User
     from fits_storage.server.orm.userprogram import UserProgram
     from fits_storage.server.orm.usagelog import UsageLog
@@ -109,6 +108,8 @@ if fsc.is_server:
 # Calcache table
 if fsc.is_archive:
     from fits_storage.cal.orm.calcache import CalCache
+    from fits_storage.server.orm.glacier import Glacier
+
 
 def get_fitsweb_granthelper():
     # Define server database permissions here for clarity. Using helper class
@@ -172,6 +173,7 @@ def get_fitsweb_granthelper():
     grant.update(odb_tables)
 
     return grant
+
 
 def create_tables(session: Session):
     """

@@ -1,6 +1,5 @@
-from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, Boolean, DateTime
-from sqlalchemy.orm import relation
+from sqlalchemy import Column
+from sqlalchemy import Integer, Text, DateTime
 
 from fits_storage.core.orm import Base
 
