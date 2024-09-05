@@ -69,7 +69,7 @@ sudo mkdir DRAGONS FitsStorage FitsStorageConfigurations
 sudo chown fitsdata DRAGONS FitsStorage FitsStorageConfigurations
 sudo mkdir /data/logs /data/locks /data/upload_staging /data/z_staging
 sudo chown fitsdata:fitsdata /data/logs/ /data/locks /data/upload_staging /data/z_staging
-sudo chmod g+w /data/upload_staging
+sudo chmod g+w /data/upload_staging /data/s3_staging
 # If configuring autofs. note mko vs cpo
 sudo cp /opt/FitsStorage/system_install_files/etc-auto.sci-mko /etc/auto.sci
 sudo vi /etc/auto.master
