@@ -46,7 +46,7 @@ def xmlfilelist(selection):
         )
 
 
-def diskfile_dicts(headers, return_header=False, check_ingest_queue=False):
+def diskfile_dicts(headers, return_header=False):
     for header in headers:
         thedict = {}
         thedict['name'] = _for_json(header.diskfile.file.name)
@@ -54,19 +54,18 @@ def diskfile_dicts(headers, return_header=False, check_ingest_queue=False):
             thedict[field] = _for_json(getattr(header.diskfile, field))
         thedict['size'] = thedict['file_size']
         thedict['md5'] = thedict['file_md5']
-        pending_ingest = False
-        if check_ingest_queue:
-            ctx = get_context()
-            fname = header.diskfile.file.name
-            if fname is not None:
-                if fname.endswith('.bz2'):
-                    fname = fname[:-4]
-                fname = f"{fname}%"
-                query = ctx.session.query(IngestQueueEntry)\
-                    .filter(IngestQueueEntry.filename.like(fname))
-                if query.count() > 0:
-                    pending_ingest = True
-        thedict['pending_ingest'] = pending_ingest
+        # Check for presence on ingest queue
+        thedict['pending_ingest'] = None
+        ctx = get_context()
+        fname = header.diskfile.file.name
+        if fname is not None:
+            if fname.endswith('.bz2'):
+                fname = fname[:-4]
+            fname = f"{fname}%"
+            query = ctx.session.query(IngestQueueEntry)\
+                .filter(IngestQueueEntry.filename.like(fname))
+            thedict['pending_ingest'] = query.count() > 0
+
         if not return_header:
             yield thedict
         else:
@@ -95,11 +94,8 @@ def jsonfilelist(selection, fields=None):
         headers = list_obslogs(selection, orderby)
     else:
         headers = list_headers(selection, orderby)
-    check_ingest_queue = False
-    if 'pending_ingest' in req.env.qs:
-        check_ingest_queue = True
-    thelist = list(diskfile_dicts(headers,
-                                  check_ingest_queue=check_ingest_queue))
+
+    thelist = list(diskfile_dicts(headers))
 
     if fields is None:
         get_context().resp.send_json(thelist, indent=4)
