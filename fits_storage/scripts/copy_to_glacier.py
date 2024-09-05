@@ -20,7 +20,7 @@ from fits_storage.config import get_config
 # Controls the resources taken in the local side. Too small number will result
 # in high database traffic. Too big number may cause a significant delay in the
 # operations, and a large memory consumption on the client side.
-FETCH_SIZE = 50000
+FETCH_SIZE = 1000
 
 
 parser = argparse.ArgumentParser(description='Copy data to Glacier')
@@ -28,7 +28,8 @@ parser.add_argument('--filepre', dest='filepre', action='store',
                     help="Select files with given filename prefix")
 parser.add_argument('--daysold', dest='daysold', action='store', type=int,
                     default=14, help="Select files with a lastmod time more "
-                                     "than N days ago")
+                                     "than N days ago. Note, defaults to 14."
+                                     "To disable this, set to 0.")
 parser.add_argument('--numdays', dest='numdays', action='store', type=int,
                     default=0, help="Select files with a lastmod time at most "
                                     "M days older than more than --daysold")
@@ -73,7 +74,6 @@ try:
         if args.filepre:
             query = query.filter(DiskFile.filename.startswith(args.filepre))
 
-
         if args.daysold:
             # Select files that are at least this many days old.
             # ie lastmod older than (less than) point in time.
@@ -81,7 +81,6 @@ try:
             interval = datetime.timedelta(days=args.daysold)
             maxdate = datetime.datetime.now() - interval
             query = query.filter(DiskFile.lastmod < maxdate)
-
 
         if args.numdays:
             # Select files with lastmod between daysold days old and
@@ -113,7 +112,7 @@ try:
             glacier.md5 = diskfile.file_md5
             glacier.when_uploaded = datetime.datetime.utcnow()
             session.add(glacier)
-            session.commit()
+        session.commit()
 except PidFileError as e:
     logger.error(str(e))
 
