@@ -173,6 +173,10 @@ def get_fitsweb_granthelper():
     grant.insert(odb_tables)
     grant.update(odb_tables)
 
+    # Archive specific tables
+    if fsc.is_archive:
+        grant.select('ipprefix')
+
     return grant
 
 
