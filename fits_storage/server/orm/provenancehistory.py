@@ -50,7 +50,7 @@ class Provenance(Base):
     __tablename__ = 'provenance'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'))
+    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), index=True)
     timestamp = Column(DateTime)
     filename = Column(Text)
     md5 = Column(Text)
@@ -87,7 +87,7 @@ class History(Base):
     __tablename__ = 'history'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'))
+    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), index=True)
     timestamp_start = Column(DateTime)
     timestamp_end = Column(DateTime)
     primitive = Column(Text)
