@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 from . import Base
 from .footprint import Footprint
 
+from decimal import Decimal
 
 class PhotStandard(Base):
     """
@@ -32,6 +33,20 @@ class PhotStandard(Base):
     lprime_mag = Column(Numeric(precision=6, scale=4))
     m_mag = Column(Numeric(precision=6, scale=4))
 
+    def as_dict(self):
+        """
+        Return a dict representation of this photstd
+        """
+        d = {}
+        for item in ['name', 'field', 'ra', 'dec', 'u_mag', 'v_mag', 'g_mag',
+                     'r_mag', 'i_mag', 'z_mag', 'y_mag', 'j_mag', 'h_mag',
+                     'k_mag', 'lprime_mag', 'm_mag']:
+            thing = getattr(self, item)
+            if isinstance(thing, Decimal):
+                thing = float(thing)
+            d[item] = thing
+
+        return d
 
 class PhotStandardObs(Base):
     """

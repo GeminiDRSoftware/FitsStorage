@@ -8,7 +8,7 @@ from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.file import File
 from fits_storage.db.selection import queryselection, openquery
 from fits_storage.db.list_headers import list_headers, list_obslogs
-from .standards import get_standard_obs
+from fits_storage.web.standards import get_standard_obs, list_phot_std_obs
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
 
 from fits_storage.server.access_control_utils import canhave_coords
@@ -157,7 +157,12 @@ def jsonsummary(selection, orderby=None):
         if not chc:
             for field in proprietary_fields:
                 thedict[field] = None
-
+        # Add phot standard info if it has them
+        if header.phot_standard:
+            photstds = []
+            for ps in list_phot_std_obs(header.id):
+                photstds.append(ps.as_dict())
+            thedict['phot_standards'] = photstds
         thelist.append(thedict)
 
     if openquery(selection) and thelist:
