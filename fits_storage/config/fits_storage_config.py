@@ -56,7 +56,8 @@ class FitsStorageConfig(dict):
               'development_bypass_auth', 'using_calcache']
     _ints = ['postgres_database_pool_size', 'postgres_database_max_overflow',
              'defer_threshold', 'defer_delay', 'fits_open_result_limit',
-             'fits_closed_result_limit', 'min_dhs_age_seconds']
+             'fits_closed_result_limit', 'min_dhs_age_seconds',
+             'robot_badness_threshold']
     _lists = ['blocked_urls', 'export_destinations']
 
     def __init__(self, configfile=None, configstring=None,
