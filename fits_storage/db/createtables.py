@@ -105,11 +105,12 @@ if fsc.is_server:
 
     from fits_storage.server.orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 
-# Calcache table
+# Archive specific tables
 if fsc.is_archive:
     from fits_storage.cal.orm.calcache import CalCache
+    from fits_storage.server.orm.ipprefix import IPPrefix
+    from fits_storage.server.orm.usagelog_analysis import UsageLogAnalysis
     from fits_storage.server.orm.glacier import Glacier
-
 
 def get_fitsweb_granthelper():
     # Define server database permissions here for clarity. Using helper class

@@ -23,6 +23,21 @@ from .response import Response
 
 from fits_storage.config import get_config
 
+fsc = get_config()
+if fsc.is_archive:
+    from fits_storage.server.prefix_helpers import get_ipprefix_from_db
+
+
+blocked_msg = """
+Your IP address range or ISP has been the source of excessive or malicious 
+requests to this server and anonymous access has been denied. If you are a 
+genuine Gemini Observatory Archive user, we apologize and would appreciate a 
+helpdesk ticket to let us know this has occurred. You may regain access to the 
+archive by logging in at https://archive.gemini.edu/login. If you do not 
+already have an account, you will need to set one up using a different 
+internet connection. Sorry.
+"""
+
 
 class ContextResponseIterator(object):
     def __init__(self, response, context_closer):
@@ -57,16 +72,19 @@ class ContextResponseIterator(object):
 
 class ArchiveContextMiddleware(object):
     """
-    Takes care of providing the 'context' (containing useful things like a
-    database session, and looking up user privileges based on any session
-    cookie in the request) and also takes care of adding an entry to the
-    usagelog for each request that comes in.
+    Takes care of:
+    - providing the 'context', containing useful things like a database session,
+    - looking up user privileges based on any session cookie in the request
+    - adding an entry to the usagelog for each request that comes in.
+    - denying anonymous requests from "blocked" IPPrefixes for the archive
     """
 
     def __init__(self, application):
         self.ctx = None
         self.application = application
         self.bytes_sent = 0
+        fsc = get_config()
+        self.is_archive = fsc.is_archive
 
     def __call__(self, environ, start_response):
         self.ctx = get_context(initialize=True)
@@ -103,6 +121,24 @@ class ArchiveContextMiddleware(object):
             finally:
                 self.close()
 
+        # If we're the archive, block requests from "blocked" IPPrefixes here.
+        if self.is_archive and not self.ctx.usagelog.user_id:
+            # Find if this request comes from a known IPPrefix
+            ipp = get_ipprefix_from_db(session, self.ctx.req.env.remote_ip)
+
+            try:
+                allowed_url = self.ctx.req.env.unparsed_uri.startswith('/login')
+                # Maybe we should allow request_account etc. here too, but
+                # that seems risky, so they'll need to use another ISP for that.
+            except AttributeError:
+                allowed_url = False
+
+            if ipp and ipp.deny and not allowed_url:
+                # Blocked!
+                usagelog.add_note(f"Blocked - IPPrefix {ipp.prefix}")
+                self.ctx.resp.content_type = 'text/plain'
+                self.ctx.resp.status = Return.HTTP_FORBIDDEN
+                return self.ctx.resp.append(blocked_msg).respond()
         try:
             result = self.application(environ, start_response)
             return ContextResponseIterator(result, self.close)
