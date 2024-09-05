@@ -17,8 +17,6 @@ from fits_storage.cal.orm.gpi import Gpi
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.file import File
-from fits_storage.core.orm.footprint import Footprint
-from fits_storage.core.orm.photstandard import PhotStandardObs
 from fits_storage.server.orm.program import Program
 from fits_storage.server.orm.publication import Publication, ProgramPublication
 
@@ -566,8 +564,7 @@ def queryselection(query, selection):
                                  selection['detector_roi'])
 
     if 'photstandard' in selection:
-        query = query.filter(Footprint.header_id == Header.id)
-        query = query.filter(PhotStandardObs.footprint_id == Footprint.id)
+        query = query.filter(Header.phot_standard == True)
 
     if 'twilight' in selection:
         if selection['twilight']:
