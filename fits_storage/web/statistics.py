@@ -145,7 +145,7 @@ def content():
         )
 
     telescopes = ['Gemini-North', 'Gemini-South']
-    minyear = 1998
+    minyear = 2000
     maxyear = datetime.date.today().year
 
     # Build a list of dicts that we're going to populate
