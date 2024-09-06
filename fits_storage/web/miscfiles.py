@@ -57,7 +57,9 @@ def miscfiles(handle=None):
 
 @templating.templated("miscfiles/miscfiles.html")
 def bare_page():
-    return dict(can_add=get_context().user.misc_upload)
+    user = get_context().user
+    can_add = user.misc_upload if user else False
+    return dict(can_add=can_add)
 
 
 def enumerate_miscfiles(query):
