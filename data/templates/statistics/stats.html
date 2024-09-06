@@ -20,9 +20,9 @@
   <li>Number of DiskFile rows added in the last minute: {{ df_stats.last_minute }}
   <li>Number of DiskFile rows added in the last hour: {{ df_stats.last_hour }}
   <li>Number of DiskFile rows added in the last day: {{ df_stats.last_day }}
-  <li>Last {{ df_stats.last_queries.count() }} entires added:
+  <li>Last {{ df_stats.last_entries.count() }} entires added:
     <ul>
-      {%- for entry in df_stats.last_queries %}
+      {%- for entry in df_stats.last_entries %}
       <li>{{ entry.file.name }}: {{ entry.entrytime }}
       {%- endfor %}
     </ul>
@@ -33,28 +33,62 @@
   <li>Total Rows: {{ header_count }}
 </ul>
 
-<h2>Ingest Queue</h2>
-<ul>
-  <li>Total Rows: {{ iq_stats.count }}
-  <li>Currently In Progress: {{ iq_stats.in_progress }}
-</ul>
+<h2>Queues</h2>
+<table>
+  <tr class='tr_head'>
+    <th>Queue</th>
+    <th>Entries</th>
+    <th>In Progress</th>
+  </tr>
+  <tr class='alternating'>
+    <td>Ingest</td>
+    <td>{{ iq_stats.count }}</td>
+    <td>{{ iq_stats.in_progress }}</td>
+  </tr>
+  <tr class='alternating'>
+    <td>Export</td>
+    <td>{{ eq_stats.count }}</td>
+    <td>{{ eq_stats.in_progress }}</td>
+  </tr>
+  <tr class='alternating'>
+    <td>FileOps</td>
+    <td>{{ fq_stats.count }}</td>
+    <td>{{ fq_stats.in_progress }}</td>
+  </tr>
+  <tr class='alternating'>
+    <td>Preview</td>
+    <td>{{ pq_stats.count }}</td>
+    <td>{{ pq_stats.in_progress }}</td>
+  </tr>
+  <tr class='alternating'>
+    <td>CalCache</td>
+    <td>{{ cq_stats.count }}</td>
+    <td>{{ cq_stats.in_progress }}</td>
+  </tr>
+  <tr class='alternating'>
+    <td>Reduce</td>
+    <td>{{ rq_stats.count }}</td>
+    <td>{{ rq_stats.in_progress }}</td>
+  </tr>
+</table>
+
 
 <h2>Data Rates</h2>
-<h3>Last {{ daily_rates.count() }} days</h3>
+<h3>Last {{ daily_rates|length }} days</h3>
 <ul>
   {%- for entry in daily_rates %}
   <li>{{ entry.start }}: {{ (entry.bytes or 0)|bytes_to_GB|format_float }} GB, {{ entry.count }} files
   {%- endfor %}
 </ul>
 
-<h3>Last {{ weekly_rates.count() }} weeks</h3>
+<h3>Last {{ weekly_rates|length }} weeks</h3>
 <ul>
   {%- for entry in weekly_rates %}
   <li>{{ entry.start }} - {{ entry.end }}: {{ (entry.bytes or 0)|bytes_to_GB|format_float }} GB, {{ entry.count }}
   {%- endfor %}
 </ul>
 
-<h3>Last {{ monthly_rates.count() }} months</h3>
+<h3>Last {{ monthly_rates|length }} months</h3>
 <ul>
   {%- for entry in monthly_rates %}
   <li>{{ entry.start }} - {{ entry.end }}: {{ (entry.bytes or 0)|bytes_to_GB|format_float }} GB, {{ entry.count }}
