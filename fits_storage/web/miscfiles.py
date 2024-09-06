@@ -264,8 +264,9 @@ def detail_miscfile(handle, formdata={}):
             # Must be a file name...
             meta, df, fobj = query.filter(File.name == handle).one()
 
+        misc_upload = ctx.user.misc_upload if ctx.user else False
         ret = dict(
-            canedit=ctx.user.misc_upload,
+            canedit=misc_upload,
             canhave=icanhave(ctx, meta),
             uri=ctx.env.uri,
             meta=meta,
