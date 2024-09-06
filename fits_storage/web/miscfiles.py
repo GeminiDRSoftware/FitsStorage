@@ -71,8 +71,8 @@ def enumerate_miscfiles(query):
 @templating.templated("miscfiles/miscfiles.html")
 def search_miscfiles(formdata):
     ctx = get_context()
-
-    ret = dict(can_add=ctx.user.misc_upload)
+    can_add = ctx.user.misc_upload if ctx.user else False
+    ret = dict(can_add=can_add)
     query = ctx.session.query(MiscFile, DiskFile, File).\
         join(DiskFile, MiscFile.diskfile_id == DiskFile.id).\
         join(File, DiskFile.file_id == File.id).\
