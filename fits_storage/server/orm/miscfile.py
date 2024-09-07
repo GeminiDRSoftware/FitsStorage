@@ -14,7 +14,7 @@ if fsc.using_s3:
 
 import json
 import os
-import io
+import dateutil.parser
 from base64 import urlsafe_b64encode as encode_string
 from base64 import urlsafe_b64decode as decode_string
 
@@ -111,7 +111,8 @@ def decode_description(meta):
 
 def miscfile_meta(path, urlencode=False):
     """
-    Read `miscfile` metadata for the given path
+    Read `miscfile` metadata from json file corresponding to the miscfile
+    at the given path
 
     Parameters
     ----------
@@ -126,7 +127,7 @@ def miscfile_meta(path, urlencode=False):
     """
     fsc = get_config()
     try:
-        meta = json.load(io.open(miscfile_meta_path(path), encoding='utf-8'))
+        meta = json.load(open(miscfile_meta_path(path), encoding='utf-8'))
         if urlencode:
             meta['description'] = encode_string(meta['description'].encode('utf-8')) \
                 .decode(encoding='utf-8', errors='ignore')
@@ -155,3 +156,25 @@ class MiscFile(Base):
     release     = Column(DateTime, nullable=False)
     description = Column(Text)
     program_id  = Column(Text, index=True)
+
+    def __init__(self, diskfile, parse_meta=True):
+        """
+        Create a new miscfile, pass diskfile_id and meta dict
+        """
+
+        self.diskfile_id = diskfile.id
+        if parse_meta:
+            meta = miscfile_meta(diskfile.filename)
+            self.release = dateutil.parser.parse(meta['release'])
+            self.program_id = meta['program']
+
+            # self.description = meta['description']
+            desc = meta['description']
+            if isinstance(desc, str):
+                if desc.startswith('\\x'):
+                    desc = bytes.fromhex(desc[2:].replace('\\x', ''))\
+                        .decode('utf-8')
+            else:
+                desc_bytes = desc
+                desc = desc_bytes.decode('utf-8', errors='ignore')
+            self.description = desc

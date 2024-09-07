@@ -29,7 +29,7 @@ if fsc.using_s3:
     from fits_storage.server.aws_s3 import Boto3Helper
 
 if fsc.is_archive:
-    from fits_storage.server.orm import miscfile
+    from fits_storage.server.orm.miscfile import MiscFile, is_miscfile
 
 if fsc.is_server:
     from fits_storage.server.orm.reduction import Reduction
@@ -365,26 +365,12 @@ class Ingester(object):
         -------
         True if it was a miscfile, False otherwise
         """
-        if not miscfile.is_miscfile(diskfile.filename):
+        if not is_miscfile(diskfile.filename):
             return False
 
         self.l.debug("This is a Miscfile")
         try:
-            meta = miscfile.miscfile_meta(diskfile.filename)
-            misc = miscfile.MiscFile()
-            misc.diskfile_id = diskfile.id
-            misc.release = dateutil.parser.parse(meta['release'])
-            # misc.description = meta['description']
-            dsc = meta['description']
-            if isinstance(dsc, str):
-                if dsc.startswith('\\x'):
-                    dsc = bytes.fromhex(dsc[2:].replace('\\x', ''))\
-                        .decode('utf-8')
-            else:
-                dsc_bytes = dsc
-                dsc = dsc_bytes.decode('utf-8', errors='ignore')
-            misc.description = dsc
-            misc.program_id = meta['program']
+            misc = MiscFile(diskfile)
 
             self.l.info(f"Adding miscfile {diskfile.filename}")
             self.s.add(misc)
