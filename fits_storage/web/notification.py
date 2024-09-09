@@ -3,7 +3,6 @@ This module contains the notification html generator function,
 and odb import via web function
 """
 from fits_storage.server.orm.notification import Notification
-#from fits_storage.server.odb_program_interface import ingest_odb_xml
 
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
@@ -79,29 +78,3 @@ def notification():
                          ('internal', 'Internal Email'),
                          ('delete', 'Delete')]
         )
-
-
-@needs_cookie(magic_cookie='gemini_fits_upload_auth')
-def import_odb_notifications():
-    """
-    This takes xml from the ODB posted to it and imports it as notifications
-    """
-
-    ctx = get_context()
-
-    # Get the payload from the POST data
-    xml = ctx.raw_data
-
-    # Process it
-    try:
-        report = ingest_odb_xml(ctx.session, xml)
-    except ExpatError:
-        ctx.resp.client_error(Return.HTTP_BAD_REQUEST,
-                              content_type='text/plan',
-                              message='<!-- The content sent is not valid XML'
-                                      ' -->')
-        return
-
-    # Write back the report
-    ctx.resp.content_type = "text/plain"
-    ctx.resp.append_iterable(line + '\n' for line in report)

@@ -42,7 +42,7 @@ from fits_storage.web.update_headers import update_headers
 
 from fits_storage.web.qastuff import qareport, qametrics, qaforgui
 
-from fits_storage.web.notification import notification, import_odb_notifications
+from fits_storage.web.notification import notification
 
 from fits_storage.web.calmgr import xmlcalmgr, jsoncalmgr
 from fits_storage.web.calibrations import calibrations
@@ -174,8 +174,6 @@ url_map = Map([
 
     # Notifications
     Rule('/notification', notification),
-    Rule('/import_odb_notifications', import_odb_notifications, methods=['POST']),
-
 
     Rule('/update_headers', update_headers, methods=['POST']),
     Rule('/ingest_programs', ingest_programs, methods=['POST']),
