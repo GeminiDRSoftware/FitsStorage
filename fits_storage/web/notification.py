@@ -81,8 +81,7 @@ def notification():
         )
 
 
-@needs_cookie(
-    magic_cookies=[('gemini_fits_authorization', fsc.magic_download_cookie)])
+@needs_cookie(magic_cookie='gemini_fits_upload_auth')
 def import_odb_notifications():
     """
     This takes xml from the ODB posted to it and imports it as notifications

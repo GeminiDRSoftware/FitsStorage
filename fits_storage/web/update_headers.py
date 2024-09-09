@@ -50,9 +50,7 @@ def check_exists(session, fn=None, dl=None):
         return 2
 
 
-@needs_cookie(magic_cookies=
-    [('gemini_api_authorization', fsc.magic_api_server_cookie)],
-    content_type='json')
+@needs_cookie(magic_cookie='gemini_api_authorization', content_type='json')
 def update_headers():
     ctx = get_context()
     resp = ctx.resp
