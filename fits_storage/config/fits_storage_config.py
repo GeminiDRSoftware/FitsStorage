@@ -58,7 +58,8 @@ class FitsStorageConfig(dict):
              'defer_threshold', 'defer_delay', 'fits_open_result_limit',
              'fits_closed_result_limit', 'min_dhs_age_seconds',
              'robot_badness_threshold']
-    _lists = ['blocked_urls', 'export_destinations']
+    _lists = ['blocked_urls', 'export_destinations', 'gemini_fits_upload_auth',
+              'gemini_api_authorization']
 
     def __init__(self, configfile=None, configstring=None,
                  builtin=True, builtinonly=False):
@@ -250,3 +251,9 @@ class FitsStorageConfig(dict):
 
     def __getattr__(self, item):
         return self.__getitem__(item)
+
+    def get(self, item):
+        try:
+            return self.__getitem__(item)
+        except KeyError:
+            return None
