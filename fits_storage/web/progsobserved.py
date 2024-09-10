@@ -8,12 +8,13 @@ from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.file import File
 from fits_storage.db.selection import sayselection, queryselection
 from . import templating
-from sqlalchemy import join, not_, func
+from sqlalchemy import join, func
 import datetime
 
 from fits_storage.gemini_metadata_utils import gemini_date
 
 from fits_storage.server.wsgi.context import get_context
+
 
 @templating.templated("progsobserved.html")
 def progsobserved(selection):
@@ -45,10 +46,11 @@ def progsobserved(selection):
         joined_sel = '/'.join(list(selection.values()))
         )
 
+
 @templating.templated("sitemap.xml", content_type='text/xml')
 def sitemap():
     """
-    This generates a sitemap.xml for google et al.
+    This generates a sitemap.xml for Google et al.
     We advertise a page for each program that we have data for... :-)
     """
 
@@ -60,8 +62,8 @@ def sitemap():
     # the basic query in this case
     query = session.query(Header.program_id, func.max(Header.ut_datetime))\
         .group_by(Header.program_id)\
-        .filter(not_(Header.program_id.contains('ENG')))\
-        .filter(not_(Header.program_id.contains('CAL')))
+        .filter(Header.engineering == False)\
+        .filter(Header.calibration_program == False)
 
     items = []
 
