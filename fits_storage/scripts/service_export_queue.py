@@ -142,7 +142,7 @@ if __name__ == "__main__":
                     # log the error and carry on. Probably the error would
                     # reoccur if we re-try the same file though, so we set it
                     # as failed and record the error in the eqe too.
-                    message = "Unknown Error - no IngestQueueEntry instance"
+                    message = "Unknown Error - no ExportQueueEntry instance"
                     if eqe is not None:
                         eqe.failed = True
                         eqe.inprogress = False
