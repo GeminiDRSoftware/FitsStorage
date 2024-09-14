@@ -66,8 +66,14 @@ class ExportQueue(Queue):
         future = datetime.datetime.now() + datetime.timedelta(seconds=interval)
 
         for fail in fails:
-            fail.fail_dt = fail.fail_dt_false
-            fail.after = future
+            try:
+                fail.fail_dt = fail.fail_dt_false
+                fail.after = future
+                self.session.commit()
+            except IntegrityError:
+                # More than likely, the file got added again before the failed
+                # one got pushed for re-try. Just leave it as is, the other
+                # one should get processed, then this will retry as a noop
+                self.session.rollback()
 
-        self.session.commit()
         
