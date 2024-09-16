@@ -5,7 +5,7 @@ import signal
 import traceback
 import time
 
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, IntegrityError
 
 from argparse import ArgumentParser
 
@@ -157,8 +157,24 @@ if __name__ == "__main__":
                         defer_message = iqe.defer()
                         if defer_message is not None:
                             logger.info(defer_message)
-                            iqe.inprogress = False
-                            session.commit()
+                            try:
+                                iqe.inprogress = False
+                                session.commit()
+                            except (IntegrityError, OperationalError):
+                                # Possible race condition here if same file
+                                # has been added to queue with inprogress=False
+                                # while we were doing this, preventing us
+                                # setting this one back to false. Ideally we
+                                # just delete the current entry at this point.
+                                logger.error("Possible Deferred file race "
+                                             "condition in service_ingest_"
+                                             "queue. Update code to handle "
+                                             "this", exc_info=True)
+                            except Exception:
+                                logger.error("This should not happen - Need "
+                                             "to handle this exception in "
+                                             "service_ingest_queue!",
+                                             exc_info=True)
                             continue
 
                     # Go ahead and ingest the file. At this point, iqe is
@@ -171,7 +187,8 @@ if __name__ == "__main__":
 
                     ingester.ingest_file(iqe)
 
-                except (KeyboardInterrupt, OperationalError):
+                except KeyboardInterrupt:
+                    logger.info("Got KeyboardInterrupt, stopping looping")
                     loop = False
 
                 except:
@@ -182,16 +199,26 @@ if __name__ == "__main__":
                     # log the error and carry on. Probably the error would
                     # reoccur if we re-try the same file though, so we set it
                     # as failed and record the error in the iqe too.
+
+                    # Log the exception right away so that if the handling fails
+                    # we still get an error message
+                    logger.error("Unhandled Exception in service_ingest_queue!",
+                                 exc_info=True)
                     message = "Unknown Error - no IngestQueueEntry instance"
                     if iqe is not None:
-                        iqe.failed = True
-                        iqe.inprogress = False
-                        message = "Exception in service_ingest_queue while " \
-                                  f"processing {iqe.filename}"
-                        iqe.error = message
-                        session.commit()
+                        try:
+                            iqe.failed = True
+                            iqe.inprogress = False
+                            message = "Exception in service_ingest_queue " \
+                                      "while processing {iqe.filename}"
+                            iqe.error = message
+                            session.commit()
+                        except:
+                            logger.error("Exception while trying to handle "
+                                         "exception in service_ingest_queue",
+                                         exc_info=True)
 
-                    logger.error(message, exc_info=True)
+                    logger.error(message)
                     # Press on with the next file, don't raise the exception
 
     except PidFileError as e:
