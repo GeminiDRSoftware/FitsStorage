@@ -95,15 +95,19 @@ class FitsEditor(object):
                 .filter(DiskFile.present == True).one()
         except NoResultFound:
             self.error = True
-            self.message = 'No results searching for target file'
+            self.message = f'No results searching for target file ' \
+                           f'({self.filename} or {self.datalabel})'
             self.logger.error(self.message)
         except MultipleResultsFound:
             self.error = True
-            self.message = 'Multiple results searching for target file'
+            self.message = f'Multiple results searching for target file ' \
+                           f'({self.filename} or {self.datalabel})'
             self.logger.error(self.message)
-        if self.diskfile.present is False:
+        if self.diskfile is not None and self.diskfile.present is False:
             self.error = True
-            self.message = 'Target diskffile is not present'
+            self.message = f'Target diskfile is not present ' \
+                           f'(id: {self.diskfile.id} - ' \
+                           f'filename:{self.diskfile.filename})'
             self.logger.error(self.message)
 
     def _get_localfile(self):
