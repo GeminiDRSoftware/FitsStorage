@@ -124,7 +124,7 @@ sudo systemctl status fits-service_fileops_queue1
 sudo systemctl enable fits-service_fileops_queue1
 tail /data/logs/service_fileops_queue.py
 
-# Same for other queues, if appropriate
+# Same for other queues, if appropriate, plus fits-queue_monitor
 
 # If you cycle the magic download cookie, let Kathleen know, it's needed by
 # SCALes (for processing pre-imaging) and stored on the scales server.
