@@ -183,8 +183,8 @@ def update_headers(args, session, logger):
         fe.set_release(args['release'])
     if 'generic' in args:
         reject_new = args.get('reject_new', False)
-        for item in args['generic']:
-            keyword, value = item
+        for keyword in args['generic']:
+            value = args['generic'][keyword]
             logger.debug("Updating keyword: %s", keyword)
             fe.set_header(keyword, value, reject_new=reject_new)
     filename = fe.diskfile.filename
