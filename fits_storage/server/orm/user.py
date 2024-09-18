@@ -28,7 +28,7 @@ class User(Base):
     password = Column(Text)
     salt = Column(Text)
     email = Column(Text)
-    staff = Column(Boolean)
+    gemini_staff = Column(Boolean)
     misc_upload = Column(Boolean)
     user_admin = Column(Boolean)
     file_permission_admin = Column(Boolean)
