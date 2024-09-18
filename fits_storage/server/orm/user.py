@@ -51,7 +51,7 @@ class User(Base):
         self.account_type = None
         self.username = username
         self.password = None
-        self.staff = False
+        self.gemini_staff = False
         self.misc_upload = False
         self.user_admin = False
         self.superuser = False
