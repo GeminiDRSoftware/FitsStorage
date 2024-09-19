@@ -219,8 +219,9 @@ if __name__ == "__main__":
                                          exc_info=True)
 
                     logger.error(message)
-                    # Press on with the next file, don't raise the exception
-
+                    # This is drastic. raise the exception so we crash out.
+                    # We need to figure out what causes any occurence off this.
+                    raise
     except PidFileError as e:
         logger.error(str(e))
 
