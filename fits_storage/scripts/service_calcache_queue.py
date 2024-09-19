@@ -132,14 +132,13 @@ if __name__ == "__main__":
                     if options.oneshot:
                         loop = False
 
-                except (KeyboardInterrupt, OperationalError):
+                except KeyboardInterrupt:
+                    logger.info("Got KeyboardInterrupt, stopping looping")
                     loop = False
 
                 except:
-                    session.rollback()
-                    logger.error("Exception", exc_info=True)
-                    # Press on with the next file, don't raise the exception
-                    # further.
+                    logger.error("Unhandled Exception!", exc_info=True)
+                    raise
 
     except PidFileError as e:
         logger.error(str(e))

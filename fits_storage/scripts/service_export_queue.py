@@ -142,6 +142,8 @@ if __name__ == "__main__":
                     # log the error and carry on. Probably the error would
                     # reoccur if we re-try the same file though, so we set it
                     # as failed and record the error in the eqe too.
+                    logger.error("Unhandled Exception in service_export_queue!",
+                                 exc_info=True)
                     message = "Unknown Error - no ExportQueueEntry instance"
                     if eqe is not None:
                         eqe.failed = True
@@ -151,8 +153,10 @@ if __name__ == "__main__":
                         eqe.error = message
                         session.commit()
 
-                    logger.error(message, exc_info=True)
-                    # Press on with the next file, don't raise the exception
+                    logger.error(message)
+                    # This is drastic. raise the exception so we crash out.
+                    # We need to figure out what causes any occurence off this.
+                    raise
 
     except PidFileError as e:
         logger.error(str(e))
