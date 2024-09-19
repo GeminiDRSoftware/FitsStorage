@@ -1,10 +1,3 @@
 User-agent: *
-Disallow: /whoami/
-Disallow: /download/
-Disallow: /preview/
-Disallow: /file/
-Disallow: /summary/
-Disallow: /ssummary/
-Disallow: /lsummary/
-Disallow: /fullheader/
-Disallow: /jsonsummary/
+Allow: /help
+Disallow: /
