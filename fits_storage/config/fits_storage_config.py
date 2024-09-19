@@ -59,7 +59,7 @@ class FitsStorageConfig(dict):
              'fits_closed_result_limit', 'min_dhs_age_seconds',
              'robot_badness_threshold']
     _lists = ['blocked_urls', 'export_destinations', 'gemini_fits_upload_auth',
-              'gemini_api_authorization']
+              'gemini_api_authorization', 'block_user_agent_substrings']
 
     def __init__(self, configfile=None, configstring=None,
                  builtin=True, builtinonly=False):
