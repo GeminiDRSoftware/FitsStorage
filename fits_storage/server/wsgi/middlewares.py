@@ -121,9 +121,17 @@ class ArchiveContextMiddleware(object):
             finally:
                 self.close()
 
-        # If we're the archive, block requests from "blocked" IPPrefixes here.
+        # If we're the archive, block requests we don't like here.
         if self.is_archive and not self.ctx.usagelog.user_id:
-            # Find if this request comes from a known IPPrefix
+            # User agent check
+            for badword in fsc.block_user_agent_substrings:
+                if badword in self.ctx.req.env.user_agent:
+                    # Blocked!
+                    usagelog.add_note(f"Blocked - User agent {badword}")
+                    self.ctx.resp.content_type = 'text/plain'
+                    self.ctx.resp.status = Return.HTTP_FORBIDDEN
+                    return self.ctx.resp.append(blocked_msg).respond()
+            # IPPrefix check - Find if this request comes from a known IPPrefix
             ipp = get_ipprefix_from_db(session, self.ctx.req.env.remote_ip)
 
             try:
