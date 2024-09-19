@@ -87,7 +87,6 @@ try:
                 pqe = pq.pop()
 
                 if pqe is None:
-                    logger.info("Nothing on queue.")
                     if options.empty:
                         logger.info("--empty flag set, exiting")
                         break
