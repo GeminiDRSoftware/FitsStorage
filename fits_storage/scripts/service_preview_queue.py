@@ -140,7 +140,9 @@ try:
                     pqe.seterror("Exception making preview")
                     session.commit()
             except:
-                logger.error("Exception in service_preview_queue", exc_info=True)
+                logger.error("Unhandled Exception in service_preview_queue",
+                             exc_info=True)
+                raise
 except PidFileError as e:
     logger.error(str(e))
 
