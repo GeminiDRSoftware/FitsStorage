@@ -214,21 +214,6 @@ class Exporter(object):
             else:
                 destination_filename = filename + '.bz2'
                 flo = StreamBz2Compressor(f)
-                # TODO - 5-Aug-2024 PANIC. The old archive does not support
-                # POST requests with no content-length, which you will get
-                # by using StreamBz2Compressor. Use a temporary file until
-                # we have switched over to the new code on archive.
-                tmpfile = tempfile.TemporaryFile(dir=fsc.z_staging_dir)
-                chunksize = 1000000  # 1 MByte
-                while True:
-                    chunk = flo.read(chunksize)
-                    if not chunk:
-                        break
-                    tmpfile.write(chunk)
-                tmpfile.seek(0)
-                tmpfile.bytes_output = flo.bytes_output
-                tmpfile.md5sum_output = flo.md5sum_output
-                flo = tmpfile
             # Construct upload URL.
             url = "%s/upload_file/%s" % (destination, destination_filename)
 
