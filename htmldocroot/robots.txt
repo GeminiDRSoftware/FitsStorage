@@ -1,3 +1,4 @@
+Sitemap: https://archive.gemini.edu/sitemap.xml
 User-agent: *
 Allow: /help
 Disallow: /
