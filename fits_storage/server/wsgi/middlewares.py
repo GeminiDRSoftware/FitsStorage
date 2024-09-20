@@ -125,7 +125,8 @@ class ArchiveContextMiddleware(object):
         if self.is_archive and not self.ctx.usagelog.user_id:
             # User agent check
             for badword in fsc.block_user_agent_substrings:
-                if badword in self.ctx.req.env.user_agent:
+                if self.ctx.req.env.user_agent and \
+                        badword in self.ctx.req.env.user_agent:
                     # Blocked!
                     usagelog.add_note(f"Blocked - User agent {badword}")
                     self.ctx.resp.content_type = 'text/plain'
