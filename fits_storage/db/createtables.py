@@ -140,7 +140,7 @@ def get_fitsweb_granthelper():
 
     # For the queue status page:
     grant.select(['ingestqueue', 'exportqueue', 'fileopsqueue', 'previewqueue',
-                  'calcachequeue'])
+                  'calcachequeue', 'reducequeue'])
 
     # For the qametric system:
     qametric_tables = ['qareport', 'qametriciq', 'qametriczp', 'qametricsb',
