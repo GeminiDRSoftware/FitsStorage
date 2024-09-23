@@ -145,7 +145,8 @@ class FileOpser(object):
             self.response.ok = False
         except Exception:
             self.doerror("Exception calling worker function for "
-                         f"{self.request_name}", exc_info=True)
+                         f"{self.request_name} - {self.request_args}",
+                         exc_info=True)
             return
 
         # It worked!
