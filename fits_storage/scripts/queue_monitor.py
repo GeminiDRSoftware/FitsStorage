@@ -67,9 +67,9 @@ while True:
             newinp.append(orm.id)
             if orm.id in oldinp:
                 stuck.append(orm.id)
-            if len(stuck):
-                logger.critical("%s has %d items stuck in progress: %s",
-                                queue, len(stuck), stuck)
+        if len(stuck):
+            logger.critical("%s has %d items stuck in progress: %s",
+                            queue, len(stuck), stuck)
         queues[queue]['inprogress'] = newinp
 
     time.sleep(args.minutes * 60)
