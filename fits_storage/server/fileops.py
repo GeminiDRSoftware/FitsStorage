@@ -154,6 +154,8 @@ def update_headers(args, session, logger):
     an error, we raise FileOpsError.
     """
 
+    logger.info("update_headers: %s", args)
+
     if 'filename' in args:
         logger.debug("Instantiating FitsEditor on filename %s",
                      args['filename'])
