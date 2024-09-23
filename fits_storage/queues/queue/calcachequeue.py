@@ -18,11 +18,11 @@ class CalCacheQueue(Queue):
     def __init__(self, session, logger=None):
         super().__init__(session, ormclass=CalCacheQueueEntry, logger=logger)
 
-    def add(self, hid, filename):
+    def add(self, hid, filename, commit=True):
         """
         Add and entry to the CalCacheQueue. This instantiates a
-        CalCacheQueueEntry instance, adds it to the database and commits
-        the session.
+        CalCacheQueueEntry instance, adds it to the database. If commit=True
+        (the default) it commits the session.
 
         Returns
         -------
@@ -33,15 +33,18 @@ class CalCacheQueue(Queue):
 
         self.session.add(cqe)
 
-        try:
-            self.session.commit()
+        if commit:
+            try:
+                self.session.commit()
+                return True
+            except IntegrityError:
+                self.logger.debug(f"Integrity error adding file {filename} to "
+                                  "CalCache Queue. Most likely, file is already"
+                                  " on queue. Silently rolling back.")
+                self.session.rollback()
+                return False
+        else:
             return True
-        except IntegrityError:
-            self.logger.debug(f"Integrity error adding file {filename} "
-                              f"to CalCache Queue. Most likely, file is already"
-                              f"on queue. Silently rolling back.")
-            self.session.rollback()
-            return False
 
     def cache_associations(self, obs_hid):
         """
