@@ -1,7 +1,7 @@
 <!DOCTYPE html><html>
 <head>
 <meta charset="UTF-8">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="toc.js"></script>
 <link rel="stylesheet" href="/help/help.css">
 <title>Gemini Observatory Archive APIs</title>
@@ -705,40 +705,6 @@ print "Total data size: %d" % total_data_size
  N20101231S0428.fits  GN-CAL20101231-12-022     dayCal     Pass Twilight
 Total data size: 1856059200
 </code></pre></div>
-
-<h2 id="rest">REST</h2>
-
-<p>We have also added a REST interface for accessing data.  Currently, this is available
-for basic header, file and program information and for GMOS-specific information.  The
-top-level for the API is at:
-</p>
-
-<a href="https://archive.gemini.edu/services/rest/">https://archive.gemini.edu/services/rest/</a>
-
-<p>It uses the URL query parameters to do searches, and results are paginated.  You can
-search for matches against the various fields you see in the output.  You can also search
-nested objects, such as a header’s program information, for instance <b>program__abstract</b>.
-You can use wildcards with <b>*</b> for text matches.  You can search for greater-than or
-less-than by adding <b>__gt</b> or <b>__lt</b> to the field name.  You can add
-<b>__ne</b> to a field name to  query for not-equals.
-</p>
-
-<p>Some example searches:</p>
-
-<h3>Find all Programs that mention Jupiter in the title:</h3>
-
-<a href="https://archive.gemini.edu/services/rest/programs/?title=*Jupiter*">https://archive.gemini.edu/services/rest/programs/?title=*Jupiter*</a>
-
-<p>Note the “next” field in the result that can take you to page 2.</p>
-
-<h3>Search for ‘Alopeke data from 2022 onward that were done for any program
-mentioning TESS in it’s abstract.</h3>
-
-<a href="https://archive.gemini.edu/services/rest/headers/?instrument=ALOPEKE&ut_datetime__gt=2022-01-01&program__abstract=*TESS*">https://archive.gemini.edu/services/rest/headers/?instrument=ALOPEKE&ut_datetime__gt=2022-01-01&program__abstract=*TESS*</a>
-
-<h3>Here are GMOS observations from 2022 onward using the G5323 component</h3>
-
-<a href="https://archive.gemini.edu/services/rest/gmos/?header__ut_datetime__gt=2022&disperser=*G5323">https://archive.gemini.edu/services/rest/gmos/?header__ut_datetime__gt=2022&disperser=*G5323</a>
 
 </body>
 </html>
