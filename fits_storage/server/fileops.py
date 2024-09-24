@@ -170,6 +170,9 @@ def update_headers(args, session, logger):
         logger.error('No Filename or data_label in update_header request')
         raise FileOpsError('No filename or data_label in update_header request')
 
+    if fe.error is True:
+        raise FileOpsError(f'Error instantiating FitsEditor: {fe.message}')
+
     if 'qa_state' in args:
         logger.debug("Updating qa_state: %s", args['qa_state'])
         fe.set_qa_state(args['qa_state'])
@@ -198,13 +201,22 @@ def update_headers(args, session, logger):
         else:
             logger.error('Unknown format for generic headers args: %s',
                          args['generic'])
+
     filename = fe.diskfile.filename
     path = fe.diskfile.path
     fe.close()
 
+    if fe.error:
+        raise FileOpsError(fe.message)
+
     # Queue the file for ingest. Pass no_defer=True as we know the file is
     # complete and not still being modified
-    logger.info("Queueing %s for Ingest", filename)
     iq = IngestQueue(session, logger)
-    iq.add(filename, path, no_defer=True)
+    iqe=iq.add(filename, path, no_defer=True)
+    if iqe:
+        logger.info("Queued %s for Ingest - ingestqueue id %s",
+                    filename, iqe.id)
+    else:
+        logger.info("Queued %s for Ingest and got None - already on queue",
+                    filename)
     session.commit()

@@ -49,7 +49,7 @@ class FitsEditor(object):
     """
     searchkey = None
     diskfile = None
-    error = False
+    error = None
     message = None
     localfile = None
     hdulist = None
@@ -60,9 +60,11 @@ class FitsEditor(object):
         self.datalabel = datalabel
         self.session = session
         self.logger = logger
+        self.error = False
+        self.message = ''
         if filename is None and datalabel is None:
             self.error = True
-            self.message = "Must provide either filename or datalabel"
+            self.message = "Must provide either filename or datalabel. "
             self.logger.error(self.message)
             return
 
@@ -96,18 +98,18 @@ class FitsEditor(object):
         except NoResultFound:
             self.error = True
             self.message = f'No results searching for target file ' \
-                           f'({self.filename} or {self.datalabel})'
+                           f'({self.filename} or {self.datalabel}). '
             self.logger.error(self.message)
         except MultipleResultsFound:
             self.error = True
             self.message = f'Multiple results searching for target file ' \
-                           f'({self.filename} or {self.datalabel})'
+                           f'({self.filename} or {self.datalabel}). '
             self.logger.error(self.message)
         if self.diskfile is not None and self.diskfile.present is False:
             self.error = True
             self.message = f'Target diskfile is not present ' \
                            f'(id: {self.diskfile.id} - ' \
-                           f'filename:{self.diskfile.filename})'
+                           f'filename:{self.diskfile.filename}). '
             self.logger.error(self.message)
 
     def _get_localfile(self):
@@ -115,9 +117,10 @@ class FitsEditor(object):
 
         if self.error is True:
             return
+
         if fsc.using_s3:
             self.error = True
-            self.message = 'S3 header updates not implemented yet'
+            self.message = 'S3 header updates not implemented yet. '
             self.logger.error(self.message)
             return
 
@@ -155,7 +158,7 @@ class FitsEditor(object):
                                                 do_not_scale_image_data=True)
         except Exception:
             self.error = True
-            self.message = 'Error opening file with astropy.io.fits'
+            self.message = 'Error opening file with astropy.io.fits. '
             self.logger.error(self.message, exc_info=True)
 
     def close(self):
@@ -181,7 +184,7 @@ class FitsEditor(object):
         if qa_state is None or (qa_state := qa_state.lower()) not in \
                 qa_states.keys():
             self.error = True
-            self.message = 'Invalid QA state'
+            self.message += f'Invalid QA state: {qa_state}. '
             self.logger.error(self.message)
             return False
         for keyword in qa_states[qa_state]:
@@ -194,7 +197,7 @@ class FitsEditor(object):
             strptime(release, "%Y-%m-%d")
         except (ValueError, TypeError):
             self.error = True
-            self.message = 'Invalid Release date'
+            self.message += f'Invalid Release date: {release}. '
             return False
         self.hdulist[0].header['RELEASE'] = release
         return True
@@ -203,7 +206,7 @@ class FitsEditor(object):
         if rawsite is None or (rawsite := rawsite.lower()) not in \
                 rawsite_states.keys():
             self.error = True
-            self.message = 'Invalid Raw Site Quality state'
+            self.message += f'Invalid Raw Site Quality state: {rawsite}. '
             return False
         for keyword in rawsite_states[rawsite]:
             self.hdulist[0].header[keyword] = rawsite_states[rawsite][keyword]
@@ -212,11 +215,11 @@ class FitsEditor(object):
     def set_header(self, keyword, value, ext=0, reject_new=False):
         if keyword not in self.hdulist[ext].header and reject_new:
             self.error = True
-            self.message = "new keyword and reject_new = True, aborting"
+            self.message += f"keyword {keyword} is new and reject_new = True. "
             return False
         if len(keyword) > 8:
             self.error = True
-            self.message = "Invalid keyword"
+            self.message += f"Invalid keyword: {keyword}. "
             return False
         self.hdulist[ext].header[keyword] = value
         return True
