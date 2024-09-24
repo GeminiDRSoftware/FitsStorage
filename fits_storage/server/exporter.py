@@ -148,6 +148,10 @@ class Exporter(object):
             if eqe.failed:
                 self.l.debug("exporter.at_destination() failed")
                 return
+            else:
+                self.l.info("File %s is not present at destination %s with "
+                            "correct data_md5.",
+                            eqe.filename, eqe.destination)
 
         # If we get here, everything so far worked, and the file is not at the
         # destination with the correct data_md5. Go ahead and transfer it.
@@ -162,13 +166,13 @@ class Exporter(object):
                 and self.eqe.header_update is not None
 
         if got_header_update:
-            self.l.debug("Attempting pseudo-transfer by header update")
+            self.l.info("Attempting pseudo-transfer by header update")
             if self.transfer_headers():
                 self.l.info("Header update pseudo-transfer successful")
                 self.s.delete(self.eqe)
                 self.s.commit()
                 return
-            self.l.debug("Header update failed. Falling back to file transfer")
+            self.l.info("Header update failed. Falling back to file transfer")
 
         self.file_transfer()
         self.reset()

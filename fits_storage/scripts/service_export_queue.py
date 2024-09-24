@@ -131,7 +131,8 @@ if __name__ == "__main__":
 
                     exporter.export_file(eqe)
 
-                except (KeyboardInterrupt, OperationalError):
+                except KeyboardInterrupt:
+                    logger.error("KeyboardInterrupt - exiting gracefully")
                     loop = False
 
                 except:
