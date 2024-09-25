@@ -81,8 +81,8 @@ df -h .
 
 # As fitsdata
 pip3 install astrodata
-pop3 uninstall astrodata  # We just wanted the dependencies really...
-pip3 install psycopg2-binary simplejson python-dateutil 'sqlalchemy>=1.3,<2.0.0a0'
+pip3 uninstall astrodata  # We just wanted the dependencies really...
+pip3 install psycopg2-binary simplejson python-dateutil requests 'sqlalchemy>=1.3,<2.0.0a0'
 conda install uwsgi
 pip3 install boto3 # if required
 cd /opt/DRAGONS
@@ -91,6 +91,7 @@ git fetch
 git switch release/3.2.x  # or master, depending what you want...
 cd /opt/FitsStorage
 git clone git@github.com:GeminiDRSoftware/FitsStorage.git .
+git switch release/3.2.x  # or main, depending what you want...
 cd /opt/FitsStorageConfigurations
 git clone git@github.com:/phirstgemini/FitsStorageConfigurations .
 create_tables.py
