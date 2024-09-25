@@ -75,7 +75,8 @@ def cals_info(cal_obj, caltype, procmode=None, qtype='UNKNOWN', log=no_func, add
             # we can introduce a mappint in args_for_cals
             method, args = args_for_cals.get(ct, (ct, {}))
             try:
-                cals = getattr(cal_obj, method)(*args)
+                cals = getattr(cal_obj, method)(*args) \
+                    if hasattr(cal_obj, method) else []
             except (InternalError, DataError):
                 get_context().session.rollback()
                 add_note("Rolling back errored transaction in cal query")

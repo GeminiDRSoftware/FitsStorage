@@ -15,8 +15,12 @@ def curation_report():
     Retrieves and prints out the desired values from the list created in
     FitsStorageCuration.py
     """
+    ctx = get_context()
 
-    session = get_context().session
+    if ctx.user is None or ctx.user.superuser is not True:
+        return dict(allowed=False)
+
+    session = ctx.session
 
     return dict(
         dup_canon=duplicate_canonicals(session),

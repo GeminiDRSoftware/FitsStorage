@@ -180,7 +180,10 @@ class DiskFile(Base):
     def storage_root(self):
         if self._storage_root is None:
             fsc = get_config()
-            self._storage_root = fsc.storage_root
+            if fsc.using_s3:
+                self._storage_root = fsc.s3_staging_dir
+            else:
+                self._storage_root = fsc.storage_root
         return self._storage_root
 
     @property

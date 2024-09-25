@@ -154,6 +154,8 @@ def update_headers(args, session, logger):
     an error, we raise FileOpsError.
     """
 
+    logger.info("update_headers: %s", args)
+
     if 'filename' in args:
         logger.debug("Instantiating FitsEditor on filename %s",
                      args['filename'])
@@ -167,6 +169,9 @@ def update_headers(args, session, logger):
     else:
         logger.error('No Filename or data_label in update_header request')
         raise FileOpsError('No filename or data_label in update_header request')
+
+    if fe.error is True:
+        raise FileOpsError(f'Error instantiating FitsEditor: {fe.message}')
 
     if 'qa_state' in args:
         logger.debug("Updating qa_state: %s", args['qa_state'])
@@ -183,17 +188,35 @@ def update_headers(args, session, logger):
         fe.set_release(args['release'])
     if 'generic' in args:
         reject_new = args.get('reject_new', False)
-        for keyword in args['generic'].keys():
-            logger.debug("Updating keyword: %s", keyword)
-            fe.set_header(keyword, args['generic'][keyword],
-                          reject_new=reject_new)
+        if isinstance(args['generic'], dict):
+            for keyword in args['generic']:
+                value = args['generic'][keyword]
+                logger.debug("Updating keyword: %s", keyword)
+                fe.set_header(keyword, value, reject_new=reject_new)
+        elif isinstance(args['generic'], list):
+            for item in args['generic']:
+                keyword, value = item
+                logger.debug("Updating keyword: %s", keyword)
+                fe.set_header(keyword, value, reject_new=reject_new)
+        else:
+            logger.error('Unknown format for generic headers args: %s',
+                         args['generic'])
+
     filename = fe.diskfile.filename
     path = fe.diskfile.path
     fe.close()
 
+    if fe.error:
+        raise FileOpsError(fe.message)
+
     # Queue the file for ingest. Pass no_defer=True as we know the file is
     # complete and not still being modified
-    logger.info("Queueing %s for Ingest", filename)
     iq = IngestQueue(session, logger)
-    iq.add(filename, path, no_defer=True)
+    iqe=iq.add(filename, path, no_defer=True)
+    if iqe:
+        logger.info("Queued %s for Ingest - ingestqueue id %s",
+                    filename, iqe.id)
+    else:
+        logger.info("Queued %s for Ingest and got None - already on queue",
+                    filename)
     session.commit()

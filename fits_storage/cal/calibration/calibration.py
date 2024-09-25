@@ -9,7 +9,7 @@ from fits_storage.gemini_metadata_utils import UT_DATETIME_SECS_EPOCH
 
 from ast import literal_eval
 
-from sqlalchemy import func, desc, case
+from sqlalchemy import func, desc
 from sqlalchemy.orm import join
 from datetime import timedelta
 
@@ -105,8 +105,11 @@ class CalQuery(object):
         self.procmode = procmode
         self.descr = descriptors
 
-        query = session.query(Header)\
-            .select_from(join(join(instrClass, Header), DiskFile))
+        if instrClass is not None:
+            query = session.query(Header)\
+                .select_from(join(join(instrClass, Header), DiskFile))
+        else:
+            query = session.query(Header).select_from(join(Header, DiskFile))
 
         if procmode == 'Science-Quality':
             query = query.filter(Header.processing == procmode)
@@ -269,12 +272,6 @@ class CalQuery(object):
 
 
         """
-        # If returning both raw and processed, return processed first.
-        enums = Header.processing.type.enums
-        whens = {pm: str(pm) if pm else 'AAA' for pm in enums}
-        processing_sort_logic = case(value=Header.processing, whens=whens,
-                                   else_='AAA').label("processing_sortkey")
-
         extra_order = () if extra_order_terms is None \
             else tuple(extra_order_terms)
 
@@ -283,7 +280,8 @@ class CalQuery(object):
                                - UT_DATETIME_SECS_EPOCH)
                                .total_seconds())
         def_order = func.abs(Header.ut_datetime_secs - targ_ut_dt_secs)
-        processing_order = desc(processing_sort_logic)
+        # If returning both raw and processed, return processed first.
+        processing_order = desc(Header.processing)
         order = (def_order, processing_order) + extra_order
 
         if order_by is not None:
@@ -564,7 +562,7 @@ class Calibration(object):
         self.procmode = procmode
 
         # Populate the descriptors dictionary for header
-        if self.descriptors is None and self.instrClass is not None:
+        if self.descriptors is None:
             self.from_descriptors = True
             self.types = literal_eval(self.header.types)
             self.descriptors = {
@@ -590,7 +588,7 @@ class Calibration(object):
                 'engineering':          self.header.engineering
                 }
 
-            if instinit:
+            if self.instrClass is not None and instinit:
                 query = session.query(self.instrClass)\
                     .filter(self.instrClass.header_id ==
                             self.descriptors['header_id'])

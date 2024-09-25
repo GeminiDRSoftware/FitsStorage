@@ -17,9 +17,7 @@ from fits_storage.config import get_config
 fsc = get_config()
 
 
-@needs_cookie(magic_cookies=
-    [('gemini_fits_upload_auth', fsc.upload_auth_cookie)],
-              annotate=FileUploadLog)
+@needs_cookie(magic_cookie='gemini_fits_upload_auth', annotate=FileUploadLog)
 def upload_file(filename, processed_cal=False):
     """
     This handles uploading files, including processed calibrations.

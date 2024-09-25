@@ -1,7 +1,7 @@
 # Update and basic installs
 sudo dnf update
 sudo dnf autoremove
-sudo dnf install nginx postgresql-server sysstat
+sudo dnf install nginx postgresql-server sysstat wget
 sudo dnf group install "Development Tools"
 
 # Add to /etc/passwd:
@@ -24,6 +24,7 @@ sudo -i -u postgres
   vi /data/postgres/pgdata/postgresql.conf
     shared_buffers = 512MB    # 25% of ram if ram > 1GB
     effective_cache_size = 4GB   # 50% of ram size ish
+    max_connections = 200  # we're using 100 for uwsgi, plus scripts.
 sudo systemctl start postgresql
 sudo systemctl status postgresql
 sudo systemctl enable postgresql
@@ -34,28 +35,32 @@ sudo -i -u fitsdata
   createdb fitsdata
 
 
-# Anaconda install (as fitsdata)
-# Go to https://www.anaconda.com/download#downloads and get the latest URL
-wget https://repo.anaconda.com/archive/Anaconda3-2023.07-1-Linux-x86_64.sh
-bash Anaconda3-2023.07-1-Linux-x86_64.sh
-install location /opt/anaconda3
+sudo mkdir /opt/miniforge3
+sudo chown fitsdata /opt/miniforge3
+# Miniconda install (as fitsdata)
+# Go to https://conda-forge.org/miniforge/ and get the latest URL
+wget https://github.com/conda-forge/miniforge/releases/download/24.3.0-0/Miniforge3-24.3.0-0-Linux-x86_64.sh
+bash Miniforge3-24.3.0-0-Linux-x86_64.sh -f
+install location /opt/miniforge3
 do not activate
-sudo chgrp -R local-users /opt/anaconda3
-sudo chmod -R g+w /opt/anaconda3
+sudo chgrp -R local-users /opt/miniforge3
+sudo chmod -R g+w /opt/miniforge3
 
 # As fitsdata
-eval "$(/opt/anaconda3/bin/conda shell.bash hook)"
+eval "$(/opt/miniforge3/bin/conda shell.bash hook)"
 conda init
 # log out and back in
+# may need to source .bashrc if conda is not on path
 conda config --add channels conda-forge
 conda config --add channels http://astroconda.gemini.edu/public
-conda create -p /opt/anaconda3/envs/dragons python=3.10 dragons
+#conda create -p /opt/miniforge3/envs/dragons python=3.10 "numpy<2" dragons
+conda create -p /opt/miniforge3/envs/fitsdata python=3.10
 
 # In bash profile, add:
 export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
 
 # At end of bashrc, add:
-conda activate dragons
+conda activate fitsdata
 export PATH="/opt/FitsStorage/fits_storage/scripts:$PATH"
 
 # As you
@@ -64,8 +69,7 @@ sudo mkdir DRAGONS FitsStorage FitsStorageConfigurations
 sudo chown fitsdata DRAGONS FitsStorage FitsStorageConfigurations
 sudo mkdir /data/logs /data/locks /data/upload_staging /data/z_staging
 sudo chown fitsdata:fitsdata /data/logs/ /data/locks /data/upload_staging /data/z_staging
-sudo chmod g+w /data/upload_staging
-sudo ln -s /opt/FitsStorageConfigurations/fits_storage.conf /etc/fits_storage.conf
+sudo chmod g+w /data/upload_staging /data/s3_staging
 # If configuring autofs. note mko vs cpo
 sudo cp /opt/FitsStorage/system_install_files/etc-auto.sci-mko /etc/auto.sci
 sudo vi /etc/auto.master
@@ -76,7 +80,9 @@ df -h .
 
 
 # As fitsdata
-pip3 install psycopg2-binary simplejson
+pip3 install astrodata
+pop3 uninstall astrodata  # We just wanted the dependencies really...
+pip3 install psycopg2-binary simplejson python-dateutil 'sqlalchemy>=1.3,<2.0.0a0'
 conda install uwsgi
 pip3 install boto3 # if required
 cd /opt/DRAGONS
@@ -84,7 +90,7 @@ git clone git@github.com:/GeminiDRSoftware/DRAGONS .
 git fetch
 git switch release/3.2.x  # or master, depending what you want...
 cd /opt/FitsStorage
-git clone git@github.com:/phirstgemini/FitsStorage2 .
+git clone git@github.com:GeminiDRSoftware/FitsStorage.git .
 cd /opt/FitsStorageConfigurations
 git clone git@github.com:/phirstgemini/FitsStorageConfigurations .
 create_tables.py
@@ -118,7 +124,7 @@ sudo systemctl status fits-service_fileops_queue1
 sudo systemctl enable fits-service_fileops_queue1
 tail /data/logs/service_fileops_queue.py
 
-# Same for other queues, if appropriate
+# Same for other queues, if appropriate, plus fits-queue_monitor
 
 # If you cycle the magic download cookie, let Kathleen know, it's needed by
 # SCALes (for processing pre-imaging) and stored on the scales server.

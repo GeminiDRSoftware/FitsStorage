@@ -131,6 +131,34 @@ def make_empty_testing_db_env(tmpdir):
     drop_tables(session)
     create_tables(session)
 
+def make_empty_pg_testing_db():
+    """
+    Make a testing database environment consisting an empty postgres database
+    ready for use. Doesn't currentlyset up testing storage root etc, but that
+    could be easily added cribbed from the above.
+
+    There needs to be a postgres server running on the local machine, with
+    a fitsdata_testing database, that will be trashed by this code.
+    """
+
+    configstring = f"""
+        [DEFAULT]
+        database_url = postgresql:///fitsdata_testing
+        is_server = True
+        export_destinations = []
+        """
+    get_config(configstring=configstring, builtinonly=True, reload=True)
+
+    # Note - must do this import *after* the call to get_config() above this
+    # import references the fsc at import time.
+    from fits_storage.db.createtables import create_tables, drop_tables
+
+    session = sessionfactory(reload=True)
+    drop_tables(session)
+    create_tables(session)
+
+    return session
+
 
 def get_test_config():
     """

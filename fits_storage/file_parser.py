@@ -878,7 +878,12 @@ class GHOSTFileParser(AstroDataFileParser):
     def exposure_time(self) -> Union[float, None]:
         et = self.ad.exposure_time()
         if isinstance(et, dict):
-            val =  min(self.ad.number_of_exposures()[camera] * self.ad.exposure_time()[camera] for camera in ('blue', 'red'))
+            # There are a few files that trip this KeyError. Could handle it
+            # better if there's onely one camera present...
+            try:
+                val = min(self.ad.number_of_exposures()[camera] * self.ad.exposure_time()[camera] for camera in ('blue', 'red'))
+            except KeyError:
+                val = None
         else:
             val =  super().exposure_time()
         if isinstance(val, str):
@@ -897,7 +902,7 @@ class GHOSTFileParser(AstroDataFileParser):
 
     def gain_setting(self):
         gs = super().gain_setting()
-        if isinstance(gs, dict) or gs.startswith('{'):
+        if gs is None or isinstance(gs, dict) or gs.startswith('{'):
             return None
         return gs
 

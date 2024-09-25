@@ -34,7 +34,6 @@ gemini_readmode_settings = ('Classic',
                             'High_Background')
 
 
-
 # sortkey_regex_dict:
 # These regular expessions are used by the queues to determine how to sort (
 # ie prioritize) files when despooling the queues. The regexes should provide

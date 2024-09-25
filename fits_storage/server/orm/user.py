@@ -28,7 +28,7 @@ class User(Base):
     password = Column(Text)
     salt = Column(Text)
     email = Column(Text)
-    staff = Column(Boolean)
+    gemini_staff = Column(Boolean)
     misc_upload = Column(Boolean)
     user_admin = Column(Boolean)
     file_permission_admin = Column(Boolean)
@@ -51,7 +51,7 @@ class User(Base):
         self.account_type = None
         self.username = username
         self.password = None
-        self.staff = False
+        self.gemini_staff = False
         self.misc_upload = False
         self.user_admin = False
         self.superuser = False

@@ -38,9 +38,10 @@ class FitsStorageConfig(dict):
     configuration files will be read.
 
     If builtinonly is not True, the following are read in this order:
+    * /opt/FitsStorageConfigurations/fits_storage.conf
     * /etc/fits_storage.conf
-    * /opt/FitsStorageConfig/fits_storage.conf
     * ~/.fits_storage.conf
+
 
     When reading configuration values from multiple places, any values read
     later will take precedence over values read earlier.
@@ -55,8 +56,10 @@ class FitsStorageConfig(dict):
               'development_bypass_auth', 'using_calcache']
     _ints = ['postgres_database_pool_size', 'postgres_database_max_overflow',
              'defer_threshold', 'defer_delay', 'fits_open_result_limit',
-             'fits_closed_result_limit']
-    _lists = ['blocked_urls', 'export_destinations']
+             'fits_closed_result_limit', 'min_dhs_age_seconds',
+             'robot_badness_threshold']
+    _lists = ['blocked_urls', 'export_destinations', 'gemini_fits_upload_auth',
+              'gemini_api_authorization', 'block_user_agent_substrings']
 
     def __init__(self, configfile=None, configstring=None,
                  builtin=True, builtinonly=False):
@@ -82,7 +85,7 @@ class FitsStorageConfig(dict):
         configfile: config file to read. See class documentation
         configstring: config file to read. See class documentation
         builtin: whether to read the built-in minimal configuration file.
-        builtinonly: whether to skip reading config files from /etc and ~
+        builtinonly: whether to skip reading additional configuration files
 
         Returns
         -------
@@ -95,8 +98,8 @@ class FitsStorageConfig(dict):
                                 'fits_storage.conf')
 
         # Places to look for config files. Later ones take precedence
-        self._configfiles = ['/etc/fits_storage.conf',
-                             '/opt/FitsStorageConfig/fits_storage.conf',
+        self._configfiles = ['/opt/FitsStorageConfigurations/fits_storage.conf',
+                             '/etc/fits_storage.conf',
                              os.path.expanduser('~/.fits_storage.conf')]
 
         # This can be read back to see which config files were actually used.
@@ -248,3 +251,9 @@ class FitsStorageConfig(dict):
 
     def __getattr__(self, item):
         return self.__getitem__(item)
+
+    def get(self, item):
+        try:
+            return self.__getitem__(item)
+        except KeyError:
+            return None

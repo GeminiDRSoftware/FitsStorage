@@ -8,6 +8,7 @@ import requests.utils
 import json
 import datetime
 import os
+import time
 
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
@@ -18,6 +19,7 @@ from fits_storage.core.hashes import md5sum
 
 from fits_storage.config import get_config
 
+import tempfile
 
 class Exporter(object):
     """
@@ -146,6 +148,10 @@ class Exporter(object):
             if eqe.failed:
                 self.l.debug("exporter.at_destination() failed")
                 return
+            else:
+                self.l.info("File %s is not present at destination %s with "
+                            "correct data_md5.",
+                            eqe.filename, eqe.destination)
 
         # If we get here, everything so far worked, and the file is not at the
         # destination with the correct data_md5. Go ahead and transfer it.
@@ -160,13 +166,13 @@ class Exporter(object):
                 and self.eqe.header_update is not None
 
         if got_header_update:
-            self.l.debug("Attempting pseudo-transfer by header update")
+            self.l.info("Attempting pseudo-transfer by header update")
             if self.transfer_headers():
                 self.l.info("Header update pseudo-transfer successful")
                 self.s.delete(self.eqe)
                 self.s.commit()
                 return
-            self.l.debug("Header update failed. Falling back to file transfer")
+            self.l.info("Header update failed. Falling back to file transfer")
 
         self.file_transfer()
         self.reset()
@@ -212,11 +218,11 @@ class Exporter(object):
             else:
                 destination_filename = filename + '.bz2'
                 flo = StreamBz2Compressor(f)
-
             # Construct upload URL.
             url = "%s/upload_file/%s" % (destination, destination_filename)
 
             self.l.debug("POSTing data to %s", url)
+            starttime = datetime.datetime.utcnow()
             try:
                 req = self.rs.post(url, data=flo, timeout=self.timeout)
             except requests.Timeout:
@@ -229,6 +235,16 @@ class Exporter(object):
                 self.logeqeerror(f"RequestException posting {url}",
                                  exc_info=True)
                 return
+            enddtime = datetime.datetime.utcnow()
+
+            secs = (enddtime - starttime).total_seconds()
+            bytes_transferred = flo.bytes_output \
+                if isinstance(flo, StreamBz2Compressor) else flo.tell()
+            mbytes_transferred = bytes_transferred / 1048576
+
+            self.l.info(f"Transfer completed: {mbytes_transferred:.2f} MB "
+                        f"in {secs:.1f} secs - "
+                        f"{mbytes_transferred/secs:.2f} MB/sec")
 
             self.l.debug("Got http status %s and response %s",
                          req.status_code, req.text)
@@ -236,6 +252,15 @@ class Exporter(object):
             if req.status_code != http.HTTPStatus.OK:
                 self.logeqeerror(f"Bad HTTP status: {req.status_code} from "
                                  f"upload post to url: {url}")
+                # Insert a sleep here, to prevent rapid-fire failures in the
+                # case where the server is in a bad state. This isn't ideal as
+                # there may be exports to other destinations in the queue, and
+                # it would be preferable to continue with those.
+                # TODO - after we switch to sqlalchemy-2, change this to do a
+                # TODO - bulk UPDATE on the exportqueue table to set after to
+                # TODO - now()+30s where destination == self.destination.
+                self.l.info("Waiting 30 seconds to prevent rapid-fire failures")
+                time.sleep(30)
                 return
 
             # The response should be a short json document
@@ -269,6 +294,8 @@ class Exporter(object):
                 self.s.commit()
 
             self.l.debug("Transfer Verification succeeded")
+            self.s.delete(self.eqe)
+            self.s.commit()
 
     def get_df(self):
         """

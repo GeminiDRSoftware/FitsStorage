@@ -36,6 +36,7 @@ def get_and_fix_emails(emails):
                 retval.append(email.strip())
     return retval
 
+
 parser = OptionParser()
 parser.add_option("--date", action="store", dest="date", default="today",
                   help="Specify an alternate date to check for data from")
@@ -45,6 +46,8 @@ parser.add_option("--debug", action="store_true", dest="debug",
                   help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon",
                   help="Run as a background demon, do not generate stdout")
+parser.add_option("--dryrun", action="store_true", dest="dryrun",
+                  help="Do not actually send emails")
 (options, args) = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
@@ -163,21 +166,27 @@ with session_scope() as session:
                 # Bcc fitsadmin on all the emails...
                 fulllist.append('fitsadmin@gemini.edu')
 
-                try:
-                    logger.info("Sending Email- "
+                if options.dryrun:
+                    logger.info("Dryrun - NOT Sending Email- "
                                 "To: %s; CC: %s; Subject: %s",
                                 msg['To'], msg['Cc'], msg['Subject'])
                     logger.debug("Full address list: %s", fulllist)
-                    smtp = smtplib.SMTP(fsc.smtp_server)
-                    smtp.sendmail(fsc.email_from, fulllist,
-                                  msg.as_string())
-                    retval = smtp.quit()
-                    logger.info("SMTP seems to have worked OK: %s",
-                                str(retval))
-                except smtplib.SMTPRecipientsRefused:
-                    logger.error("Error sending notification email mail: "
-                                 "Id %d, selection %s", notif.id,
-                                 notif.selection, exc_info=True)
+                else:
+                    try:
+                        logger.info("Sending Email- "
+                                    "To: %s; CC: %s; Subject: %s",
+                                    msg['To'], msg['Cc'], msg['Subject'])
+                        logger.debug("Full address list: %s", fulllist)
+                        smtp = smtplib.SMTP(fsc.smtp_server)
+                        smtp.sendmail(fsc.email_from, fulllist,
+                                      msg.as_string())
+                        retval = smtp.quit()
+                        logger.info("SMTP seems to have worked OK: %s",
+                                    str(retval))
+                    except smtplib.SMTPRecipientsRefused:
+                        logger.error("Error sending notification email mail: "
+                                     "Id %d, selection %s", notif.id,
+                                     notif.selection, exc_info=True)
 
         except Exception:
             logger.error("Unhandled Error sending email notification: "

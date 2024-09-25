@@ -69,6 +69,35 @@ def calhelper(base_url, dod):
             print(f"Testing caltype {caltype}")
             assert dod[item][caltype] == cals_from_server[caltype]
 
+
+def calibrationshelper(base_url, dod):
+    """
+    This is like calshelper, but tests against the /calibrations
+    ("human-readable") calibrations server as opposed to the json API.
+
+    The tests are less rigorous - we don't really parse the html, we just
+    check that the answer is in there somewhere
+    """
+    for target in dod.keys():
+        cals = dod[target]
+        for caltype in cals.keys():
+            if caltype not in ['bias', 'dark', 'flat', 'arc']:
+                continue
+            print(f"Testing caltype {caltype} for {target}")
+            url = base_url + f'/calibrations/{caltype}/{target}'
+            req = requests.get(url)
+            assert req.status_code == http.HTTPStatus.OK
+            html = req.text
+
+            # The science file we asked for should be mentioned in the response
+            assert target in html
+
+            # If there are supposed to be calibrations...
+            if dod[target][caltype]:
+                assert caltype.upper() in html
+                assert dod[target][caltype] in html
+
+
 def associatedcalhelper(base_url, dod):
     """
     base_url is the associated_cals url to test against, without the

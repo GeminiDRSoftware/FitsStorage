@@ -94,3 +94,9 @@ def test_using_fitsverify():
     """
     a = get_config(configstring=configtext, reload=True)
     assert a.using_fitsverify is False
+
+def test_get():
+    fsc = get_test_config()
+
+    assert fsc.get('using_fitsverify') is True
+    assert fsc.get('non existent item') is None

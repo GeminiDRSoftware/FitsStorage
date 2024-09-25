@@ -5,8 +5,6 @@ import signal
 import time
 from argparse import ArgumentParser
 
-from sqlalchemy.exc import OperationalError
-
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.server.pidfile import PidFile, PidFileError
 
@@ -44,11 +42,10 @@ if options.name is not None:
 # This is the loop forever variable later, allowing us to stop  cleanly via kill
 loop = True
 
+
 # Define signal handlers. This allows us to bail out cleanly e.g. if we get a
 # signal. These need to be defined after logger is set up as there is no way
 # to pass the logger as an argument to these.
-
-
 def handler(signum, frame):
     logger.error("Received signal: %d. Crashing out.", signum)
     raise KeyboardInterrupt('Signal', signum)
@@ -79,9 +76,7 @@ logger.info("***   service_fileops_queue.py - starting up at %s",
 logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
 
 try:
-    with PidFile(logger,
-                 name=options.name,
-                 dummy=not options.lockfile) as pidfile, \
+    with PidFile(logger, options.name, dummy=not options.lockfile) as pidfile, \
             session_scope() as session:
 
         fileops_queue = FileopsQueue(session, logger)
@@ -103,6 +98,9 @@ try:
                         logger.info("Nothing on queue... Waiting")
                         time.sleep(1)
                         continue
+                else:
+                    logger.info("Popped queue id %d to process", fqe.id)
+                    logger.debug("Request is: %s", fqe.request)
 
                 if options.oneshot:
                     loop = False
@@ -112,8 +110,10 @@ try:
                 # from here
                 fileopser.fileop(fqe)
 
-            except (KeyboardInterrupt, OperationalError):
+            except KeyboardInterrupt:
+                logger.error("KeyboardInterrupt - exiting ungracefully!")
                 loop = False
+                break
 
             except Exception:
                 # fileop() should handle its own exceptions, and
@@ -123,6 +123,7 @@ try:
                 # log the error and carry on. Probably the error would
                 # reoccur if we re-try the same entry though, so we set it
                 # as failed and record the error in the fqe too.
+                logger.error("Unhanded Exception!", exc_info=True)
                 message = "Unknown Error - no FileopsQueueEntry instance"
                 if fqe is not None:
                     fqe.failed = True
@@ -132,8 +133,9 @@ try:
                     fqe.error = message
                     session.commit()
 
-                logger.error(message, exc_info=True)
-                # Press on with the next file, don't raise the exception
+                logger.error(message)
+                # Things are probably messed up at this point
+                raise
 
 except PidFileError as e:
     logger.error(str(e))

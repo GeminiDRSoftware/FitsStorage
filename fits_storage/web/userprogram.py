@@ -191,12 +191,12 @@ def validate_program_key(program_id, program_key):
 
     url = 'https://%s.gemini.edu:8443/auth?id=%s&password=%s' % (host, program_id, program_key)
 
-    # REMOVE THIS ONCE WE GET SSL WORKING, THEY ARE SELF SIGNED
-    import os, ssl
-    if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
-            getattr(ssl, '_create_unverified_context', None)):
-        ssl._create_default_https_context = ssl._create_unverified_context
-    r = requests.get(url)
+    # Remove verify=False once SWG get a decent SSL configuration.
+    # Without verify=False, we get: ssl.SSLCertVerificationError:
+    # [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed:
+    # EE certificate key too weak (_ssl.c:997)
+
+    r = requests.get(url, verify=False)
     reply = r.text
 
     if reply[:3] == 'YES':

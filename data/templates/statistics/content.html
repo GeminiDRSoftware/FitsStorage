@@ -64,10 +64,10 @@
   <tr class='alternating'>
     <td>{{ values.telescope }}
     <td>{{ values.year }}
-    {%- if values.yearbytes %}
-    <td>{{ values.yearbytes|bytes_to_GB(GiB=True)|group_digits(2) }}
-    <td>{{ values.yeardata|bytes_to_GB(GiB=True)|group_digits(2) }}
-    <td>{{ values.yearnum|group_digits }}
+    {%- if values.file_size %}
+    <td>{{ values.file_size|bytes_to_GB(GiB=True)|group_digits(2) }}
+    <td>{{ values.data_size|bytes_to_GB(GiB=True)|group_digits(2) }}
+    <td>{{ values.num|group_digits }}
     {%- else %}
     <td colspan='3'>
     {%- endif %}

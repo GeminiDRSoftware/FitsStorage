@@ -146,7 +146,8 @@ class FileOpser(object):
         except Exception as err:
             err_msg = f"{err.__class__}: {err}"
             self.doerror("Exception calling worker function for "
-                         f"{self.request_name} (err_msg)", exc_info=True)
+                         f"{self.request_name} - {self.request_args}",
+                         exc_info=True)
             return
 
         # It worked!
