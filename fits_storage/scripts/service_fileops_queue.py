@@ -67,7 +67,7 @@ signal.signal(signal.SIGABRT, handler)
 signal.signal(signal.SIGFPE, handler)
 signal.signal(signal.SIGSEGV, handler)
 signal.signal(signal.SIGPIPE, handler)
-signal.signal(signal.SIGTERM, handler)
+signal.signal(signal.SIGTERM, nicehandler)
 
 # Announce startup
 fsc = get_config()
