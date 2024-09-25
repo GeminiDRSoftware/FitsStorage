@@ -1,11 +1,8 @@
 #! /usr/bin/env python3
 
 import signal
-import sys
 import datetime
 import time
-import traceback
-from sqlalchemy.exc import OperationalError
 from argparse import ArgumentParser
 
 from fits_storage.config import get_config
@@ -45,18 +42,20 @@ if options.name:
 
 # Need to set up the global loop variable before we define the signal handlers
 # This is the loop forever variable later, allowing us to stop cleanly via kill
-global loop
 loop = True
+
 
 # Define signal handlers. This allows us to bail out neatly if we get a signal
 def handler(signum, frame):
     logger.error("Received signal: %d. Crashing out. ", signum)
     raise KeyboardInterrupt('Signal', signum)
 
+
 def nicehandler(signum, frame):
     logger.error("Received signal: %d. Attempting to stop nicely ", signum)
     global loop
     loop = False
+
 
 # Set handlers for the signals we want to handle
 # Cannot trap SIGKILL or SIGSTOP, all others are fair game
@@ -68,7 +67,7 @@ signal.signal(signal.SIGABRT, handler)
 signal.signal(signal.SIGFPE, handler)
 signal.signal(signal.SIGSEGV, handler)
 signal.signal(signal.SIGPIPE, handler)
-signal.signal(signal.SIGTERM, nicehandler)
+signal.signal(signal.SIGTERM, handler)
 
 # Announce startup
 fsc = get_config()
@@ -77,7 +76,7 @@ logger.info("***   service_preview_queue.py - starting up at %s",
 logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
 
 try:
-    with PidFile(logger, name=options.name, dummy=not options.lockfile) as pidfile, \
+    with PidFile(logger, options.name, dummy=not options.lockfile) as pidfile, \
             session_scope() as session:
         pq = PreviewQueue(session, logger=logger)
         # Loop forever. loop is a global variable defined up top
@@ -128,17 +127,21 @@ try:
                         pqe.seterror("Bad Status from make_preview()")
                         session.commit()
 
-                except (KeyboardInterrupt, OperationalError):
+                except KeyboardInterrupt:
+                    logger.error("KeyboardInterrupt - exiting ungracefully!")
                     loop = False
+                    break
 
                 except:
-                    logger.info("Problem Making Preview")
-                    logger.error("Exception making preview for %s",
-                                 pqe.filename, exc_info=True)
-                    pqe.inprogress = False
-                    pqe.failed = True
-                    pqe.seterror("Exception making preview")
-                    session.commit()
+                    logger.error("Unhandled Exception making preview",
+                                 exc_info=True)
+                    if pqe:
+                        logger.error("Exception was while making preview for "
+                                     "%s", pqe.filename)
+                        pqe.inprogress = False
+                        pqe.failed = True
+                        pqe.seterror("Exception making preview")
+                        session.commit()
             except:
                 logger.error("Unhandled Exception in service_preview_queue",
                              exc_info=True)

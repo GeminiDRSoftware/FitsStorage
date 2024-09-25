@@ -5,8 +5,6 @@ import signal
 import time
 from argparse import ArgumentParser
 
-from sqlalchemy.exc import OperationalError
-
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.server.pidfile import PidFile, PidFileError
 
@@ -44,11 +42,10 @@ if options.name is not None:
 # This is the loop forever variable later, allowing us to stop  cleanly via kill
 loop = True
 
+
 # Define signal handlers. This allows us to bail out cleanly e.g. if we get a
 # signal. These need to be defined after logger is set up as there is no way
 # to pass the logger as an argument to these.
-
-
 def handler(signum, frame):
     logger.error("Received signal: %d. Crashing out.", signum)
     raise KeyboardInterrupt('Signal', signum)
@@ -70,7 +67,7 @@ signal.signal(signal.SIGABRT, handler)
 signal.signal(signal.SIGFPE, handler)
 signal.signal(signal.SIGSEGV, handler)
 signal.signal(signal.SIGPIPE, handler)
-signal.signal(signal.SIGTERM, nicehandler)
+signal.signal(signal.SIGTERM, handler)
 
 # Announce startup
 fsc = get_config()
@@ -79,9 +76,7 @@ logger.info("***   service_fileops_queue.py - starting up at %s",
 logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
 
 try:
-    with PidFile(logger,
-                 name=options.name,
-                 dummy=not options.lockfile) as pidfile, \
+    with PidFile(logger, options.name, dummy=not options.lockfile) as pidfile, \
             session_scope() as session:
 
         fileops_queue = FileopsQueue(session, logger)
@@ -115,8 +110,10 @@ try:
                 # from here
                 fileopser.fileop(fqe)
 
-            except (KeyboardInterrupt, OperationalError):
+            except KeyboardInterrupt:
+                logger.error("KeyboardInterrupt - exiting ungracefully!")
                 loop = False
+                break
 
             except Exception:
                 # fileop() should handle its own exceptions, and
