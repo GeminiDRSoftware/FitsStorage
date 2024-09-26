@@ -6,7 +6,7 @@
  {%- else %}
  <th>{{ col.heading }}
  {%- endif %}
- {%- if col.sortarrow == True %}<a href="{{ uri }}?orderby={{ col.key }}_asc">&uarr;</a><a href="{{ uri }}?orderby={{ col.key }}_desc">&darr;</a>{%- endif %}
+ {%- if col.sortarrow == True %}<a rel="nofollow" href="{{ uri }}?orderby={{ col.key }}_asc">&uarr;</a><a rel="nofollow" href="{{ uri }}?orderby={{ col.key }}_desc">&darr;</a>{%- endif %}
 {%- endfor %}
 </tr>
 {%- endmacro %}
@@ -45,7 +45,7 @@
 {%- if test != True -%}
 {{ text }}
 {%- else -%}
-<a href="{{ uri }}"{% if blank == True %} target="_blank"{% endif %}>{{ text }}</a>
+<a rel="nofollow" href="{{ uri }}"{% if blank == True %} target="_blank"{% endif %}>{{ text }}</a>
 {%- endif -%}
 {%- endmacro -%}
 
@@ -60,18 +60,18 @@
 <span style="display: inline-block; width: 7ex">
 {%- if col.display_prog -%}
 <span class="info">
-<a href="/programinfo/{{ col.dl.program_id }}" <abbr title="Program Info and Abstract">[A]</abbr></a>
+<a rel="nofollow" href="/programinfo/{{ col.dl.program_id }}" <abbr title="Program Info and Abstract">[A]</abbr></a>
 </span>
 {%- endif -%}
 {%- if col.comment -%}
 <span class="info">
-<a href="/logcomments/{{ col.dl.observation_id }}" target="_blank"><abbr title="{{ col.comment|tojson }}">[L]</abbr></a>
+<a rel="nofollow" href="/logcomments/{{ col.dl.observation_id }}" target="_blank"><abbr title="{{ col.comment|tojson }}">[L]</abbr></a>
 </span>
 {%- endif -%} </span>
   {%- if col.dl.extension -%}
-    <a href="{{ uri }}/{{ col.dl.program_id }}">{{ col.dl.program_id}}</a>-<a href="{{ uri }}/{{ col.dl.observation_id }}">{{ col.dl.obsnum }}</a>-<a href="{{ uri }}/{{ col.dl.datalabel_noextension }}">{{ col.dl.dlnum }}-</a><a href="{{ uri }}/{{ col.dl.datalabel }}">{{ col.dl.extension }}</a>
+    <a rel="nofollow" href="{{ uri }}/{{ col.dl.program_id }}">{{ col.dl.program_id}}</a>-<a rel="nofollow" href="{{ uri }}/{{ col.dl.observation_id }}">{{ col.dl.obsnum }}</a>-<a rel="nofollow" href="{{ uri }}/{{ col.dl.datalabel_noextension }}">{{ col.dl.dlnum }}-</a><a rel="nofollow" href="{{ uri }}/{{ col.dl.datalabel }}">{{ col.dl.extension }}</a>
   {%- else -%}
-    <a href="{{ uri }}/{{ col.dl.program_id }}">{{ col.dl.program_id}}</a>-<a href="{{ uri }}/{{ col.dl.observation_id }}">{{ col.dl.obsnum }}</a>-<a href="{{ uri }}/{{ col.dl.datalabel }}">{{ col.dl.dlnum }}</a>
+    <a rel="nofollow" href="{{ uri }}/{{ col.dl.program_id }}">{{ col.dl.program_id}}</a>-<a rel="nofollow" href="{{ uri }}/{{ col.dl.observation_id }}">{{ col.dl.obsnum }}</a>-<a rel="nofollow" href="{{ uri }}/{{ col.dl.datalabel }}">{{ col.dl.dlnum }}</a>
   {%- endif -%}
 {%- else -%}
   {{ col.datalabel }}
@@ -80,7 +80,7 @@
 
 {%- macro generate_utdatetime(col, uri) -%}
 {%- if col.links == True -%}
-<a href="{{ uri }}/{{ col.dl }}">{{ col.dp }}</a> {{ col.tp }}
+<a rel="nofollow" href="{{ uri }}/{{ col.dl }}">{{ col.dp }}</a> {{ col.tp }}
 {%- else -%}
 {{ col.dt }}
 {%- endif -%}
@@ -103,12 +103,12 @@
 
 {%- macro generate_download(col, sumtype, has_provenance) -%}
 <div class='center'>
-{%- if col.prev %}<span class="preview"><a href="/preview/{{ col.name }}">[P]</a> </span>{% endif -%}
-{%- if has_provenance %}<a href="/history/{{ col.name }}" target="_blank">[H]</a>{% endif -%}
+{%- if col.prev %}<span class="preview"><a rel="nofollow" href="/preview/{{ col.name }}">[P]</a> </span>{% endif -%}
+{%- if has_provenance %}<a rel="nofollow" href="/history/{{ col.name }}" target="_blank">[H]</a>{% endif -%}
 {%- if col.name.endswith('.fits') %}
-<a href="/file/{{ col.name }}.bz2">[D]</a>
+<a rel="nofollow" href="/file/{{ col.name }}.bz2">[D]</a>
 {%- else -%}
-<a href="/file/{{ col.name }}">[D]</a>
+<a rel="nofollow" href="/file/{{ col.name }}">[D]</a>
 {%- endif -%}
 {%- if col.down_sel %} <input type='checkbox' class='mark mark_{{ sumtype }}' name='files' value='{{ col.name }}'>{% endif -%}
 </div>
