@@ -550,9 +550,19 @@ class CalibrationGHOST(Calibration):
                 .add_filters(Header.observation_class.in_(['partnerCal', 'progCal']),
                              Header.object != 'Twilight',
                              *filters)
-                # Found lots of examples where detector binning does not match, so we're not adding those
+            # Detector binning doesn't have to match, DRAGONS is clever enough
+            # now to use specphots with different binning.
+
+            # 25-Sep-2024 there was a slack discussion about focal_plane_mask
+            # matching. In principle, the fpm (HR|SR) doesn't need to match, but
+            # in practice if you want to use a specphot with a different fpm to
+            # the science, you have to reduce a bunch of calibrations that you
+            # otherwise wouldn't, and since ghost has limited configuration
+            # options, the chances of their not being a same fpm specphot are
+            # basically zero, and thus it's best to just require fpm to match
+            # here to keep things simple for the user.
                 .match_descriptors(Header.instrument,
-                                   )
+                                   Ghost.focal_plane_mask)
             )
         return query.all(howmany)
 
