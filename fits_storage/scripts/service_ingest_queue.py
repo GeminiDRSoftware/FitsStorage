@@ -80,6 +80,7 @@ def nicehandler(signum, frame):
 
 # Set handlers for the signals we want to handle
 # Cannot trap SIGKILL or SIGSTOP, all others are fair game
+# Don't trap SIGPIPE - if that happens, we want to see the exception.
 signal.signal(signal.SIGHUP, nicehandler)
 signal.signal(signal.SIGINT, nicehandler)
 signal.signal(signal.SIGQUIT, nicehandler)
@@ -87,7 +88,6 @@ signal.signal(signal.SIGILL, handler)
 signal.signal(signal.SIGABRT, handler)
 signal.signal(signal.SIGFPE, handler)
 signal.signal(signal.SIGSEGV, handler)
-signal.signal(signal.SIGPIPE, handler)
 signal.signal(signal.SIGTERM, nicehandler)
 
 # Announce startup
