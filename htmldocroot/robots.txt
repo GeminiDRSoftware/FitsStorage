@@ -7,4 +7,5 @@ Disallow: /
 User-agent: *
 Allow: /help/
 Allow: /searchform/
+Allow: /programinfo/
 Disallow: /
