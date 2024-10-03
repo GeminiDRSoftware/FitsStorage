@@ -1,6 +1,7 @@
 import datetime
 import os
 import tempfile
+import time
 from filelock import FileLock
 
 from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
@@ -124,9 +125,13 @@ def test_filemixins():
     dataroot = tempfile.mkdtemp()
     filename = 'test.dat'
     fpfn = os.path.join(dataroot, filename)
+    # fs timestamps come from a clock that is updated on an interrupt, now()
+    # timestamps get corrected with a delta from that last interrupt.
     now = datetime.datetime.now()
+    time.sleep(0.1)
     with open(fpfn, 'w') as f:
         f.write('hello')
+    time.sleep(0.1)
     then = datetime.datetime.now()
     iqe = IngestQueueEntry(filename, '')
     iqe.storage_root = dataroot

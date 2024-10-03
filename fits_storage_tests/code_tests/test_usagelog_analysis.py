@@ -4,7 +4,7 @@ from fits_storage.server.orm.usagelog_analysis import *
 def test_usagelog_analysis_orm_init():
     ula = UsageLogAnalysis(1)
     assert ula.usagelog_id == 1
-    assert ula.uri_score == 0
+    assert ula.url_score == 0
     assert ula.agent_score == 0
     assert ula.referer_score == 0
     assert ula.total_score == 0
