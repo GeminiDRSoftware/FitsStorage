@@ -1,5 +1,11 @@
 Sitemap: https://archive.gemini.edu/sitemap.xml
+
+User-agent: Amazonbot
+Allow: /help/
+Disallow: /
+
 User-agent: *
-Allow: /help
-Allow: /searchform
+Allow: /help/
+Allow: /searchform/
+Allow: /programinfo/
 Disallow: /

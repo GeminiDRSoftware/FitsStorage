@@ -40,15 +40,11 @@ sudo chown fitsdata /opt/miniforge3
 # Miniconda install (as fitsdata)
 # Go to https://conda-forge.org/miniforge/ and get the latest URL
 wget https://github.com/conda-forge/miniforge/releases/download/24.3.0-0/Miniforge3-24.3.0-0-Linux-x86_64.sh
-bash Miniforge3-24.3.0-0-Linux-x86_64.sh -f
-install location /opt/miniforge3
-do not activate
-sudo chgrp -R local-users /opt/miniforge3
-sudo chmod -R g+w /opt/miniforge3
 
 # As fitsdata
-eval "$(/opt/miniforge3/bin/conda shell.bash hook)"
-conda init
+bash Miniforge3-24.3.0-0-Linux-x86_64.sh -f
+install location /opt/miniforge3
+do activate
 # log out and back in
 # may need to source .bashrc if conda is not on path
 conda config --add channels conda-forge
@@ -67,8 +63,8 @@ export PATH="/opt/FitsStorage/fits_storage/scripts:$PATH"
 cd /opt
 sudo mkdir DRAGONS FitsStorage FitsStorageConfigurations
 sudo chown fitsdata DRAGONS FitsStorage FitsStorageConfigurations
-sudo mkdir /data/logs /data/locks /data/upload_staging /data/z_staging
-sudo chown fitsdata:fitsdata /data/logs/ /data/locks /data/upload_staging /data/z_staging
+sudo mkdir /data/logs /data/locks /data/upload_staging /data/z_staging /data/s3_staging
+sudo chown fitsdata:fitsdata /data/logs/ /data/locks /data/upload_staging /data/z_staging /data/s3_staging
 sudo chmod g+w /data/upload_staging /data/s3_staging
 # If configuring autofs. note mko vs cpo
 sudo cp /opt/FitsStorage/system_install_files/etc-auto.sci-mko /etc/auto.sci
@@ -81,7 +77,7 @@ df -h .
 
 # As fitsdata
 pip3 install astrodata
-pop3 uninstall astrodata  # We just wanted the dependencies really...
+pip3 uninstall astrodata  # We just wanted the dependencies really...
 pip3 install -r /opt/FitsStorage/requirements.txt
 pip3 install -r /opt/FitsStorage/requirements_server.txt # For servers
 pip3 install -r /opt/FitsStorage/requirements_dev.txt   # For development systems
@@ -93,6 +89,7 @@ git fetch
 git switch release/3.2.x  # or master, depending what you want...
 cd /opt/FitsStorage
 git clone git@github.com:GeminiDRSoftware/FitsStorage.git .
+git switch release/3.2.x  # or main, depending what you want...
 cd /opt/FitsStorageConfigurations
 git clone git@github.com:/phirstgemini/FitsStorageConfigurations .
 create_tables.py
