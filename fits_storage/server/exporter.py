@@ -114,8 +114,11 @@ class Exporter(object):
                          f"{eqe.filename}. Marking transfer as failed."
             self.logeqeerror(error_text)
             return
+        else:
+            self.l.debug("Sucessfully got destination file info for %s",
+                         eqe.filename)
 
-        # there is an ingest pending on this at the destination, we simply
+        # if there is an ingest pending on this at the destination, we simply
         # log a message and postpone the export by 30 seconds
         if self.destination_ingest_pending:
             delay = 30
@@ -132,7 +135,10 @@ class Exporter(object):
         if self.get_df() is False:
             # Could not look up the diskfile. get_df() will have already logged
             # the error, just bail out of the transfer.
+            self.l.debug("get_df() returned False")
             return
+        else:
+            self.l.debug("get_df() good return")
 
         if self.at_destination():
             self.l.info("File %s is already at destination %s with correct "
@@ -155,7 +161,7 @@ class Exporter(object):
 
         # If we get here, everything so far worked, and the file is not at the
         # destination with the correct data_md5. Go ahead and transfer it.
-
+        self.l.debug("export_file: go ahead and transfer")
         # If we have header update data, we attempt to send the header update
         # to the destination and then verify we ended up with the same data_md5.
         # If we did, then the transfer is complete, if not, we fall back to a
@@ -174,6 +180,7 @@ class Exporter(object):
                 return
             self.l.info("Header update failed. Falling back to file transfer")
 
+        self.l.debug("export_file: calling file_transfer()")
         self.file_transfer()
         self.reset()
         return
@@ -305,6 +312,7 @@ class Exporter(object):
         """
         # Note no need to worry about .bz2 here as by definition the file in
         # the export queue should match exactly what's in the database.
+        self.l.debug("in get_df")
         query = self.s.query(DiskFile) \
             .filter(DiskFile.filename == self.eqe.filename) \
             .filter(DiskFile.path == self.eqe.path) \
@@ -312,17 +320,20 @@ class Exporter(object):
         try:
             self.df = query.one()
         except MultipleResultsFound:
+            self.l.debug("get_df MultipleResultsFound")
             et = "Multiple present diskfile entries found for filename " \
                  f"{self.eqe.filename}, path {self.eqe.path}. DATABASE IS " \
                  "CORRUPTED, Aborting Export and marking as failed"
             self.logeqeerror(et)
             return False
         except NoResultFound:
+            self.l.debug("get_df NoResultFound")
             et = f"Cannot find present filename {self.eqe.filename}, path " \
                  f"{self.eqe.path} in diskfile table. Attempt to export a " \
                  "non-existent file. Marking export as failed."
             self.logeqeerror(et)
             return False
+        self.l.debug("get_df returning True")
         return True
 
     def at_destination(self):
@@ -405,4 +416,8 @@ class Exporter(object):
 
         self.destination_ingest_pending = \
             thelist[0].get("pending_ingest", False)
+
+        self.l.debug("Got destination file info for filename %s: md5 %s, "
+                     "pending_ingest: %s", filename, self.destination_md5,
+                     self.destination_ingest_pending)
         return True

@@ -147,7 +147,7 @@ class OrmQueueMixin:
         try:
             with open(self.fullpathfilename, "r+") as fd:
                 try:
-                    fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 except IOError:
                     return True
         except IOError:
