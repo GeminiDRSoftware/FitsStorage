@@ -119,15 +119,16 @@ class Exporter(object):
                          eqe.filename)
 
         # if there is an ingest pending on this at the destination, we simply
-        # log a message and postpone the export by 30 seconds
+        # log a message and postpone the export by 40 seconds
         if self.destination_ingest_pending:
-            delay = 30
-            self.l.info("File %s is ingest pending at destination %d. "
+            delay = 40
+            self.l.info("File %s is ingest pending at destination %s. "
                         "Deferring ingest for %d seconds", eqe.filename,
                         eqe.destination, delay)
             now = datetime.datetime.utcnow()
             dt = datetime.timedelta(seconds=delay)
             eqe.after = now + dt
+            eqe.inprogress = False
             self.s.commit()
             return
 
