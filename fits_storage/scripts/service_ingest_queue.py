@@ -191,8 +191,8 @@ try:
                     try:
                         iqe.failed = True
                         iqe.inprogress = False
-                        message = "Exception in service_ingest_queue " \
-                                  "while processing {iqe.filename}"
+                        message = f"Exception in service_ingest_queue " \
+                                  f"while processing {iqe.filename}"
                         iqe.error = message
                         session.commit()
                     except:
