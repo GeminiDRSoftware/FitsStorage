@@ -1,11 +1,5 @@
-from sqlalchemy import Column
-from sqlalchemy import Integer, Text, Boolean, DateTime, String
-from sqlalchemy.sql import func
+from sqlalchemy import Column, ForeignKey, Integer, Text, Boolean
 from sqlalchemy.orm import relationship
-
-from sqlalchemy.ext.associationproxy import association_proxy
-
-from io import StringIO
 
 from fits_storage.core.orm import Base
 
@@ -19,43 +13,66 @@ class Publication(Base):
     __tablename__ = 'publication'
 
     id = Column(Integer, primary_key=True)
-    bibcode = Column(String(20), index=True)
+    bibcode = Column(Text, unique=True, index=True)
     author = Column(Text)
     title = Column(Text)
     year = Column(Integer)
     journal = Column(Text)
-    telescope = Column(String(5))
-    instrument = Column(String(50))
-    country = Column(String(20))
-    wavelength = Column(String(20))
-    mode = Column(String(20))
+    telescope = Column(Text)
+    instrument = Column(Text)
+    country = Column(Text)
+    wavelength = Column(Text)
+    mode = Column(Text)
     gstaff = Column(Boolean)
     gsa = Column(Boolean)
     golden = Column(Boolean)
-    too = Column(String(10))
-    partner = Column(String(35))
-    last_refreshed = Column(DateTime, server_default=func.now(), onupdate=func.now())
-    # programs = association_proxy('publication_programs', 'program')
+    too = Column(Boolean)
+    partner = Column(Text)
 
-    def __init__(self, bibcode, author='', title='', year='', journal=''):
+    programs = relationship('Program', secondary='programpublication',
+                            back_populates='publications', collection_class=set)
+
+    def __init__(self, bibcode):
         """
-        Create a publication record from the given inputs
+        Create a publication record with the given bibcode
 
         Parameters
         ----------
         bibcode : str
             Bibliography code for the publication
-        author : str
-            Author of the article
-        title : str
-            Title of the article
-        year : int
-            Year of publication
-        journal : str
-            Name of the journal article was published in
         """
         self.bibcode = bibcode
-        self.author = author
-        self.title = title
-        self.year = year
-        self.journal = journal
+
+
+class ProgramPublication(Base):
+    """
+    Association object supporting the M:N relationship between programs and
+    publications. Note, this references the Program table, which is populated
+    from ODB data, so it's necessary for the *program* to have been fetched
+    from the ODB *before* publications can be associated with it.
+
+    """
+    __tablename__ = 'programpublication'
+
+    id = Column(Integer, primary_key=True)
+    program_id = Column(Integer, ForeignKey('program.id'),
+                        nullable=False, index=True)
+    publication_id = Column(Integer, ForeignKey('publication.id'),
+                            nullable=False, index=True)
+
+    def __init__(self, program, publication):
+        """
+        Create a new association between a program and a publication.
+
+        Parameters
+        ----------
+        program : :class:`~program.Program`
+            Program to associate
+        publication : :class:`~publication.Publication`
+            Publication to associate
+        """
+        if program is None:
+            self.program_id = None
+        else:
+            self.program_id = program.id
+        self.publication_id = publication.id

@@ -85,7 +85,6 @@ if fsc.is_server:
     from fits_storage.server.orm.preview import Preview
     from fits_storage.server.orm.provenancehistory import Provenance, History
     from fits_storage.server.orm.miscfile import MiscFile
-    from fits_storage.server.orm.glacier import Glacier
     from fits_storage.server.orm.user import User
     from fits_storage.server.orm.userprogram import UserProgram
     from fits_storage.server.orm.usagelog import UsageLog
@@ -96,7 +95,7 @@ if fsc.is_server:
     from fits_storage.server.orm.notification import Notification
     from fits_storage.server.orm.program import Program
     from fits_storage.server.orm.publication import Publication
-    from fits_storage.server.orm.programpublication import ProgramPublication
+    from fits_storage.server.orm.publication import ProgramPublication
     from fits_storage.server.orm.obslog import Obslog
     from fits_storage.server.orm.obslog_comment import ObslogComment
     from fits_storage.server.orm.reduction import Reduction
@@ -106,9 +105,12 @@ if fsc.is_server:
 
     from fits_storage.server.orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 
-# Calcache table
+# Archive specific tables
 if fsc.is_archive:
     from fits_storage.cal.orm.calcache import CalCache
+    from fits_storage.server.orm.ipprefix import IPPrefix
+    from fits_storage.server.orm.usagelog_analysis import UsageLogAnalysis
+    from fits_storage.server.orm.glacier import Glacier
 
 def get_fitsweb_granthelper():
     # Define server database permissions here for clarity. Using helper class
@@ -138,7 +140,7 @@ def get_fitsweb_granthelper():
 
     # For the queue status page:
     grant.select(['ingestqueue', 'exportqueue', 'fileopsqueue', 'previewqueue',
-                  'calcachequeue'])
+                  'calcachequeue', 'reducequeue'])
 
     # For the qametric system:
     qametric_tables = ['qareport', 'qametriciq', 'qametriczp', 'qametricsb',
@@ -171,7 +173,12 @@ def get_fitsweb_granthelper():
     grant.insert(odb_tables)
     grant.update(odb_tables)
 
+    # Archive specific tables
+    if fsc.is_archive:
+        grant.select('ipprefix')
+
     return grant
+
 
 def create_tables(session: Session):
     """

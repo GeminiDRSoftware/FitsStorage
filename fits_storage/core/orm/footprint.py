@@ -61,10 +61,7 @@ def footprints(ad, logger=DummyLogger()):
         sec = ext.data_section()
         if sec is None:
             continue
-        pix_fp = [(sec.x1, sec.y1),
-                  (sec.x1, sec.y2),
-                  (sec.x2, sec.y2),
-                  (sec.x2, sec.y1)]
+
         extname = ext.hdr.get('EXTNAME', 'Unknown')
         extver = ext.hdr.get('EXTVER', 'Unknown')
         label = f"{extname}-{extver}"
@@ -75,7 +72,10 @@ def footprints(ad, logger=DummyLogger()):
             # If we're not in an RA/Dec frame, don't even bother
             if (ext.hdr.get('CTYPE1') == 'RA---TAN') and \
                     (ext.hdr.get('CTYPE2') == 'DEC--TAN'):
-                wc_fp = ext.wcs.footprint(pix_fp)
+                # Note that the format of the "bounding box" argument to
+                # gwcs.wcs.footprint is ((x1, x2), (y1, y2)).
+                pix_bb = ((sec.x1, sec.x2), (sec.y1, sec.y2))
+                wc_fp = ext.wcs.footprint(pix_bb)
                 footprints[label] = wc_fp
         except:
             # TODO: silently handle lame duck exceptions here

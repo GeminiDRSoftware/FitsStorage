@@ -1,7 +1,8 @@
 import datetime
 import os
 import tempfile
-from filelock import FileLock
+import time
+import fcntl
 
 from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
@@ -124,9 +125,13 @@ def test_filemixins():
     dataroot = tempfile.mkdtemp()
     filename = 'test.dat'
     fpfn = os.path.join(dataroot, filename)
+    # fs timestamps come from a clock that is updated on an interrupt, now()
+    # timestamps get corrected with a delta from that last interrupt.
     now = datetime.datetime.now()
+    time.sleep(0.1)
     with open(fpfn, 'w') as f:
         f.write('hello')
+    time.sleep(0.1)
     then = datetime.datetime.now()
     iqe = IngestQueueEntry(filename, '')
     iqe.storage_root = dataroot
@@ -136,8 +141,12 @@ def test_filemixins():
     assert iqe.fullpathfilename == fpfn
     assert iqe.file_is_locked is False
 
-    with FileLock(fpfn):
+    with open(fpfn, "r+") as fd:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         assert iqe.file_is_locked is True
+        fcntl.flock(fd, fcntl.LOCK_UN | fcntl.LOCK_NB)
+        assert iqe.file_is_locked is False
 
+    assert iqe.file_is_locked is False
     os.unlink(fpfn)
     os.rmdir(dataroot)

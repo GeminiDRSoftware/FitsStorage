@@ -21,11 +21,6 @@ if fsc.using_s3:
     s3 = get_helper()
 
 
-"""
-Script to add files to the ingest queue.
-"""
-
-
 def _dayoptions(string):
     # Function to parse the today and twoday etc. options
     # Returns a compiled regex that can be used with search
@@ -158,6 +153,12 @@ if __name__ == "__main__":
                 logger.info("Querying files for ingest from S3 bucket")
                 fulllist = s3.key_names()
         else:
+            # Kick the automounter
+            cwd = os.getcwd()
+            os.chdir(fsc.storage_root)
+            os.chdir(cwd)
+
+            # Get the directory listing of path within the storage_root
             fulldirpath = os.path.join(fsc.storage_root, path)
             logger.info("Queueing files for ingest from: %s", fulldirpath)
             fulllist = os.listdir(fulldirpath)

@@ -27,9 +27,9 @@
    that one file. <b>[A]</b>: Program <b>A</b>bstract and PI / Co-I details.
    <b>[L]</b>: observing <b>L</b>og entries.
    Use the check-boxes to select a subset of the results to download, or if available
-   a download all link is at <a href="#tableend"> the end of the table</a>. Click the filename
+   a download all link is at <a rel="nofollow" href="#tableend"> the end of the table</a>. Click the filename
    to see the full header in a new tab. Click anything else to add that to your search criteria.
-   You can also <a href="{{ json_res_link}}" download target="_blank">save these results as JSON</a>.
+   You can also <a rel="nofollow" href="{{ json_res_link}}" download target="_blank">save these results as JSON</a>.
 </p>
 {% endif %}
 <FORM action='/download' method='POST'>
@@ -79,7 +79,7 @@
 {% else %}
 <INPUT type='submit' value='Download the {{ data_rows.down }} files totalling {{ data_rows.size_in_gb }} GB that you have access to'>
 {% endif %}
-- this is always available at <a href="{{ down_all_link }}">this link</a>
+- this is always available at <a rel="nofollow" href="{{ down_all_link }}">this link</a>
 </FORM>
 </div>
 {% endif %}

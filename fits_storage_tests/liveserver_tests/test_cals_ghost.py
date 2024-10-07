@@ -2,7 +2,7 @@ import pytest
 pytest.register_assert_rewrite('fits_storage_tests.liveserver_tests.helpers')
 
 from fits_storage_tests.liveserver_tests.helpers import getserver, calhelper, \
-    associatedcalhelper
+    associatedcalhelper, calibrationshelper
 
 # This dict of dicts defines the expected calibration associations.
 cals_2024_ghost = {
@@ -15,6 +15,10 @@ cals_2024_ghost = {
 
 def test_ghostcals():
     calhelper(getserver(), cals_2024_ghost)
+
+
+def test_ghostcalibrations():
+    calibrationshelper(getserver(), cals_2024_ghost)
 
 
 def test_associated_ghostcals():

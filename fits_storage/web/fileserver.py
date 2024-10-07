@@ -31,9 +31,9 @@ fsc = get_config()
 
 # We assume that servers used as archive use a calibraiton association cache table
 if fsc.is_archive:
-    from gemini_calmgr.cal.associate_calibrations import associate_cals_from_cache as associate_cals
+    from fits_storage.cal.associate_calibrations import associate_cals_from_cache as associate_cals
 else:
-    from gemini_calmgr.cal.associate_calibrations import associate_cals
+    from fits_storage.cal.associate_calibrations import associate_cals
 
 if fsc.using_s3:
     from fits_storage.server.aws_s3 import get_helper

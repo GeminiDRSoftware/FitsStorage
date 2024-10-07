@@ -5,19 +5,12 @@ import sys
 
 from sqlalchemy.exc import IntegrityError
 
-from fits_storage.queues.orm.calcachequeueentry import CalCacheQueueEntry
+from fits_storage.queues.queue import CalCacheQueue
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.db import session_scope
 
-"""
-Script to add files to ingest into the FITS Server
-
-This script will add files in the system to the queue for ingest.
-The ingest service will then examine the files and create 
-`fits_storage.orm.DiskFile` and `fits_storage.orm.Header` records.
-"""
 
 # Option Parsing
 from optparse import OptionParser
@@ -28,6 +21,8 @@ parser.add_option("--lastdays", action="store", type="int", dest="lastdays",
                   help="queue observations with ut_datetime in last n days")
 parser.add_option("--instrument", action="store", dest="instrument",
                   type="string", help="Only add files for this instrument")
+parser.add_option("--include-eng", action="store", dest="include_eng",
+                  default=False, help="Include engineering files")
 parser.add_option("--all", action="store_true", dest="all",
                   help="queue all observations in database. Use with Caution")
 parser.add_option("--ignore-mdbad", action="store_true", dest="ignore_mdbad",
@@ -73,12 +68,20 @@ with session_scope() as session:
                 datetime.timedelta(days=options.lastdays)
         query = query.filter(Header.ut_datetime > then)
 
+    if options.instrument:
+        query = query.filter(Header.instrument == options.instrument)
+
+    if options.include_eng:
+        pass
+    else:
+        query = query.filter(Header.engineering == False)
+
     headers = query.all()
 
     logger.info("Got %d header items to queue" % len(headers))
 
     # Looping through the header list directly for the add is really slow
-    # if the list is big..
+    # if the list is big.
 
     logger.info("Building (hid, filename) list...")
     items = []
@@ -88,25 +91,25 @@ with session_scope() as session:
     # Note, we don't try and batch these commits as if there's an
     # IntegrityError resulting from an entry already existing, that will
     # fail the entire commit and thus the entire batch.
+    ccq = CalCacheQueue(session, logger=logger)
+    commit = False if options.bulk_add else True
     i = 0
     n = len(items)
     for (hid, filename) in items:
         i += 1
-        logger.info("Creating CalCacheQueueEntry with obs_hid %s, "
-                    "filename %s (%d/%d)", hid, filename, i, n)
-        cqe = CalCacheQueueEntry(hid, filename)
+        logger.info("Adding hid %d - filename %s to CalCache queue (%d/%d)",
+                    hid, filename, i, n)
+        ccq.add(hid, filename, commit=commit)
+    if options.bulk_add:
         try:
-            logger.debug("Adding CalCacheQueueEntry")
-            session.add(cqe)
-            if not options.bulk_add:
-                session.commit()
+            logger.info("Committing bulk-add.")
+            session.commit()
         except IntegrityError:
             session.rollback()
-            logger.debug("IntegrityError adding hid %s - filename %s"
-                         "to queue. Likely they are already on the"
-                         "queue", hid, filename)
-    if options.bulk_add:
-        session.commit()
+            logger.debug("Bulk add commit failed. None of the items have been "
+                         "added. Suggest re-run without bulk-add, or ensure "
+                         "queue is empty before adding.")
+
 
 logger.info("*** add_to_calcache_queue.py exiting normally at %s" %
             datetime.datetime.now())

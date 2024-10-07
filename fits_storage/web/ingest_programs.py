@@ -15,9 +15,7 @@ def error_response(message, id=None):
     return response
 
 
-@needs_cookie(magic_cookies=
-              [('gemini_fits_upload_auth', fsc.upload_auth_cookie)],
-              content_type='json')
+@needs_cookie(magic_cookie='gemini_fits_upload_auth', content_type='json')
 def ingest_programs():
     ctx = get_context()
     resp = ctx.resp

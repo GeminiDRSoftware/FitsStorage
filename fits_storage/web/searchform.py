@@ -14,7 +14,7 @@ from xml.parsers.expat import ExpatError
 from . import templating
 
 from fits_storage.gemini_metadata_utils import GeminiDataLabel, \
-    GeminiObservation, gemini_date
+    GeminiObservation, gemini_date, gemini_daterange
 
 from fits_storage.db.selection import getselection, selection_to_URL
 from .summary import summary_body
@@ -34,7 +34,7 @@ def searchform(things, orderby):
 
     """
     # How (we think) this (will) all work(s)
-    # User gets/posts the url, may or may not have selection criteria on it
+    # User gets/posts the url, may or may not have selection criteria
     # We parse the url, and create an initial selection dictionary
     # (which may or may not be empty).
     # We parse the formdata and modify the selection dictionary if there was any
@@ -49,6 +49,7 @@ def searchform(things, orderby):
     # User messes with input fields
     # User hits submit - back to top
 
+    fsc = get_config()
     ctx = get_context()
 
     # grab the string version of things before getselection() as that modifies the list.
@@ -68,13 +69,14 @@ def searchform(things, orderby):
     prevday_search = None
 
     if formdata:
-        if ((len(formdata) == 6) and
-            ('engineering' in list(formdata.keys())) and (formdata['engineering'].value == 'EngExclude') and
-            ('science_verification' in list(formdata.keys())) and (formdata['science_verification'].value == 'SvInclude') and
-            ('qa_state' in list(formdata.keys())) and (formdata['qa_state'].value == 'NotFail') and
-            ('col_selection' in list(formdata.keys())) and
-            ('site_monitoring' in list(formdata.keys())) and (formdata['site_monitoring'].value == 'SmExclude') and
-            ('Search' in list(formdata.keys())) and (formdata['Search'].value == 'Search')):
+        if (len(formdata) == 7 and
+                ('engineering' in list(formdata.keys())) and (formdata['engineering'].value == 'EngExclude') and
+                ('science_verification' in list(formdata.keys())) and (formdata['science_verification'].value == 'SvInclude') and
+                ('qa_state' in list(formdata.keys())) and (formdata['qa_state'].value == 'NotFail') and
+                ('col_selection' in list(formdata.keys())) and
+                ('site_monitoring' in list(formdata.keys())) and (formdata['site_monitoring'].value == 'SmExclude') and
+                ('datetype') in list(formdata.keys()) and
+                ('Search' in list(formdata.keys())) and (formdata['Search'].value == 'Search')):
             # This is the default form state, someone just hit submit without doing anything.
             pass
         elif list(formdata.keys()) == ['orderby']:
@@ -83,7 +85,7 @@ def searchform(things, orderby):
         else:
             # Populate selection dictionary with values from form input
             updateselection(formdata, selection)
-            # This logs the seleciton to the apache error log for debugging.
+            # This logs the selection to the apache error log for debugging.
             # ctx.req.log(str(selection))
             # build URL
             urlstring = selection_to_URL(selection, with_columns=True)
@@ -111,7 +113,8 @@ def searchform(things, orderby):
 
     # Construct suffix to html title
     things = []
-    for thing in ['program_id', 'inst', 'date', 'daterange']:
+    for thing in ['program_id', 'inst', 'night', 'nightrange',
+                  'date', 'daterange']:
         if thing in selection:
             things.append(selection[thing])
     title_suffix = ' '.join(things)
@@ -145,7 +148,6 @@ def searchform(things, orderby):
                 # ok if we fail, this is a nice to have
                 pass
 
-    fsc = get_config()
     template_args = dict(
         server_title   = fsc.fits_server_title,
         title_suffix   = title_suffix,
@@ -175,11 +177,18 @@ std_gmos_fpm = {'NS2.0arcsec', 'IFU-R', 'IFU-B', 'focus_array_new', 'Imaging', '
 
 def updateform(selection):
     """
-    Receives html page as a string and updates it according to values in the 
-    selection dictionary. Pre-populates input fields with said selection values.
+    Take the selection dictionary and generate an update dictionary which is
+    passed to the searchform template in order to update the form.
 
     """
+    fsc = get_config()
+
     dct = {}
+
+    # Set the default value of the datetype pull-down. It will get re-set later
+    # if it has actually been changed and night or date etc is in the selection
+    dct['datetype'] = 'UTC' if fsc.is_archive else 'night'
+
     for key, value in list(selection.items()):
         if key in {'program_id', 'observation_id', 'data_label'}:
             # Program id etc
@@ -191,11 +200,23 @@ def updateform(selection):
             if key == 'data_label':
                 dct['program_id'] = value
 
-        elif key in {'date', 'daterange'}:
+        elif key in ('date', 'daterange'):
+            # Set the datetype pulldown to UTC
+            dct['datetype'] = 'UTC'
             # If there is a date and a daterange, only use the date part
-            if 'date' in selection and 'daterange' in selection:
-                key = 'date'
-            dct['date'] = value
+            if key == 'daterange' and 'date' not in selection.keys():
+                dct['date'] = selection['daterange']
+            if key == 'date':
+                dct['date'] = selection['date']
+
+        elif key in ('night', 'nightrange'):
+            # Set the datetype pulldown to night
+            dct['datetype'] = 'night'
+            # If there is a night and a nightrange, only use the night part
+            if key == 'nightrange' and 'night' not in selection.keys():
+                dct['date'] = selection['nightrange']
+            if key == 'night':
+                dct['date'] = selection['night']
 
         elif key == 'spectroscopy' and 'mode' not in selection:
             dct['mode'] = 'spectroscopy' if value else 'imaging'
@@ -280,12 +301,13 @@ def updateform(selection):
 def updateselection(formdata, selection):
     """
     Updates the selection dictionary with user input values in formdata
-    Handles many different specific cases
+    Handles many specific cases
     """
+
     # Populate selection dictionary with values from form input
     for key in formdata:
         # if we got a list, there are multiple fields with that name. This is
-        # true for filter at least. Pick the last one (except for col_selection).
+        # true for filter at least. Use the last one (except for col_selection)
         if type(formdata[key]) is list and key != 'col_selection':
             value = formdata[key][-1].value
         if key == 'col_selection':
@@ -300,7 +322,8 @@ def updateselection(formdata, selection):
             # Ensure it's upper case
             value = value.upper()
 
-            # accepts program id along with observation id and data label for program_id input
+            # accepts program id along with observation id and data label for
+            # program_id input.
             # see if it is an obsid or data label, otherwise treat as program id
             go = GeminiObservation(value)
             dl = GeminiDataLabel(value)
@@ -311,10 +334,26 @@ def updateselection(formdata, selection):
                 selection['data_label'] = value
             else:
                 selection['program_id'] = value
+        elif key == 'datetype':
+            # This is referenced directly in when processing date
+            pass
         elif key == 'date':
-            # removes spaces from daterange queries
+            # remove spaces from daterange queries
             value = value.replace(' ', '')
-            selection[key] = value
+            gd = gemini_date(value)
+            gdr = gemini_daterange(value)
+            # Put it in the correct selection depending on UTC vs night pulldown
+            if formdata['datetype'].value == 'night':
+                if gd:
+                    selection['night'] = gd
+                elif gdr:
+                    selection['nightrange'] = gdr
+            else:
+                if gd:
+                    selection['date'] = gd
+                elif gdr:
+                    selection['daterange'] = gdr
+
         elif key in ['ra', 'dec', 'sr', 'cenwlen', 'filepre']:
             # Check the formatting of RA, Dec, search radius values. Keep them in same format as given though.
 
@@ -410,10 +449,7 @@ def nameresolver(resolver, target):
     except IndexError:
         msg = {'success': False, 'message': "The name resolver returned information in an unknown format"}
     except Exception as e:
-        try:
-            message = e.strerror.strerror
-        except AttributeError:
-            message = str(e)
+        message = str(e)
         msg = {'success': False, 'message': message}
     resp.append_json(msg)
 
@@ -591,7 +627,17 @@ dropdown_options = {
          ("Lya395", "Lya395"),
          ("ri", "ri"),
          ("DS920", "DS920"),
-         ("open", "Open")],
+         ("open", "Open"),
+         ("GG455", "GG455"),
+         ("OG515", "OG515"),
+         ("RG610", "RG610"),
+         ("RG780", "RG780"),
+         ("F396N", "F396N"),
+         ("JWL34", "JWL34"),
+         ("JWL38", "JWL38"),
+         ("JWL43", "JWL43"),
+         ("Stry", "Stry"),
+         ("Strb", "Strb")],
     "pre_image_options":
         [("preimage", "Pre-image"),],
     "gnirs_filter_options":
@@ -693,9 +739,6 @@ dropdown_options = {
          ("JH", "JH"),
          ("HK", "HK"),
          ("J-lo", "J low")],
-    "igrins_filter_options":
-        [("H", "H"),
-         ("K", "K")],
     "nici_filter_options":
         [("Ks+H", "Ks+H"),
          ("CH4-H4L+CH4-H4S", "CH4-H4L+CH4-H4S"),
@@ -920,5 +963,8 @@ dropdown_options = {
     "niri_cam_options":
         [("f6", 'f/6 (0.12 &quot;/pix)'),
          ("f13.9", 'f/14 (0.05 &quot;/pix)'),
-         ("f32", 'f/32 (0.02 &quot;/pix)')]
+         ("f32", 'f/32 (0.02 &quot;/pix)')],
+    "datetype_options":
+        [("UTC", "UTC"),
+         ("night", "Night")]
     }

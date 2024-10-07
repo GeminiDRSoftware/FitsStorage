@@ -45,7 +45,7 @@ def is_staff(user, filedownloadlog):
     """
     Is the current user a staff member?
     """
-    if user is not None and user.staff is True:
+    if user is not None and user.gemini_staff is True:
         if filedownloadlog:
             filedownloadlog.staff_access = True
         return True

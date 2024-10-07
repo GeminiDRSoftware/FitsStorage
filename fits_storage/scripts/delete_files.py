@@ -4,7 +4,6 @@ import sys
 import datetime
 import os
 import smtplib
-from sqlalchemy import desc
 from optparse import OptionParser
 
 from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
@@ -200,7 +199,8 @@ with session_scope() as session:
                         diskfile.fullpath)
         else:
             try:
-                logger.debug("Deleting file %s", diskfile.fullpath)
+                logger.info("Deleting file %s [%d tapes: %s]",
+                            diskfile.fullpath, len(tape_ids), str(tape_ids))
                 os.unlink(diskfile.fullpath)
                 logger.debug("Marking diskfile id %d as not present",
                              diskfile.id)

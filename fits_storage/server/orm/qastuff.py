@@ -81,7 +81,7 @@ class QAreport(Base, MetricDictMixin):
             Dictionary of values for a QA Report
         host : str
             Host submitting the QA report
-        time : datetime
+        time : datetime.datetime
             Time of the QA report
 
         Returns
@@ -121,8 +121,8 @@ class QAmetricIQ(Base, MetricDictMixin):
     __tablename__ = 'qametriciq'
 
     id = Column(Integer, primary_key=True)
-    qareport_id = Column(Integer, ForeignKey('qareport.id'))
-    datalabel = Column(Text)
+    qareport_id = Column(Integer, ForeignKey('qareport.id'), index=True)
+    datalabel = Column(Text, index=True)
     filename = Column(Text)
     detector = Column(Text)
     # Image Quality Values
@@ -257,8 +257,8 @@ class QAmetricZP(Base, MetricDictMixin):
     __tablename__ = 'qametriczp'
 
     id = Column(Integer, primary_key=True)
-    qareport_id = Column(Integer, ForeignKey('qareport.id'))
-    datalabel = Column(Text)
+    qareport_id = Column(Integer, ForeignKey('qareport.id'), index=True)
+    datalabel = Column(Text, index=True)
     filename = Column(Text)
     detector = Column(Text)
     # Photometry
@@ -386,8 +386,8 @@ class QAmetricSB(Base, MetricDictMixin):
     __tablename__ = 'qametricsb'
 
     id = Column(Integer, primary_key=True)
-    qareport_id = Column(Integer, ForeignKey('qareport.id'))
-    datalabel = Column(Text)
+    qareport_id = Column(Integer, ForeignKey('qareport.id'), index=True)
+    datalabel = Column(Text, index=True)
     filename = Column(Text)
     detector = Column(Text)
     # Sky Background
@@ -520,8 +520,8 @@ class QAmetricPE(Base, MetricDictMixin):
     __tablename__ = 'qametricpe'
 
     id = Column(Integer, primary_key=True)
-    qareport_id = Column(Integer, ForeignKey('qareport.id'))
-    datalabel = Column(Text)
+    qareport_id = Column(Integer, ForeignKey('qareport.id'), index=True)
+    datalabel = Column(Text, index=True)
     filename = Column(Text)
     detector = Column(Text)
     # Astrometric Pointing Error

@@ -1,10 +1,11 @@
+from fits_storage_tests.code_tests.helpers import get_test_config
+get_test_config()
+
 from fits_storage_tests.code_tests.helpers import make_empty_testing_db_env, \
     fetch_file
 
-from fits_storage.config import get_config
-get_config(builtinonly=True, reload=True)
-
 from fits_storage.db import sessionfactory
+from fits_storage.config import get_config
 from fits_storage.logger import DummyLogger
 
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry

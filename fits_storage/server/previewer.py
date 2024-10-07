@@ -17,7 +17,6 @@ from fits_storage.config import get_config
 
 from fits_storage.server.orm.preview import Preview
 
-
 class PreviewException(Exception):
     pass
 
@@ -36,6 +35,7 @@ class Previewer(object):
     filename = None
     fpfn = None  # Full Path Filename
     spectrum = None
+    s3_helper = None
 
     def __init__(self, diskfile, session, logger=None, path = None,
                  using_s3 = None, force=False, scavengeonly=False):
@@ -47,6 +47,11 @@ class Previewer(object):
         self.using_s3 = using_s3 if using_s3 is not None else fsc.using_s3
         self.path = path if path is not None else fsc.previewpath
         self.path = fsc.s3_staging_dir if self.using_s3 else self.path
+
+        # Push our logger instance into the diskfile if it doesn't have one.
+        # diskfiles from a database session do not get __init__()ed.
+        if not hasattr(self.diskfile, '_logger'):
+            self.diskfile._logger = logger
 
         self.filename = diskfile.filename + '_preview.jpg'
 
@@ -151,7 +156,15 @@ class Previewer(object):
 
         if self.using_s3 and upload:
             # Upload preview file to S3 and delete local copy
-            self.logger.error("Preview upload to S3 needs implementing")
+            self.logger.info("Uploading preview %s to S3", self.filename)
+            if self.s3.upload_file(self.filename, self.fpfn) is None:
+                self.logger.error("Error uploading %s to S3 as %s",
+                                  self.fpfn, self.filename)
+            try:
+                os.unlink(self.fpfn)
+                os.unlink(self.diskfile.fullpath)
+            except Exception:
+                pass
 
         return status
 
@@ -220,6 +233,17 @@ class Previewer(object):
         This function will create a jpeg rendering of the ad object and write
         it to the filelike fp.
         """
+        if self.using_s3:
+            # Fetch the file from S3 at this point
+            if not self.s3.fetch_to_storageroot(self.diskfile.filename,
+                                                self.diskfile.fullpath):
+                # Failed to fetch the file from S3.
+                self.logger.error("Failed to fetch %s from S3",
+                                  self.diskfile.filename)
+                return None
+            # Having magicaly dropped a local file there, the diskfile instance
+            # should be able to handle compression and astrodata for us.
+
         ad = self.diskfile.get_ad_object
 
         fmt1 = "Full Image extent is: {}:{}, {}:{}"

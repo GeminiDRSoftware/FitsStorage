@@ -7,7 +7,10 @@
 # the FITS_STORATE_TEST_TESTSERVER environment variable.
 
 from fits_storage_tests.testserver_tests.\
-    test_upload_ingest_against_web_server import *
+    test_upload_against_web_server import *
+from fits_storage_tests.testserver_tests.test_header_update_against_web_server \
+    import *
 from fits_storage_tests.testserver_tests.\
     test_jsonqareport_against_web_server import *
 from fits_storage_tests.testserver_tests.test_ingest_programs import *
+from fits_storage_tests.testserver_tests.test_jsonfilelist_etc import *

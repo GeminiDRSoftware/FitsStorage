@@ -34,7 +34,6 @@ gemini_readmode_settings = ('Classic',
                             'High_Background')
 
 
-
 # sortkey_regex_dict:
 # These regular expessions are used by the queues to determine how to sort (
 # ie prioritize) files when despooling the queues. The regexes should provide
@@ -45,10 +44,10 @@ gemini_readmode_settings = ('Classic',
 # next in priority. This allows for example to prioritize science files over
 # site monitoring data. The regexes should be compiled here for efficiency.
 
-_standard_filename_re = re.compile('[NS](?P<date>\d{8})\w(?P<num>\d+).*')
-_igrins_filename_re = re.compile('SDC[SHK]_(?P<date>\d{8})_(?P<num>\d+).*')
-_skycam_filename_re = re.compile('img_(?P<date>\d{8})_(?P<num>\w+).*')
-_obslog_filename_re = re.compile('(?P<date>\d{8})_(?P<num>.*)_obslog.txt')
+_standard_filename_re = re.compile(r'[NS](?P<date>\d{8})\w(?P<num>\d+).*')
+_igrins_filename_re = re.compile(r'SDC[SHK]_(?P<date>\d{8})_(?P<num>\d+).*')
+_skycam_filename_re = re.compile(r'img_(?P<date>\d{8})_(?P<num>\w+).*')
+_obslog_filename_re = re.compile(r'(?P<date>\d{8})_(?P<num>.*)_obslog.txt')
 sortkey_regex_dict = {_standard_filename_re: 'z',
                       _igrins_filename_re: 'z',
                       _obslog_filename_re: 'x',
@@ -169,8 +168,12 @@ def gemini_instrument(string, gmos=False, other=False):
 
 
 # These are the new (2024) official processing modes. As used in the
-# FitsStorage reduction table, and thus archive.
-gemini_processing_modes = ('Raw', 'Fail', 'Science-Quality', 'Quick-Look')
+# FitsStorage reduction table, and thus archive. Note, the order is significant
+# here as this is used directly to create the enumerated SQL type and sorting
+# by that type in postgres will respect the order in the enum, which is the
+# order here. We use this sort to return calibrations "processed first", so the
+# order should generally be from least to most processed.
+gemini_processing_modes = ('Failed', 'Raw', 'Quick-Look', 'Science-Quality')
 
 
 def gemini_processing_mode(string: str) -> str:
@@ -386,8 +389,8 @@ def gemini_fitsfilename(string):
     """
     A utility function matching Gemini data fits filenames. If the string
     argument matches the format of a gemini data filename, with or without the
-    .fits on the end, this function will return the filename, with the .fits
-    on the end.
+    .fits on the end, and with or without a trailiing .bz2, this function will
+    return the filename, with the .fits on the end (but no .bz2)
 
     If the string does not look like a filename, we return an empty string.
     """
@@ -398,6 +401,8 @@ def gemini_fitsfilename(string):
     vfitsfilenamecre = re.compile(
         r'^(20)?(\d\d)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d\d)'
         r'_(\d+)(?P<fits>.fits)?$')
+
+    string = string.removesuffix('.bz2')
 
     retval = ''
     m = fitsfilenamecre.match(string) or vfitsfilenamecre.match(string)

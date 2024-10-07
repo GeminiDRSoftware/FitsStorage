@@ -22,8 +22,7 @@ from fits_storage.server.wsgi.returnobj import Return
 from fits_storage.db.selection import sayselection, queryselection
 from .calibrations import interval_hours
 from fits_storage.cal.calibration import get_cal_object
-from fits_storage.gemini_metadata_utils import gemini_time_period_from_range, \
-    ONEDAY_OFFSET
+from fits_storage.gemini_metadata_utils import gemini_daterange, ONEDAY_OFFSET
 
 from fits_storage.config import get_config
 
@@ -74,12 +73,17 @@ def gmoscal(selection):
 
     # Was a date provided by user?
     datenotprovided = ('date' not in selection) and \
-                      ('daterange' not in selection)
+                      ('daterange' not in selection) and \
+                      ('night' not in selection) and \
+                      ('nightrange' not in selection)
+
     # If no date or daterange, look on endor or josie to get the last
     # processing date
 
     def autodetect_range(checkfile, selection):
         base_dir = fsc.das_calproc_path
+        if not base_dir:
+            return None
         enddate = datetime.datetime.now().date()
         date = enddate
         found = -1000
@@ -222,13 +226,12 @@ def gmoscal(selection):
     nobiases = []
     if 'daterange' in selection:
         # Parse the date to start and end datetime objects
-        date, enddate = gemini_time_period_from_range(selection['daterange'],
-                                                      as_date=True)
+        startd, endd = gemini_daterange(selection['daterange'], as_dates=True)
 
-        while date <= enddate:
-            if date not in bias:
-                nobiases.append(str(date))
-            date += ONEDAY_OFFSET
+        while startd <= endd:
+            if startd not in bias:
+                nobiases.append(str(startd))
+            startd += ONEDAY_OFFSET
 
         if nobiases:
             result['nobiases'] = nobiases

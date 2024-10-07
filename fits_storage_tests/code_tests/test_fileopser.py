@@ -68,7 +68,7 @@ def test_echo_nodb():
 def test_echo(tmp_path):
     make_empty_testing_db_env(tmp_path)
     session = sessionfactory()
-    logger = DummyLogger()
+    logger = DummyLogger(print=True)
 
     fqreq = FileOpsRequest(request='echo', args={"echo": "Hello, world"})
     fqe = FileopsQueueEntry(fqreq.json(), response_required=True)
@@ -98,7 +98,7 @@ def test_ingest_upload(tmp_path):
     make_empty_testing_db_env(tmp_path)
     fsc = get_config()
     session = sessionfactory()
-    logger = DummyLogger()
+    logger = DummyLogger(print=True)
     filename = 'N20200127S0023.fits.bz2'
 
     ul = UsageLog(None)
@@ -152,7 +152,7 @@ def test_update_headers(tmp_path):
     make_empty_testing_db_env(tmp_path)
     fsc = get_config()
     session = sessionfactory()
-    logger = DummyLogger()
+    logger = DummyLogger(print=True)
     filename = 'N20200127S0023.fits.bz2'
 
     fetch_file(filename, fsc.storage_root)
@@ -195,6 +195,8 @@ def test_update_headers(tmp_path):
     fo.fileop(fqe)
     session.commit()
 
+    if fo.response.ok is not True:
+        print(f'fo response error: {fo.response.error}')
     assert fo.response.ok is True
     assert fo.response.error == ''
     assert fo.response.value is None

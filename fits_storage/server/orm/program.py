@@ -1,6 +1,6 @@
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text
-from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
 
@@ -13,12 +13,13 @@ class Program(Base):
     __tablename__ = 'program'
 
     id = Column(Integer, primary_key=True)
-    program_id = Column(Text, index=True)
+    program_id = Column(Text, unique=True, index=True)
     pi_coi_names = Column(Text, index=True)
     title = Column(Text)
     abstract = Column(Text)
 
-    publications = association_proxy('program_publications', 'publication')
+    publications = relationship('Publication', secondary='programpublication',
+                                back_populates='programs', collection_class=set)
 
     def __init__(self, progdict):
         """

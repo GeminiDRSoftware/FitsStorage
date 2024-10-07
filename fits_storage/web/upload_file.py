@@ -17,9 +17,7 @@ from fits_storage.config import get_config
 fsc = get_config()
 
 
-@needs_cookie(magic_cookies=
-    [('gemini_fits_upload_auth', fsc.upload_auth_cookie)],
-              annotate=FileUploadLog)
+@needs_cookie(magic_cookie='gemini_fits_upload_auth', annotate=FileUploadLog)
 def upload_file(filename, processed_cal=False):
     """
     This handles uploading files, including processed calibrations.
@@ -66,6 +64,10 @@ def upload_file(filename, processed_cal=False):
     try:
         with open(fullfilename, 'wb') as f:
             fileuploadlog.ut_transfer_start = datetime.datetime.utcnow()
+            # wsgiref workaround to ensure initial read is not bigger than
+            # content_length if content_length is smaller than chunksize
+            chunksize = content_length \
+                if content_length and content_length < chunksize else chunksize
             while chunk := ctx.input.read(chunksize):
                 size += len(chunk)
                 m.update(chunk)

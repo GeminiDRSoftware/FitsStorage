@@ -499,8 +499,8 @@ class CalibrationGMOS(Calibration):
                 mos_or_ls = self.descriptors['central_wavelength'] > 0.55 or self.descriptors['disperser'].startswith('R150')
                 # For MOS and LS, elevation must we within 15 degrees
                 el_thres = 15.0
-            except AttributeError:
-                # Just in case disperser is None
+            except (AttributeError, TypeError):
+                # In cases where disperser or central_wavelength is None
                 pass
             under_85 = self.descriptors['elevation'] < 85
 

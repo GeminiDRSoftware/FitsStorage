@@ -1,10 +1,11 @@
+Sitemap: https://archive.gemini.edu/sitemap.xml
+
+User-agent: Amazonbot
+Allow: /help/
+Disallow: /
+
 User-agent: *
-Disallow: /whoami/
-Disallow: /download/
-Disallow: /preview/
-Disallow: /file/
-Disallow: /summary/
-Disallow: /ssummary/
-Disallow: /lsummary/
-Disallow: /fullheader/
-Disallow: /jsonsummary/
+Allow: /help/
+Allow: /searchform/
+Allow: /programinfo/
+Disallow: /

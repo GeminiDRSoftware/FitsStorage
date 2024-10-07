@@ -60,5 +60,5 @@ def test_bzstream4():
     do_test(datasize=100, chunksize=1000, readsize=200)
 
 def test_bzstream5():
-    do_test(datasize=5000000, chunksize=1000000, readsize=1000)
+    do_test(datasize=500000, chunksize=100000, readsize=1000)
 

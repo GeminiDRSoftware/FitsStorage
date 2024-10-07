@@ -988,7 +988,7 @@ def bad_password(candidate):
     return True
 
 
-def needs_cookie(magic_cookies=(), content_type='text/html', annotate=None,
+def needs_cookie(magic_cookie, content_type='text/html', annotate=None,
                  context=None, fsconfig=None):
     """
     Decorator for functions that need a magic cookie value to be passed with the
@@ -1002,9 +1002,14 @@ def needs_cookie(magic_cookies=(), content_type='text/html', annotate=None,
     Which rejects access if no valid magic cookie value was supplied with the
     request.
 
-    If the required cookie value is None, we reject the request irrespective
-    of the supplied value (ie setting the required value to None disables
-    access using that cookie)
+    If the magic cookie name is None, we reject the request irrespective
+    of the supplied value (ie setting the cookie name to None disables
+    access using cookies)
+
+    magic cookie is the cookie name. The decorator function will look up the
+    acceptable value(s) from a config system parameter with the same name. This
+    will be a list of acceptable values. If this value is None or [None],
+    access using cookies is disabled.
 
     See also: needs_login()
     """
@@ -1018,24 +1023,30 @@ def needs_cookie(magic_cookies=(), content_type='text/html', annotate=None,
             ctype = 'application/json' if content_type == 'json' \
                 else 'text/html'
 
+            # This to allow passing in a fake config object for testing
+            fsc = fsconfig if fsconfig is not None else get_config()
+
             # Is this a development server with authentication bypassed?
             # fsc is passable as an argument to facilitate testing
-            fsc = fsconfig if fsconfig is not None else get_config()
             if fsc.fits_system_status == 'development' \
                     and fsc.development_bypass_auth:
                 return fn(*args, **kw)
 
-            # Did we get a valid magic cookie?
+            # Did we get a valid magic cookie name?
             got_magic = False
-            for cookiename, magicvalue in magic_cookies:
-                if magicvalue is None:
-                    continue
-                try:
-                    if cookie_match(ctx.cookies[cookiename], magicvalue):
-                        got_magic = True
-                        break
-                except KeyError:
-                    pass
+            if magic_cookie is not None:
+                magic_values = fsc.get(magic_cookie)
+                if magic_values:
+                    for magic_value in magic_values:
+                        if magic_value is None:
+                            continue
+                        try:
+                            if cookie_match(ctx.cookies[magic_cookie],
+                                            magic_value):
+                                got_magic = True
+                                break
+                        except KeyError:
+                            pass
 
             if not got_magic:
                 raise_error = functools.partial(ctx.resp.client_error,

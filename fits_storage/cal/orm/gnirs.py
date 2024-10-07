@@ -42,6 +42,7 @@ class Gnirs(Base):
     well_depth_setting = Column(WELL_DEPTH_SETTING_ENUM, index=True)
     camera = Column(Text, index=True)
     focal_plane_mask = Column(Text)
+    array_name = Column(Text)
 
     # This is to support 2024-04 PRISM mechanism issue workarounds
     prism_motor_steps = Column(Integer)
@@ -89,3 +90,12 @@ class Gnirs(Base):
         self.focal_plane_mask = ad.focal_plane_mask()
 
         self.prism_motor_steps = ad.prism_motor_steps()
+
+        try:
+            an = ad.array_name()
+            if isinstance(an, list):
+                self.array_name = an[0]
+            elif isinstance(an, str):
+                self.array_name = an
+        except:
+            pass

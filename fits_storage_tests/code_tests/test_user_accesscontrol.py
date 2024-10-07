@@ -2,7 +2,6 @@ import pytest
 
 from fits_storage.web.user import needs_login, needs_cookie
 
-from fits_storage_tests.code_tests.helpers import get_test_config
 from fits_storage.config import get_config
 badcookie_message = "This resource can only be accessed by providing a valid " \
                     "magic cookie, which this request did not."
@@ -11,8 +10,6 @@ notloggedin_message = "You need to be logged in to access this resource"
 
 notstaff_message = "You need to be logged in as Gemini Staff member to access" \
                    " this resource"
-
-get_test_config()
 
 
 class FakeUser(object):
@@ -49,12 +46,34 @@ class FakeCtx(object):
         self.user = user
 
 
+def get_cookietest_config():
+    # Note we have to pick a real cookie name here, as those are listed in
+    # fits_storage.conf _lists.
+    configtext = """
+            [DEFAULT]
+            is_server = True
+            gemini_api_authorization = ['good_value1', 'good_value2']
+            """
+    return get_config(reload=True, builtinonly=True, configstring=configtext)
+
+
 def test_cookie_access_good():
 
-    fakectx = FakeCtx(cookies={'good_cookie_name': 'magic_value'})
+    fakectx = FakeCtx(cookies={'gemini_api_authorization': 'good_value1'})
 
-    @needs_cookie(magic_cookies=[('good_cookie_name', 'magic_value')],
-                  context=fakectx, fsconfig=get_config(builtinonly=True))
+    fsc = get_cookietest_config()
+
+    @needs_cookie('gemini_api_authorization', context=fakectx,
+                  fsconfig=fsc)
+    def thefunction():
+        return "OK"
+
+    assert thefunction() == "OK"
+
+    fakectx = FakeCtx(cookies={'gemini_api_authorization': 'good_value2'})
+
+    @needs_cookie('gemini_api_authorization', context=fakectx,
+                  fsconfig=get_cookietest_config())
     def thefunction():
         return "OK"
 
@@ -63,10 +82,10 @@ def test_cookie_access_good():
 
 def test_cookie_access_badvalue():
 
-    fakectx = FakeCtx(cookies={'good_cookie_name': 'bad_value'})
+    fakectx = FakeCtx(cookies={'gemini_api_authorization': 'bad_value'})
 
-    @needs_cookie(magic_cookies=[('good_cookie_name', 'magic_value')],
-                  context=fakectx, fsconfig=get_config(builtinonly=True))
+    @needs_cookie(magic_cookie='gemini_api_authorization',
+                  context=fakectx, fsconfig=get_cookietest_config())
     def thefunction():
         return "OK"
 
@@ -79,8 +98,8 @@ def test_cookie_access_badcookie():
 
     fakectx = FakeCtx(cookies={'bad_cookie_name': 'magic_value'})
 
-    @needs_cookie(magic_cookies=[('good_cookie_name', 'magic_value')],
-                  context=fakectx, fsconfig=get_config(builtinonly=True))
+    @needs_cookie(magic_cookie='gemini_api_authorization',
+                  context=fakectx, fsconfig=get_cookietest_config())
     def thefunction():
         return "OK"
 
@@ -193,7 +212,7 @@ def test_cookie_bypass_true():
 
     fakectx = FakeCtx()
 
-    @needs_cookie(context=fakectx, fsconfig=fsc)
+    @needs_cookie(magic_cookie='whatevah', context=fakectx, fsconfig=fsc)
     def thefunction():
         return "OK"
 

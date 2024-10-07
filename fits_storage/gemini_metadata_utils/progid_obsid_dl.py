@@ -39,8 +39,8 @@ pid_caleng_cre = re.compile(pid_caleng)
 pid_sci_orig = r'G[NS]-(?P<sem3>20\d\d[AB])-(?P<typ1>Q|C|SV|QS|DD|LP|FT|DS)-\d+'
 
 # New 2024 GPP format is: G-YYYYS-NNNN-T
-# Where T is a single letter from [CDFLQSV]
-pid_sci_new = r'G-(?P<sem4>20\d\d[AB])-\d+-(?P<typ2>[CDFLQSV])'
+# Where T is a single letter from [CDFLQSVP]
+pid_sci_new = r'G-(?P<sem4>20\d\d[AB])-\d+-(?P<typ2>[CDFLQSVP])'
 
 # This should match any valid program science program ID
 pid_sci = "%s|%s" % (pid_sci_orig, pid_sci_new)
@@ -205,6 +205,7 @@ class GeminiProgram:
     * is_lp: Boolean indicating if this is an LP (Large Program) program
     * is_ft: Boolean indicating if this is an FT (Fast Turnaround) program
     * is_ds: Boolean indicating if this is an DS (Demo Science) program
+    * is_pw: Boolean indicating if this is a P (Poor Weather) program
 
     This could be easily expanded to extract semester, hemisphere, program
     number etc. if required.
@@ -235,6 +236,7 @@ class GeminiProgram:
         self.is_lp = None
         self.is_ft = None
         self.is_ds = None
+        self.is_pw = None
 
         m = re.fullmatch(pid_cre, program_id)
         if m:
@@ -263,6 +265,7 @@ class GeminiProgram:
             self.is_ds = typ in ['S', 'DS']
             self.is_dd = typ in ['D', 'DD']
             self.is_ll = typ in ['L', 'LP']
+            self.is_pw = typ == 'P'
 
             sem = None
             for i in ['sem1', 'sem2', 'sem3', 'sem4']:

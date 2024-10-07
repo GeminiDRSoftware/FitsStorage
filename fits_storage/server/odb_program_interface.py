@@ -306,7 +306,7 @@ def fetch_odb_xml(odb, semester, active=False, notifypi=None, logger=None):
         logger.info("Fetching %s XML program info for all semesters" % odb)
         url += "?programSemester=20*"
     else:
-        logger.info("Fetching %s program info for semester %s", (odb, semester))
+        logger.info("Fetching %s program info for semester %s", odb, semester)
         url += "?programSemester=%s" % semester
 
     if active:
@@ -331,4 +331,3 @@ def fetch_odb_xml(odb, semester, active=False, notifypi=None, logger=None):
         return None
 
     return xml
-

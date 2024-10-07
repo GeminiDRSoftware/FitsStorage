@@ -8,6 +8,7 @@ import traceback
 import datetime
 import time
 import shutil
+import socket
 
 import astrodata
 from fits_storage.fits_verify import fitsverify
@@ -15,7 +16,7 @@ from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.queues.queue import IngestQueue
 from fits_storage.logger import DummyLogger
 
-from fits_storage.gemini_metadata_utils import get_fake_ut, gemini_date
+from fits_storage.gemini_metadata_utils import gemini_date, CHILE_OFFSET
 from fits_storage.db import session_scope
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.hashes import md5sum
@@ -33,6 +34,13 @@ global _yesterday_str
 
 _today_str = gemini_date('today')
 _yesterday_str = gemini_date('yesterday')
+
+
+def get_fake_ut():
+    ut = datetime.datetime.utcnow()
+    if 'cpo' in socket.gethostname():
+        ut -= CHILE_OFFSET
+    return ut.date().strftime('%Y%m%d')
 
 
 class MD5Cache:

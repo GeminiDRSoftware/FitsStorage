@@ -116,24 +116,6 @@ class StreamingObject(object):
         self.flush()
 
 
-class JsonStreamingObject(object):
-    """
-    Helper file-like object that implements an unbuffered output, streaming
-    JSON objects as they're written.
-    """
-    def __init__(self, callback):
-        self._callback = callback
-
-    def write(self, data):
-        self._callback((json.dumps(data) + '\n').encode('utf-8'))
-
-    def flush(self):
-        pass
-
-    def close(self):
-        pass
-
-
 class JsonArrayStreamingObject(object):
     """
     Helper file-like object that implements an unbuffered output, streaming

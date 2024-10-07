@@ -34,6 +34,13 @@ from fits_storage_tests.code_tests.test_user_accesscontrol import *
 from fits_storage_tests.code_tests.test_provenance_history import *
 from fits_storage_tests.code_tests.test_gmu_telins import *
 from fits_storage_tests.code_tests.test_gmu_progidetc import *
+from fits_storage_tests.code_tests.test_gmu_datestimes import *
 from fits_storage_tests.code_tests.test_odb_interface import *
 from fits_storage_tests.code_tests.test_orm_calcache import *
 from fits_storage_tests.code_tests.test_server_logorms import *
+from fits_storage_tests.code_tests.test_publications import *
+from fits_storage_tests.code_tests.test_pubdb_interface import *
+from fits_storage_tests.code_tests.test_selection import *
+from fits_storage_tests.code_tests.test_ipprefix import *
+from fits_storage_tests.code_tests.test_robot_defense import *
+from fits_storage_tests.code_tests.test_usagelog_analysis import *

@@ -42,7 +42,7 @@ from fits_storage.web.update_headers import update_headers
 
 from fits_storage.web.qastuff import qareport, qametrics, qaforgui
 
-from fits_storage.web.notification import notification, import_odb_notifications
+from fits_storage.web.notification import notification
 
 from fits_storage.web.calmgr import xmlcalmgr, jsoncalmgr
 from fits_storage.web.calibrations import calibrations
@@ -64,6 +64,8 @@ from fits_storage.web.ingest_programs import ingest_programs
 
 from fits_storage.web.miscfiles import miscfiles
 
+from fits_storage.web.standards import standardobs
+
 from .routing import SequenceConverter, SelectionConverter
 
 from fits_storage.config import get_config
@@ -71,7 +73,7 @@ fsc = get_config()
 
 url_map = Map([
     # Queries to the root should redirect to a sensible page
-    Rule('/', redirect_to=('/searchform' if fsc.is_archive else '/static/usage.html')),
+    Rule('/', redirect_to=('/searchform')),
 
     # Debugging and testing
     Rule('/debug', debugmessage),
@@ -172,15 +174,16 @@ url_map = Map([
 
     # Notifications
     Rule('/notification', notification),
-    Rule('/import_odb_notifications', import_odb_notifications, methods=['POST']),
-
 
     Rule('/update_headers', update_headers, methods=['POST']),
-    # Rule('/ingest_files', ingest_files, methods=['POST']),
     Rule('/ingest_programs', ingest_programs, methods=['POST']),
 
-    # Publication handling
-    # Rule('/ingest_publications', ingest_publications, methods=['POST']),
+    # Publication handling.
+    # It's not obvious what the uses for these are or who they were intended
+    # for. They get basically no hits on archive. Deprecating them now and will
+    # git rm the template files and code behind these, but will leave these
+    # entries commented here in case anyone comes looking soon. Remove these
+    # at next release if no one has asked for them back - PH 2024-06-27
     # Rule('/publication/ads/<bibcode>', publication_ads),
     # Rule('/list_publications', list_publications),
 
@@ -190,7 +193,7 @@ url_map = Map([
     # Rule('/miscfiles/validate_add', miscfiles.validate,
     #      methods=['POST']),
     #
-    # Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
+    Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
     Rule('/upload_file/<filename>', upload_file, methods=['POST']),   # The generic upload_file server
     Rule('/upload_processed_cal/<filename>',                        # The processed_cal upload server
         partial(upload_file, processed_cal=True), methods=['POST']),

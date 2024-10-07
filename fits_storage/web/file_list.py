@@ -7,13 +7,15 @@ from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.file import File
 from fits_storage.db.selection import queryselection, openquery
-from fits_storage.db.list_headers import list_headers
-from .standards import get_standard_obs
+from fits_storage.db.list_headers import list_headers, list_obslogs
+from fits_storage.web.standards import get_standard_obs, list_phot_std_obs
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
 
 from fits_storage.server.access_control_utils import canhave_coords
 
 from fits_storage.server.wsgi.context import get_context
+
+from fits_storage.config import get_config
 
 from . import templating
 
@@ -44,7 +46,7 @@ def xmlfilelist(selection):
         )
 
 
-def diskfile_dicts(headers, return_header=False, check_ingest_queue=False):
+def diskfile_dicts(headers, return_header=False):
     for header in headers:
         thedict = {}
         thedict['name'] = _for_json(header.diskfile.file.name)
@@ -52,19 +54,18 @@ def diskfile_dicts(headers, return_header=False, check_ingest_queue=False):
             thedict[field] = _for_json(getattr(header.diskfile, field))
         thedict['size'] = thedict['file_size']
         thedict['md5'] = thedict['file_md5']
-        pending_ingest = False
-        if check_ingest_queue:
-            ctx = get_context()
-            fname = header.diskfile.file.name
-            if fname is not None:
-                if fname.endswith('.bz2'):
-                    fname = fname[:-4]
-                fname = f"{fname}%"
-                query = ctx.session.query(IngestQueueEntry)\
-                    .filter(IngestQueueEntry.filename.like(fname))
-                if query.count() > 0:
-                    pending_ingest = True
-        thedict['pending_ingest'] = pending_ingest
+        # Check for presence on ingest queue
+        thedict['pending_ingest'] = None
+        ctx = get_context()
+        fname = header.diskfile.file.name
+        if fname is not None:
+            if fname.endswith('.bz2'):
+                fname = fname[:-4]
+            fname = f"{fname}%"
+            query = ctx.session.query(IngestQueueEntry)\
+                .filter(IngestQueueEntry.filename.like(fname))
+            thedict['pending_ingest'] = query.count() > 0
+
         if not return_header:
             yield thedict
         else:
@@ -73,25 +74,35 @@ def diskfile_dicts(headers, return_header=False, check_ingest_queue=False):
 
 def jsonfilelist(selection, fields=None):
     """
-    This generates a JSON list of the files that met the selection
-    """
+    This generates a JSON list of the files that met the selection.
 
+    This contains a special case to handle queries for obslogs by filename.
+    We query jsonfilelist in the exporter to determine if the file is already
+    present at the remote server. Without this special case, this doesn't work
+    for obslogs as by default it searches on header, and obslogs don't have
+    header entries
+    """
+    fsc = get_config()
     ctx = get_context()
     req = ctx.req
 
     orderby = ['filename_asc']
-    headers = list_headers(selection, orderby)
-    check_ingest_queue = False
-    if 'pending_ingest' in req.env.qs:
-        check_ingest_queue = True
-    thelist = list(diskfile_dicts(headers,
-                                  check_ingest_queue=check_ingest_queue))
+    fn = selection.get('filename')
+    if fsc.is_server and fn and 'obslog' in fn:
+        # This is a bit ugly, but it turns out that obslog instances function
+        # equivalently to header instances as far as this code is concerned.
+        headers = list_obslogs(selection, orderby)
+    else:
+        headers = list_headers(selection, orderby)
+
+    thelist = list(diskfile_dicts(headers))
 
     if fields is None:
         get_context().resp.send_json(thelist, indent=4)
     else:
         get_context().resp.send_json([dict((k, d[k]) for k in fields)
                                       for d in thelist], indent=4)
+
 
 
 header_fields = ('program_id', 'engineering', 'science_verification',
@@ -146,7 +157,12 @@ def jsonsummary(selection, orderby=None):
         if not chc:
             for field in proprietary_fields:
                 thedict[field] = None
-
+        # Add phot standard info if it has them
+        if header.phot_standard:
+            photstds = []
+            for ps in list_phot_std_obs(header.id):
+                photstds.append(ps.as_dict())
+            thedict['phot_standards'] = photstds
         thelist.append(thedict)
 
     if openquery(selection) and thelist:

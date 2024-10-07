@@ -65,10 +65,19 @@ class WrapperObject(object):
     def process_cals(self):
         self.cals['arcs'] = self.arcs()
         self.cals['darks'] = self.darks()
-        self.cals['biases'] = self.common('bias', self.c.bias)
+        try:
+            self.cals['biases'] = self.common('bias', self.c.bias)
+        except:
+            self.cals['biases'] =WrappedCals(applicable=False)
         self.cals['flats'] = self.flats()
-        self.cals['pinhole'] = self.common('pinhole', self.c.pinhole)
-        self.cals['ronchi_masks'] = self.common('ronchi_mask', self.c.ronchi_mask)
+        try:
+            self.cals['pinhole_masks'] = self.common('pinhole', self.c.pinhole)
+        except:
+            self.cals['pinhole_masks'] = WrappedCals(applicable=False)
+        try:
+            self.cals['ronchi_masks'] = self.common('ronchi_mask', self.c.ronchi_mask)
+        except:
+            self.cals['ronchi_masks'] = WrappedCals(applicable=False)
         if self._warning:
             self._counter['warnings'] += 1
         if self._missing:
@@ -101,7 +110,10 @@ class WrapperObject(object):
             wrap = WrappedCals(applicable=True)
 
             # Look for an arc. Note no longer any requirement to support "sameprog" with the new archive
-            arcs = self.c.arc()
+            try:
+                arcs = self.c.arc()
+            except:
+                return WrappedCals(applicable=False)
             if arcs:
                 for arc in arcs:
                     r = Result(name  = arc.diskfile.file.name,
@@ -150,7 +162,10 @@ class WrapperObject(object):
         if self.c.header.instrument.startswith('GMOS') and "'IMAGE'" in self.c.header.types:
             return WrappedCals(applicable=False)
         else:
-            return self.common('flat', self.c.flat)
+            try:
+                return self.common('flat', self.c.flat)
+            except:
+                return WrappedCals(applicable=False)
 
     def darks(self):
         skip = False
@@ -163,7 +178,11 @@ class WrapperObject(object):
             self._requires = True
             wrap = WrappedCals(applicable=True)
 
-            darks = self.c.dark()
+            try:
+                darks = self.c.dark()
+            except:
+                return WrappedCals(applicable=False)
+
             if darks:
                 for dark in darks:
                     r = Result(name  = dark.diskfile.file.name,
@@ -197,7 +216,11 @@ class WrapperObject(object):
             self._requires = True
             wrap = WrappedCals(applicable=True)
 
-            cals = queryfn()
+            try:
+                cals = queryfn()
+            except:
+                return WrappedCals(applicable=False)
+
             if cals:
                 for cal in cals:
                     r = Result(name  = cal.diskfile.file.name,

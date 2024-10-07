@@ -6,8 +6,7 @@ from sqlalchemy import desc, or_
 import datetime
 import json
 
-from fits_storage.gemini_metadata_utils import gemini_date, get_date_offset, \
-    gemini_daterange
+from fits_storage.gemini_metadata_utils import gemini_date, gemini_daterange
 
 from fits_storage.server.orm.qastuff import QAreport, QAmetricSB, QAmetricIQ, \
     QAmetricZP, QAmetricPE, evaluate_bg_from_metrics, evaluate_cc_from_metrics
@@ -31,7 +30,7 @@ def qareport():
     clientdata = ctx.raw_data
     if clientdata:
         clientdata = clientdata.decode('utf-8', errors='ignore')
-        #ctx.log("QAreport clientdata: %s" % clientdata)
+        # ctx.log("QAreport clientdata: %s" % clientdata)
 
     # We make here some reasonable assumptions about the input format
     if clientdata.startswith('['):
@@ -40,13 +39,14 @@ def qareport():
         ctx.resp.status = Return.HTTP_BAD_REQUEST
         return
 
-    #ctx.log("thelist: %s" % thelist)
+    # ctx.log("thelist: %s" % thelist)
 
     qareport_ingest(thelist, submit_host=ctx.env.remote_host,
                     submit_time=datetime.datetime.now())
 
 
-def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now()):
+def qareport_ingest(thelist, submit_host=None,
+                    submit_time=datetime.datetime.utcnow()):
     """
     This function takes a list of qareport dictionaries and inserts into the 
     database
@@ -60,12 +60,14 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
         session.add(qareport)
         session.commit()
 
+
 def parse_json(clientdata):
     """
     This function takes a string containg a json document containing a list of 
     qareports and makes it into a list of dictionaries.
     """
     return json.loads(clientdata)
+
 
 @templating.templated("reports/qametrics.txt", content_type='text/plain',
                       with_generator=True)
@@ -76,7 +78,8 @@ def qametrics(metrics):
 
     def yield_metrics(cls):
         session = get_context().session
-        query = session.query(cls).select_from(cls, QAreport).filter(cls.qareport_id == QAreport.id)
+        query = session.query(cls).select_from(cls, QAreport)\
+            .filter(cls.qareport_id == QAreport.id)
         for qa in query:
             hquery = session.query(Header).select_from(Header, DiskFile)\
                                 .filter(Header.diskfile_id == DiskFile.id)\
@@ -106,11 +109,12 @@ def qametrics(metrics):
 
     return ret
 
+
 def qaforgui(date):
     """
-    This function outputs a JSON dump, aimed at feeding the QA metric GUI display
-    You must pass a datestamp. It will only return results for datafiles from 
-    that datestamp to 3 days later.
+    This function outputs a JSON dump, aimed at feeding the QA metric GUI
+    display You must pass a datestamp. It will only return results for
+    datafiles from that datestamp to 3 days later.
     """
 
     ctx = get_context()
@@ -118,19 +122,16 @@ def qaforgui(date):
 
     try:
         if '-' in date:
-            datestamp, enddatestamp = gemini_daterange(date,
-                                                       offset=get_date_offset(),
-                                                       as_datetime=True)
-            assert enddatestamp > datestamp
+            datestamp, enddatestamp = gemini_daterange(date, as_dates=True)
         else:
-            datestamp = gemini_date(date, offset=get_date_offset(),
-                                    as_datetime=True)
+            datestamp = gemini_date(date, as_date=True)
             # Default 3 days worth for the gui;
             # stop the return getting huge over time
             window = datetime.timedelta(days=3)
             enddatestamp = datestamp+window
-    except (AssertionError, TypeError, ValueError):
-        resp.client_error(Return.HTTP_NOT_ACCEPTABLE, "Error: Invalid or null datestamp.")
+    except (TypeError, ValueError):
+        resp.client_error(Return.HTTP_NOT_ACCEPTABLE,
+                          "Error: Invalid or null datestamp.")
 
     session = ctx.session
     resp.content_type = "application/json"
@@ -151,12 +152,13 @@ def qaforgui(date):
                     .filter(Header.ut_datetime < enddatestamp)
 
     datalabel_query = mquery(QAmetricIQ)\
-                        .union(mquery(QAmetricZP))\
-                        .union(mquery(QAmetricSB))\
-                        .distinct()
+        .union(mquery(QAmetricZP))\
+        .union(mquery(QAmetricSB))\
+        .distinct()
 
     # Now loop through the datalabels.
-    # For each datalabel, get the most recent QA measurement of each type. Only ones reported after the datestamp and before enddatestamp
+    # For each datalabel, get the most recent QA measurement of each type.
+    # Only ones reported after the datestamp and before enddatestamp
     # Add the QA measurements to a list that we then dump out with json
     list_for_json = []
     # Comes back as a 1 element list, capture as such
@@ -165,11 +167,12 @@ def qaforgui(date):
         iq, cc, bg = {}, {}, {}
         submit_time_kludge = None
 
-        # First try and find the header entry for this datalabel, and populate what comes from that
+        # First try and find the header entry for this datalabel, and populate
+        # what comes from that
         query = session.query(Header).select_from(Header, DiskFile)\
-                    .filter(Header.diskfile_id == DiskFile.id)\
-                    .filter(DiskFile.canonical == True)\
-                    .filter(Header.data_label == datalabel)
+            .filter(Header.diskfile_id == DiskFile.id)\
+            .filter(DiskFile.canonical == True)\
+            .filter(Header.data_label == datalabel)
         header = query.first()
         # We can only populate the header info if it is in the header table
         # These items are used later in the code if available from the header,
@@ -196,18 +199,23 @@ def qaforgui(date):
                 'raw_filename': header.diskfile.file.name,
                 'ut_time': str(header.ut_datetime),
                 'local_time': str(header.local_time),
-                'wavelength': float(header.central_wavelength) if header.central_wavelength else None,
+                'wavelength':
+                    float(header.central_wavelength)
+                    if header.central_wavelength else None,
                 'waveband': header.wavelength_band,
                 'airmass': airmass,
                 'filter': header.filter_name,
                 'instrument': header.instrument,
                 'object': header.object,
-                # Parse the types string back into a list using a locked-down eval
-                'types': eval(header.types, {"__builtins__":None}, {})
+                # Parse the types string back into a list using a locked-down
+                # eval
+                'types': eval(header.types, {"__builtins__": None}, {})
                 })
 
-        if (datestamp is None) or (header and (datestamp < header.ut_datetime < enddatestamp)):
-            # Look for IQ metrics to report. Going to need to do the same merging trick here
+        if (datestamp is None) or \
+                (header and (datestamp <= header.ut_datetime.date() <= enddatestamp)):
+            # Look for IQ metrics to report. Going to need to do the same
+            # merging trick here
             query = session.query(QAmetricIQ).select_from(QAmetricIQ, QAreport)\
                         .filter(QAmetricIQ.qareport_id == QAreport.id)\
                         .filter(QAmetricIQ.datalabel == datalabel)\
@@ -225,7 +233,7 @@ def qaforgui(date):
 
             # Look for CC metrics to report. The DB has the different detectors
             # in different entries, have to do some merging.
-            # Find the qareport id of the most recent zp report for this datalabel
+            # Find the qareport id of the most recent zp report for datalabel
             query = session.query(QAreport).select_from(QAmetricZP, QAreport)\
                         .filter(QAmetricZP.qareport_id == QAreport.id)\
                         .filter(QAmetricZP.datalabel == datalabel)\
@@ -243,10 +251,9 @@ def qaforgui(date):
 
                 submit_time_kludge = qarep.submit_time
 
-
             # Look for BG metrics to report. The DB has the different detectors
             # in different entries, have to do some merging.
-            # Find the qareport id of the most recent zp report for this datalabel
+            # Find the qareport id of the most recent zp report for datalabel
             query = session.query(QAreport).select_from(QAmetricSB, QAreport)\
                         .filter(QAmetricSB.qareport_id == QAreport.id)\
                         .filter(QAmetricSB.datalabel == datalabel)\
@@ -265,7 +272,7 @@ def qaforgui(date):
 
                 submit_time_kludge = qarep.submit_time
 
-            # Now, put the stuff we built into a dict that we can push out to json
+            # put the stuff we built into a dict that we can push out to json
             dct = {}
             if metadata:
                 dct['metadata'] = metadata

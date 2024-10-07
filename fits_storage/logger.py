@@ -32,9 +32,6 @@ logging.getLogger('futures').setLevel(logging.CRITICAL)
 logging.getLogger('s3transfer').setLevel(logging.CRITICAL)
 logging.getLogger('connectionpool').setLevel(logging.CRITICAL)
 
-
-
-
 # Create log formatter
 formatter = logging.Formatter("%(asctime)s %(process)d:%(module)s:%(lineno)d "
                               "%(levelname)s: %(message)s")
@@ -44,7 +41,7 @@ formatter = logging.Formatter("%(asctime)s %(process)d:%(module)s:%(lineno)d "
 logname = "%s.log" % (os.path.basename(sys.argv[0]))
 logfile = os.path.join(fsc.log_dir, logname)
 filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount=10,
-                                                   maxBytes=10000000)
+                                                   maxBytes=100000000)
 streamhandler = logging.StreamHandler()
 emailsubject = "Messages from FitsStorage on %s" % os.uname()[1]
 smtphandler = logging.handlers.SMTPHandler(mailhost=fsc.smtp_server,
@@ -52,7 +49,9 @@ smtphandler = logging.handlers.SMTPHandler(mailhost=fsc.smtp_server,
                                            toaddrs=[fsc.email_errors_to],
                                            subject=emailsubject)
 
-# The smtp handler should only do CRITICAL or worse
+# The smtp handler should only do CRITICAL or worse.
+# TODO: Go through code and identify ERROR messages that should be CRITICAL.
+# Avoid logging CRITICAL inside loops that could rapidly loop.
 smtphandler.setLevel(logging.CRITICAL)
 
 # Add formatter to handlers

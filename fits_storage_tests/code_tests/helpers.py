@@ -5,12 +5,10 @@ import os
 import shutil
 import requests
 
-from fits_storage.core.orm.file import File
-from fits_storage.core.orm.diskfile import DiskFile
-
 from fits_storage.db import sessionfactory
 
 from fits_storage.config import get_config
+
 
 def fetch_file(filename, dest_dir):
     """
@@ -60,6 +58,9 @@ def make_diskfile(filename, tmpdir):
     -------
     a diskfile object for the file.
     """
+    from fits_storage.core.orm.file import File
+    from fits_storage.core.orm.diskfile import DiskFile
+
     storage_root = os.path.join(tmpdir, "storage_root")
     z_staging_dir = os.path.join(tmpdir, "z_staging")
     s3_staging_dir = os.path.join(tmpdir, "s3_staging")
@@ -77,6 +78,7 @@ def make_diskfile(filename, tmpdir):
                         s3_staging_dir=s3_staging_dir)
 
     return diskfile
+
 
 def make_empty_testing_db_env(tmpdir):
     """
@@ -117,9 +119,9 @@ def make_empty_testing_db_env(tmpdir):
         upload_staging_dir = {upload_staging_dir}
         database_url = sqlite:///{dbfile}
         is_server = True
-        export_destinations =
+        export_destinations = []
         """
-    fsc = get_config(configstring=configstring, builtinonly=True, reload=True)
+    get_config(configstring=configstring, builtinonly=True, reload=True)
 
     # Note - must do this import *after* the call to get_config() above this
     # import references the fsc at import time.
@@ -128,6 +130,35 @@ def make_empty_testing_db_env(tmpdir):
     session = sessionfactory(reload=True)
     drop_tables(session)
     create_tables(session)
+
+def make_empty_pg_testing_db():
+    """
+    Make a testing database environment consisting an empty postgres database
+    ready for use. Doesn't currentlyset up testing storage root etc, but that
+    could be easily added cribbed from the above.
+
+    There needs to be a postgres server running on the local machine, with
+    a fitsdata_testing database, that will be trashed by this code.
+    """
+
+    configstring = f"""
+        [DEFAULT]
+        database_url = postgresql:///fitsdata_testing
+        is_server = True
+        export_destinations = []
+        """
+    get_config(configstring=configstring, builtinonly=True, reload=True)
+
+    # Note - must do this import *after* the call to get_config() above this
+    # import references the fsc at import time.
+    from fits_storage.db.createtables import create_tables, drop_tables
+
+    session = sessionfactory(reload=True)
+    drop_tables(session)
+    create_tables(session)
+
+    return session
+
 
 def get_test_config():
     """
@@ -139,4 +170,4 @@ def get_test_config():
             [DEFAULT]
             is_server = True
             """
-    get_config(configstring=configstring, builtinonly=True, reload=True)
+    return get_config(configstring=configstring, builtinonly=True, reload=True)
