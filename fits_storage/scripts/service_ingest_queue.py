@@ -153,6 +153,7 @@ try:
                                          "and logging exception for reference.",
                                          exc_info=True)
                             try:
+                                session.rollback()
                                 session.delete(iqe)
                                 session.commit()
                             except Exception:
