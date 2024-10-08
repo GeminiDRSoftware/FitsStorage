@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey, Numeric
 from sqlalchemy import Integer, Text, Boolean, Enum
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
 from fits_storage.core.orm.header import Header
@@ -48,7 +48,7 @@ class Ghost(Base):
     id = Column(Integer, primary_key=True)
     header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
                        index=True)
-    header = relation(Header, order_by=id)
+    header = relationship(Header, order_by=id)
     arm = Column(ARMS_ENUM, index=True, nullable=False)
     want_before_arc = Column(Boolean)
 

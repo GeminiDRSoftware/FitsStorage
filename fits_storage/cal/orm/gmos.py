@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean, Enum
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
 from fits_storage.core.orm.header import Header
@@ -35,7 +35,7 @@ class Gmos(Base):
     id = Column(Integer, primary_key=True)
     header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
                        index=True)
-    header = relation(Header, order_by=id)
+    header = relationship(Header, order_by=id)
     disperser = Column(Text, index=True)
     filter_name = Column(Text, index=True)
     detector_x_bin = Column(Integer, index=True)

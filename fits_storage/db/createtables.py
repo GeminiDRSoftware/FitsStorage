@@ -2,6 +2,7 @@
 This module provides various utility functions for create_tables.py
 in the Fits Storage System.
 """
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 import fits_storage.db as db
@@ -203,20 +204,22 @@ def create_tables(session: Session):
     # This is postgres specific and referencing these column in sqlite mode
     # isn't going to work.
     if not fsc.using_sqlite:
-        db._saved_engine.execute("ALTER TABLE footprint ADD IF NOT EXISTS area polygon;")
-        db._saved_engine.execute("ALTER TABLE photstandard ADD IF NOT EXISTS coords point;")
+            session.execute(text(("ALTER TABLE footprint ADD IF NOT EXISTS area polygon;")))
+            session.execute(text("ALTER TABLE photstandard ADD IF NOT EXISTS coords point;"))
 
-    # Grant access to server tables for the unprivileged user that runs the
-    # wsgi code for the web server (ie 'fitsweb')
-    if fsc.is_server and not fsc.using_sqlite:
-        grant = get_fitsweb_granthelper()
-        db._saved_engine.execute(f"GRANT SELECT ON {grant.select_string} TO fitsweb;")
-        db._saved_engine.execute(f"GRANT INSERT ON {grant.insert_string} TO fitsweb;")
-        db._saved_engine.execute(f"GRANT UPDATE ON {grant.update_string} TO fitsweb;")
-        db._saved_engine.execute(f"GRANT DELETE ON {grant.delete_string} TO fitsweb;")
+            # Grant access to server tables for the unprivileged user that runs the
+            # wsgi code for the web server (ie 'fitsweb')
+            if fsc.is_server:
+                grant = get_fitsweb_granthelper()
+                session.execute(text(f"GRANT SELECT ON {grant.select_string} TO fitsweb;"))
+                session.execute(text(f"GRANT INSERT ON {grant.insert_string} TO fitsweb;"))
+                session.execute(text(f"GRANT UPDATE ON {grant.update_string} TO fitsweb;"))
+                session.execute(text(f"GRANT DELETE ON {grant.delete_string} TO fitsweb;"))
 
-    if fsc.is_archive and not fsc.using_sqlite:
-        db._saved_engine.execute("GRANT SELECT ON calcache TO fitsweb;")
+            if fsc.is_archive:
+                session.execute(text("GRANT SELECT ON calcache TO fitsweb;"))
+
+            session.commit()
 
 
 def drop_tables(session: Session):

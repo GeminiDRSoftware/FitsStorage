@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Enum
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
 from fits_storage.core.orm.header import Header
@@ -36,7 +36,7 @@ class Nici(Base):
     id = Column(Integer, primary_key=True)
     header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
                        index=True)
-    header = relation(Header, order_by=id)
+    header = relationship(Header, order_by=id)
     filter_name = Column(Text, index=True)
     focal_plane_mask = Column(FOCAL_PLANE_MASK_ENUM, index=True)
     disperser = Column(DISPERSER_ENUM, index=True)

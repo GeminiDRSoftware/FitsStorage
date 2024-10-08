@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
 from .usagelog import UsageLog
@@ -14,7 +14,7 @@ class QueryLog(Base):
 
     id = Column(Integer, primary_key=True)
     usagelog_id = Column(Integer, ForeignKey(UsageLog.id), nullable=False, index=True)
-    usagelog = relation(UsageLog, order_by=id)
+    usagelog = relationship(UsageLog, order_by=id)
 
     summarytype = Column(Text, index=True)
     selection = Column(Text)
