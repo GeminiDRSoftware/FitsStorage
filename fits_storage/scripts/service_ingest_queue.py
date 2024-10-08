@@ -141,16 +141,25 @@ try:
                         try:
                             iqe.inprogress = False
                             session.commit()
-                        except (IntegrityError, OperationalError):
-                            # Possible race condition here if same file
-                            # has been added to queue with inprogress=False
-                            # while we were doing this, preventing us
-                            # setting this one back to false. Ideally we
-                            # just delete the current entry at this point.
-                            logger.error("Possible Deferred file race "
+                        except IntegrityError:
+                            # Race condition here if this same file has been
+                            # added to the queue with inprogress=False while
+                            # we were doing this, preventing us setting this
+                            # one back to false. Ideally we just log a message
+                            # and delete the current entry at this point.
+                            logger.error("Likely Deferred file race "
                                          "condition in service_ingest_"
-                                         "queue. Update code to handle "
-                                         "this", exc_info=True)
+                                         "queue. Deleting current queue entry"
+                                         "and logging exception for reference.",
+                                         exc_info=True)
+                            try:
+                                session.rollback()
+                                session.delete(iqe)
+                                session.commit()
+                            except Exception:
+                                logger.error("Exception deleting race "
+                                             "condition deferred queue entry",
+                                             exc_info=True)
                         except Exception:
                             logger.error("This should not happen - Need "
                                          "to handle this exception in "
@@ -191,8 +200,8 @@ try:
                     try:
                         iqe.failed = True
                         iqe.inprogress = False
-                        message = "Exception in service_ingest_queue " \
-                                  "while processing {iqe.filename}"
+                        message = f"Exception in service_ingest_queue " \
+                                  f"while processing {iqe.filename}"
                         iqe.error = message
                         session.commit()
                     except:
