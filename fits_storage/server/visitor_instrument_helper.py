@@ -98,9 +98,13 @@ def fix_zorro_or_alopeke(fits, instr, telescope):
             dt = datetime.strptime(dateobs, '%Y-%m-%d')
             if 'CAL' in pheader['OBSID']:
                 pheader['RELEASE'] = dt.strftime('%Y-%m-%d')
-            elif '-FT-' in pheader['OBSID']:
+            elif '-FT-' in pheader['OBSID'] or '-DD-' in pheader['OBSID']:
                 pheader['RELEASE'] = (dt + timedelta(days=183)).\
                     strftime('%Y-%m-%d')
+            elif pheader['OBSID'] in ['GN-2024B-DD-101', 'GS-2024B-DD-101']:
+                # These Steve Howell DD programs should be immediately public
+                # per email 2024-01-09
+                pheader['RELEASE'] = dt.strftime('%Y-%m-%d')
             else:
                 pheader['RELEASE'] = (dt + timedelta(days=365)).\
                     strftime('%Y-%m-%d')
