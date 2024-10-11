@@ -112,6 +112,13 @@ class FitsEditor(object):
                            f'filename:{self.diskfile.filename}). '
             self.logger.error(self.message)
 
+        if self.diskfile is None:
+            self.logger.warning("FitsEditor could not find diskfile")
+        else:
+            self.logger.debug("FitsEditor found diskfile id %d:%s/%s",
+                              self.diskfile.id, self.diskfile.path,
+                              self.diskfile.filename)
+
     def _get_localfile(self):
         fsc = get_config()
 
@@ -155,6 +162,9 @@ class FitsEditor(object):
             self.error = True
             self.message = "Failed to create local uncompressed cache file"
             self.logger.error(self.message)
+        else:
+            self.logger.debug("FitsEditor editing local file: %s",
+                              self.localfile)
 
     def _get_hdulist(self):
         if self.error is True:
@@ -169,6 +179,8 @@ class FitsEditor(object):
             self.error = True
             self.message = 'Error opening file with astropy.io.fits. '
             self.logger.error(self.message, exc_info=True)
+
+        self.logger.debug("FitsEditor hdulist: %s", self.hdulist)
 
     def close(self):
         fsc = get_config()
@@ -188,6 +200,8 @@ class FitsEditor(object):
                 # Write the hdulist to the compressed file.
                 # Note, in astropy 6.x, io.fits can write the bz2 file directly.
                 # Note this is not the S3 case
+                self.logger.info("FitsEditor writing bz2 compressed file: %s",
+                                 self.diskfile.fullpath)
                 with bz2.open(self.diskfile.fullpath, mode='wb') as f:
                     self.hdulist.writeto(f)
 
@@ -199,6 +213,7 @@ class FitsEditor(object):
             # If we're not in compressed mode, this is the actual file update
             # with the changes we made going directly to the fits file.
             # TODO - check if this is still the case in astropy 6.x
+            self.logger.debug("Closing hdulist: %s", self.hdulist.filename())
             self.hdulist.close()
 
         # If we were using an uncompressed_cache_file, delete it now. Note that
