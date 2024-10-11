@@ -132,8 +132,12 @@ def ingest_upload(args, session, logger):
     iq = IngestQueue(session, logger)
     iqe = iq.add(filename, path, no_defer=True)
 
-    fileuploadlog.ingestqueue_id = iqe.id
-    session.commit()
+    # iq.add returns None if the file is already on the queue
+    if iqe is not None:
+        fileuploadlog.ingestqueue_id = iqe.id
+        session.commit()
+    else:
+        logger.info("File is already on queue, not added")
     return True
 
 
