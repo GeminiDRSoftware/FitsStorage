@@ -1,3 +1,4 @@
+import os
 import os.path
 
 import astrodata
@@ -5,6 +6,7 @@ import astrodata
 from fits_storage_tests.code_tests.helpers import get_test_config, make_diskfile
 
 from fits_storage.server.fitseditor import FitsEditor
+from fits_storage.logger import DummyLogger
 
 def get_from_file(fpfn, headers=[]):
     get_test_config()
@@ -39,7 +41,8 @@ def test_fitseditor(tmp_path):
     assert ff['rawwv'] == 20
     assert ff['release'] == '2020-07-27'
 
-    fe = FitsEditor(filename='N20200127S0023.fits', do_setup=False)
+    fe = FitsEditor(filename='N20200127S0023.fits', do_setup=False,
+                    logger=DummyLogger(print=True))
     fe.diskfile = diskfile
     fe._get_localfile()
     fe._get_hdulist()
@@ -69,6 +72,10 @@ def test_fitseditor(tmp_path):
 
     # The uncompressed cache file should have been deleted by fe.close()
     assert not os.path.isfile(ucf)
+
+    # There should be nothing in storage_root other than the diskfile
+    ld = os.listdir(diskfile.storage_root)
+    assert ld == ['N20200127S0023.fits.bz2']
 
     new_lastmod = diskfile.get_file_lastmod()
     assert new_lastmod > orig_lastmod
