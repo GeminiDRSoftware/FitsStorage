@@ -1,3 +1,5 @@
+import os.path
+
 import astrodata
 
 from fits_storage_tests.code_tests.helpers import get_test_config, make_diskfile
@@ -42,6 +44,11 @@ def test_fitseditor(tmp_path):
     fe._get_localfile()
     fe._get_hdulist()
 
+    # Since the file given is a bz2 file, there should be an uncompressed
+    # cache file at this point. Remember the name for later reference
+    ucf = diskfile.uncompressed_cache_file
+    assert os.path.isfile(ucf)
+
     assert fe.error is False
     # Update some headers
     assert fe.set_qa_state('Pass') is True
@@ -59,6 +66,9 @@ def test_fitseditor(tmp_path):
 
     # Close (and write) the file
     fe.close()
+
+    # The uncompressed cache file should have been deleted by fe.close()
+    assert not os.path.isfile(ucf)
 
     new_lastmod = diskfile.get_file_lastmod()
     assert new_lastmod > orig_lastmod
