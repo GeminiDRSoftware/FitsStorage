@@ -128,6 +128,9 @@ class FitsEditor(object):
         # uncpompressed version of the file, as astropy.io.fits handling
         # of .bz2 files cannot handle mode = 'update'
 
+        # Note, we need to take care of deleting the uncompressed_cache_file
+        # once we're done! We do this by calling diskfile.cleanup()
+
         # We need to set these values here for get_uncompressed_file etc.
         # to work as __init__ hasn't been called on this diskfile instance.
         # However, these may have been set by the testing framework
@@ -142,6 +145,9 @@ class FitsEditor(object):
 
         self.diskfile._logger = self.logger
 
+        # Note, this will return the path to the diskfile itself if it is not
+        # compressed. If it is compressed, it's a tmpfile containing the
+        # uncompressed data.
         self.diskfile.get_uncompressed_file(compute_values=False)
         self.localfile = self.diskfile.uncompressed_cache_file
 
@@ -154,6 +160,9 @@ class FitsEditor(object):
         if self.error is True:
             return
         try:
+            # Note, the file we're not operating on - self.localfile - is
+            # either the diskfile file itself, or the diskfile
+            # uncompressed_cache_file
             self.hdulist = astropy.io.fits.open(self.localfile, mode='update',
                                                 do_not_scale_image_data=True)
         except Exception:
@@ -164,21 +173,40 @@ class FitsEditor(object):
     def close(self):
         fsc = get_config()
 
-        if self.hdulist is None:
-            return
-
         if fsc.using_s3:
             # Will have errored as not implemented on open
             return
-        if self.diskfile.compressed:
-            # Need to recompress the bz2. Note this is not the S3 case
-            with bz2.open(self.diskfile.fullpath, mode='wb') as f:
-                self.hdulist.writeto(f)
 
-        # Note, this calls hdulist.flush() for mode = 'update'.
-        # If we're not compressed and not S3, we're operating directly on
-        # the file in the storage_root.
-        self.hdulist.close()
+        if self.hdulist is not None:
+            # Remember, the file behind the hdulist is either the diskfile file
+            # itself in storage_root, or the diskfile uncompressed_cache_file
+
+            # If the diskfile was compressed, we're using a cache file, and we
+            # now need to write a compressed copy back in place of the original
+            # (compressed) file in the storage_root
+            if self.diskfile.compressed:
+                # Write the hdulist to the compressed file.
+                # Note, in astropy 6.x, io.fits can write the bz2 file directly.
+                # Note this is not the S3 case
+                with bz2.open(self.diskfile.fullpath, mode='wb') as f:
+                    self.hdulist.writeto(f)
+
+            # Note, this calls hdulist.flush() as we are in mode = 'update'.
+            # The flush is pointless if we're in compressed mode as we just
+            # wrote it all out to a new file anyway, but we still need to close
+            # the uncompressed_cache_file and it's cheap to flush as it's
+            # uncompressed.
+            # If we're not in compressed mode, this is the actual file update
+            # with the changes we made going directly to the fits file.
+            # TODO - check if this is still the case in astropy 6.x
+            self.hdulist.close()
+
+        # If we were using an uncompressed_cache_file, delete it now. Note that
+        # this can be the case even if self.hdulist is None - ie we failed to
+        # instantiate an hdulist for some reason.
+
+        # This deletes the uncompressed_cache_file if we are using one.
+        self.diskfile.cleanup()
 
     def set_qa_state(self, qa_state):
         if qa_state is None or (qa_state := qa_state.lower()) not in \

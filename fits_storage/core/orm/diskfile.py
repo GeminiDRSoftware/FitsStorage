@@ -269,8 +269,7 @@ class DiskFile(Base):
             self.ad_object = None
 
         if self.uncompressed_cache_file is not None and \
-                self.uncompressed_cache_file != \
-                os.path.join(self._storage_root, self.path, self.filename):
+                self.uncompressed_cache_file != self.fullpath:
             self.logger.debug("Deleting uncompressed_cache_file "
                               f"{self.uncompressed_cache_file}")
             try:
