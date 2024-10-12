@@ -191,8 +191,11 @@ with session_scope() as session:
                         logger.info("Dry run, not actually copying %s", filename)
                         continue
 
+                    # 20241011 policy change - do *not* compress the files
+                    # on dataflow. It just creates overhead in inevitable
+                    # subsequent updates.
                     logger.info("Copying %s", filename)
-                    if vihelper.fix_and_copy(filename):
+                    if vihelper.fix_and_copy(filename, compress=False):
                         logger.debug("Copy appeared to succeed")
                         # Add to ingest queue?
                         if not options.noqueue:
