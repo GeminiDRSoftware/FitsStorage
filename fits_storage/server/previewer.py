@@ -161,6 +161,7 @@ class Previewer(object):
                                   self.fpfn, self.filename)
 
             self.delete_file()
+        if self.using_s3:
             try:
                 os.unlink(self.diskfile.fullpath)
             except Exception:
