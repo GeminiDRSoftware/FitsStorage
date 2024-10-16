@@ -810,7 +810,9 @@ def login(things):
         elif password == '':
             reason_bad = "No Password supplied"
         elif not username_inuse(username):
-            reason_bad = "Username / password not valid"
+            reason_bad = 'Username / password not valid. ' \
+                         'If you need to reset your password, ' \
+                         '<a href="/request_password_reset">Click Here</a>'
         else:
             # Find the user and check if the password is valid
             user = ctx.session.query(User)\
