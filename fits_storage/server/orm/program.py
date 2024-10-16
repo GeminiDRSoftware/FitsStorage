@@ -18,6 +18,12 @@ class Program(Base):
     title = Column(Text)
     abstract = Column(Text)
 
+    # Note, we don't define program_id as foreign key to Header.program_id as
+    # we want to be able to have entries in Program without corresponding
+    # entries in Header, for example - so we don't want a foreign key
+    # *constraint*. However, we do define a foreign key in the *relationship*
+    # to program in Header.
+
     publications = relationship('Publication', secondary='programpublication',
                                 back_populates='programs', collection_class=set)
 
