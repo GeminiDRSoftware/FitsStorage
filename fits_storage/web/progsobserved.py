@@ -6,6 +6,8 @@ summaries.
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.file import File
+from fits_storage.server.orm.publication import Publication
+
 from fits_storage.db.selection import sayselection, queryselection
 from . import templating
 from sqlalchemy import join, func
@@ -41,9 +43,9 @@ def progsobserved(selection):
     progs_query = query.group_by(Header.program_id)
 
     return dict(
-        selection = sayselection(selection),
-        progs     = [p[0] for p in progs_query],
-        joined_sel = '/'.join(list(selection.values()))
+        selection=sayselection(selection),
+        progs=[p[0] for p in progs_query],
+        joined_sel='/'.join(list(selection.values()))
         )
 
 
@@ -59,13 +61,13 @@ def sitemap():
 
     session = get_context().session
 
-    # the basic query in this case
+    items = []
+
+    # query for the programs
     query = session.query(Header.program_id, func.max(Header.ut_datetime))\
         .group_by(Header.program_id)\
         .filter(Header.engineering == False)\
         .filter(Header.calibration_program == False)
-
-    items = []
 
     for prog, last in query:
         item = dict()
@@ -80,5 +82,28 @@ def sitemap():
             items.append(item)
         except AttributeError:
             pass
+
+    # query for publications
+    query = session.query(Publication)
+
+    # This is a little kludgey. The template outputs searchform/{{ item.prog }}
+    for publication in query:
+        item = dict()
+        item['prog'] = f'publication={publication.bibcode}'
+
+        program_ids = []
+        for program in publication.programs:
+            program_ids.append(program.program_id)
+        last = session.query(func.max(Header.ut_datetime))\
+            .filter(Header.program_id.in_(program_ids)).first()
+        if last:
+            last = last[0]
+            item['last'] = last.date().isoformat()
+            interval = now - last
+            if interval.total_seconds() < year:
+                item['freq'] = 'weekly'
+            else:
+                item['freq'] = 'yearly'
+        items.append(item)
 
     return dict(items=items)
