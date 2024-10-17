@@ -840,6 +840,7 @@ def login(things):
         reason_bad=reason_bad,
         username=username,
         redirect=redirect,
+        cookie=cookie,
     )
 
     return template_args

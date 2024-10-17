@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 {% block extra_header %}
 <meta name="robots" content="noindex, nofollow">
+<script src="/static/login.js"></script>
 {% endblock %}
 {% block title %}Gemini Archive log in{% endblock %}
 
@@ -16,6 +17,22 @@
    {% endif %}
    <p>In order to access proprietary data, your programs need to be registered with your archive account.</p>
    <p><a href="/my_programs">Click here to register programs</a></p>
+
+   <H3>API access token</H3>
+   <p>If you access the archive API from scripts and would like to have those
+     scripts authenticate as you (for example to access your proprietary data),
+     you will need to copy and store this access token. Store this value with
+     care - anyone who obtains it can authenticate to the archive as you. You
+     can invalidate this value by logging out of the archive from any browser.
+     A new value will be issued when you log back in.</p>
+
+   <p>The <a href="/help/api.html#authentication">API authentication</a> help
+     section describes how to use this value.</p>
+   <button onclick="showCookie()">Show / Hide cookie value</button>
+   <button onclick="copyCookie()">Copy cookie value</button>
+   <!-- The text field that the javascript copyCookie function looks at-->
+   <div id="cookie" style="display:none;"><pre>{{ cookie }}</pre></div>
+
  {% else %}
    {% if reason_bad %}
      <P>Log-in did not succeed: {{ reason_bad }}. Please try again.</P>
