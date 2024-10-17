@@ -40,9 +40,9 @@ logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
 url = args.server + "/export_users"
 logger.debug("Fetching user data from: %s", url)
 
-cookie = fsc.get('user_transfer_cookie')
+cookie = fsc.get('gemini_user_transfer')
 if cookie is None:
-    logger.error("user_transfer_cookie not set in config. Aborting.")
+    logger.error("gemini_user_transfer not set in config. Aborting.")
     exit(1)
 cookies = {'gemini_user_transfer': cookie}
 
