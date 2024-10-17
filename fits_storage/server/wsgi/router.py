@@ -29,7 +29,7 @@ from fits_storage.web.progsobserved import progsobserved, sitemap
 from fits_storage.web.user import whoami, login, logout, request_account, \
     request_password_reset, change_password, change_email, password_reset, \
     user_list, staff_access, admin_change_email, admin_change_password, \
-    admin_file_permissions
+    admin_file_permissions, export_users
 
 from fits_storage.web.userprogram import my_programs
 
@@ -104,6 +104,7 @@ url_map = Map([
     Rule('/admin_change_email', admin_change_email),
     Rule('/admin_change_password', admin_change_password),
     Rule('/admin_file_permissions', admin_file_permissions),
+    Rule('/export_users', export_users),
 
     # Tape stuff
     Rule('/tape', tape),
