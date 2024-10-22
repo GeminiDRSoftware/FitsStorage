@@ -1177,7 +1177,7 @@ def oauth(service, code):
         client_secret = fsc.noirlab_oauth_client_secret
         redirect_url = fsc.noirlab_oauth_redirect_url
         response_id_key = 'username'
-        user_id_key = 'norlab_id'
+        user_id_key = 'noirlab_id'
     elif service == 'ORCID':
         oauth_server = ''
         client_id = ''
