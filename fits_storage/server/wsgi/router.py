@@ -231,7 +231,7 @@ url_map = Map([
     #
 
     # ORCID and NoIRlab login handling/account setup
-    Rule('/noirlabsso', partial(oauth, service="noirlab"), collect_qs_args=dict(code='code'), defaults=dict(code=None)),
+    Rule('/noirlabsso', partial(oauth, service="NOIRlab"), collect_qs_args=dict(code='code'), defaults=dict(code=None)),
     #
     # Rule('/rawfiles/<filename>', rawfiles),                      # This is the fits file server
 
