@@ -2,12 +2,12 @@
 {% block extra_header %}
 <meta name="robots" content="noindex, nofollow">
 {% endblock %}
-{% block title %}Gemini Archive ORCID log in{% endblock %}
+{% block title %}Gemini Archive OAuth2 log in{% endblock %}
 
 {% block body %}
- <H1>Gemini Observatory Archive ORCID Login</H1>
+ <H1>Gemini Observatory Archive Oauth2 Login</H1>
  {% if valid_request %}
-   <P>Welcome, you are successfully logged in to the Gemini Archive.</P>
+   <P>Welcome, you are successfully logged in to the Gemini Archive via {{ via }}.</P>
    {% if thing_string %}
      <p><a href="/searchform/{{ thing_string }}">Click here to go back to your search form</a></p>
      <p><a href="/searchform">Click here to go to an empty search form</a></p>

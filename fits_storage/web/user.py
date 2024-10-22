@@ -397,8 +397,6 @@ def change_password(things):
         user = ctx.user
         if user is None:
             reason_bad = 'You are not currently logged in'
-        elif not user.username:
-            reason_bad = 'This account has no password based login'
         elif user.validate_password(oldpassword) is False:
             reason_bad = 'Current password not correct'
         else:
@@ -817,7 +815,7 @@ def login(things):
                 .filter(User.username == username).one()
             if user.validate_password(password):
                 # Successful login
-                cookie = user.log_in()
+                cookie = user.log_in(by='local_account')
                 valid_request = True
             else:
                 reason_bad = 'Username / password not valid. ' \
@@ -1151,64 +1149,108 @@ def needs_login(staff=False, misc_upload=False, superuser=False,
     return decorator
 
 
-@templating.templated("user/orcid.html")
-def orcid(code):
+@templating.templated("user/oauth.html")
+def oauth(service, code):
     """
-    Generates and handles ORCID backed accounts
+    Generates and handles OAuth (e.g. ORCID, NOIRlab SSO) backed accounts
 
-    ``code`` This is the ORCID supplied authentication code.  We can use this
-    to request the users identity from the ORCID service.  On the first pass
-    to this endpoint there is no code, and we redirect the user to the ORCID
-    login page.
+    ``service`` is the OAuth service to use. Either 'ORCID' or 'NOIRlab'.
+
+    ``code`` This is the Oauth supplied authentication code.  We can use this
+    to request the users identity from the OAuth service.  On the first pass
+    to this endpoint there is no code, and we redirect the user to the respective
+    Oauth login page.
     """
 
     fsc = get_config()
-    if not fsc.orcid_enabled:
+    if not fsc.oauth_enabled:
         return dict(
             notification_message="",
-            reason_bad="ORCID not enabled on this system"
+            reason_bad="OAuth not enabled on this system"
+        )
+
+    if service == 'NOIRlab':
+        oauth_server = fsc.noirlab_oauth_server
+        client_id = fsc.noirlab_oauth_client_id
+        client_secret = fsc.noirlab_oauth_client_secret
+        redirect_url = fsc.noirlab_oauth_redirect_id
+        response_id_key = 'username'
+        user_id_key = 'norlab_id'
+    elif service == 'ORCID':
+        oauth_server = ''
+        client_id = ''
+        client_secret = ''
+        redirect_url = ''
+        response_id_key = 'orcid'
+        user_id_key = 'orcid_id'
+    else:
+        return dict(
+            notification_message="",
+            reason_bad=f"OAuth for {service} not configured on this system"
         )
 
     notification_message = ""
     reason_bad = ""
 
-    redirect_url = fsc.orcid_redirect_url
-
     ctx = get_context()
 
     if code:
-        # Need to POST the token to ORCID to get the credentials
+        # User came back from OAuth service with a code.
+        # Need to POST the code back to the OAuth service to get the credentials
         data = {
-            "client_id": fsc.orcid_client_id,
-            "client_secret": fsc.orcid_client_secret,
+            "client_id": client_id,
+            "client_secret": client_secret,
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": redirect_url
         }
-        orcid_token_url = 'https://%s/oauth/token' % fsc.orcid_server
-        r = requests.post(orcid_token_url, json=data)
+        oauth_token_url = f'https://{oauth_server}/token'
+        r = requests.post(oauth_token_url, json=data)
         if r.status_code == 200:
             response_data = r.json()
-            orcid_id = response_data["orcid"]
-            # create a session for this orcid id
-            user = ctx.session.query(User).\
-                filter(User.orcid_id == orcid_id).one_or_none()
-            if user is None:
-                # Authorized as ORCID user and we haven't seen this ORCID before
-                if ctx.user:
-                    # Add ORCID to existing user
-                    ctx.user.orcid_id = orcid_id
-                    ctx.session.save(ctx.user)
-                else:
-                    # make a new user record with our ORCID data
-                    user = User('')
-                    user.orcid_id = orcid_id
-                    user.fullname = response_data['name']
-                    session = ctx.session
-                    session.add(user)
-                    session.commit()
+            oauth_id = response_data.get(response_id_key)
+            if oauth_id is None:
+                return dict(
+                    notification_message="",
+                    reason_bad=f"Did not get a valid response to token from"
+                               f" oauth service {service}"
+                )
 
-            cookie = user.log_in()
+            # Find any existing user entry for this oauth_id.
+            user = ctx.session.query(User)
+            user = user.filter(getattr(User, user_id_key) == oauth_id)
+            user = user.one_or_none()
+
+            if user is None:
+                # Authenticated via OAuth, but we haven't seen this oauth_id
+                # (orcid_id or noirlab_id) before
+                if ctx.user:
+                    # But we have a valid session cookie for an existing user
+                    # So associate this OAuth ID with that user
+                    setattr(ctx.user, user_id_key, oauth_id)
+                    #ctx.session.save(ctx.user)
+                    ctx.session.commit()
+                else:
+                    # No valid session cookie, but maybe an existing user
+                    # Do we recognize their oauth email address?
+                    user = ctx.session.query(User)\
+                        .filter(User.email == response_data['email'])\
+                        .one_or_none()
+                    if user:
+                        # OAuth Email matches a user email. Add this OAuth ID
+                        # to that user
+                        setattr(ctx.user, user_id_key, oauth_id)
+                        ctx.session.commit()
+                    else:
+                        # We don't recognize them at all. Create new user for
+                        # them and associate this oauth_id
+                        user = User('')
+                        setattr(ctx.user, user_id_key, oauth_id)
+                        user.fullname = response_data['name']
+                        ctx.session.add(user)
+                        ctx.session.commit()
+
+            cookie = user.log_in(by=service)
             exp = datetime.datetime.utcnow() + datetime.timedelta(days=365)
             ctx.cookies.set('gemini_archive_session', cookie,
                             expires=exp, path="/")
@@ -1216,16 +1258,18 @@ def orcid(code):
         else:
             reason_bad = "Error communicating with ORCID service"
     else:
-        # Send them to ORCID, which will call back here with their token
-        orcid_url = f'https://{fsc.orcid_server}/oauth/authorize?client_id=' \
-                    f'{fsc.orcid_client_id}' \
-                    f'&response_type=code&scope=/authenticate' \
+        # No auth code - Send them to the OAuth server to authenticate, which
+        # will send them back here with their code
+        oauth_url = f'https://{oauth_server}/authorize?client_id=' \
+                    f'{client_id}' \
+                    f'&response_type=code&scope=openid' \
                     f'&redirect_uri={urllib.parse.quote(redirect_url)}'
-        ctx.resp.redirect_to(orcid_url)
+        ctx.resp.redirect_to(oauth_url)
 
     template_args = dict(
         notification_message=notification_message,
-        reason_bad=reason_bad
+        reason_bad=reason_bad,
+        via='OAuth'
     )
 
     return template_args

@@ -29,7 +29,11 @@ from fits_storage.web.progsobserved import progsobserved, sitemap
 from fits_storage.web.user import whoami, login, logout, request_account, \
     request_password_reset, change_password, change_email, password_reset, \
     user_list, staff_access, admin_change_email, admin_change_password, \
+<<<<<<< Updated upstream
     admin_file_permissions
+=======
+    admin_file_permissions, export_users, oauth
+>>>>>>> Stashed changes
 
 from fits_storage.web.userprogram import my_programs
 
@@ -230,8 +234,8 @@ url_map = Map([
     Rule('/gmoscaljson/<selection:selection>', gmoscal_json),
     #
 
-    # # ORCID login handling/account setup
-    # Rule('/orcid', orcid, collect_qs_args=dict(code='code'), defaults=dict(code=None)),
+    # ORCID and NoIRlab login handling/account setup
+    Rule('/noirlabsso', partial(oauth, service="noirlab"), collect_qs_args=dict(code='code'), defaults=dict(code=None)),
     #
     # Rule('/rawfiles/<filename>', rawfiles),                      # This is the fits file server
 

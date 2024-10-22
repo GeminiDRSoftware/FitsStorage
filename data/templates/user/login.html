@@ -19,18 +19,66 @@
  {% else %}
    {% if reason_bad %}
      <P>Log-in did not succeed: {{ reason_bad }}. Please try again.</P>
-     <P>If you have forgotten your username and/or password,
+     <P>If you have forgotten your GOA username and/or password,
         <a href="/request_password_reset">click here to reset your password</a>.</P>
    {% endif %}
+
+   <P>There are now several options for logging in to the Gemini Observatory Archive -
+     the "traditional" GOA username and password options still works, but you can
+     now also authenticate using your ORCID ID, and NOIRlab staff can authenticate using
+     NOIRlab single sign on.</P>
+   <P>Whichever method you use to log in, you <em>should</em> end up logged in to the
+     same GOA account. Please try to avoid ending up with different accounts for different
+     sign-on methods, as things like proprietary program access will then be inconsistent
+     between your accounts. The key here is the email address associated with your various sign-ons.</P>
+   <P> If for example you already have a traditional GOA username and password, and you would
+     like so switch to signing in with your ORCID, please ensure that the email address
+     you have registered to your GOA account matches the one you have registered to your
+     ORCID account. You can update the email address on your GOA account
+     <a href="/change_email">here</a>".</P>
+   <P>NORlab staff users - everything above regarding ORCID sign-in also applies to
+     NOIRLab SSO sign in. Please also note that gemini.edu and noirlab.edu email addresses
+     are not considered to be the same in this case.</P>
+
+<H2>Click here to sign in using ORCID</H2>
+
+<H2>Click here to sign in using NOIRlab SSO</H2>
+
+<H2>To sign in using traditional GOA username and password, sign in here:</H2>
    <FORM action="/login/{{ thing_string }}" method="POST">
    <TABLE>
    <TR><TD><LABEL for="username">Username</LABEL><TD>
-   <TD><INPUT type="text" size=16 name="username" value='{{ username }}'></INPUT></TD></TR>
+   <TD><INPUT id="username" type="text" size=16 name="username" value='{{ username }}'></TD></TR>
    <TR><TD><LABEL for="password">Password</LABEL><TD>
-   <TD><INPUT type="password" size=16 name="password"></INPUT></TD></TR>
+   <TD><INPUT id="password" type="password" size=16 name="password"></TD></TR>
    </TABLE>
-     <INPUT type="hidden" name="redirect" value="{{ redirect }}" />
-   <INPUT type="submit" value="Submit"></INPUT>
+     <INPUT type="hidden" name="redirect" value="{{ redirect }}">
+   <INPUT type="submit" value="Submit">
    </FORM>
+
+<H2>Not sure which to use?</H2>
+<UL>
+  <LI>If you are a Gemini User (i.e. research astronomer or other community member
+accessing Gemini data), we recommend using ORCID. This applies even if you are also NOIRlab staff.
+  <UL>
+    <LI>If you don't already have an ORCID ID, sign up for one <a href="https://orcid.org/register">here.</a></LI>
+    <LI>If you already have a GOA account, but it uses a different email address to your
+    ORCID, please go <a href="/change_email"> here </a> to update your GOA email to match
+    your ORCID email before signing in with ORCID.</LI>
+    <LI>If you don't already have a GOA account, just sign in using ORCID, we'll set one up
+    for you automatically as sign in.</LI>
+  </UL></LI>
+  <LI>If you are NOIRlab staff member, do not have an ORCID, and are accessing GOA
+    for operational duties, use the NOIRlab SSO sign in.
+    <UL>
+      <LI>If you don't already have an account, we'll create one automatically for as you sign in.</LI>
+      <LI>If you need staff data access privelidges, you will need to request that separately after you have signed.</LI>
+    </UL></LI>
+  <LI>If you are not a NOIRlab staff member, don't want to create or use an ORCID, or just prefer the simple old ways,
+    sign in using the traditional username / password form. If you don't already have an account, you can
+    <a href="/request_account">request one here</a></LI>
+  <LI>If you think you've ended up with multiple accounts, please either file a helpdesk
+  ticket, or contact Paul Hirst, and it should be simple for us to merge your accounts into one.</LI>
+</UL>
  {% endif %}{# valid request #}
 {% endblock %}
