@@ -6,13 +6,16 @@
 {% block title %}Gemini Archive Who Am I{% endblock %}
 {% block body %}
 <span id="whoami">
-{% if username or orcid %}
+{% if username or orcid_id or noirlab_id %}
 {# Unicode &#x1f464 is preferable to the user icon, if only browsers supported it (mid 2014) #}
   <img src="/static/user1-64x64.png" height="18px">
-  {% if username %}{{ username }}{% else %}{{ orcid }}{% endif %} &#9662;
+  {{ preferred_id }} &#9662;
   <ul class="whoami">
-  <li class="whoami">{{ fullname }}</li>
-  <li class="whoami"><a href="/logout">Log Out</a></li>
+      <li class="whoami">{{ fullname }}</li>
+      {% if orcid_id %}<li class="whoami">ORCID: {{ orcid_id }}</li>{% endif %}
+      {% if noirlab_id %}<li class="whoami">NOIRlab ID: {{ noirlab_id }}</li>{% endif %}
+      {% if username %}<li class="whoami">Username: {{ username }}</li>{% endif %}
+      <li class="whoami"><a href="/logout">Log Out</a></li>
   {% if username %}
   <li class="whoami"><a href="/change_password/{{ thing_string }}">Change Password</a></li>
   {% endif %}

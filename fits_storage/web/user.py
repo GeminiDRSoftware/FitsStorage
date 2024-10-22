@@ -877,7 +877,7 @@ def logout():
 @templating.templated("user/whoami.html")
 def whoami(things):
     """
-    Tells you who you are logged in as, and presents the account maintainace
+    Tells you who you are logged in as, and presents the account maintenance
     links
     """
     # Find out who we are if logged in
@@ -887,8 +887,11 @@ def whoami(things):
     user = get_context().user
 
     try:
-        template_args['username'] = user.username if user.username else ""
-        template_args['orcid'] = user.orcid_id if user.orcid_id else ""
+        template_args['username'] = user.username
+        template_args['orcid_id'] = user.orcid_id
+        template_args['noirlab_id'] = user.noirlab_id
+        template_args['preferred_id'] = user.orcid_id or user.noirlab_id or \
+                                        user.username
         template_args['fullname'] = user.fullname
         template_args['is_superuser'] = user.superuser
         template_args['user_admin'] = user.user_admin
