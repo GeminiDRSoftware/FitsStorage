@@ -1244,6 +1244,7 @@ def oauth(service, code):
                     setattr(ctx.user, user_id_key, oauth_id)
                     #ctx.session.save(ctx.user)
                     ctx.session.commit()
+                    user = ctx.user
                 else:
                     # No valid session cookie, but maybe an existing user
                     # Do we recognize their oauth email address?
