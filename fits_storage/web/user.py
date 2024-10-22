@@ -1258,7 +1258,7 @@ def oauth(service, code):
                         # We don't recognize them at all. Create new user for
                         # them and associate this oauth_id
                         user = User('')
-                        setattr(ctx.user, user_id_key, oauth_id)
+                        setattr(user, user_id_key, oauth_id)
                         user.fullname = f"{decoded_id['firstname']} " \
                                         f"{decoded_id['lastname']}"
                         user.email = decoded_id['email']
