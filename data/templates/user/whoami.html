@@ -38,11 +38,7 @@
 {% else %}
   <img src="/static/user1-64x64.png" height="18px"> Not logged in &#9662;
   <ul class="whoami">
-  <li class="whoami"><a href="/request_account/{{ thing_string }}">Request Account</a></li>
-  <li class="whoami"><a href="/login/{{ thing_string }}">Login</a></li>
-  {% if orcid_enabled %}
-  <li class="whoami"><a href="/orcid">ORCID Login</a></li>
-  {% endif %}
+  <li class="whoami"><a href="/login/{{ thing_string }}">Login or request account</a></li>
   </ul>
 {% endif %}
 </span>
