@@ -13,6 +13,7 @@ import json
 import urllib
 import requests
 from requests.auth import HTTPBasicAuth
+import jwt
 from urllib.parse import urlencode
 
 from sqlalchemy import desc, and_, or_
@@ -1217,13 +1218,16 @@ def oauth(service, code):
         print(f'POST Response text: {r.text}')
         if r.status_code == 200:
             response_data = r.json()
-            oauth_id = response_data.get(response_id_key)
-            if oauth_id is None:
+            id_token = response_data.get('id_token')
+            if id_token is None:
                 return dict(
                     notification_message="",
-                    reason_bad=f"Did not get a valid response to token from"
+                    reason_bad=f"Did not get a valid id token token from"
                                f" oauth service {service}"
                 )
+            decoded_id = jwt.decode(id_token,
+                                    options={"verify_signature": False})
+            oauth_id = decoded_id['sub']
 
             # Find any existing user entry for this oauth_id.
             user = ctx.session.query(User)
@@ -1243,7 +1247,7 @@ def oauth(service, code):
                     # No valid session cookie, but maybe an existing user
                     # Do we recognize their oauth email address?
                     user = ctx.session.query(User)\
-                        .filter(User.email == response_data['email'])\
+                        .filter(User.email == decoded_id['email'])\
                         .one_or_none()
                     if user:
                         # OAuth Email matches a user email. Add this OAuth ID
@@ -1255,7 +1259,9 @@ def oauth(service, code):
                         # them and associate this oauth_id
                         user = User('')
                         setattr(ctx.user, user_id_key, oauth_id)
-                        user.fullname = response_data['name']
+                        user.fullname = f"{decoded_id['firstname']} " \
+                                        f"{decoded_id['lastname']}"
+                        user.email = decoded_id['email']
                         ctx.session.add(user)
                         ctx.session.commit()
 
