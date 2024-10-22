@@ -12,6 +12,7 @@ import functools
 import json
 import urllib
 import requests
+from requests.auth import HTTPBasicAuth
 from urllib.parse import urlencode
 
 from sqlalchemy import desc, and_, or_
@@ -1197,15 +1198,23 @@ def oauth(service, code):
     if code:
         # User came back from OAuth service with a code.
         # Need to POST the code back to the OAuth service to get the credentials
+        # And we need to do this with HTTP Basic Auth
+        basic = HTTPBasicAuth(client_id, client_secret)
         data = {
             "client_id": client_id,
-            "client_secret": client_secret,
+            # "client_secret": client_secret,
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": redirect_url
         }
         oauth_token_url = f'https://{oauth_server}/token'
-        r = requests.post(oauth_token_url, json=data)
+        # Note, we don't post JSON here, it's an
+        # application/x-www-form-urlencoded POST.
+        r = requests.post(oauth_token_url, data=data, auth=basic)
+        print(f'POST Request headers: {r.request.headers}')
+        print(f'POST Request body: {r.request.body}')
+        print(f'POST Headers: {r.headers}')
+        print(f'POST Response text: {r.text}')
         if r.status_code == 200:
             response_data = r.json()
             oauth_id = response_data.get(response_id_key)
