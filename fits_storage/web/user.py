@@ -893,6 +893,7 @@ def whoami(things):
         template_args['preferred_id'] = user.orcid_id or user.noirlab_id or \
                                         user.username
         template_args['fullname'] = user.fullname
+        template_args['email'] = user.email
         template_args['is_superuser'] = user.superuser
         template_args['user_admin'] = user.user_admin
         template_args['file_permission_admin'] = user.file_permission_admin
