@@ -1254,7 +1254,7 @@ def oauth(service, code):
                     if user:
                         # OAuth Email matches a user email. Add this OAuth ID
                         # to that user
-                        setattr(ctx.user, user_id_key, oauth_id)
+                        setattr(user, user_id_key, oauth_id)
                         ctx.session.commit()
                     else:
                         # We don't recognize them at all. Create new user for
