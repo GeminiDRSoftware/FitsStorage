@@ -886,7 +886,7 @@ def whoami(things):
 
     user = get_context().user
 
-    try:
+    if user is not None:
         template_args['username'] = user.username
         template_args['orcid_id'] = user.orcid_id
         template_args['noirlab_id'] = user.noirlab_id
@@ -896,9 +896,6 @@ def whoami(things):
         template_args['is_superuser'] = user.superuser
         template_args['user_admin'] = user.user_admin
         template_args['file_permission_admin'] = user.file_permission_admin
-    except AttributeError:
-        # no user
-        pass
 
     # Construct the "things" part of the URL for the link that want to be
     # able to take you back to the same form contents

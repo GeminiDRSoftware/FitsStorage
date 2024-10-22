@@ -18,10 +18,7 @@
       <li class="whoami"><a href="/logout">Log Out</a></li>
   {% if username %}
   <li class="whoami"><a href="/change_password/{{ thing_string }}">Change Password</a></li>
-  {% endif %}
   <li class="whoami"><a href="/change_email/{{ thing_string }}">Change Email</a></li>
-  {% if not orcid and orcid_enabled %}
-  <li class="whoami"><a href="/orcid">Associate ORCID Login</a></li>
   {% endif %}
   <li class="whoami"><a href="/my_programs/{{ thing_string }}">My Programs</a></li>
   {%  if is_superuser %}
