@@ -33,29 +33,22 @@ def my_programs(things):
 
     # Now figure out if we are logged in, who we are, and current prog_list
     # If we have form data, try and action it
-    username = ''
-    prog_list = []
     reason_bad = ''
-    orcid = ''
 
     user = ctx.user
     if user:
-        username = user.username
-        orcid = user.orcid_id
         if program_id or program_key:
             reason_bad = request_user_program(user, program_id, program_key)
         prog_list = get_program_list(user)
-
-    if username == '' and not orcid:
+    else:
         return dict(logged_in = False)
 
-    someid = username
-    if not someid:
-        someid = orcid
+    preferred_id = user.orcid_id or user.noirlab_id or user.username
+
     template_args = dict(
         # Build the thing_string to link back to the searchform
         logged_in    = True,
-        username     = someid,
+        username     = preferred_id,
         progs        = prog_list,
         thing_string = '/'.join(things),
         reason_bad   = reason_bad
