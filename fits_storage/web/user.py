@@ -1173,7 +1173,7 @@ def oauth(service, code):
         oauth_server = fsc.noirlab_oauth_server
         client_id = fsc.noirlab_oauth_client_id
         client_secret = fsc.noirlab_oauth_client_secret
-        redirect_url = fsc.noirlab_oauth_redirect_id
+        redirect_url = fsc.noirlab_oauth_redirect_url
         response_id_key = 'username'
         user_id_key = 'norlab_id'
     elif service == 'ORCID':
@@ -1256,7 +1256,8 @@ def oauth(service, code):
                             expires=exp, path="/")
             ctx.resp.redirect_to('/searchform')
         else:
-            reason_bad = "Error communicating with ORCID service"
+            reason_bad = "Error communicating with OAuth service " \
+                         f"- status code {r.status_code}"
     else:
         # No auth code - Send them to the OAuth server to authenticate, which
         # will send them back here with their code
