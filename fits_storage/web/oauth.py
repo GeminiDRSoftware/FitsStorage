@@ -109,9 +109,11 @@ class OAuth(object):
         else:
             decoded_id = jwt.decode(self.id_token,
                                     options={"verify_signature": False})
-        self.oauth_id = decoded_id['sub']
-        self.email = decoded_id['email']
-        self.fullname = f"{decoded_id['firstname']} {decoded_id['lastname']}"
+        self.decoded_id = decoded_id
+        self.parse_id()
+
+    def parse_id(self):
+        pass
 
     def authenticate_url(self):
         oauth_url = f'https://{self.oauth_server}/authorize?client_id=' \
@@ -168,6 +170,12 @@ class OAuthNOIR(OAuth):
         self.redirect_url = fsc.noirlab_oauth_redirect_url
         self.user_id_key = 'noirlab_id'
 
+    def parse_id(self):
+        self.oauth_id = self.decoded_id['sub']
+        self.email = self.decoded_id['email']
+        self.fullname = f"{self.decoded_id['firstname']} " \
+                        f"{self.decoded_id['lastname']}"
+
 
 class OAuthORCID(OAuth):
     def __init__(self):
@@ -180,3 +188,9 @@ class OAuthORCID(OAuth):
         self.client_secret = fsc.orcid_oauth_client_secret
         self.redirect_url = fsc.orcid_oauth_redirect_url
         self.user_id_key = 'orcid_id'
+
+    def parse_id(self):
+        self.oauth_id = self.decoded_id['sub']
+        self.fullname = f"{self.decoded_id['given_name']} " \
+                        f"{self.decoded_id['family_name']}"
+        
