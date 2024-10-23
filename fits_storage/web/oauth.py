@@ -1,4 +1,6 @@
 # Class to handle OAuth and to abstract server differences
+# See https://datatracker.ietf.org/doc/html/rfc6749
+
 import requests
 from requests.auth import HTTPBasicAuth
 import jwt
@@ -78,7 +80,7 @@ class OAuth(object):
         # Given an existing fits storage user orm instance 'user', add the
         # current oauth_id to that user and commit to the database.
         # Must have called decode_id_token() before this.
-        setattr(ctx.user, self.user_id_key, self.oauth_id)
+        setattr(user, self.user_id_key, self.oauth_id)
         ctx.session.commit()
 
     def find_user_by_email(self, ctx):
