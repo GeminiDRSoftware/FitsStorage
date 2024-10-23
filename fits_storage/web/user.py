@@ -10,11 +10,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import functools
 import json
-import urllib
-import requests
-from requests.auth import HTTPBasicAuth
-import jwt
-from urllib.parse import urlencode
 
 from sqlalchemy import desc, and_, or_
 from sqlalchemy.exc import NoResultFound
@@ -30,6 +25,8 @@ from . import templating
 
 from fits_storage.config import get_config
 
+if get_config().oauth_enabled:
+    from fits_storage.web.oauth import OAuthNOIR, OAuthORCID
 
 bad_password_msg = "Bad password - must be at least 14 characters long, and " \
                    "contain at least one lower case letter, upper case " \
@@ -1153,7 +1150,7 @@ def needs_login(staff=False, misc_upload=False, superuser=False,
 
 
 @templating.templated("user/oauth.html")
-def oauth(service, code):
+def oauth_login(service, code):
     """
     Generates and handles OAuth (e.g. ORCID, NOIRlab SSO) backed accounts
 
@@ -1161,8 +1158,8 @@ def oauth(service, code):
 
     ``code`` This is the Oauth supplied authentication code.  We can use this
     to request the users identity from the OAuth service.  On the first pass
-    to this endpoint there is no code, and we redirect the user to the respective
-    Oauth login page.
+    to this endpoint there is no code, and we redirect the user to the
+    respective Oauth login page.
     """
 
     fsc = get_config()
@@ -1173,19 +1170,9 @@ def oauth(service, code):
         )
 
     if service == 'NOIRlab':
-        oauth_server = fsc.noirlab_oauth_server
-        client_id = fsc.noirlab_oauth_client_id
-        client_secret = fsc.noirlab_oauth_client_secret
-        redirect_url = fsc.noirlab_oauth_redirect_url
-        response_id_key = 'username'
-        user_id_key = 'noirlab_id'
+        oauth = OAuthNOIR()
     elif service == 'ORCID':
-        oauth_server = ''
-        client_id = ''
-        client_secret = ''
-        redirect_url = ''
-        response_id_key = 'orcid'
-        user_id_key = 'orcid_id'
+        oauth = OAuthORCID()
     else:
         return dict(
             notification_message="",
@@ -1198,90 +1185,56 @@ def oauth(service, code):
     ctx = get_context()
 
     if code:
-        # User came back from OAuth service with a code.
-        # Need to POST the code back to the OAuth service to get the credentials
-        # And we need to do this with HTTP Basic Auth
-        basic = HTTPBasicAuth(client_id, client_secret)
-        data = {
-            "client_id": client_id,
-            # "client_secret": client_secret,
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": redirect_url
-        }
-        oauth_token_url = f'https://{oauth_server}/token'
-        # Note, we don't post JSON here, it's an
-        # application/x-www-form-urlencoded POST.
-        r = requests.post(oauth_token_url, data=data, auth=basic)
-        print(f'POST Request headers: {r.request.headers}')
-        print(f'POST Request body: {r.request.body}')
-        print(f'POST Headers: {r.headers}')
-        print(f'POST Response text: {r.text}')
-        if r.status_code == 200:
-            response_data = r.json()
-            id_token = response_data.get('id_token')
-            if id_token is None:
-                return dict(
-                    notification_message="",
-                    reason_bad=f"Did not get a valid id token token from"
-                               f" oauth service {service}"
-                )
-            decoded_id = jwt.decode(id_token,
-                                    options={"verify_signature": False})
-            oauth_id = decoded_id['sub']
+        reason_bad = oauth.request_access_token(code)
+        if reason_bad:
+            return dict(notification_message="", reason_bad=reason_bad)
+        if oauth.id_token is None:
+            return dict(notification_message="",
+                        reason_bad=f"Did not get a valid id token token from "
+                                   f"oauth service {service}")
 
-            # Find any existing user entry for this oauth_id.
-            user = ctx.session.query(User)
-            user = user.filter(getattr(User, user_id_key) == oauth_id)
-            user = user.one_or_none()
+        # This populates oauth.oauth_id, email and fullname
+        oauth.decode_id_token()
 
-            if user is None:
-                # Authenticated via OAuth, but we haven't seen this oauth_id
-                # (orcid_id or noirlab_id) before
-                if ctx.user:
-                    # But we have a valid session cookie for an existing user
-                    # So associate this OAuth ID with that user
-                    setattr(ctx.user, user_id_key, oauth_id)
-                    #ctx.session.save(ctx.user)
-                    ctx.session.commit()
-                    user = ctx.user
+        # Find any existing user entry for this oauth_id.
+        user = oauth.find_user_by_oauth_id(ctx)
+
+        if user is None:
+            # Authenticated via OAuth, but we haven't seen this oauth_id
+            # (orcid_id or noirlab_id) before
+            if ctx.user:
+                # But we do have a valid session cookie for an existing user
+                # So associate this OAuth ID with that user
+                oauth.add_oauth_id_to_user(ctx, ctx.user)
+                user = ctx.user
+            else:
+                # No valid session cookie, but maybe we recognize their oauth
+                # email address?
+                user = oauth.find_user_by_email(ctx)
+                if user:
+                    # OAuth Email matches a user email. Add this OAuth ID
+                    # to that user
+                    oauth.add_oauth_id_to_user(ctx, ctx.user)
                 else:
-                    # No valid session cookie, but maybe an existing user
-                    # Do we recognize their oauth email address?
-                    user = ctx.session.query(User)\
-                        .filter(User.email == decoded_id['email'])\
-                        .one_or_none()
-                    if user:
-                        # OAuth Email matches a user email. Add this OAuth ID
-                        # to that user
-                        setattr(user, user_id_key, oauth_id)
-                        ctx.session.commit()
-                    else:
-                        # We don't recognize them at all. Create new user for
-                        # them and associate this oauth_id
-                        user = User('')
-                        setattr(user, user_id_key, oauth_id)
-                        user.fullname = f"{decoded_id['firstname']} " \
-                                        f"{decoded_id['lastname']}"
-                        user.email = decoded_id['email']
-                        ctx.session.add(user)
-                        ctx.session.commit()
+                    # We don't recognize them at all. Create new user for
+                    # them and associate this oauth_id
+                    user = oauth.create_user(ctx)
 
-            cookie = user.log_in(by=service)
-            exp = datetime.datetime.utcnow() + datetime.timedelta(days=365)
-            ctx.cookies.set('gemini_archive_session', cookie,
-                            expires=exp, path="/")
-            ctx.resp.redirect_to('/searchform')
-        else:
-            reason_bad = "Error communicating with OAuth service " \
-                         f"- status code {r.status_code}"
+        # Check for an updated email address from the OAuth id
+        if user.email != oauth.email:
+            user.email = oauth.email
+            ctx.session.commit()
+
+        cookie = user.log_in(by=service)
+        exp = datetime.datetime.utcnow() + datetime.timedelta(days=365)
+        ctx.cookies.set('gemini_archive_session', cookie,
+                        expires=exp, path="/")
+        ctx.resp.redirect_to('/searchform')
+
     else:
         # No auth code - Send them to the OAuth server to authenticate, which
         # will send them back here with their code
-        oauth_url = f'https://{oauth_server}/authorize?client_id=' \
-                    f'{client_id}' \
-                    f'&response_type=code&scope=openid' \
-                    f'&redirect_uri={urllib.parse.quote(redirect_url)}'
+        oauth_url = oauth.authenticate_url()
         ctx.resp.redirect_to(oauth_url)
 
     template_args = dict(
