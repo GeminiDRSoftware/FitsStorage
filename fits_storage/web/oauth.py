@@ -89,7 +89,7 @@ class OAuth(object):
                 bytes(self.access_token, 'utf-8'))
             at_hash = base64.urlsafe_b64encode(
                 digest[: (len(digest) // 2)]).rstrip(b'=')
-            if at_hash == payload["at_hash"]:
+            if at_hash == bytes(payload["at_hash"], 'utf-8'):
                 # Successful verification
                 decoded_id = payload
             else:
