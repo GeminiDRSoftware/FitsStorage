@@ -17,6 +17,7 @@ class OAuth(object):
         self.client_id = None
         self.client_secret = None
         self.use_basic_auth = True
+        self.verify_signature = True
         self.redirect_url = None
         self.response_id_key = None
         self.user_id_key = None
@@ -31,7 +32,6 @@ class OAuth(object):
         # Need to POST the code back to the OAuth service to get the credentials
         # result goes in self.id_token.
         # Return None on success string error message on failure
-
 
         data = {
             "client_id": self.client_id,
@@ -57,6 +57,7 @@ class OAuth(object):
         print(f'POST Response text: {r.text}')
         if r.status_code == 200:
             response_data = r.json()
+            print(f'Response data: {response_data}')
             self.id_token = response_data.get('id_token')
             self.access_token = response_data.get('access_token')
             return None
@@ -64,8 +65,9 @@ class OAuth(object):
             self.id_token = None
             return f"Bad status code {r.status_code} from OAuth server"
 
-    def decode_id_token(self, verify_signature=True):
+    def decode_id_token(self, verify_signature=None):
         # Return None on success (and set data items), error message on failure
+        verify_signature = verify_signature or self.verify_signature
         if verify_signature:
             # Following https://pyjwt.readthedocs.io/en/stable/usage.html
             # #retrieve-rsa-signing-keys-from-a-jwks-endpoint
@@ -174,6 +176,7 @@ class OAuthORCID(OAuth):
         self.oauth_server = fsc.orcid_oauth_server
         self.client_id = fsc.orcid_oauth_client_id
         self.use_basic_auth = False
+        self.verify_signature = False
         self.client_secret = fsc.orcid_oauth_client_secret
         self.redirect_url = fsc.orcid_oauth_redirect_url
         self.user_id_key = 'orcid_id'
