@@ -1235,7 +1235,11 @@ def oauth_login(service, code):
     else:
         # No auth code - Send them to the OAuth server to authenticate, which
         # will send them back here with their code
-        oauth_url = oauth.authorization_url()
+        try:
+            oauth_url = oauth.authorization_url()
+        except Exception as e:
+            return dict(notification_message="", reason_bad=e)
+        
         ctx.resp.redirect_to(oauth_url)
 
     template_args = dict(
