@@ -44,7 +44,8 @@ class OAuth(object):
         if response.status_code != 200:
             raise OAuthError('Bad status code %d getting openid-configuration' %
                              response.status_code)
-        if response.headers.get('content-type') != 'application/json':
+        if not response.headers.get('content-type')\
+                .startswith('application/json'):
             raise OAuthError('Got non-json content type %s getting '
                              'openid-configuration' %
                              response.headers['content-type'])
