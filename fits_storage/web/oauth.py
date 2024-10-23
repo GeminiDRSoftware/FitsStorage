@@ -73,7 +73,11 @@ class OAuth(object):
             # #retrieve-rsa-signing-keys-from-a-jwks-endpoint
             config_url = f"https://{self.oauth_server}" \
                          "/.well-known/openid-configuration"
-            oidc_config = requests.get(config_url).json()
+            print(f'config url: {config_url}')
+            r = requests.get(config_url)
+            print(f'config_status: {r.status_code}')
+            print(f'config_text: {r.text}')
+            oidc_config = r.json()
             signing_algos = oidc_config["id_token_signing_alg_values_supported"]
 
             # set up a PyJWKClient to get the appropriate signing key
