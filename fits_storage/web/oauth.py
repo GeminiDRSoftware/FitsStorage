@@ -85,14 +85,16 @@ class OAuth(object):
             alg_obj = jwt.get_algorithm_by_name(header["alg"])
 
             # compute at_hash, then validate / assert
-            digest = alg_obj.compute_hash_digest(self.access_token)
+            digest = alg_obj.compute_hash_digest(
+                bytes(self.access_token, 'utf-8'))
             at_hash = base64.urlsafe_b64encode(
                 digest[: (len(digest) // 2)]).rstrip(b'=')
             if at_hash == payload["at_hash"]:
                 # Successful verification
                 decoded_id = payload
             else:
-                return "OAuth id token verification failed"
+                return f"OAuth id token verification failed: " \
+                       f"{at_hash} vs {payload['at_hash']}"
 
         else:
             decoded_id = jwt.decode(self.id_token,
