@@ -1185,47 +1185,46 @@ def oauth_login(service, code):
     ctx = get_context()
 
     if code:
-        reason_bad = oauth.request_access_token(code)
-        if reason_bad:
-            return dict(notification_message="", reason_bad=reason_bad)
-        if oauth.id_token is None:
-            return dict(notification_message="",
-                        reason_bad=f"Did not get a valid id token token from "
-                                   f"oauth service {service}")
+        try:
+            oauth.request_tokens(code)
 
-        # This populates oauth.oauth_id, email and fullname
-        reason_bad = oauth.decode_id_token()
-        if reason_bad:
-            return dict(notification_message="", reason_bad=reason_bad)
+            # This populates oauth.oauth_id, email and fullname
+            oauth.decode_id_token()
 
-        # Find any existing user entry for this oauth_id.
-        user = oauth.find_user_by_oauth_id(ctx)
+            # Find any existing user entry for this oauth_id.
+            user = oauth.find_user_by_oauth_id(ctx)
 
-        if user is None:
-            # Authenticated via OAuth, but we haven't seen this oauth_id
-            # (orcid_id or noirlab_id) before
-            if ctx.user:
-                # But we do have a valid session cookie for an existing user
-                # So associate this OAuth ID with that user
-                oauth.add_oauth_id_to_user(ctx, ctx.user)
-                user = ctx.user
-            else:
-                # No valid session cookie, but maybe we recognize their oauth
-                # email address?
-                user = oauth.find_user_by_email(ctx)
-                if user:
-                    # OAuth Email matches a user email. Add this OAuth ID
-                    # to that user
+            if user is None:
+                # Authenticated via OAuth, but we haven't seen this oauth_id
+                # (orcid_id or noirlab_id) before
+                if ctx.user:
+                    # But we do have a valid session cookie for an existing user
+                    # - User is already signed in, and just signed in via OAuth.
+                    # This is how we/they associate their OAuth ID with their
+                    # existing archive user record
                     oauth.add_oauth_id_to_user(ctx, ctx.user)
+                    user = ctx.user
                 else:
-                    # We don't recognize them at all. Create new user for
-                    # them and associate this oauth_id
-                    user = oauth.create_user(ctx)
+                    # No valid session cookie - they are not logged in.
+                    # But maybe oauth provided an email address that we
+                    # recognize? (NOIRlab SSO does, ORCID doesn't)
+                    user = oauth.find_user_by_email(ctx)
+                    if user:
+                        # OAuth Email matches a user email.
+                        # Add this OAuth ID to that user
+                        oauth.add_oauth_id_to_user(ctx, ctx.user)
+                    else:
+                        # We don't recognize them at all. Create a new archive
+                        # user record for them and associate this oauth_id
+                        user = oauth.create_user(ctx)
 
-        # Check for an updated email address from the OAuth id
-        if user.email != oauth.email:
-            user.email = oauth.email
-            ctx.session.commit()
+            # Check for an updated email address from the OAuth id
+            if oauth.email is not None and user.email != oauth.email:
+                user.email = oauth.email
+                ctx.session.commit()
+
+        except Exception as e:
+            return dict(notification_message="", reason_bad=e)
 
         cookie = user.log_in(by=service)
         exp = datetime.datetime.utcnow() + datetime.timedelta(days=365)
@@ -1236,7 +1235,7 @@ def oauth_login(service, code):
     else:
         # No auth code - Send them to the OAuth server to authenticate, which
         # will send them back here with their code
-        oauth_url = oauth.authenticate_url()
+        oauth_url = oauth.authorization_url()
         ctx.resp.redirect_to(oauth_url)
 
     template_args = dict(
