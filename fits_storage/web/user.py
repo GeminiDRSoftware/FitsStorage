@@ -1194,7 +1194,9 @@ def oauth_login(service, code):
                                    f"oauth service {service}")
 
         # This populates oauth.oauth_id, email and fullname
-        oauth.decode_id_token()
+        reason_bad = oauth.decode_id_token()
+        if reason_bad:
+            return dict(notification_message="", reason_bad=reason_bad)
 
         # Find any existing user entry for this oauth_id.
         user = oauth.find_user_by_oauth_id(ctx)

@@ -5,6 +5,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import jwt
 import urllib.parse
+import base64
 
 from fits_storage.config import get_config
 from fits_storage.server.orm.user import User
@@ -19,6 +20,7 @@ class OAuth(object):
         self.response_id_key = None
         self.user_id_key = None
         self.id_token = None
+        self.access_token = None
         self.oauth_id = None
         self.email = None
         self.fullname = None
@@ -48,14 +50,53 @@ class OAuth(object):
         if r.status_code == 200:
             response_data = r.json()
             self.id_token = response_data.get('id_token')
+            self.access_token = response_data.get('access_token')
             return None
         else:
             self.id_token = None
             return f"Bad status code {r.status_code} from OAuth server"
 
-    def decode_id_token(self):
-        decoded_id = jwt.decode(self.id_token,
-                                options={"verify_signature": False})
+    def decode_id_token(self, verify_signature=True):
+        # Return None on success (and set data items), error message on failure
+        if verify_signature:
+            # Following https://pyjwt.readthedocs.io/en/stable/usage.html
+            # #retrieve-rsa-signing-keys-from-a-jwks-endpoint
+            config_url = f"https://{self.oauth_server}" \
+                         "/.well-known/openid-configuration"
+            oidc_config = requests.get(config_url).json()
+            signing_algos = oidc_config["id_token_signing_alg_values_supported"]
+
+            # set up a PyJWKClient to get the appropriate signing key
+            jwks_client = jwt.PyJWKClient(oidc_config["jwks_uri"])
+
+            # get signing_key from id_token
+            signing_key = jwks_client.get_signing_key_from_jwt(self.id_token)
+
+            # now, decode_complete to get payload + header
+            data = jwt.api_jwt.decode_complete(
+                self.id_token,
+                key=signing_key.key,
+                algorithms=signing_algos,
+                audience=self.client_id,
+            )
+            payload, header = data["payload"], data["header"]
+
+            # get the pyjwt algorithm object
+            alg_obj = jwt.get_algorithm_by_name(header["alg"])
+
+            # compute at_hash, then validate / assert
+            digest = alg_obj.compute_hash_digest(self.access_token)
+            at_hash = base64.urlsafe_b64encode(
+                digest[: (len(digest) // 2)]).rstrip(b'=')
+            if at_hash == payload["at_hash"]:
+                # Successful verification
+                decoded_id = payload
+            else:
+                return "OAuth id token verification failed"
+
+        else:
+            decoded_id = jwt.decode(self.id_token,
+                                    options={"verify_signature": False})
         self.oauth_id = decoded_id['sub']
         self.email = decoded_id['email']
         self.fullname = f"{decoded_id['firstname']} {decoded_id['lastname']}"
@@ -102,6 +143,7 @@ class OAuth(object):
         ctx.session.add(user)
         ctx.session.commit()
         return user
+
 
 class OAuthNOIR(OAuth):
     def __init__(self):
