@@ -16,6 +16,7 @@ class OAuth(object):
         self.oauth_server = None
         self.client_id = None
         self.client_secret = None
+        self.use_basic_auth = True
         self.redirect_url = None
         self.response_id_key = None
         self.user_id_key = None
@@ -30,19 +31,26 @@ class OAuth(object):
         # Need to POST the code back to the OAuth service to get the credentials
         # result goes in self.id_token.
         # Return None on success string error message on failure
-        # And we need to do this with HTTP Basic Auth
-        basic = HTTPBasicAuth(self.client_id, self.client_secret)
+
+
         data = {
             "client_id": self.client_id,
-            # "client_secret": client_secret,
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": self.redirect_url
         }
         oauth_token_url = f'https://{self.oauth_server}/token'
-        # Note, we don't post JSON here, it's an
-        # application/x-www-form-urlencoded POST.
-        r = requests.post(oauth_token_url, data=data, auth=basic)
+
+        # Some servers require use of HTTP Basic Auth, some just want the
+        # client_secret in the post data
+        if self.use_basic_auth:
+            # And we need to do this with HTTP Basic Auth
+            basic = HTTPBasicAuth(self.client_id, self.client_secret)
+            r = requests.post(oauth_token_url, data=data, auth=basic)
+        else:
+            data["client_secret"] = self.client_secret
+            r = requests.post(oauth_token_url, data=data)
+
         print(f'POST Request headers: {r.request.headers}')
         print(f'POST Request body: {r.request.body}')
         print(f'POST Headers: {r.headers}')
@@ -153,6 +161,7 @@ class OAuthNOIR(OAuth):
         fsc = get_config()
         self.oauth_server = fsc.noirlab_oauth_server
         self.client_id = fsc.noirlab_oauth_client_id
+        self.use_basic_auth = True
         self.client_secret = fsc.noirlab_oauth_client_secret
         self.redirect_url = fsc.noirlab_oauth_redirect_url
         self.user_id_key = 'noirlab_id'
@@ -164,6 +173,7 @@ class OAuthORCID(OAuth):
         fsc = get_config()
         self.oauth_server = fsc.orcid_oauth_server
         self.client_id = fsc.orcid_oauth_client_id
+        self.use_basic_auth = False
         self.client_secret = fsc.orcid_oauth_client_secret
         self.redirect_url = fsc.orcid_oauth_redirect_url
         self.user_id_key = 'orcid_id'
