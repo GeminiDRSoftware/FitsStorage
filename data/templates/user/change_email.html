@@ -17,6 +17,9 @@
 {% endif %}
 {% else %}{# not successful means we're just presenting the form or we couldn't change the password. Show the form anyway #}
 <p>Fill out and submit this form to change your email.</p>
+<p>NOTE: If you sign in to the Gemini Observatory Archive using ORICD or
+NOIRlab SSO, we will automatically update your email address from your ORCID
+or NOIRLab account information.</p>
 <form action="/change_email/{{ thing_string }}" method="POST">
     <table>
         <tr>
