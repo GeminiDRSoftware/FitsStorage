@@ -193,4 +193,3 @@ class OAuthORCID(OAuth):
         self.oauth_id = self.decoded_id['sub']
         self.fullname = f"{self.decoded_id['given_name']} " \
                         f"{self.decoded_id['family_name']}"
-        
