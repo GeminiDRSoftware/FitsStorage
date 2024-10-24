@@ -843,7 +843,7 @@ def login(things):
         server_title=get_config().fits_server_title,
         # Rebuild the thing_string for the url
         thing_string='/'.join(things),
-        valid_request=valid_request,
+        logged_in=user is not None,
         reason_bad=reason_bad,
         login_methods=', '.join(login_methods),
         username=username,
@@ -891,8 +891,7 @@ def whoami(things):
     links
     """
     # Find out who we are if logged in
-    fsc = get_config()
-    template_args = {'orcid_enabled': fsc.orcid_enabled}
+    template_args = {}
 
     user = get_context().user
 

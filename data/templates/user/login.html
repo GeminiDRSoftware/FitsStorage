@@ -28,7 +28,7 @@
 
 <H1>Login</H1>
 
-{% if valid_request %}
+{% if logged_in %}
   <H3>Welcome, you are logged in to the Gemini Archive.</H3>
   <P>Your account has the following active login methods: {{ login_methods }}. To
   add additional login methods, log in using the new method below.</P>
