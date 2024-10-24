@@ -30,8 +30,8 @@
 
 {% if logged_in %}
   <H3>Welcome, you are logged in to the Gemini Archive.</H3>
-  <P>Your account has the following login methods available: {{ login_methods }}. To
-  add additional login methods, simply log in using the new method below.</P>
+  <P>Your account has the following login methods available: {{ login_methods }}.</P>
+  <P>To add additional login methods, simply log in using the new method below.</P>
   {% if thing_string %}
     <p><a href="/searchform/{{ thing_string }}">Click here to go back to your search form</a></p>
     <p><a href="/searchform">Click here to go to an empty search form</a></p>
