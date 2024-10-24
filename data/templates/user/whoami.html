@@ -16,6 +16,7 @@
       {% if username %}<li class="whoami">Username: {{ username }}</li>{% endif %}
       <li class="whoami">Email {{ email }} {% if username %}<a href="/change_email">[update]</a>{% endif %}</li>
       <li class="whoami"><a href="/logout">Log Out</a></li>
+      <li class="whoami"><a href="/login">Login Page</a></li>
   {% if username %}
   <li class="whoami"><a href="/change_password/{{ thing_string }}">Change Password</a></li>
   <li class="whoami"><a href="/change_email/{{ thing_string }}">Change Email</a></li>
