@@ -30,8 +30,8 @@
 
 {% if logged_in %}
   <H3>Welcome, you are logged in to the Gemini Archive.</H3>
-  <P>Your account has the following active login methods: {{ login_methods }}. To
-  add additional login methods, log in using the new method below.</P>
+  <P>Your account has the following login methods available: {{ login_methods }}. To
+  add additional login methods, simply log in using the new method below.</P>
   {% if thing_string %}
     <p><a href="/searchform/{{ thing_string }}">Click here to go back to your search form</a></p>
     <p><a href="/searchform">Click here to go to an empty search form</a></p>
@@ -141,7 +141,8 @@ to your archive account.</LI>
     If you inadvertently end up with multiple accounts please file a helpdesk ticket,
     and we will merge them into one. </P>
 
-<P>You can tell what log-in methods are valid for your account by clicking on your
+<P>You can tell what log-in methods are valid for your account in the logged-in message
+    near the top of this page or by clicking on your
     account name pull down to the top right of this page. If you see <code>ORCID</code>
     and your ORCID id listed, your account is registered to an ORCID iD.
     If you see <code>NOIRLab ID</code> listed, you have a NOIRLab SSO account registered,
