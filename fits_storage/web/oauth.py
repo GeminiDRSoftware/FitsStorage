@@ -83,8 +83,10 @@ class OAuth(object):
         # This is the URL we send the user to for them to authenticate. This
         # URL contains the redirect_url which the authorization server with
         # send them back to with an authorization code.
+        scopes="openid read-limited"
         return f"{self.openid_config['authorization_endpoint']}" \
-               f"?client_id={self.client_id}&response_type=code&scope=openid" \
+               f"?client_id={self.client_id}&response_type=code" \
+               f"&scope={urllib.parse.quote(scopes)}" \
                f"&redirect_uri={urllib.parse.quote(self.redirect_url)}"
 
     def request_tokens(self, code):
@@ -256,7 +258,7 @@ class OAuthORCID(OAuth):
 
         # Try to read more stuff from ORCID
         url = f"https://api.sandbox.orcid.org/v3.0/{self.oauth_id}/read-public"
-        headers = {'Accept': 'application/orcid+json',
+        headers = {'Accept': 'application/vnd.orcid+json',
                    'Authorization': f'Bearer {self.access_token}'}
         r = requests.get(url, headers=headers)
         print(f'status_code: {r.status_code}')
