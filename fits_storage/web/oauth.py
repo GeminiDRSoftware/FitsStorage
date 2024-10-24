@@ -258,6 +258,6 @@ class OAuthORCID(OAuth):
         url = f"https://api.sandbox.orcid.org/v3.0/{self.oauth_id}/record"
         headers = {'Accept': 'application/orcid+json',
                    'Authorization': f'Bearer: {self.access_token}'}
-        r = requests.get(url, heders=headers)
+        r = requests.get(url, headers=headers)
         print(f'status_code: {r.status_code}')
         print(f'test: {r.text}')
