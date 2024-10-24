@@ -40,12 +40,14 @@
   {% endif %}
   <p>In order to access proprietary data, your programs need to be registered with your archive account.</p>
   <p><a href="/my_programs">Click here to register programs</a></p>
+<hr>
 {% endif %}
 
 {% if reason_bad %}
   <H3>Log-in did not succeed: {{ reason_bad }}. Please try again.</H3>
   <P>If you have forgotten your GOA username and/or password,
     <a href="/request_password_reset">click here to reset your password</a>.</P>
+  <hr>
 {% endif %}
 
 <P>There are now several options for logging in to the Gemini Observatory Archive -
