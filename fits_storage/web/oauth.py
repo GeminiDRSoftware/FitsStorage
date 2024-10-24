@@ -83,7 +83,7 @@ class OAuth(object):
         # This is the URL we send the user to for them to authenticate. This
         # URL contains the redirect_url which the authorization server with
         # send them back to with an authorization code.
-        scopes="openid read-limited"
+        scopes="openid /read-public"
         return f"{self.openid_config['authorization_endpoint']}" \
                f"?client_id={self.client_id}&response_type=code" \
                f"&scope={urllib.parse.quote(scopes)}" \
