@@ -791,6 +791,8 @@ def login(things):
     redirect = ''
     cookie = None
 
+    user = ctx.user
+
     # Parse the form data here
     if formdata:
         if 'username' in formdata:
@@ -828,11 +830,22 @@ def login(things):
         if redirect:
             ctx.resp.redirect_to(redirect)
 
+    login_methods = []
+    if user and user.orcid_id:
+        login_methods.append("ORCID")
+    if user and user.noirlab_id:
+        login_methods.append("NOIRLab-SSO")
+    if user and user.username:
+        login_methods.append("Username-Password")
+
+
     template_args = dict(
+        server_title=get_config().fits_server_title,
         # Rebuild the thing_string for the url
         thing_string='/'.join(things),
         valid_request=valid_request,
         reason_bad=reason_bad,
+        login_methods=', '.join(login_methods),
         username=username,
         redirect=redirect,
     )
@@ -1239,7 +1252,7 @@ def oauth_login(service, code):
             oauth_url = oauth.authorization_url()
         except Exception as e:
             return dict(notification_message="", reason_bad=e)
-        
+
         ctx.resp.redirect_to(oauth_url)
 
     template_args = dict(

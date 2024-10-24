@@ -110,11 +110,6 @@ class OAuth(object):
             data["client_secret"] = self.client_secret
             r = requests.post(oauth_token_url, data=data)
 
-        print(f'POST Request headers: {r.request.headers}')
-        print(f'POST Request body: {r.request.body}')
-        print(f'POST Headers: {r.headers}')
-        print(f'POST Response text: {r.text}')
-
         if r.status_code != 200:
             raise OAuthError(f"Bad status code {r.status_code} from OAuth "
                              f"server token endpoint")

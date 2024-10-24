@@ -1,84 +1,150 @@
 {% extends "layout.html" %}
+
 {% block extra_header %}
 <meta name="robots" content="noindex, nofollow">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="/static/titlebar.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/whoami.css" />
+<link rel="stylesheet" type="text/css" href="/static/titlebar.css" />
+<link rel="stylesheet" type="text/css" href="/static/login.css" />
+
 {% endblock %}
+
 {% block title %}Gemini Archive log in{% endblock %}
 
 {% block body %}
- <H1>Gemini Observatory Archive Login</H1>
- {% if valid_request %}
-   <P>Welcome, you are successfully logged in to the Gemini Archive.</P>
-   {% if thing_string %}
-     <p><a href="/searchform/{{ thing_string }}">Click here to go back to your search form</a></p>
-     <p><a href="/searchform">Click here to go to an empty search form</a></p>
-   {% else %}
-     <p><a href="/searchform">Click here to go to the search form</a></p>
-   {% endif %}
-   <p>In order to access proprietary data, your programs need to be registered with your archive account.</p>
-   <p><a href="/my_programs">Click here to register programs</a></p>
- {% else %}
-   {% if reason_bad %}
-     <P>Log-in did not succeed: {{ reason_bad }}. Please try again.</P>
-     <P>If you have forgotten your GOA username and/or password,
-        <a href="/request_password_reset">click here to reset your password</a>.</P>
-   {% endif %}
+<div class="titlebar">
+  <div class="titlebar_left">
+  {{ server_title }}
+  </div>
+  <div class="titlebar_help" id="help_about">
+    <a href="/help/index.html" target="_blank">Help</a> -
+    <a href="/help/about.html" target="_blank">About</a>
+  </div>
+  <div class="titlebar_right" id="div_whoami">
+    Loading...
+  </div>
+</div>
 
-   <P>There are now several options for logging in to the Gemini Observatory Archive -
-     the "traditional" GOA username and password options still works, but you can
-     now also authenticate using your ORCID ID, and NOIRlab staff can authenticate using
-     NOIRlab single sign on.</P>
-   <P>Whichever method you use to log in, you <em>should</em> end up logged in to the
-     same GOA account. Please try to avoid ending up with different accounts for different
-     sign-on methods, as things like proprietary program access will then be inconsistent
-     between your accounts. The key here is the email address associated with your various sign-ons.</P>
-   <P> If for example you already have a traditional GOA username and password, and you would
-     like so switch to signing in with your ORCID, please ensure that the email address
-     you have registered to your GOA account matches the one you have registered to your
-     ORCID account. You can update the email address on your GOA account
-     <a href="/change_email">here</a>".</P>
-   <P>NORlab staff users - everything above regarding ORCID sign-in also applies to
-     NOIRLab SSO sign in. Please also note that gemini.edu and noirlab.edu email addresses
-     are not considered to be the same in this case.</P>
+<H1>Login</H1>
 
-<H2>Click here to sign in using ORCID</H2>
+{% if valid_request %}
+  <H3>Welcome, you are logged in to the Gemini Archive.</H3>
+  <P>Your account has the following active login methods: {{ login_methods }}. To
+  add additional login methods, log in using the new method below.</P>
+  {% if thing_string %}
+    <p><a href="/searchform/{{ thing_string }}">Click here to go back to your search form</a></p>
+    <p><a href="/searchform">Click here to go to an empty search form</a></p>
+  {% else %}
+    <p><a href="/searchform">Click here to go to the search form</a></p>
+  {% endif %}
+  <p>In order to access proprietary data, your programs need to be registered with your archive account.</p>
+  <p><a href="/my_programs">Click here to register programs</a></p>
+{% endif %}
 
-<H2><a href="/noirlabsso">Click here to sign in using NOIRlab SSO</a></H2>
+{% if reason_bad %}
+  <H3>Log-in did not succeed: {{ reason_bad }}. Please try again.</H3>
+  <P>If you have forgotten your GOA username and/or password,
+    <a href="/request_password_reset">click here to reset your password</a>.</P>
+{% endif %}
 
-<H2>To sign in using traditional GOA username and password, sign in here:</H2>
-   <FORM action="/login/{{ thing_string }}" method="POST">
-   <TABLE>
-   <TR><TD><LABEL for="username">Username</LABEL><TD>
-   <TD><INPUT id="username" type="text" size=16 name="username" value='{{ username }}'></TD></TR>
-   <TR><TD><LABEL for="password">Password</LABEL><TD>
-   <TD><INPUT id="password" type="password" size=16 name="password"></TD></TR>
-   </TABLE>
-     <INPUT type="hidden" name="redirect" value="{{ redirect }}">
-   <INPUT type="submit" value="Submit">
-   </FORM>
+<P>There are now several options for logging in to the Gemini Observatory Archive -
+    in addition to the "traditional" GOA username and password log-in, you can
+    now also authenticate using your ORCID ID, and NOIRlab staff can authenticate using
+    NOIRlab single sign on. Please read the more detailed explanation below.</P>
+
+<div class="loginboxes">
+    <div class="loginbox">
+        <a href="/orcid"><H3 style="text-align:center;">Click here to sign in using ORCID</H3>
+            <img src="https://orcid.org/assets/vectors/orcid.logo.svg" class="loginlogo" alt="ORCID">
+        </a>
+    </div>
+    <div class="loginbox">
+        <a href="/noirlabsso"><H3 style="text-align:center;">Click here to sign in using NOIRlab SSO</H3>
+        <img src="https://noirlab.edu/public/media/archives/logos/svg/logo001.svg" class="loginlogo" alt="NOIRLab">
+        </a>
+    </div>
+    <div class="loginbox">
+        <H3>To sign in using traditional GOA username and password, sign in here:</H3>
+        <FORM action="/login/{{ thing_string }}" method="POST">
+        <TABLE>
+        <TR><TD><LABEL for="username">Username</LABEL><TD>
+        <TD><INPUT id="username" type="text" size=16 name="username" value='{{ username }}'></TD></TR>
+        <TR><TD><LABEL for="password">Password</LABEL><TD>
+        <TD><INPUT id="password" type="password" size=16 name="password"></TD></TR>
+        </TABLE>
+        <INPUT type="hidden" name="redirect" value="{{ redirect }}">
+        <INPUT type="submit" value="Submit">
+        </FORM>
+    </div>
+</div>
 
 <H2>Not sure which to use?</H2>
+
+<H3>New to the Gemini Observatory Archive?</H3>
 <UL>
-  <LI>If you are a Gemini User (i.e. research astronomer or other community member
-accessing Gemini data), we recommend using ORCID. This applies even if you are also NOIRlab staff.
-  <UL>
-    <LI>If you don't already have an ORCID ID, sign up for one <a href="https://orcid.org/register">here.</a></LI>
-    <LI>If you already have a GOA account, but it uses a different email address to your
-    ORCID, please go <a href="/change_email"> here </a> to update your GOA email to match
-    your ORCID email before signing in with ORCID.</LI>
-    <LI>If you don't already have a GOA account, just sign in using ORCID, we'll set one up
-    for you automatically as sign in.</LI>
-  </UL></LI>
-  <LI>If you are NOIRlab staff member, do not have an ORCID, and are accessing GOA
-    for operational duties, use the NOIRlab SSO sign in.
-    <UL>
-      <LI>If you don't already have an account, we'll create one automatically for as you sign in.</LI>
-      <LI>If you need staff data access privelidges, you will need to request that separately after you have signed.</LI>
-    </UL></LI>
-  <LI>If you are not a NOIRlab staff member, don't want to create or use an ORCID, or just prefer the simple old ways,
-    sign in using the traditional username / password form. If you don't already have an account, you can
-    <a href="/request_account">request one here</a></LI>
-  <LI>If you think you've ended up with multiple accounts, please either file a helpdesk
-  ticket, or contact Paul Hirst, and it should be simple for us to merge your accounts into one.</LI>
+<LI>If you are new to the Gemini Observatory Archive, and you already have an
+    ORCID iD, we recommend signing in with ORCID.</LI>
+<LI>If you use Gemini data for your astronomy research, but don't have an
+    <a href="https://info.orcid.org/what-is-orcid/">ORCID iD</a>, we recommend
+    <a href="https://orcid.org/register">registering for an ORCID iD</a>,
+    then signing in with ORCID. As more Gemini Observatory services adopt ORCID
+    this will allow more seamless integration between the GOA and other Gemini
+    services, as well as external services.</LI>
+<LI>If you are a member of Gemini or NOIRLab staff using Gemini data for operational
+purposes, we recommend signing in with NOIRLab SSO.</LI>
 </UL>
- {% endif %}{# valid request #}
+
+<H3>Existing GOA Users</H3>
+<P>When the GOA was created, username / password was the only sign in option,
+    and thus all older accounts  will have username / password sign-in.</P>
+<P>We expect that most users will want to switch to ORCID sign-in so that they
+    do not have to remember a specific GOA username and password. NOIRLab staff
+    members may wish to switch to NOIRLab sign-in for the same reason.</P>
+<P>The simplest way to do this and ensure that you maintain your current proprietary
+    data access is as follows:
+<UL>
+    <LI>Ensure you are logged in to GOA. You can tell if you are already logged
+        in by looking at the top-right of this page. If your name shows up next to the
+        <img src="/static/user1-64x64.png" height="18px"> symbol, you are already
+        logged in. If you see "Not logged in", then log in using your GOA username
+        and password now, then when you get back here after logging in, continue
+        to the next step.
+    <LI>Log in again, using ORCID or NOIRLab SSO. This will add your ORCID or NOIRLab ID
+to your archive account.</LI>
+</UL>
+
+<P>If you are not a NOIRlab staff member, don't want to create or use an ORCID, or just prefer the simple old ways,
+    sign in using the traditional username / password form. If you don't already have an account, you can
+    <a href="/request_account">request one here</a></P>
+
+<H2>Further details and explanation</H2>
+<P>In order to access proprietary data in GOA, GOA needs to know who you are and what
+    proprietary data rights you have. GOA maintains a database of registered users along
+    with what proprietary data rights they have. The process of logging-in allows GOA to
+    associate a user session (or API client) with a particular user in the database,
+    and thus determine which proprietary data to allow that session to access.</P>
+
+<P>Whichever method you use to log in, you should end up logged in to the
+    same GOA account. A single GOA account can have a username-password pair,
+    an ORCID iD, and/or a NORLAB ID associated with it. Obviously, most accounts
+    will only have one or two forms of identification defined. Older accounts will only
+    have username-password defined, for example. Either way, you can log into an account
+    using any identification method that is defined for that account.</P>
+
+<P>If you log in by a new method (e.g. ORCID) <strong>while you are already logged into a GOA
+    account</strong> (for example from a previous username-password login), the system will
+    <strong>add that new login method</strong> (e.g. ORCID iD) to your existing account.</P>
+
+<P>If you log in by ORCID or NOIRLab and GOA doesn't already have an account corresponding
+    to that ORCID or NOIRLab ID, we will simply create a new account for you as you log in.
+    If you inadvertently end up with multiple accounts please file a helpdesk ticket,
+    and we will merge them into one. </P>
+
+<P>You can tell what log-in methods are valid for your account by clicking on your
+    account name pull down to the top right of this page. If you see <code>ORCID</code>
+    and your ORCID id listed, your account is registered to an ORCID iD.
+    If you see <code>NOIRLab ID</code> listed, you have a NOIRLab SSO account registered,
+    and if you see <code>Username</code>, then you have a traditional username-password
+    login defined.</P>
 {% endblock %}
