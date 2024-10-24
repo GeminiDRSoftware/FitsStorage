@@ -253,3 +253,12 @@ class OAuthORCID(OAuth):
         self.oauth_id = self.decoded_id_token['sub']
         self.fullname = f"{self.decoded_id_token['given_name']} " \
                         f"{self.decoded_id_token['family_name']}"
+
+        # Try to read more stuff from ORCID
+        url = f"https://api.sandbox.orcid.org/v3.0/{self.oauth_id}/record"
+        headers = {'Accept': 'application/orcid+json',
+                   'Bearer': self.access_token}
+        r = requests.get(url)
+        print(f'status_code: {r.status_code}')
+        print(f'test: {r.text}')
+        
