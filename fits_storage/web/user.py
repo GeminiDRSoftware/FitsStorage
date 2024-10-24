@@ -838,7 +838,9 @@ def login(things):
     if user and user.username:
         login_methods.append("Username-Password")
 
-
+    if redirect == '':
+        redirect="/login"
+        
     template_args = dict(
         server_title=get_config().fits_server_title,
         # Rebuild the thing_string for the url
