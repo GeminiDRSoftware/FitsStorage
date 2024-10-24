@@ -255,7 +255,7 @@ class OAuthORCID(OAuth):
                         f"{self.decoded_id_token['family_name']}"
 
         # Try to read more stuff from ORCID
-        url = f"https://api.sandbox.orcid.org/v3.0/{self.oauth_id}/record"
+        url = f"https://api.sandbox.orcid.org/v3.0/{self.oauth_id}/read-public"
         headers = {'Accept': 'application/orcid+json',
                    'Authorization': f'Bearer {self.access_token}'}
         r = requests.get(url, headers=headers)
