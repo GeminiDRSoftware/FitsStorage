@@ -56,34 +56,34 @@ def querypropcoords(query):
                             Header.release <= func.now()))
 
 
-def filterquery(self, query):
+def filter(self, query):
     """
     Given an sqlalchemy query object, add filters for the items in the selection
     and return the query object
     """
     for key, field in queryselection_filters:
-        if key in self._seldict:
-            query = query.filter(field == self._seldict[key])
+        if key in self:
+            query = query.filter(field == self[key])
 
     # For some bizarre reason, doing a .in_([]) with an empty list is really
     # slow, and postgres eats CPU for a while doing it.
-    if 'filelist' in self._seldict:
-        if self._seldict['filelist']:
-            query = query.filter(File.name.in_(self._seldict['filelist']))
+    if 'filelist' in self:
+        if self['filelist']:
+            query = query.filter(File.name.in_(self['filelist']))
         else:
             query = query.filter(False)
 
     # Ignore the "Include" dummy value
-    if self._seldict.get('engineering') in (True, False):
-        query = query.filter(Header.engineering == self._seldict['engineering'])
+    if self.get('engineering') in (True, False):
+        query = query.filter(Header.engineering == self['engineering'])
 
-    if self._seldict.get('calprog') in (True, False):
-        query = query.filter(Header.calibration_program == self._seldict['calprog'])
+    if self.get('calprog') in (True, False):
+        query = query.filter(Header.calibration_program == self['calprog'])
 
-    if ('object' in self._seldict) and (
-            ('ra' not in self._seldict) and ('dec' not in self._seldict)):
+    if ('object' in self) and (
+            ('ra' not in self) and ('dec' not in self)):
         # Handle the "wildcards" allowed on the object name
-        object = self._seldict['object']
+        object = self['object']
         if object.startswith('*') or object.endswith('*'):
             # Wildcards are used, replace with SQL wildcards and use ilike query
             object = object.replace('*', '%')
@@ -92,20 +92,20 @@ def filterquery(self, query):
         query = querypropcoords(query)
 
     # Should we query by date?
-    if 'date' in self._seldict:
+    if 'date' in self:
         # This is now a literal UTC date query. To query by observing night
         # use the 'night' selection
 
-        startdt, enddt = gmu.get_time_period(self._seldict['date'])
+        startdt, enddt = gmu.get_time_period(self['date'])
 
         # check it's between these two
         query = query.filter(Header.ut_datetime >= startdt)\
             .filter(Header.ut_datetime < enddt)
 
     # Should we query by daterange?
-    if 'daterange' in self._seldict:
+    if 'daterange' in self:
         # Parse the date to start and end datetime objects
-        startd, endd = gmu.gemini_daterange(self._seldict['daterange'],
+        startd, endd = gmu.gemini_daterange(self['daterange'],
                                             as_dates=True)
         startdt, enddt = gmu.get_time_period(startd, endd)
 
@@ -114,8 +114,8 @@ def filterquery(self, query):
             .filter(Header.ut_datetime < enddt)
 
     # Query by Observing Night
-    if 'night' in self._seldict:
-        startdt, enddt = gmu.get_time_period(self._seldict['night'])
+    if 'night' in self:
+        startdt, enddt = gmu.get_time_period(self['night'])
         query = query.filter(
             or_(
                 and_(Header.telescope == 'Gemini-North',
@@ -128,8 +128,8 @@ def filterquery(self, query):
         )
 
     # Query by nightrange
-    if 'nightrange' in self._seldict:
-        startd, endd = gmu.gemini_daterange(self._seldict['nightrange'],
+    if 'nightrange' in self:
+        startd, endd = gmu.gemini_daterange(self['nightrange'],
                                             as_dates=True)
         startdt, enddt = gmu.get_time_period(startd, endd)
         query = query.filter(
@@ -143,109 +143,109 @@ def filterquery(self, query):
         )
     )
 
-    if 'inst' in self._seldict:
-        if self._seldict['inst'] == 'GMOS':
+    if 'inst' in self:
+        if self['inst'] == 'GMOS':
             query = query.filter(or_(Header.instrument == 'GMOS-N',
                                      Header.instrument == 'GMOS-S'))
         else:
-            query = query.filter(Header.instrument == self._seldict['inst'])
+            query = query.filter(Header.instrument == self['inst'])
 
-    if 'disperser' in self._seldict:
-        if 'inst' in self._seldict and self._seldict['inst'] == 'GNIRS':
-            if self._seldict['disperser'] == '10lXD':
+    if 'disperser' in self:
+        if 'inst' in self and self['inst'] == 'GNIRS':
+            if self['disperser'] == '10lXD':
                 query = query.filter(or_(Header.disperser == '10_mm&SXD',
                                          Header.disperser == '10_mm&LXD'))
-            elif self._seldict['disperser'] == '32lXD':
+            elif self['disperser'] == '32lXD':
                 query = query.filter(or_(Header.disperser == '32_mm&SXD',
                                          Header.disperser == '32_mm&LXD'))
-            elif self._seldict['disperser'] == '111lXD':
+            elif self['disperser'] == '111lXD':
                 query = query.filter(or_(Header.disperser == '111_mm&SXD',
                                          Header.disperser == '111_mm&LXD'))
             else:
-                query = query.filter(Header.disperser == self._seldict['disperser'])
+                query = query.filter(Header.disperser == self['disperser'])
         else:
-            like_arg = self._seldict['disperser'] + '_%'
+            like_arg = self['disperser'] + '_%'
             query = query.filter(
-                or_(Header.disperser == self._seldict['disperser'],
+                or_(Header.disperser == self['disperser'],
                     Header.disperser.like(like_arg)))
 
-    if 'camera' in self._seldict:
+    if 'camera' in self:
         # Hack for GNIRS camera names
         # - find both the Red and Blue options for each case
-        if self._seldict['camera'] == 'GnirsLong':
+        if self['camera'] == 'GnirsLong':
             query = query.filter(or_(Header.camera == 'LongRed',
                                      Header.camera == 'LongBlue'))
-        elif self._seldict['camera'] == 'GnirsShort':
+        elif self['camera'] == 'GnirsShort':
             query = query.filter(or_(Header.camera == 'ShortRed',
                                      Header.camera == 'ShortBlue'))
         else:
-            query = query.filter(Header.camera == self._seldict['camera'])
+            query = query.filter(Header.camera == self['camera'])
 
-    if 'focal_plane_mask' in self._seldict:
-        if 'inst' in list(self._seldict.keys()) and self._seldict['inst'] == 'TReCS':
+    if 'focal_plane_mask' in self:
+        if 'inst' in list(self.keys()) and self['inst'] == 'TReCS':
             # handle the quotes and options "+ stuff" in the TReCS mask names.
             # the selection should only contain the "1.23" bit
             query = query.filter(
-                Header.focal_plane_mask.contains(self._seldict['focal_plane_mask']))
-        if 'inst' in list(self._seldict.keys()) and self._seldict['inst'][:4] == 'GMOS':
+                Header.focal_plane_mask.contains(self['focal_plane_mask']))
+        if 'inst' in list(self.keys()) and self['inst'][:4] == 'GMOS':
             # Make this startswith for convenience finding multiple gmos masks
             query = query.filter(Header.focal_plane_mask.startswith(
-                self._seldict['focal_plane_mask']))
+                self['focal_plane_mask']))
         else:
             query = query.filter(Header.focal_plane_mask ==
-                                 self._seldict['focal_plane_mask'])
+                                 self['focal_plane_mask'])
 
-    if 'pupil_mask' in self._seldict:
-        query = query.filter(Header.pupil_mask == self._seldict['pupil_mask'])
+    if 'pupil_mask' in self:
+        query = query.filter(Header.pupil_mask == self['pupil_mask'])
 
-    if 'qa_state' in self._seldict and self._seldict['qa_state'] != 'AnyQA':
-        if self._seldict['qa_state'] == 'Win':
+    if 'qa_state' in self and self['qa_state'] != 'AnyQA':
+        if self['qa_state'] == 'Win':
             query = query.filter(or_(Header.qa_state == 'Pass',
                                      Header.qa_state == 'Usable'))
-        elif self._seldict['qa_state'] == 'NotFail':
+        elif self['qa_state'] == 'NotFail':
             query = query.filter(Header.qa_state != 'Fail')
-        elif self._seldict['qa_state'] == 'Lucky':
+        elif self['qa_state'] == 'Lucky':
             query = query.filter(or_(Header.qa_state == 'Pass',
                                      Header.qa_state == 'Undefined'))
-        elif self._seldict['qa_state'] == 'UndefinedQA':
+        elif self['qa_state'] == 'UndefinedQA':
             query = query.filter(Header.qa_state == 'Undefined')
         else:
-            query = query.filter(Header.qa_state == self._seldict['qa_state'])
+            query = query.filter(Header.qa_state == self['qa_state'])
 
-    if 'ao' in self._seldict:
-        isAO = (self._seldict['ao'] == 'AO')
+    if 'ao' in self:
+        isAO = (self['ao'] == 'AO')
         query = query.filter(Header.adaptive_optics == isAO)
 
-    if 'lgs' in self._seldict:
-        isLGS = (self._seldict['lgs'] == 'LGS')
+    if 'lgs' in self:
+        isLGS = (self['lgs'] == 'LGS')
         query = query.filter(Header.laser_guide_star == isLGS)
 
-    if 'detector_roi' in self._seldict:
-        if self._seldict['detector_roi'] == 'Full Frame':
+    if 'detector_roi' in self:
+        if self['detector_roi'] == 'Full Frame':
             query = query.filter(
                 or_(Header.detector_roi_setting == 'Fixed',
                     Header.detector_roi_setting == 'Full Frame'))
         else:
             query = query.filter(Header.detector_roi_setting ==
-                                 self._seldict['detector_roi'])
+                                 self['detector_roi'])
 
-    if 'photstandard' in self._seldict:
+    if 'photstandard' in self:
         query = query.filter(Header.phot_standard == True)
 
-    if 'twilight' in self._seldict:
-        if self._seldict['twilight']:
+    if 'twilight' in self:
+        if self['twilight']:
             query = query.filter(Header.object == 'Twilight')
         else:
             query = query.filter(Header.object != 'Twilight')
 
-    if 'az' in self._seldict:
-        a, b = _parse_range(self._seldict['az'])
+    if 'az' in self:
+        a, b = _parse_range(self['az'])
         if a is not None and b is not None:
             query = query.filter(Header.azimuth >= a).filter(Header.azimuth < b)
             query = querypropcoords(query)
 
-    if 'el' in self._seldict:
-        a, b = _parse_range(self._seldict['el'])
+    if 'el' in self:
+        a, b = _parse_range(self['el'])
         if a is not None and b is not None:
             query = query.filter(Header.elevation >= a).\
                 filter(Header.elevation < b)
@@ -253,33 +253,33 @@ def filterquery(self, query):
 
     # cosdec value is used in 'ra' code below to scale the search radius
     cosdec = None
-    if 'dec' in self._seldict:
+    if 'dec' in self:
         valid = True
         # might be a range or a single value
-        match = re.match(r"(-?[\d:\.]+)-(-?[\d:\.]+)", self._seldict['dec'])
+        match = re.match(r"(-?[\d:\.]+)-(-?[\d:\.]+)", self['dec'])
         if match is None:
             # single value
-            degs = gmu.dectodeg(self._seldict['dec'])
+            degs = gmu.dectodeg(self['dec'])
             if degs is None:
                 # Invalid value.
-                self._seldict['warning'] = 'Invalid Dec format. ' \
+                self['warning'] = 'Invalid Dec format. ' \
                                        'Ignoring your Dec constraint.'
                 valid = False
             else:
                 # valid single value, get search radius
-                if 'sr' in list(self._seldict.keys()):
-                    sr = gmu.srtodeg(self._seldict['sr'])
+                if 'sr' in list(self.keys()):
+                    sr = gmu.srtodeg(self['sr'])
                     if sr is None:
-                        self._seldict['warning'] = 'Invalid Search Radius, ' \
+                        self['warning'] = 'Invalid Search Radius, ' \
                                                'defaulting to 3 arcmin'
-                        self._seldict['sr'] = '180'
-                        sr = gmu.srtodeg(self._seldict['sr'])
+                        self['sr'] = '180'
+                        sr = gmu.srtodeg(self['sr'])
                 else:
                     # No search radius specified. Default it for them
-                    self._seldict['warning'] = 'No Search Radius given, ' \
+                    self['warning'] = 'No Search Radius given, ' \
                                            'defaulting to 3 arcmin'
-                    self._seldict['sr'] = '180'
-                    sr = gmu.srtodeg(self._seldict['sr'])
+                    self['sr'] = '180'
+                    sr = gmu.srtodeg(self['sr'])
                 lower = degs - sr
                 upper = degs + sr
 
@@ -291,7 +291,7 @@ def filterquery(self, query):
             lower = gmu.dectodeg(match.group(1))
             upper = gmu.dectodeg(match.group(2))
             if (lower is None) or (upper is None):
-                self._seldict['warning'] = 'Invalid Dec range format. ' \
+                self['warning'] = 'Invalid Dec range format. ' \
                                        'Ignoring your Dec constraint.'
                 valid = False
             else:
@@ -309,33 +309,33 @@ def filterquery(self, query):
                     .filter(Header.dec < upper)
             query = querypropcoords(query)
 
-    if 'ra' in self._seldict:
+    if 'ra' in self:
         valid = True
         # might be a range or a single value
-        value = self._seldict['ra'].split('-')
+        value = self['ra'].split('-')
         if len(value) == 1:
             # single value
             degs = gmu.ratodeg(value[0])
             if degs is None:
                 # Invalid value.
-                self._seldict['warning'] = 'Invalid RA format. ' \
+                self['warning'] = 'Invalid RA format. ' \
                                        'Ignoring your RA constraint.'
                 valid = False
             else:
                 # valid single value, get search radius
-                if 'sr' in list(self._seldict.keys()):
-                    sr = gmu.srtodeg(self._seldict['sr'])
+                if 'sr' in list(self.keys()):
+                    sr = gmu.srtodeg(self['sr'])
                     if sr is None:
-                        self._seldict['warning'] = 'Invalid Search Radius, ' \
+                        self['warning'] = 'Invalid Search Radius, ' \
                                                'defaulting to 3 arcmin'
-                        self._seldict['sr'] = '180'
-                        sr = gmu.srtodeg(self._seldict['sr'])
+                        self['sr'] = '180'
+                        sr = gmu.srtodeg(self['sr'])
                 else:
                     # No search radius specified. Default it for them
-                    self._seldict['warning'] = 'No Search Radius given, ' \
+                    self['warning'] = 'No Search Radius given, ' \
                                            'defaulting to 3 arcmin'
-                    self._seldict['sr'] = '180'
-                    sr = gmu.srtodeg(self._seldict['sr'])
+                    self['sr'] = '180'
+                    sr = gmu.srtodeg(self['sr'])
 
                 # Don't apply a factor 15 as that is done in the conversion
                 # to degrees. But we do need to account for the factor cos(
@@ -351,13 +351,13 @@ def filterquery(self, query):
             lower = gmu.ratodeg(value[0])
             upper = gmu.ratodeg(value[1])
             if (lower is None) or (upper is None):
-                self._seldict['warning'] = 'Invalid RA range format. ' \
+                self['warning'] = 'Invalid RA range format. ' \
                                        'Ignoring your RA constraint.'
                 valid = False
 
         else:
             # Invalid string format for RA
-            self._seldict['warning'] = 'Invalid RA format. ' \
+            self['warning'] = 'Invalid RA format. ' \
                                    'Ignoring your RA constraint.'
             valid = False
 
@@ -369,23 +369,23 @@ def filterquery(self, query):
                 query = query.filter(or_(Header.ra >= lower, Header.ra < upper))
             query = querypropcoords(query)
 
-    if 'exposure_time' in self._seldict:
+    if 'exposure_time' in self:
         valid = True
         expt = None
         lower = None
         upper = None
         # might be a range or a single value
-        self._seldict['exposure_time'] = self._seldict['exposure_time'].replace(' ', '')
-        match = re.match(r"([\d\.]+)-([\d\.]+)", self._seldict['exposure_time'])
+        self['exposure_time'] = self['exposure_time'].replace(' ', '')
+        match = re.match(r"([\d\.]+)-([\d\.]+)", self['exposure_time'])
         if match is None:
             # single value
             try:
-                expt = float(self._seldict['exposure_time'])
+                expt = float(self['exposure_time'])
             except:
                 pass
             if expt is None:
                 # Invalid format
-                self._seldict['warning'] = "Invalid format for exposure time, " \
+                self['warning'] = "Invalid format for exposure time, " \
                                        "ignoring it."
                 valid = False
             else:
@@ -400,7 +400,7 @@ def filterquery(self, query):
                 lower = float(match.group(1))
                 upper = float(match.group(2))
             except (ValueError, TypeError):
-                self._seldict['warning'] = 'Invalid format for exposure time ' \
+                self['warning'] = 'Invalid format for exposure time ' \
                                        'range. Ignoring it.'
                 valid = False
 
@@ -408,21 +408,21 @@ def filterquery(self, query):
             query = query.filter(Header.exposure_time >= lower)\
                 .filter(Header.exposure_time <= upper)
 
-    if 'crpa' in self._seldict:
-        a, b = _parse_range(self._seldict['crpa'])
+    if 'crpa' in self:
+        a, b = _parse_range(self['crpa'])
         if a is not None and b is not None:
             query = query.filter(Header.cass_rotator_pa >= a)\
                 .filter(Header.cass_rotator_pa < b)
             query = querypropcoords(query)
 
-    if 'filepre' in self._seldict:
-        likestr = '%s%%' % self._seldict['filepre']
+    if 'filepre' in self:
+        likestr = '%s%%' % self['filepre']
         query = query.filter(File.name.like(likestr))
 
-    if 'cenwlen' in self._seldict:
+    if 'cenwlen' in self:
         valid = True
         # Might be a single value or a range
-        value = self._seldict['cenwlen'].split('-')
+        value = self['cenwlen'].split('-')
         if len(value) == 1:
             # single value
             try:
@@ -430,7 +430,7 @@ def filterquery(self, query):
                 lower = value - 0.1
                 upper = value + 0.1
             except:
-                self._seldict['warning'] = 'Central Wavelength value is invalid ' \
+                self['warning'] = 'Central Wavelength value is invalid ' \
                                        'and has been ignored'
                 valid = False
         elif len(value) == 2:
@@ -439,16 +439,16 @@ def filterquery(self, query):
                 lower = float(value[0])
                 upper = float(value[1])
             except:
-                self._seldict['warning'] = 'Central Wavelength value is invalid ' \
+                self['warning'] = 'Central Wavelength value is invalid ' \
                                        'and has been ignored'
                 valid = False
         else:
-            self._seldict['warning'] = 'Central Wavelength value is invalid ' \
+            self['warning'] = 'Central Wavelength value is invalid ' \
                                    'and has been ignored'
             valid = False
 
         if valid and not ((0.2 < lower < 30) and (0.2 < upper < 30)):
-            self._seldict['warning'] = 'Invalid Central wavelength value. Value ' \
+            self['warning'] = 'Invalid Central wavelength value. Value ' \
                                    'should be in microns, >0.2 and <30.0'
             if lower > upper:
                 lower, upper = upper, lower
@@ -458,7 +458,7 @@ def filterquery(self, query):
                 upper = 30
             if lower > 30 or upper < 0.2:
                 # only reject the terms outright if they are out of range
-                self._seldict['warning'] = 'Invalid Central wavelength value. ' \
+                self['warning'] = 'Invalid Central wavelength value. ' \
                                        'Value should be in microns, >0.2 and ' \
                                        '<30.0 - Ignoring terms'
                 valid = False
@@ -470,31 +470,31 @@ def filterquery(self, query):
             query = query.filter(Header.central_wavelength > lower)\
                 .filter(Header.central_wavelength < upper)
 
-    if 'publication' in self._seldict:
+    if 'publication' in self:
         query = query.join(Program, Header.program_id == Program.program_id)\
             .join(ProgramPublication, Program.id == ProgramPublication.program_id)\
             .join(Publication, Publication.id == ProgramPublication.publication_id)\
-            .filter(Publication.bibcode == self._seldict['publication'])
+            .filter(Publication.bibcode == self['publication'])
 
-    if 'PIname' in self._seldict or 'ProgramText' in self._seldict:
+    if 'PIname' in self or 'ProgramText' in self:
         query = query.join(Program, Header.program_id == Program.program_id)
-        if 'PIname' in self._seldict:
+        if 'PIname' in self:
             query = query.filter(
                 func.to_tsvector(Program.pi_coi_names)
-                .match(' & '.join(self._seldict['PIname'].split()))
+                .match(' & '.join(self['PIname'].split()))
                 )
-        if 'ProgramText' in self._seldict:
+        if 'ProgramText' in self:
             query = query.filter(
                 func.to_tsvector(Program.title)
-                .match(' & '.join(self._seldict['ProgramText'].split()))
+                .match(' & '.join(self['ProgramText'].split()))
                 )
 
-    if 'gpi_astrometric_standard' in self._seldict:
+    if 'gpi_astrometric_standard' in self:
         query = query.join(Gpi, Gpi.header_id == Header.id)
         query = query.filter(Gpi.astrometric_standard ==
-                             self._seldict['gpi_astrometric_standard'])
+                             self['gpi_astrometric_standard'])
 
-    if 'standard' in self._seldict:
+    if 'standard' in self:
         query = query.filter(Header.types.ilike('%''STANDARD''%'))
 
     return query

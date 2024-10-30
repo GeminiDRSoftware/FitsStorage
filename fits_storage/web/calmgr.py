@@ -22,7 +22,7 @@ from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
 
-from fits_storage.db.selection import queryselection, openquery
+from fits_storage.db.selection import Selection
 
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
@@ -230,13 +230,13 @@ def generate_get_calmgr(selection, caltype, procmode=None):
     # Query the selection
     # Knock out the FAILs
     # Order by date, most recent first
-    query = queryselection(query, selection)\
+    query = selection.filter(query)\
                  .filter(Header.qa_state != 'Fail')\
                  .order_by(desc(Header.ut_datetime))
 
     # If openquery, limit number of responses
     # NOTE: This shouldn't happen, as we're disallowing open queries
-    if openquery(selection):
+    if selection.openquery:
         query = query.limit(1000)
 
     # OK, do the query
@@ -297,7 +297,7 @@ def calmgr(selection):
     method = ctx.env.method
 
     # There selection has to be a closed query for a GET. If it's open, then disallow
-    if method == 'GET' and openquery(selection):
+    if method == 'GET' and selection.openquery:
         ctx.usagelog.add_note("Error: Selection cannot represent an open query for calibration association")
         ctx.resp.client_error(Return.HTTP_NOT_ACCEPTABLE, content_type='text/plain',
                                     message='<!-- Error: Selection cannot represent an open query for calibration association -->\n\n')

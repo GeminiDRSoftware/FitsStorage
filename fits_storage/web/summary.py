@@ -6,7 +6,7 @@ import json
 
 from fits_storage.server.wsgi.context import get_context
 
-from fits_storage.db.selection import sayselection, openquery, selection_to_URL
+from fits_storage.db.selection import Selection
 from fits_storage.db.list_headers import list_headers
 
 from .summary_generator import SummaryGenerator, NO_LINKS, FILENAME_LINKS, \
@@ -47,7 +47,7 @@ def full_page_summary(sumtype, selection, orderby, links):
 
     template_args.update({
         'sumtype': sumtype,
-        'sayselection': sayselection(selection)
+        'sayselection': selection.say()
         })
 
     return template_args
@@ -68,8 +68,8 @@ def summary_body(sumtype, selection, orderby, links=True,
                  additional_columns=()):
     """
     This is the main summary generator. sumtype is the summary type required.
-    selection is an array of items to select on, simply passed through to the
-    webhdrsummary function orderby specifies how to order the output table,
+    selection is a Selection() instance, simply passed through to the
+    webhdrsummary function, orderby specifies how to order the output table,
     simply passed through to the webhdrsummary function
 
     This function outputs header and footer for the html page, and calls the
@@ -113,9 +113,9 @@ def summary_body(sumtype, selection, orderby, links=True,
     querylog.numresults = num_headers
     # Did we get any selection warnings?
     if 'warning' in selection:
-        querylog.add_note("Selection Warning: {}".format(selection['warning']))
+        querylog.add_note(f"Selection Warning: {selection['warning']}")
     # Note any notrecognised in the querylog
-    if 'notrecognised' in list(selection.keys()):
+    if 'notrecognised' in selection.keys():
         querylog.add_note("Selection NotRecognised: %s" %
                           selection['notrecognised'])
     # Note in the log if we hit limits
@@ -162,7 +162,7 @@ def summary_body(sumtype, selection, orderby, links=True,
     template_args =  dict(
         got_results      = sumtable_data,
         dev_system       = (sumtype not in {'searchresults', 'customsearch', 'associated_cals'}) and fsc.fits_system_status == 'development',
-        open_query       = openquery(selection),
+        open_query       = selection.openquery,
         hit_open_limit   = hit_open_limit,
         hit_closed_limit = hit_closed_limit,
         open_limit       = fsc.fits_open_result_limit,
@@ -203,8 +203,8 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
     sumgen = SummaryGenerator(sumtype, links, uri, user, user_progid_list, user_obsid_list, user_file_list,
                               additional_columns)
 
-    download_all_url = '{}{}'.format(url_prefix, selection_to_URL(selection))
-    json_results_url = '{}{}'.format('/jsonsummary', selection_to_URL(selection))
+    download_all_url = f'{url_prefix}{selection.to_url}'
+    json_results_url = f'/jsonsummary{selection.to_url}'
 
     class RowYielder(object):
         """

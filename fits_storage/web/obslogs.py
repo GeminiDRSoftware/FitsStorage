@@ -6,7 +6,7 @@ import datetime
 from sqlalchemy.exc import NoResultFound
 from fits_storage.server.orm.obslog import Obslog
 from fits_storage.db.list_headers import list_obslogs, list_headers
-from fits_storage.db.selection import openquery
+from fits_storage.db.selection import Selection
 
 from fits_storage.server.access_control_utils import icanhave
 from fits_storage.server.wsgi.context import get_context
@@ -81,7 +81,7 @@ def obslogs(selection, sumtype):
     session.flush()
 
     return dict(
-        hits_open=openquery(selection) and
+        hits_open=selection.openquery and
                   (len(obslogs) == fits_open_result_limit),
         hits_closed=len(obslogs) == fits_closed_result_limit,
         open_limit=fits_open_result_limit,

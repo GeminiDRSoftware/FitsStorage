@@ -23,7 +23,7 @@ from fits_storage.server.wsgi.returnobj import Return
 
 from fits_storage.server.access_control_utils import icanhave
 
-from fits_storage.db.selection import openquery, selection_to_URL
+from fits_storage.db.selection import Selection
 from fits_storage.db.list_headers import list_headers
 
 from fits_storage.config import get_config
@@ -168,7 +168,7 @@ def download(selection, associated_calibrations):
         session.commit()
         return
 
-    if openquery(selection) and len(headers) > fsc.fits_open_result_limit:
+    if selection.openquery and len(headers) > fsc.fits_open_result_limit:
         # Open query. Almost certainly too many files
         downloadlog.sending_files = False
         downloadlog.add_note("Hit Open result Limit, aborted")
@@ -273,7 +273,7 @@ def download(selection, associated_calibrations):
         tar.addfile(tarinfo, BytesIO(md5file.encode('utf8')))
 
         # And add the README.TXT file
-        readme = readme_body.format(selection_url=selection_to_URL(selection),
+        readme = readme_body.format(selection_url=selection.to_url(),
                                     search_time=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
                                     username=username)
         if associated_calibrations:

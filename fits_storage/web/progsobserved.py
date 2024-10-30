@@ -6,7 +6,7 @@ summaries.
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.file import File
-from fits_storage.db.selection import sayselection, queryselection
+from fits_storage.db.selection import Selection
 from . import templating
 from sqlalchemy import join, func
 import datetime
@@ -32,7 +32,7 @@ def progsobserved(selection):
         .select_from(join(join(DiskFile, File), Header))
 
     # Add the selection criteria
-    query = queryselection(query, selection)
+    query = selection.filter(query)
 
     # Knock out null values. No point showing them as None for engineering files
     query = query.filter(Header.program_id != None)
@@ -41,7 +41,7 @@ def progsobserved(selection):
     progs_query = query.group_by(Header.program_id)
 
     return dict(
-        selection = sayselection(selection),
+        selection = selection.say(),
         progs     = [p[0] for p in progs_query],
         joined_sel = '/'.join(list(selection.values()))
         )

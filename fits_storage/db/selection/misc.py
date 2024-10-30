@@ -8,7 +8,7 @@ def openquery(self):
 
     things = {'date', 'daterange', 'night', 'nightrange','program_id',
               'observation_id', 'data_label', 'filename', 'filepre', 'filelist'}
-    selection_keys = set(self._seldict)  # Makes a set out of selection.keys()
+    selection_keys = set(self)  # Makes a set out of selection.keys()
 
     # Are the previous two sets disjoint?
     return len(things & selection_keys) == 0

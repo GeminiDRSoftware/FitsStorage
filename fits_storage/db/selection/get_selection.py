@@ -1,3 +1,5 @@
+from . import Selection
+
 import fits_storage.gemini_metadata_utils as gmu
 
 from fits_storage.config import get_config
@@ -124,27 +126,27 @@ getselection_detector_roi = {
     }
 
 
-def from_url_things(self, things):
+def from_url_things(things):
     """
-    This takes a list of things from the URL, and populates self._seldict.
+    This takes a list of things from the URL, and returns a Selection dict.
     We disregard all but the most specific of a project id, observation id
     or datalabel.
 
     If a raw date, eg /YYYYMMDD is specified in the URL, whether it is treated
     as a UTC date or a "night" date is configuration dependent.
     """
-    self._seldict = {}
+    selection = Selection()
 
     for thing in things:
         for key in getselection_tests.keys():
             if callable(getselection_tests[key]):
                 r = getselection_tests[key](thing)
                 if r:
-                    self._seldict[key] = r
+                    selection[key] = r
                     break
             else:
                 if thing in getselection_tests[key]:
-                    self._seldict[key] = thing
+                    selection[key] = thing
                     break
 
         else:
@@ -153,81 +155,81 @@ def from_url_things(self, things):
                 value = thing
 
             if sep == '=' and key in getselection_key_value:
-                self._seldict[getselection_key_value[key]] = value
+                selection[getselection_key_value[key]] = value
             elif sep == '=' and key == 'cols':
-                self._seldict['cols'] = value
+                selection['cols'] = value
             elif thing in getselection_booleans:
                 kw, val = getselection_booleans[thing]
-                self._seldict[kw] = val
+                selection[kw] = val
             elif thing in getselection_simple_associations:
-                self._seldict[getselection_simple_associations[thing]] = thing
+                selection[getselection_simple_associations[thing]] = thing
             elif gmu.GeminiProgram(thing).valid:
-                self._seldict['program_id'] = \
+                selection['program_id'] = \
                     gmu.GeminiProgram(thing).program_id
             elif key == 'progid':
                 if value is not None and isinstance(value, str):
                     value = value.strip()
                 if gmu.GeminiDataLabel(value).valid:
-                    self._seldict['data_label'] = value
+                    selection['data_label'] = value
                 elif gmu.GeminiObservation(value).valid:
-                    self._seldict['observation_id'] = value
+                    selection['observation_id'] = value
                 else:
-                    self._seldict['program_id'] = value
+                    selection['program_id'] = value
             elif gmu.GeminiObservation(thing).observation_id or key == 'obsid':
-                self._seldict['observation_id'] = value.strip()
+                selection['observation_id'] = value.strip()
             elif gmu.GeminiDataLabel(thing).datalabel or key == 'datalabel':
-                self._seldict['data_label'] = value.strip()
+                selection['data_label'] = value.strip()
             elif thing in {'LGS', 'NGS'}:
-                self._seldict['lgs'] = thing
+                selection['lgs'] = thing
                 # Make LGS / NGS selection imply AO selection
-                self._seldict['ao'] = 'AO'
+                selection['ao'] = 'AO'
             elif thing in {'Raw', 'Quick-Look', 'Science-Quality'}:
-                self._seldict['processing'] = thing
+                selection['processing'] = thing
             elif thing.lower() in getselection_detector_roi:
-                self._seldict['detector_roi'] = \
+                selection['detector_roi'] = \
                     getselection_detector_roi[thing.lower()]
             elif thing.lower() == 'preimage':
-                self._seldict['pre_image'] = True
+                selection['pre_image'] = True
             elif thing.lower() == 'twilight':
-                self._seldict['twilight'] = True
+                selection['twilight'] = True
             elif thing.lower() == 'nottwilight':
-                self._seldict['twilight'] = False
+                selection['twilight'] = False
             elif (len(thing) < 14) and (thing[:4] in {'N200', 'N201', 'N202',
                                                       'S200', 'S201', 'S202'}):
                 # Good through 2029, don't match full filenames :-)
-                self._seldict['filepre'] = thing
+                selection['filepre'] = thing
             elif key in {'object', 'Object'}:
-                self._seldict['object'] = value
+                selection['object'] = value
             elif thing in {'LS', 'MOS', 'IFS'}:
-                self._seldict['mode'] = thing
-                self._seldict['spectroscopy'] = True
+                selection['mode'] = thing
+                selection['spectroscopy'] = True
             elif thing.lower() == 'standard':
-                self._seldict['standard'] = True
+                selection['standard'] = True
             elif gmu.gemini_date(thing):
                 # Handle raw date strings in the URL
                 if fsc.is_archive:
                     # On the archive, handle raw dates as UTC
-                    self._seldict['date'] = thing
+                    selection['date'] = thing
                 else:
                     # On the summit servers, handle raw dates as Nights
-                    self._seldict['night'] = thing
+                    selection['night'] = thing
             elif gmu.gemini_daterange(thing):
                 if fsc.is_archive:
                     # On the archive, handle raw dates as UTC
-                    self._seldict['daterange'] = thing
+                    selection['daterange'] = thing
                 else:
                     # On the summit servers, handle raw dates as Nights
-                    self._seldict['nightrange'] = thing
+                    selection['nightrange'] = thing
             else:
-                if 'notrecognised' in self._seldict:
-                    self._seldict['notrecognised'] += " "+thing
+                if 'notrecognised' in selection:
+                    selection['notrecognised'] += " "+thing
                 else:
-                    self._seldict['notrecognised'] = thing
+                    selection['notrecognised'] = thing
 
     # Delete all but the most specific of program_id, observation_id, data_label
-    if 'data_label' in self._seldict:
-        self._seldict.pop('observation_id', None)
-        self._seldict.pop('program_id', None)
-    if 'observation_id' in self._seldict:
-        self._seldict.pop('program_id', None)
-    return self._seldict
+    if 'data_label' in selection:
+        selection.pop('observation_id', None)
+        selection.pop('program_id', None)
+    if 'observation_id' in selection:
+        selection.pop('program_id', None)
+    return selection

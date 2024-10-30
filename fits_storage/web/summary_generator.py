@@ -55,7 +55,7 @@ def selection_to_form_indices(selection):
 
 def selection_to_column_names(selection):
     try:
-        cols = selection_to_form_indices(selection)
+        cols = selection_to_form_indices(selection._seldict)
     except KeyError:
         # Default case. 'cols' was not in selections
         cols = default_search_cols

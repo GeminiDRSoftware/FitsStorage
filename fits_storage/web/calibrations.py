@@ -5,8 +5,7 @@ import datetime
 from sqlalchemy import join, desc
 
 from fits_storage.gemini_metadata_utils import gemini_date
-from fits_storage.db.selection import sayselection, queryselection, openquery, \
-    selection_to_URL
+from fits_storage.db.selection import Selection
 from fits_storage.cal.calibration import get_cal_object
 
 from fits_storage.core.orm.header import Header
@@ -252,7 +251,7 @@ def calibrations(selection):
     template_args = dict(
         fits_server    = fsc.fits_server_name,
         secure         = fsc.is_archive,
-        say_selection  = sayselection(selection),
+        say_selection  = selection.say(),
         is_development = fsc.fits_system_status == "development",
         counter        = counter,
         )
@@ -266,7 +265,7 @@ def calibrations(selection):
     # Only the canonical versions
     selection['canonical'] = True
 
-    query = queryselection(query, selection)
+    query = selection.filter(query)
 
     try:
         if 'date' in selection:
@@ -283,18 +282,18 @@ def calibrations(selection):
                 nextsel = selection.copy()
                 del nextsel['canonical']
                 nextsel['date'] = nextdt
-                template_args['next'] = f"&nbsp;|&nbsp;<a href=\"/calibrations{selection_to_URL(nextsel)}\">{nextdt}</a> &gt;&gt;"
+                template_args['next'] = f"&nbsp;|&nbsp;<a href=\"/calibrations{nextsel.to_url()}\">{nextdt}</a> &gt;&gt;"
             if prevdt:
                 prevsel = selection.copy()
                 del prevsel['canonical']
                 prevsel['date'] = prevdt
-                template_args['prev'] = f"&lt;&lt; <a href=\"/calibrations{selection_to_URL(prevsel)}\">{prevdt}</a>"
+                template_args['prev'] = f"&lt;&lt; <a href=\"/calibrations{prevsel.to_url()}\">{prevdt}</a>"
     except Exception as e:
         # best effort, we'll just exclude the links for prev/next day
         raise
 
     # If openquery, decline to do it
-    if openquery(selection):
+    if selection.openquery:
         template_args['is_open'] = True
         return template_args
 

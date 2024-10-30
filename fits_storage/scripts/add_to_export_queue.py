@@ -6,7 +6,7 @@ import datetime
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.queues.queue.exportqueue import ExportQueue
 from fits_storage.db.list_headers import list_headers
-from fits_storage.db.selection import getselection, openquery
+from fits_storage.db.selection.get_selection import from_url_things
 from fits_storage.db import session_scope
 
 """
@@ -57,9 +57,9 @@ if __name__ == "__main__":
 
     order = []
     things = selection.split('/')
-    selection = getselection(things)
+    selection = from_url_things(things)
     logger.info("Selection: %s" % selection)
-    if openquery(selection):
+    if selection.openquery:
         logger.warning("Selection is open - this may not be what you want")
 
     with session_scope() as session:

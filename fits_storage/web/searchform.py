@@ -16,7 +16,7 @@ from . import templating
 from fits_storage.gemini_metadata_utils import GeminiDataLabel, \
     GeminiObservation, gemini_date, gemini_daterange
 
-from fits_storage.db.selection import getselection, selection_to_URL
+from fits_storage.db.selection.get_selection import from_url_things
 from .summary import summary_body
 from .summary_generator import selection_to_column_names, selection_to_form_indices
 from .summary_generator import formdata_to_compressed, search_col_mapping
@@ -55,7 +55,7 @@ def searchform(things, orderby):
     # grab the string version of things before getselection() as that modifies the list.
     thing_string = '/' + '/'.join(things)
     things = [urllib.parse.unquote(t) for t in things]
-    selection = getselection(things)
+    selection = from_url_things(things)
     formdata = ctx.get_form_data()
 
     # Also args to pass on to results page
@@ -88,7 +88,7 @@ def searchform(things, orderby):
             # This logs the selection to the apache error log for debugging.
             # ctx.req.log(str(selection))
             # build URL
-            urlstring = selection_to_URL(selection, with_columns=True)
+            urlstring = selection.to_url(with_columns=True)
 
             # The following will redirect to some other page. Redirects work by
             # raising an exception, meaning that there's no need for return
@@ -128,10 +128,10 @@ def searchform(things, orderby):
         selection_clone = {k: v for k, v in selection.items()}
         if selection['date'] == 'today':
             selection_clone['date'] = "yesterday"
-            prevday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
+            prevday_search = "/searchform%s" % selection_clone.to_url(with_columns=True)
         elif selection['date'] == 'yesterday':
             selection_clone['date'] = "today"
-            nextday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
+            nextday_search = "/searchform%s" % selection_clone.to_url(with_columns=True)
             prevday_search = "bar"
         else:
             try:
@@ -139,11 +139,11 @@ def searchform(things, orderby):
                 nextsearchdt = searchdt + timedelta(days=1)
                 prevsearchdt = searchdt - timedelta(days=1)
                 selection_clone['date'] = prevsearchdt.strftime("%Y%m%d")
-                prevday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
+                prevday_search = "/searchform%s" % selection_clone.to_url(with_columns=True)
                 nextsearchstr = nextsearchdt.strftime('%Y%m%d')
                 if nextsearchstr <= gemini_date('today'):
                     selection_clone['date'] = nextsearchstr
-                    nextday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
+                    nextday_search = "/searchform%s" % selection_clone.to_url(with_columns=True)
             except:
                 # ok if we fail, this is a nice to have
                 pass

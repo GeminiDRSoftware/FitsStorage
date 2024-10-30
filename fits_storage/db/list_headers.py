@@ -8,7 +8,7 @@ from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
 from fits_storage.server.orm.program import Program
 from fits_storage.server.orm.obslog import Obslog
-from .selection import queryselection, openquery
+from .selection import Selection
 from fits_storage.gemini_metadata_utils import gemini_date, \
     gemini_daterange, get_time_period
 from sqlalchemy import asc, desc, func, nullslast, or_
@@ -36,7 +36,7 @@ def list_headers(selection, orderby, session=None, unlimit=False):
     query = session.query(Header).join(DiskFile).join(File)
 
     # Add the selection...
-    query = queryselection(query, selection)
+    query = selection.filter(query)
 
     # Do we have any order by arguments?
 
@@ -67,10 +67,9 @@ def list_headers(selection, orderby, session=None, unlimit=False):
                 thing = getattr(Header, value)
                 order_criteria.append(sortingfunc(thing))
 
-    is_openquery = openquery(selection)
 
     # Default sorting by ascending date if closed query, desc date if open query
-    if is_openquery:
+    if selection.openquery:
         # On postgres, nulls default last on asc, and ordering by
         # nullslast(desc()) is very slow, *unless* there is an index
         # specifically to support it. There's a __table_args__ entry in the
@@ -88,7 +87,7 @@ def list_headers(selection, orderby, session=None, unlimit=False):
     # If this is an open query, we should limit the number of responses
     fsc = get_config()
     if not unlimit:
-        if is_openquery:
+        if selection.openquery:
             query = query.limit(fsc.fits_open_result_limit)
         else:
             query = query.limit(fsc.fits_closed_result_limit)

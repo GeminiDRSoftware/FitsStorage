@@ -58,41 +58,41 @@ def say(self):
 
     # Collect simple associations of the 'key: value' type from the
     # sayselection_defs dictionary
-    parts = ["%s: %s" % (sayselection_defs[key], self._seldict[key])
-             for key in sayselection_defs if key in self._seldict]
+    parts = ["%s: %s" % (sayselection_defs[key], self[key])
+             for key in sayselection_defs if key in self]
     
-    if self._seldict.get('site_monitoring'):
+    if self.get('site_monitoring'):
         parts.append('Is Site Monitoring Data')
 
     # More complicated selections from here on
-    if 'spectroscopy' in self._seldict:
-        parts.append('Spectroscopy' if self._seldict['spectroscopy'] else 'Imaging')
+    if 'spectroscopy' in self:
+        parts.append('Spectroscopy' if self['spectroscopy'] else 'Imaging')
 
-    if 'qa_state' in self._seldict:
+    if 'qa_state' in self:
         qa_state_dict = {
             'Win': "Win (Pass or Usable)",
             'NotFail': "Not Fail",
             'Lucky': "Lucky (Pass or Undefined)"
             }
 
-        sel = self._seldict['qa_state']
+        sel = self['qa_state']
         parts.append('QA State: ' + qa_state_dict.get(sel, sel))
 
-    if 'ao' in self._seldict:
+    if 'ao' in self:
         parts.append("Adaptive Optics in beam"
-                     if self._seldict['ao'] == 'AO'
+                     if self['ao'] == 'AO'
                      else "No Adaptive Optics in beam")
 
-    if 'lgs' in self._seldict:
-        parts.append("LGS" if self._seldict['lgs'] == 'LGS' else "NGS")
+    if 'lgs' in self:
+        parts.append("LGS" if self['lgs'] == 'LGS' else "NGS")
 
     # If any of the previous tests contributed parts to the list, this will
     # create a return string like '; ...; ...; ...'. Otherwise we get an
     # empty string.
     ret = '; '.join([''] + parts)
 
-    if 'notrecognised' in self._seldict:
+    if 'notrecognised' in self:
         return ret + ". WARNING: I didn't understand these (case-sensitive) " \
-                     "words: %s" % self._seldict['notrecognised']
+                     "words: %s" % self['notrecognised']
 
     return ret

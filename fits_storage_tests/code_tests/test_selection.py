@@ -1,7 +1,7 @@
 from fits_storage_tests.code_tests.helpers import get_test_config
 get_test_config()
 
-from fits_storage.db.selection import Selection
+from fits_storage.db.selection.get_selection import from_url_things
 
 
 # This data block is a list of 3-element tuples. The elements in the tuples are:
@@ -36,5 +36,19 @@ def test_getselection():
     get_test_config()
 
     for (thinglist, key, value) in getselection_data:
-        selection = Selection(thinglist)
-        assert selection._seldict[key] == value
+        selection = from_url_things(thinglist)
+        assert selection[key] == value
+
+def test_openquery():
+    openthings = ['GMOS']
+    closedthings = ['date=20001122']
+
+    selection = from_url_things(openthings)
+    assert selection.openquery is True
+
+    selection = from_url_things(closedthings)
+    assert selection.openquery is False
+
+
+
+
