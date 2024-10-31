@@ -6,6 +6,7 @@ import re
 import math
 import urllib.parse
 import urllib.error
+import dateutil.parser
 
 from sqlalchemy import or_, and_, func
 
@@ -86,6 +87,7 @@ getselection_key_value = {
     'daterange': 'daterange',
     'night': 'night',
     'nightrange': 'nightrange',
+    'entrytimedaterange': 'entrytimedaterange'
     }
 
 # Some elements of the URL entries set themselves as the value for a
@@ -831,6 +833,17 @@ def queryselection(query, selection):
     if 'standard' in selection:
         query = query.filter(Header.types.ilike('%''STANDARD''%'))
 
+    if 'entrytimedaterange' in selection:
+        try:
+            a, b = selection['entrytimedaterange'].split('--')
+            startfiledt = dateutil.parser.isoparse(a)
+            endfiledt = dateutil.parser.isoparse(b)
+
+            query = query.filter(DiskFile.entrytime >= startfiledt).filter(
+                DiskFile.entrytime < endfiledt)
+        except Exception:
+            # parse error on datetime
+            pass
     return query
 
 
