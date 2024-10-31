@@ -5,7 +5,9 @@ import fits_storage.gemini_metadata_utils as gmu
 from fits_storage.config import get_config
 fsc = get_config()
 
-# The getselection() function converts a list of elements from the URL
+# These are factory functions that generate Selection(dict) instances.
+
+# The from_url_things() function converts a list of elements from the URL
 # into a selection dictionary. We loop through the elements in the URL
 # and test each one against some criteria to decide how to handle it. Common
 # tests are grouped into different types and described by these dictionaries
@@ -39,6 +41,7 @@ getselection_tests = {
 
 getselection_key_value = {
     'filename': 'filename',
+    'filepre': 'filepre',
     'disperser': 'disperser',
     'camera': 'camera',
     'mask': 'focal_plane_mask',
@@ -52,7 +55,6 @@ getselection_key_value = {
     'dec': 'dec', 'Dec': 'dec',
     'sr': 'sr', 'SR': 'sr',
     'crpa': 'crpa', 'CRPA': 'crpa',
-    'filepre': 'filepre',
     'cenwlen': 'cenwlen',
     'exposure_time': 'exposure_time',
     'coadds': 'coadds',
@@ -61,7 +63,6 @@ getselection_key_value = {
     'ProgramText': 'ProgramText',
     'raw_cc': 'raw_cc',
     'raw_iq': 'raw_iq',
-    'ephemeris_target': 'ephemeris_target',
     'gain': 'gain',
     'readspeed': 'readspeed',
     'date': 'date',
@@ -88,6 +89,7 @@ getselection_simple_associations = {
     'UndefinedQA': 'qa_state',
     'AO': 'ao',
     'NOTAO': 'ao',
+    'NOAO': 'ao',
     }
 
 # Some elements set a certain selection entry to boolean value...
@@ -203,8 +205,6 @@ def from_url_things(things):
             elif thing in {'LS', 'MOS', 'IFS'}:
                 selection['mode'] = thing
                 selection['spectroscopy'] = True
-            elif thing.lower() == 'standard':
-                selection['standard'] = True
             elif gmu.gemini_date(thing):
                 # Handle raw date strings in the URL
                 if fsc.is_archive:
