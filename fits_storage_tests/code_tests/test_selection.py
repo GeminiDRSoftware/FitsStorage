@@ -142,7 +142,7 @@ getselection_data = [
     (['MOS'], 'spectroscopy', True),
     (['IFS'], 'mode', 'IFS'),
     (['IFS'], 'spectroscopy', True),
-    # ([''], '', ''),
+    (['fubar'], 'notrecognised', 'fubar'),
 ]
 
 
