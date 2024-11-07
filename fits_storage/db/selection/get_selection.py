@@ -69,6 +69,8 @@ getselection_key_value = {
     'daterange': 'daterange',
     'night': 'night',
     'nightrange': 'nightrange',
+    'entrytimedaterange': 'entrytimedaterange',
+    'lastmoddaterange': 'lastmoddaterange',
     }
 
 # Some elements of the URL entries set themselves as the value for a

@@ -143,6 +143,25 @@ def filter(self, query):
         )
     )
 
+    if 'entrytimedaterange' in self:
+        pair = gmu.gemini_daterange(self['entrytimedaterange'],
+                                              as_dates=True)
+        if pair is not None:
+            start, end = pair
+
+            query = query.filter(DiskFile.entrytime >= start)\
+                .filter(DiskFile.entrytime < end)
+
+
+    if 'lastmoddaterange' in self:
+        pair = gmu.gemini_daterange(self['lastmoddaterange'],
+                                    as_dates=True)
+        if pair is not None:
+            start, end = pair
+
+            query = query.filter(DiskFile.lastmod >= start) \
+                .filter(DiskFile.lastmod < end)
+
     if 'inst' in self:
         if self['inst'] == 'GMOS':
             query = query.filter(or_(Header.instrument == 'GMOS-N',
