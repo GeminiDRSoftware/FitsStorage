@@ -105,6 +105,15 @@ def searchform(things, orderby):
                 # TODO: Ask Paul why are we clearing the form data here. Does it make sense?
                 # formdata.clear()
                 ctx.resp.redirect_to('/searchform' + urlstring + args_string)
+    else:
+        # No form data
+        # Check if the URL they came to is normalized.
+        normalized_url = selection.to_url(with_columns=True)
+        submitted_url = ctx.req.env.uri.removeprefix("/searchform")
+        # print(f"normalized URL: {normalized_url}")
+        # print(f"submitted URL: {submitted_url}")
+        if submitted_url != normalized_url:
+            ctx.resp.redirect_to('/searchform' + normalized_url)
 
     try:
         indices = selection_to_form_indices(selection)
