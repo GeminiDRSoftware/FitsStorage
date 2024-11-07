@@ -6,7 +6,6 @@ from collections import defaultdict
 
 import requests
 import urllib.parse, urllib.error
-from datetime import datetime, timedelta
 
 from xml.dom import minidom
 from xml.parsers.expat import ExpatError
@@ -26,7 +25,7 @@ from fits_storage.server.wsgi.returnobj import Return
 
 from fits_storage.config import get_config
 
-# ------------------------------------------------------------------------------
+
 @templating.templated("search_and_summary/searchform.html", with_generator=True)
 def searchform(things, orderby):
     """
@@ -35,13 +34,17 @@ def searchform(things, orderby):
     """
     # How (we think) this (will) all work(s)
     # User gets/posts the url, may or may not have selection criteria
-    # We parse the url, and create an initial selection dictionary
-    # (which may or may not be empty).
-    # We parse the formdata and modify the selection dictionary if there was any
+    # We parse the url, and create an initial selection dictionary (which may
+    # or may not be empty).
     # If there was formdata:
+    #    Parse the formdata and modify the selection dictionary
     #    Build a URL from the selection dictionary
     #    Clear the formdata from the request object
     #    Re-direct the user to the new URL (without any formdata)
+    # Else:
+    #    Build a "normalized" URL from the selection dictionary
+    #    If the URL they came to is not equal to the normalized URL:
+    #        Redirect them to the normalized URL
     # Pre-populate the form fields with what is now in our selection dictionary
     #  by modifying the form html server side before we send it out
     # Send out the form html
@@ -52,7 +55,8 @@ def searchform(things, orderby):
     fsc = get_config()
     ctx = get_context()
 
-    # grab the string version of things before getselection() as that modifies the list.
+    # grab the string version of things before getselection() as that modifies
+    # the list.
     thing_string = '/' + '/'.join(things)
     things = [urllib.parse.unquote(t) for t in things]
     selection = from_url_things(things)
@@ -64,9 +68,6 @@ def searchform(things, orderby):
         args_string = '?orderby=%s' % orderby[0]
 
     column_selection = {}
-
-    nextday_search = None
-    prevday_search = None
 
     if formdata:
         if (len(formdata) == 7 and
@@ -124,30 +125,6 @@ def searchform(things, orderby):
     for k, v in updated_input.items():
         updated[k] = v
 
-    if 'date' in selection:
-        selection_clone = {k: v for k, v in selection.items()}
-        if selection['date'] == 'today':
-            selection_clone['date'] = "yesterday"
-            prevday_search = "/searchform%s" % selection_clone.to_url(with_columns=True)
-        elif selection['date'] == 'yesterday':
-            selection_clone['date'] = "today"
-            nextday_search = "/searchform%s" % selection_clone.to_url(with_columns=True)
-            prevday_search = "bar"
-        else:
-            try:
-                searchdt = datetime.strptime(selection_clone['date'], "%Y%m%d")
-                nextsearchdt = searchdt + timedelta(days=1)
-                prevsearchdt = searchdt - timedelta(days=1)
-                selection_clone['date'] = prevsearchdt.strftime("%Y%m%d")
-                prevday_search = "/searchform%s" % selection_clone.to_url(with_columns=True)
-                nextsearchstr = nextsearchdt.strftime('%Y%m%d')
-                if nextsearchstr <= gemini_date('today'):
-                    selection_clone['date'] = nextsearchstr
-                    nextday_search = "/searchform%s" % selection_clone.to_url(with_columns=True)
-            except:
-                # ok if we fail, this is a nice to have
-                pass
-
     template_args = dict(
         server_title   = fsc.fits_server_title,
         title_suffix   = title_suffix,
@@ -161,10 +138,7 @@ def searchform(things, orderby):
         # Look at the end of the file for this
         **dropdown_options
         )
-    if nextday_search:
-        template_args['nextday_search'] = nextday_search
-    if prevday_search:
-        template_args['prevday_search'] = prevday_search
+
     if selection:
         template_args.update(summary_body('customsearch', selection, orderby,
                                           additional_columns=selection_to_column_names(selection)))
