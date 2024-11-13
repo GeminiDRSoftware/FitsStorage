@@ -234,4 +234,7 @@ def from_url_things(things):
         selection.pop('program_id', None)
     if 'observation_id' in selection:
         selection.pop('program_id', None)
+
+    # Unpack defaults, if appropriate
+    selection.unpackdefaults()
     return selection

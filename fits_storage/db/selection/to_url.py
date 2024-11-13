@@ -10,6 +10,9 @@ def to_url(self, with_columns=False):
     """
     self._url = ''
 
+    # Pack defaults into 'defaults' item if appropriate
+    self.packdefaults()
+
     # We only want one of data_label, observation_id, program_id in the URL,
     # the most specific one should carry.
     if 'data_label' in self:
@@ -18,9 +21,16 @@ def to_url(self, with_columns=False):
     if 'observation_id' in self:
         self.pop('program_id', None)
 
+    # Handle defaults separately so it always ends up at the front of the URL
+    if self.get('defaults') is True:
+        self._url += '/defaults'
     for key in self:
         if key in {'warning', 'Search', 'ObsLogsOnly'}:
             # Don't put the warning text or search buttons in the URL
+            pass
+        elif key == 'defaults':
+            # This was handled up front. Need this here to stop it being parsed
+            # by the default case below
             pass
         elif key == 'data_label':
             # See if it is a valid data_label

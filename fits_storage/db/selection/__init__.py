@@ -13,4 +13,4 @@ class Selection(dict):
     from .say_selection import say
     from .to_url import to_url
     from .query_selection import filter
-    from .misc import openquery
+    from .misc import openquery, packdefaults, unpackdefaults

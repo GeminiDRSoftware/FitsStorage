@@ -6,7 +6,7 @@ def openquery(self):
     returns True if this selection will likely return a large number of results
     """
 
-    things = {'date', 'daterange', 'night', 'nightrange','program_id',
+    things = {'date', 'daterange', 'night', 'nightrange', 'program_id',
               'observation_id', 'data_label', 'filename', 'filepre', 'filelist'}
     selection_keys = set(self)  # Makes a set out of selection.keys()
 
@@ -14,5 +14,43 @@ def openquery(self):
     return len(things & selection_keys) == 0
 
 
+def unpackdefaults(self):
+    """
+    If defaults=True is present in the selection dictionary, replace it with
+    what that actually means.
+
+    This is currently only applicable to use in /searchform, but could be
+    expanded to other endpoints too if desired
+    """
+
+    # If defaults is present and set to True
+    if self.get('defaults') is True:
+        # Remove 'defaults' dictionary entry
+        self.pop('defaults')
+        # Set the default things
+        self['canonical'] = True
+        self['engineering'] = False
+        self['site_monitoring'] = False
+        self['qa_state'] = 'Not Fail'
+        self['cols'] = 'CTOWBEQ'
 
 
+def packdefaults(self):
+    """
+    If the selection dict has all the settings that corespond to 'defaults'
+    set in their default state, remove them and replace them with a single
+    'defaults': True entry
+    """
+    print(f"pack defaults selection: {self}")
+
+    default = self.get('engineering') is False and \
+              self.get('site_monitoring') is False and \
+              self.get('qa_state') == 'NotFail' and \
+              self.get('cols') == 'CTOWBEQ'
+
+    if default:
+        self.pop('engineering')
+        self.pop('site_monitoring')
+        self.pop('qa_state')
+        self.pop('cols')
+        self['defaults'] = True
