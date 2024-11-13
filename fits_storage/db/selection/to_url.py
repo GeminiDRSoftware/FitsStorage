@@ -21,16 +21,20 @@ def to_url(self, with_columns=False):
     if 'observation_id' in self:
         self.pop('program_id', None)
 
-    # Handle defaults separately so it always ends up at the front of the URL
+    # Handle defaults separately, so it always ends up at the front of the URL
     if self.get('defaults') is True:
         self._url += '/defaults'
-    for key in self:
+
+    # Run through the selection keys in a defined order here, so that the
+    # resulting URL doesn't depend on the order they're in the dict, as that
+    # will depend on what order they were added.
+    for key in sorted(self.keys()):
         if key in {'warning', 'Search', 'ObsLogsOnly'}:
             # Don't put the warning text or search buttons in the URL
             pass
         elif key == 'defaults':
-            # This was handled up front. Need this here to stop it being parsed
-            # by the default case below
+            # This was handled up front. Need this elif here to stop it being
+            # parsed by the default case later
             pass
         elif key == 'data_label':
             # See if it is a valid data_label

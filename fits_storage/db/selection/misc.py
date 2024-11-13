@@ -28,25 +28,25 @@ def unpackdefaults(self):
         # Remove 'defaults' dictionary entry
         self.pop('defaults')
         # Set the default things
-        self['canonical'] = True
         self['engineering'] = False
         self['site_monitoring'] = False
-        self['qa_state'] = 'Not Fail'
+        self['qa_state'] = 'NotFail'
         self['cols'] = 'CTOWBEQ'
 
 
 def packdefaults(self):
     """
-    If the selection dict has all the settings that corespond to 'defaults'
+    If the selection dict has all the settings that correspond to 'defaults'
     set in their default state, remove them and replace them with a single
     'defaults': True entry
     """
-    print(f"pack defaults selection: {self}")
 
     default = self.get('engineering') is False and \
               self.get('site_monitoring') is False and \
               self.get('qa_state') == 'NotFail' and \
               self.get('cols') == 'CTOWBEQ'
+
+    print(f"pack defaults {default} - selection: {self}")
 
     if default:
         self.pop('engineering')

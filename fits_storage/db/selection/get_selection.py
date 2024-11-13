@@ -96,6 +96,7 @@ getselection_simple_associations = {
 
 # Some elements set a certain selection entry to boolean value...
 getselection_booleans = {
+    'defaults': ('defaults', True),
     'imaging': ('spectroscopy', False),
     'spectroscopy': ('spectroscopy', True),
     'present': ('present', True), 'Present': ('present', True),
