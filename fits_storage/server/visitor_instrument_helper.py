@@ -220,7 +220,7 @@ class VisitorInstrumentHelper(object):
             return True
 
         if filename.endswith('.bz2'):
-            fn = filename.rstrip('bz2')
+            fn = filename.removesuffix('.bz2')
             dest_path = os.path.join(self.dest_dir, self.subdir, fn)
             if os.access(dest_path, os.F_OK | os.R_OK):
                 return True
