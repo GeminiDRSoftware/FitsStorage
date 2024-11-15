@@ -199,6 +199,7 @@ with session_scope() as session:
                         logger.debug("Copy appeared to succeed")
                         # Add to ingest queue?
                         if not options.noqueue:
+                            filename = filename.removesuffix(".bz2")
                             path = f"{vihelper.instrument_name.lower()}/" \
                                    f"{vihelper.subdir}"
                             logger.info("Adding %s in %s to ingest queue",
