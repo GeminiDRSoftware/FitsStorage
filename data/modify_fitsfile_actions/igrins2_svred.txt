@@ -1,0 +1,6 @@
+[{"action": "ADD", "keyword": "PROCITNT", "new_value": "Quick-Look", "comment": "Processing Intent"},
+{"action": "ADD", "keyword": "PROCMODE", "new_value": "Quick-Look", "comment": "Processing Mode"},
+{"action": "ADD", "keyword": "PROCSOFT", "new_value": "IGRINS-PLP", "comment": "Processing Software"},
+{"action": "ADD", "keyword": "PROCSVER", "new_value": "3", "comment": "Processing Software Version"},
+{"action": "ADD", "keyword": "PROCINBY", "new_value": "IGRINS-2 SV team", "comment": "Processing Initiated By"},
+{"action": "ADD", "keyword": "PROCTAG", "new_value": "IGRINS-2_SV_PLP", "comment": "Gemini Processing Tag"}]
