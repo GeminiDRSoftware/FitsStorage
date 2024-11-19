@@ -313,7 +313,6 @@ class Exporter(object):
         """
         # Note no need to worry about .bz2 here as by definition the file in
         # the export queue should match exactly what's in the database.
-        self.l.debug("in get_df")
         query = self.s.query(DiskFile) \
             .filter(DiskFile.filename == self.eqe.filename) \
             .filter(DiskFile.path == self.eqe.path) \
@@ -334,7 +333,6 @@ class Exporter(object):
                  "non-existent file. Marking export as failed."
             self.logeqeerror(et)
             return False
-        self.l.debug("get_df returning True")
         return True
 
     def at_destination(self):
