@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
 from fits_storage.core.orm.header import Header
@@ -26,7 +26,7 @@ class Gpi(Base):
     id = Column(Integer, primary_key=True)
     header_id = Column(Integer, ForeignKey('header.id'), nullable=False,
                        index=True)
-    header = relation(Header, order_by=id)
+    header = relationship(Header, order_by=id)
     filter_name = Column(Text, index=True)
     disperser = Column(Text, index=True)
     focal_plane_mask = Column(Text, index=True)

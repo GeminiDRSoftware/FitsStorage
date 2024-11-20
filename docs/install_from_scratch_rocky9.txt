@@ -78,7 +78,9 @@ df -h .
 # As fitsdata
 pip3 install astrodata
 pip3 uninstall astrodata  # We just wanted the dependencies really...
-pip3 install psycopg2-binary simplejson python-dateutil requests 'sqlalchemy>=1.3,<2.0.0a0'
+pip3 install -r /opt/FitsStorage/requirements.txt
+pip3 install -r /opt/FitsStorage/requirements_server.txt # For servers
+pip3 install -r /opt/FitsStorage/requirements_dev.txt   # For development systems
 conda install uwsgi
 pip3 install boto3 # if required
 cd /opt/DRAGONS

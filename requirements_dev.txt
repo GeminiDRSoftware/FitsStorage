@@ -1,0 +1,6 @@
+pytest
+
+# Below requirements are also required in general, but not yet in
+# requirements.txt.
+requests
+numpy<2
