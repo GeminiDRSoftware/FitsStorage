@@ -211,8 +211,8 @@ with session_scope() as session:
 
             # If we didn't do anything, wait a while before looping
             if loop and not did_something:
-                logger.info("No action taken this pass, waiting 60 secs")
-                time.sleep(60)
+                logger.info("No action taken this pass, waiting 1 hour")
+                time.sleep(3600)
 
         except KeyboardInterrupt:
             loop=False
