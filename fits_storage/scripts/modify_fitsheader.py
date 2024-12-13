@@ -8,7 +8,7 @@ from astropy.io import fits
 from fits_storage.logger import logger, setdebug, setdemon
 
 """
-Helper script that modified fits headers in a convenient way.
+Helper script that modifies fits headers in a convenient way.
 
 Files to modify can be specified individually, or in a list file (plain
 text one per line).
@@ -36,17 +36,21 @@ def main():
                            "UPDATE:KEYWORD=OLD=NEW - update KEYWORD to value "
                            "NEW only if it currently has the value OLD. "
                            "There are some restrictions on formatting imposed "
-                           "by parsing this on the command line. See actionfile"
-                           "if you need more versatility.")
+                           "by parsing this on the command line, including only"
+                           "being able to update headers in the PHU. See "
+                           "actionfile if you need more versatility.")
     parser.add_option("--actionfile", action="store", dest="actionfile",
                       help="A JSON formatted file, consisting a list of"
-                           "dictioraries spcifying actions to take on each "
+                           "dictionaries specifying actions to take on each "
                            "file. Each dictionary should contain the keys "
                            "'action' = 'ADD|SET|UPDATE', 'keyword' = the fits"
                            "keyword, 'new_value' = the new value to take, "
                            "'old_value' = the old value, only for update "
                            "actions, and 'comment' being the FITS header"
-                           "comment if you want to set it.")
+                           "comment if you want to set it. You can also specify"
+                           " 'hdu' = 'PHU' (the default, to update the PHU only"
+                           "), 'ALL' (to update ALL HDUs) or an integer (to "
+                           "specify an individual HDU to update")
     parser.add_option("--dryrun", action="store_true", dest="dryrun",
                       help="Do not actually modify files, but run through the "
                            "files and report what would actually be done")
@@ -186,47 +190,66 @@ def apply_action(hdulist, actdict, logger):
     old_value = actdict.get('old_value')
     new_value = actdict.get('new_value')
     comment = actdict.get('comment')
+    hdu = actdict.get('hdu', 0)
 
-    # We only deal with the PHU for now.
-    header = hdulist[0].header
-
-    kw_exists = keyword in header
-    current_value = header.get(keyword)
-
-    if action not in ['ADD', 'SET', 'UPDATE']:
-        logger.error("Invalid action. This should NOT happen")
-        return
-
-    if action == 'ADD':
-        if kw_exists:
-            logger.warning("Keyword to add (%s) already exists in header. "
-                           "Skipping add action", keyword)
-            return
-
-    elif action == 'SET':
-        if not kw_exists:
-            logger.warning("Keyword to set (%s) does not exist in header. "
-                           "Skipping set action", keyword)
-            return
-
-    elif action == 'UPDATE':
-        if not kw_exists:
-            logger.warning("Keyword to update (%s) does not exist in header. "
-                           "Skipping update action", keyword)
-            return
-        if old_value != current_value:
-            logger.debug("Keyword to update (%s) has current value %s which"
-                         "differs from old value given %s - not updating",
-                         keyword, current_value, old_value)
-            return
-
-    if comment:
-        logger.debug("Assigning header %s with value %s and comment %s",
-                     keyword, new_value, comment)
-        header[keyword] = (new_value, comment)
+    # Parse hdu and generate headerlist which is a list of header objects to
+    # apply the action to. We sneak an extra 'hdunum' item into the header
+    # object so that we can identify it later
+    if hdu == 'PHU':
+        hdu = 0
+    headerlist = []
+    if hdu == 'ALL':
+        for i in range(len(hdulist)):
+            hdulist[i].header.hdunum = i
+            headerlist.append(hdulist[i].header)
+    elif isinstance(hdu, int):
+        hdulist[hdu].header.hdunum = hdu
+        headerlist.append(hdulist[hdu].header)
     else:
-        logger.debug("Assigning header %s with value %s", keyword, new_value)
-        header[keyword] = new_value
+        logger.error("Invalid HDU specified in action: %s", hdu)
+
+    # Loop through the headerlist
+    for header in headerlist:
+        logger.debug('Updating hdunum %d ', header.hdunum)
+
+        kw_exists = keyword in header
+        current_value = header.get(keyword)
+
+        if action not in ['ADD', 'SET', 'UPDATE']:
+            logger.error("Invalid action. This should NOT happen")
+            return
+
+        if action == 'ADD':
+            if kw_exists:
+                logger.warning("Keyword to add (%s) already exists in header. "
+                               "Skipping add action", keyword)
+                continue
+
+        elif action == 'SET':
+            if not kw_exists:
+                logger.warning("Keyword to set (%s) does not exist in header. "
+                               "Skipping set action", keyword)
+                continue
+
+        elif action == 'UPDATE':
+            if not kw_exists:
+                logger.warning("Keyword to update (%s) does not exist in "
+                               "header. Skipping update action", keyword)
+                continue
+            if old_value != current_value:
+                logger.debug("Keyword to update (%s) has current value %s which"
+                             "differs from old value given %s - not updating",
+                             keyword, current_value, old_value)
+                continue
+
+        if comment:
+            logger.debug("Assigning header %s with value %s and comment %s",
+                         keyword, new_value, comment)
+            header[keyword] = (new_value, comment)
+        else:
+            logger.debug("Assigning header %s with value %s",
+                         keyword, new_value)
+            header[keyword] = new_value
 
 
 if __name__ == "__main__":
