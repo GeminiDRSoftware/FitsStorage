@@ -203,8 +203,8 @@ def apply_action(hdulist, actdict, logger):
             hdulist[i].header.hdunum = i
             headerlist.append(hdulist[i].header)
     elif isinstance(hdu, int):
-        hdulist[hdu].header.hdunum = hdu
         if hdu in range(len(hdulist)):
+            hdulist[hdu].header.hdunum = hdu
             headerlist.append(hdulist[hdu].header)
         else:
             logger.warning("File does not contain requested HDU %d, skipping",
