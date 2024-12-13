@@ -102,6 +102,11 @@ class Exporter(object):
         """
         Exports a file.
         """
+
+        # Start with a clean state. It's simpler and more robust to do that here
+        # rather than before every exit point from this function
+        self.reset()
+
         self.eqe = eqe
         self.l.debug("Export %s to %s" % (eqe.filename, eqe.destination))
 
@@ -183,7 +188,6 @@ class Exporter(object):
 
         self.l.debug("export_file: calling file_transfer()")
         self.file_transfer()
-        self.reset()
         return
 
     def transfer_headers(self):
