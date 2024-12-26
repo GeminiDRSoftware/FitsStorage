@@ -37,6 +37,7 @@ fsc = get_config()
 
 if fsc.is_server:
     from fits_storage.server.orm.obslog_comment import ObslogComment
+    from fits_storage.server.orm.program import Program
 
 
 class Header(Base):
@@ -128,6 +129,13 @@ class Header(Base):
                                        primaryjoin='Header.data_label=='
                                                    'ObslogComment.data_label'
                                        )
+        # Note, we don't define foreign key constraints on Program.program_id
+        # for similar reasons.
+        programs = relationship(Program,
+                                foreign_keys=Program.program_id,
+                                primaryjoin='Header.program_id=='
+                                            'Program.program_id'
+                                )
 
     def __init__(self, diskfile, logger=DummyLogger()):
         self.diskfile_id = diskfile.id
