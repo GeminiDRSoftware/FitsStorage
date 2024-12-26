@@ -11,14 +11,4 @@ build
 dist
 .DS_Store
 .pytest_cache
-
-# Robot output
-robot/*.png
-robot/*.html
-robot/*.xml
-
-# Ansible
-ansible/playbooks/secret
-ansible/playbooks/id_rsa
-ansible/vault.txt
-ansible/aws_vars.yml
+_jb_pytest_runner.py.log

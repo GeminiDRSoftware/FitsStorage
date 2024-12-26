@@ -13,7 +13,7 @@ from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.db import session_scope
 from fits_storage.queues.queue import IngestQueue
 
-from fits_storage.db.selection import getselection
+from fits_storage.db.selection.get_selection import from_url_things
 from fits_storage.db.list_headers import list_headers
 
 if fsc.using_s3:
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         with session_scope() as session:
             things = options.selection.split('/')
             things.append("canonical")
-            selection = getselection(things)
+            selection = from_url_things(things)
             headers = list_headers(selection, None, session, unlimit=True)
             logger.info("Found %d headers to reingest", len(headers))
             for header in headers:

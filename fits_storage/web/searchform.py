@@ -6,7 +6,6 @@ from collections import defaultdict
 
 import requests
 import urllib.parse, urllib.error
-from datetime import datetime, timedelta
 
 from xml.dom import minidom
 from xml.parsers.expat import ExpatError
@@ -16,9 +15,10 @@ from . import templating
 from fits_storage.gemini_metadata_utils import GeminiDataLabel, \
     GeminiObservation, gemini_date, gemini_daterange
 
-from fits_storage.db.selection import getselection, selection_to_URL
+from fits_storage.db.selection.get_selection import from_url_things
 from .summary import summary_body
-from .summary_generator import selection_to_column_names, selection_to_form_indices
+from .summary_generator import selection_to_column_names, \
+    selection_to_form_indices
 from .summary_generator import formdata_to_compressed, search_col_mapping
 
 from fits_storage.server.wsgi.context import get_context
@@ -26,7 +26,7 @@ from fits_storage.server.wsgi.returnobj import Return
 
 from fits_storage.config import get_config
 
-# ------------------------------------------------------------------------------
+
 @templating.templated("search_and_summary/searchform.html", with_generator=True)
 def searchform(things, orderby):
     """
@@ -35,13 +35,17 @@ def searchform(things, orderby):
     """
     # How (we think) this (will) all work(s)
     # User gets/posts the url, may or may not have selection criteria
-    # We parse the url, and create an initial selection dictionary
-    # (which may or may not be empty).
-    # We parse the formdata and modify the selection dictionary if there was any
+    # We parse the url, and create an initial selection dictionary (which may
+    # or may not be empty).
     # If there was formdata:
+    #    Parse the formdata and modify the selection dictionary
     #    Build a URL from the selection dictionary
     #    Clear the formdata from the request object
     #    Re-direct the user to the new URL (without any formdata)
+    # Else:
+    #    Build a "normalized" URL from the selection dictionary
+    #    If the URL they came to is not equal to the normalized URL:
+    #        Redirect them to the normalized URL
     # Pre-populate the form fields with what is now in our selection dictionary
     #  by modifying the form html server side before we send it out
     # Send out the form html
@@ -52,10 +56,11 @@ def searchform(things, orderby):
     fsc = get_config()
     ctx = get_context()
 
-    # grab the string version of things before getselection() as that modifies the list.
+    # grab the string version of things before getselection() as that modifies
+    # the list.
     thing_string = '/' + '/'.join(things)
     things = [urllib.parse.unquote(t) for t in things]
-    selection = getselection(things)
+    selection = from_url_things(things)
     formdata = ctx.get_form_data()
 
     # Also args to pass on to results page
@@ -65,9 +70,6 @@ def searchform(things, orderby):
 
     column_selection = {}
 
-    nextday_search = None
-    prevday_search = None
-
     if formdata:
         if (len(formdata) == 7 and
                 ('engineering' in list(formdata.keys())) and (formdata['engineering'].value == 'EngExclude') and
@@ -75,7 +77,7 @@ def searchform(things, orderby):
                 ('qa_state' in list(formdata.keys())) and (formdata['qa_state'].value == 'NotFail') and
                 ('col_selection' in list(formdata.keys())) and
                 ('site_monitoring' in list(formdata.keys())) and (formdata['site_monitoring'].value == 'SmExclude') and
-                ('datetype') in list(formdata.keys()) and
+                ('datetype' in list(formdata.keys())) and
                 ('Search' in list(formdata.keys())) and (formdata['Search'].value == 'Search')):
             # This is the default form state, someone just hit submit without doing anything.
             pass
@@ -88,7 +90,7 @@ def searchform(things, orderby):
             # This logs the selection to the apache error log for debugging.
             # ctx.req.log(str(selection))
             # build URL
-            urlstring = selection_to_URL(selection, with_columns=True)
+            urlstring = selection.to_url(with_columns=True)
 
             # The following will redirect to some other page. Redirects work by
             # raising an exception, meaning that there's no need for return
@@ -100,10 +102,18 @@ def searchform(things, orderby):
                 ctx.resp.redirect_to('/programs' + urlstring)
             else:
                 # Regular data search
-                # clears formdata, refreshes page with updated selection from form
-                # TODO: Ask Paul why are we clearing the form data here. Does it make sense?
+                # clear formdata, refreshe page with updated selection from form
                 # formdata.clear()
                 ctx.resp.redirect_to('/searchform' + urlstring + args_string)
+    else:
+        # No form data
+        # Check if the URL they came to is normalized.
+        normalized_url = selection.to_url(with_columns=True)
+        submitted_url = ctx.req.env.uri.removeprefix("/searchform")
+        # print(f"normalized URL: {normalized_url}")
+        # print(f"submitted URL: {submitted_url}")
+        if submitted_url != normalized_url:
+            ctx.resp.redirect_to('/searchform' + normalized_url)
 
     try:
         indices = selection_to_form_indices(selection)
@@ -124,56 +134,34 @@ def searchform(things, orderby):
     for k, v in updated_input.items():
         updated[k] = v
 
-    if 'date' in selection:
-        selection_clone = {k: v for k, v in selection.items()}
-        if selection['date'] == 'today':
-            selection_clone['date'] = "yesterday"
-            prevday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
-        elif selection['date'] == 'yesterday':
-            selection_clone['date'] = "today"
-            nextday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
-            prevday_search = "bar"
-        else:
-            try:
-                searchdt = datetime.strptime(selection_clone['date'], "%Y%m%d")
-                nextsearchdt = searchdt + timedelta(days=1)
-                prevsearchdt = searchdt - timedelta(days=1)
-                selection_clone['date'] = prevsearchdt.strftime("%Y%m%d")
-                prevday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
-                nextsearchstr = nextsearchdt.strftime('%Y%m%d')
-                if nextsearchstr <= gemini_date('today'):
-                    selection_clone['date'] = nextsearchstr
-                    nextday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
-            except:
-                # ok if we fail, this is a nice to have
-                pass
-
     template_args = dict(
-        server_title   = fsc.fits_server_title,
-        title_suffix   = title_suffix,
-        archive_style  = fsc.is_archive,
-        thing_string   = thing_string,
-        args_string    = args_string,
-        updated        = updated,  # updateform(selection),
-        debugging      = False, # Enable this to show some debugging data
-        selection      = selection,
-        col_sel        = column_selection,
+        server_title=fsc.fits_server_title,
+        title_suffix=title_suffix,
+        archive_style=fsc.is_archive,
+        thing_string=thing_string,
+        args_string=args_string,
+        updated=updated,  # updateform(selection),
+        debugging=False,  # Enable this to show some debugging data
+        selection=selection,
+        col_sel=column_selection,
         # Look at the end of the file for this
         **dropdown_options
         )
-    if nextday_search:
-        template_args['nextday_search'] = nextday_search
-    if prevday_search:
-        template_args['prevday_search'] = prevday_search
+
     if selection:
-        template_args.update(summary_body('customsearch', selection, orderby,
-                                          additional_columns=selection_to_column_names(selection)))
+        template_args.update(
+            summary_body('customsearch', selection, orderby,
+                         additional_columns=selection_to_column_names(
+                             selection)))
 
     return template_args
 
-std_gmos_fpm = {'NS2.0arcsec', 'IFU-R', 'IFU-B', 'focus_array_new', 'Imaging', '2.0arcsec',
-                'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2',
-                'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec'}
+
+std_gmos_fpm = {'NS2.0arcsec', 'IFU-R', 'IFU-B', 'focus_array_new', 'Imaging',
+                '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec',
+                '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec',
+                '0.5arcsec'}
+
 
 def updateform(selection):
     """
@@ -193,7 +181,8 @@ def updateform(selection):
         if key in {'program_id', 'observation_id', 'data_label'}:
             # Program id etc
             # don't do program_id if we have already done obs_id, etc
-            if key == 'program_id' and not ('observation_id' in selection or 'data_label' in selection):
+            if key == 'program_id' and not ('observation_id' in selection or
+                                            'data_label' in selection):
                 dct['program_id'] = value
             if key == 'observation_id' and not ('data_label' in selection):
                 dct['program_id'] = value
@@ -244,7 +233,8 @@ def updateform(selection):
                 dct[key] = 'SvInclude'
 
         elif key == 'focal_plane_mask':
-            if selection.get('inst', '').startswith('GMOS') and value not in std_gmos_fpm:
+            if selection.get('inst', '').startswith('GMOS') and \
+                    value not in std_gmos_fpm:
                 # Custom mask name
                 dct[key] = 'custom'
                 dct['custom_mask'] = value
@@ -271,18 +261,20 @@ def updateform(selection):
             if value in ('NodAndShuffle', 'Classic'):
                 # For GMOS, this indicates nod and shuffle
                 dct['nod_and_shuffle'] = value
-            elif value in ('High_Background', 'Medium_Background', 'Low_Background'):
+            elif value in ('High_Background', 'Medium_Background',
+                           'Low_Background'):
                 # NIRI readmode
                 dct['niri_readmode'] = value
             elif value in ('Bright_Object', 'Medium_Object', 'Faint_Object'):
                 # NIFS readmode
                 dct['nifs_readmode'] = value
-            elif value in ('Very_Bright_Objects', 'Bright_Objects', 'Faint_Objects', 'Very_Faint_Objects'):
+            elif value in ('Very_Bright_Objects', 'Bright_Objects',
+                           'Faint_Objects', 'Very_Faint_Objects'):
                 # GNIRS readmode
                 dct['gnirs_readmode'] = value
         elif key == 'welldepth':
-                # Only GNIRS has well depth
-                dct['gnirs_depth'] = value
+            # Only GNIRS has well depth
+            dct['gnirs_depth'] = value
         elif key == 'pre_image':
             if value:
                 dct['preimage'] = 'preimage'
@@ -297,6 +289,7 @@ def updateform(selection):
             dct[key] = value
 
     return dct
+
 
 def updateselection(formdata, selection):
     """
@@ -355,7 +348,8 @@ def updateselection(formdata, selection):
                     selection['daterange'] = gdr
 
         elif key in ['ra', 'dec', 'sr', 'cenwlen', 'filepre']:
-            # Check the formatting of RA, Dec, search radius values. Keep them in same format as given though.
+            # Check the formatting of RA, Dec, search radius values. Keep them
+            # in same format as given though.
 
             # Eliminate any whitespace
             value = value.replace(' ', '')
@@ -435,19 +429,24 @@ def nameresolver(resolver, target):
         xml = r.text
         doc = minidom.parseString(xml)
         info = doc.getElementsByTagName("INFO")
-        if info and ('nothing found' in info[0].childNodes[0].nodeValue.lower()):
-            msg = {'success': False, 'message': 'Object not found' }
+        if info and \
+                ('nothing found' in info[0].childNodes[0].nodeValue.lower()):
+            msg = {'success': False, 'message': 'Object not found'}
         else:
-            ra = float(doc.getElementsByTagName('jradeg')[0].childNodes[0].wholeText)
-            dec = float(doc.getElementsByTagName('jdedeg')[0].childNodes[0].wholeText)
+            ra = float(
+                doc.getElementsByTagName('jradeg')[0].childNodes[0].wholeText)
+            dec = float(
+                doc.getElementsByTagName('jdedeg')[0].childNodes[0].wholeText)
             msg = {'success': True, 'ra': ra, 'dec': dec}
     except KeyError:
         resp.status = Return.HTTP_NOT_ACCEPTABLE
         return
     except ExpatError:
-        msg = {'success': False, 'message': "Got corrupted information from the name resolver"}
+        msg = {'success': False, 'message': "Got corrupted information from "
+                                            "the name resolver"}
     except IndexError:
-        msg = {'success': False, 'message': "The name resolver returned information in an unknown format"}
+        msg = {'success': False, 'message': "The name resolver returned "
+                                            "information in an unknown format"}
     except Exception as e:
         message = str(e)
         msg = {'success': False, 'message': message}
@@ -639,7 +638,7 @@ dropdown_options = {
          ("Stry", "Stry"),
          ("Strb", "Strb")],
     "pre_image_options":
-        [("preimage", "Pre-image"),],
+        [("preimage", "Pre-image"), ],
     "gnirs_filter_options":
         [("XD", "XD"),
          ("H2", "H2"),
@@ -900,7 +899,7 @@ dropdown_options = {
          ("Hokupaa+QUIRC", "Hokupaa+QUIRC"),
          ("ABU", "ABU"),
          ("CIRPASS", "CIRPASS"),
-],
+         ],
     "obs_cls_options":
         [("science", "science"),
          ("acq", "acq"),

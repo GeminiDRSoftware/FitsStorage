@@ -3,7 +3,6 @@ This module deals with displaying information about programs.
 """
 
 from . import templating
-from fits_storage.db.selection import queryselection
 
 from fits_storage.core.orm.header import Header
 from fits_storage.server.orm.obslog_comment import ObslogComment
@@ -17,7 +16,7 @@ def log_comments(selection):
                           ObslogComment.comment)
     query = query.select_from(Header)\
         .join(ObslogComment, Header.data_label == ObslogComment.data_label)
-    query = queryselection(query, selection).order_by(Header.data_label)
+    query = selection.filter(query).order_by(Header.data_label)
 
     def generate_dict(it):
         for row in it:

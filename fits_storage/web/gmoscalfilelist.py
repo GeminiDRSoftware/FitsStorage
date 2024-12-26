@@ -18,7 +18,6 @@ from fits_storage.core.orm.file import File
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
 
-from fits_storage.db.selection import queryselection
 from fits_storage.gemini_metadata_utils import ONEDAY_OFFSET
 
 from fits_storage.config import get_config
@@ -106,7 +105,7 @@ def gmoscalbiasfiles(selection):
     selection['inst'] = 'GMOS'
     selection['qa_state'] = 'NotFail'
     query = (
-        queryselection(query, selection)
+        selection.filter(query)
         )
 
     # OK, re-organise results into tally table dict

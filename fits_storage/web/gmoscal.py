@@ -19,7 +19,7 @@ from fits_storage.core.orm.file import File
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
 
-from fits_storage.db.selection import sayselection, queryselection
+from fits_storage.db.selection import Selection
 from .calibrations import interval_hours
 from fits_storage.cal.calibration import get_cal_object
 from fits_storage.gemini_metadata_utils import gemini_daterange, ONEDAY_OFFSET
@@ -61,7 +61,7 @@ def gmoscal(selection):
     fsc = get_config()
 
     result = dict(
-        said_selection=sayselection(selection),
+        said_selection=selection.say(),
         is_development=fsc.fits_system_status == 'development',
         )
 
@@ -142,7 +142,7 @@ def gmoscal(selection):
             # Twilight flats must have the target name 'Twilight'
             query = query.filter(Header.object == 'Twilight')
 
-        query = queryselection(query, selection)
+        query = selection.filter(query)
 
         # Knock out ENG programs
         query = query.filter(Header.engineering == False).\
@@ -198,7 +198,7 @@ def gmoscal(selection):
     selection['observation_type'] = 'BIAS'
     selection['inst'] = 'GMOS'
     selection['qa_state'] = 'NotFail'
-    query = (queryselection(query, selection)
+    query = (selection.filter(query)
              .group_by('utdate', Header.detector_binning,
                        Header.detector_roi_setting)
              .order_by('utdate', Header.detector_binning,
@@ -251,7 +251,7 @@ def gmoscal(selection):
         selection['inst'] = 'GMOS'
         selection['qa_state'] = 'Pass'
 
-        query = queryselection(query, selection)
+        query = selection.filter(query)
 
         # Only Nod and Shuffle frames
         query = query.filter(Gmos.nodandshuffle == True)

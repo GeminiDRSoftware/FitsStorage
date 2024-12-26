@@ -6,7 +6,7 @@ from sqlalchemy import Integer, Text, DateTime, Numeric, Date, Time, \
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.file import File
-from fits_storage.db.selection import queryselection, openquery
+from fits_storage.db.selection import Selection
 from fits_storage.db.list_headers import list_headers, list_obslogs
 from fits_storage.web.standards import get_standard_obs, list_phot_std_obs
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
@@ -165,7 +165,7 @@ def jsonsummary(selection, orderby=None):
             thedict['phot_standards'] = photstds
         thelist.append(thedict)
 
-    if openquery(selection) and thelist:
+    if selection.openquery and thelist:
         thelist[-1]['results_truncated'] = True
 
     ctx.resp.send_json(thelist, indent=4)
@@ -189,7 +189,7 @@ def jsonqastate(selection):
         .select_from(Header, DiskFile, File)
     query = query.filter(Header.diskfile_id == DiskFile.id)
     query = query.filter(DiskFile.file_id == File.id)
-    query = queryselection(query, selection)
+    query = selection.filter(query)
 
     thelist = []
     for header, diskfile in query:

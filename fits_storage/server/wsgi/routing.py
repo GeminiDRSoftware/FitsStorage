@@ -4,7 +4,7 @@ from fits_storage.server.wsgi.returnobj import Return
 
 from urllib.parse import parse_qs
 
-from fits_storage.db.selection import getselection
+from fits_storage.db.selection.get_selection import from_url_things
 
 # This rule regular expressions is copied from werkzeug's, as we intend to make it
 # syntax-compatible
@@ -492,7 +492,7 @@ class SelectionConverter(BaseConverter):
         result = []
         for r in self.res_order:
             if r == 'SEL':
-                result.append(getselection(things))
+                result.append(from_url_things(things))
             elif r == 'ASSOC':
                 result.append(assoc)
             elif r == 'NOLNK':

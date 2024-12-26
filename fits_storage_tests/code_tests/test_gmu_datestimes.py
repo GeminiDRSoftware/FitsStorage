@@ -12,38 +12,15 @@ iso_good = {'20001122T012345.67-20010102T112233.44':
                 ('20001122T012345.67', '20010102T112233.44'),
             '20001122T012345-20010102T112233':
                 ('20001122T012345', '20010102T112233'),
-            '20001122T012345.-20010102T112233.44456':
-                ('20001122T012345.', '20010102T112233.44456')}
+            '20001122T012345-20010102T112233.44456':
+                ('20001122T012345', '20010102T112233.44456'),
+            '2000-11-22T01:23:45--2001-01-02T11:22:33.44456':
+                ('20001122T012345', '20010102T112233.44456')
+            }
 
 iso_bad = {'20002122T012345.67-20010102T112233.44': None,
            '20001142T012345-20010102T112233': None,
            '20001122T016345.-20010102T112233.44456': None}
-
-
-def test_simple_daterange_regex():
-    for i in simple_good.keys():
-        start, end = simple_good[i]
-        m = simple_daterange_cre.match(i)
-        assert m is not None
-        assert m.group('start') == start
-        assert m.group('end') == end
-
-    for i in simple_bad.keys():
-        m = simple_daterange_cre.match(i)
-        assert m is None
-
-
-def test_iso_daterange_regex():
-    for i in iso_good.keys():
-        start, end = iso_good[i]
-        m = iso_daterange_cre.match(i)
-        assert m is not None
-        assert m.group('start') == start
-        assert m.group('end') == end
-
-    for i in iso_bad.keys():
-        m = iso_daterange_cre.match(i)
-        assert m is None
 
 
 def test_daterange_simple_strings():
