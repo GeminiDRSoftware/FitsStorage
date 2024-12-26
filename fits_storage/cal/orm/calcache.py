@@ -24,18 +24,6 @@ class CalCache(Base):
     the rank of the calibration - ie 0 is the best one (generally closest in
     time), 1 is next best, etc. caltype is the calibration type.
 
-    Parameters
-    ----------
-    obs_hid : int
-        ID of the :class:`~fits_storage_core.orm.header.Header`
-        record for the data being linked
-    cal_hid : int
-        ID of the :class:`~fits_storage_core.orm.header.Header` record for the
-        calibration
-    caltype : `~fits_storage_core.orm.calcache.CALTYPE_ENUM`
-        type of calibration being linked
-    rank : int
-        rank of this calibration (relative to other options, lower is better)
     """
     __tablename__ = 'calcache'
 
@@ -45,7 +33,7 @@ class CalCache(Base):
     rank = Column(SmallInteger, nullable=False, index=True)
     caltype = Column(CALTYPE_ENUM, index=True)
     
-    def __init__(self, obs_hid: int, cal_hid: int, caltype: CALTYPE_ENUM, rank: int):
+    def __init__(self, obs_hid, cal_hid, caltype, rank):
         """
         Create a calcache record linking data to a relevant calibration file.
 

@@ -45,7 +45,7 @@ class ExportQueueEntry(OrmQueueMixin, Base):
         destination : str
             URL of the server to export to
         after : datetime.datetime
-            datetime only after which to export the file
+            UTC datetime only after which to export the file
         header_update: dict
             Header updates from a call to the update_headers API that resulted
             in this request for export. This gets passed from the ingest queue

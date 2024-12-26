@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, Boolean
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
 from .usagelog import UsageLog
@@ -16,7 +16,7 @@ class FileUploadLog(Base):
     id = Column(Integer, primary_key=True)
     usagelog_id = Column(Integer, ForeignKey(UsageLog.id),
                          nullable=False, index=True)
-    usagelog = relation(UsageLog, order_by=id)
+    usagelog = relationship(UsageLog, order_by=id)
 
     ut_transfer_start = Column(DateTime(timezone=False), index=True)
     ut_transfer_complete = Column(DateTime(timezone=False))

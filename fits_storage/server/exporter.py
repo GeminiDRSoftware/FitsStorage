@@ -8,9 +8,9 @@ import requests.utils
 import json
 import datetime
 import os
-import time
 
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
+from sqlalchemy import update
 
 from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
 from fits_storage.core.orm.diskfile import DiskFile
@@ -19,7 +19,6 @@ from fits_storage.core.hashes import md5sum
 
 from fits_storage.config import get_config
 
-import tempfile
 
 class Exporter(object):
     """
@@ -174,8 +173,8 @@ class Exporter(object):
         # regular file transfer.
 
         got_header_update = self.eqe.md5_before_header_update is not None\
-                and self.eqe.md5_after_header_update is not None\
-                and self.eqe.header_update is not None
+                            and self.eqe.md5_after_header_update is not None\
+                            and self.eqe.header_update is not None
 
         if got_header_update:
             self.l.info("Attempting pseudo-transfer by header update")
@@ -238,14 +237,21 @@ class Exporter(object):
             try:
                 req = self.rs.post(url, data=flo, timeout=self.timeout)
             except requests.Timeout:
-                self.logeqeerror(f"Timeout posting {url}", exc_info=True)
+                self.logeqeerror(f"Timeout posting to: {url}", exc_info=True)
+                # Delay exports to this destination to give it chance to recover
+                self._delay_destination()
                 return
             except requests.ConnectionError:
-                self.logeqeerror(f"ConnectionError posting {url}", exc_info=True)
+                self.logeqeerror(f"ConnectionError posting to: {url}",
+                                 exc_info=True)
+                # Delay exports to this destination to give it chance to recover
+                self._delay_destination()
                 return
             except requests.RequestException:
-                self.logeqeerror(f"RequestException posting {url}",
+                self.logeqeerror(f"RequestException posting to: {url}",
                                  exc_info=True)
+                # Delay exports to this destination to give it chance to recover
+                self._delay_destination()
                 return
             enddtime = datetime.datetime.utcnow()
 
@@ -264,15 +270,9 @@ class Exporter(object):
             if req.status_code != http.HTTPStatus.OK:
                 self.logeqeerror(f"Bad HTTP status: {req.status_code} from "
                                  f"upload post to url: {url}")
-                # Insert a sleep here, to prevent rapid-fire failures in the
-                # case where the server is in a bad state. This isn't ideal as
-                # there may be exports to other destinations in the queue, and
-                # it would be preferable to continue with those.
-                # TODO - after we switch to sqlalchemy-2, change this to do a
-                # TODO - bulk UPDATE on the exportqueue table to set after to
-                # TODO - now()+30s where destination == self.destination.
-                self.l.info("Waiting 30 seconds to prevent rapid-fire failures")
-                time.sleep(30)
+                # Delay all exports to this destination, to prevent rapid-fire
+                # failures if the server immediately returns an error.
+                self._delay_destination()
                 return
 
             # The response should be a short json document
@@ -424,3 +424,26 @@ class Exporter(object):
                      "pending_ingest: %s", filename, self.destination_md5,
                      self.destination_ingest_pending)
         return True
+
+    def _delay_destination(self, delaysecs=300):
+        # If the destination server is in a bad state, we need to prevent
+        # rapid-fire failures, but also bear in mind we may be
+        # exporting to others servers which are still ok. So we update
+        # the exportqueue table to add a delay to the 'after' time for
+        # all entries for this destination. If it hasn't recovered when we next
+        # try, we'll just delay again next time round. We could implement
+        # increasing delay with more failures here, but we'd need to
+        # do this on a per-destination basis and reset back to default
+        # on success. Keep it simple for now.
+        after = datetime.datetime.utcnow()
+        delay = datetime.timedelta(seconds=delaysecs)
+        after += delay
+        self.l.info("Delaying all exports to %s by %d seconds until %s",
+                    self.eqe.destination, delaysecs, after)
+        stmt = (
+            update(ExportQueueEntry)
+            .where(ExportQueueEntry.destination == self.eqe.destination)
+            .values(after=after)
+        )
+        self.s.execute(stmt)
+        self.s.commit()

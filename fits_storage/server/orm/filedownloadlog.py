@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, Boolean, BigInteger
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relationship
 
 import datetime
 
@@ -15,7 +15,7 @@ class FileDownloadLog(Base):
 
     id = Column(Integer, primary_key=True)
     usagelog_id = Column(Integer,ForeignKey(UsageLog.id), nullable=False, index=True)
-    usagelog = relation(UsageLog, order_by=id)
+    usagelog = relationship(UsageLog, order_by=id)
 
     # Don't reference the diskfile_id here - we want to be able to preserve
     # data over database rebuild. Reference by filename etc instead.

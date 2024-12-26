@@ -2,7 +2,7 @@ import datetime
 
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, BigInteger
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
 from .user import User
@@ -27,7 +27,7 @@ class UsageLog(Base):
     status = Column(Integer, index=True)
     notes = Column(Text)
 
-    user = relation(User)
+    user = relationship(User)
 
     def __init__(self, ctx):
         """
