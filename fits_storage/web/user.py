@@ -10,9 +10,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import functools
 import json
-import urllib
-import requests
-from urllib.parse import urlencode
 
 from sqlalchemy import desc, and_, or_
 from sqlalchemy.exc import NoResultFound
@@ -28,6 +25,8 @@ from . import templating
 
 from fits_storage.config import get_config
 
+if get_config().oauth_enabled:
+    from fits_storage.web.oauth import OAuthNOIR, OAuthORCID
 
 bad_password_msg = "Bad password - must be at least 14 characters long, and " \
                    "contain at least one lower case letter, upper case " \
@@ -397,8 +396,6 @@ def change_password(things):
         user = ctx.user
         if user is None:
             reason_bad = 'You are not currently logged in'
-        elif not user.username:
-            reason_bad = 'This account has no password based login'
         elif user.validate_password(oldpassword) is False:
             reason_bad = 'Current password not correct'
         else:
@@ -794,6 +791,8 @@ def login(things):
     redirect = ''
     cookie = None
 
+    user = ctx.user
+
     # Parse the form data here
     if formdata:
         if 'username' in formdata:
@@ -819,7 +818,7 @@ def login(things):
                 .filter(User.username == username).one()
             if user.validate_password(password):
                 # Successful login
-                cookie = user.log_in()
+                cookie = user.log_in(by='local_account')
                 valid_request = True
             else:
                 reason_bad = 'Username / password not valid. ' \
@@ -833,11 +832,24 @@ def login(things):
         if redirect:
             ctx.resp.redirect_to(redirect)
 
+    login_methods = []
+    if user and user.orcid_id:
+        login_methods.append("ORCID")
+    if user and user.noirlab_id:
+        login_methods.append("NOIRLab-SSO")
+    if user and user.username:
+        login_methods.append("Username-Password")
+
+    if redirect == '':
+        redirect="/login"
+        
     template_args = dict(
+        server_title=get_config().fits_server_title,
         # Rebuild the thing_string for the url
         thing_string='/'.join(things),
-        valid_request=valid_request,
+        logged_in=user is not None,
         reason_bad=reason_bad,
+        login_methods=', '.join(login_methods),
         username=username,
         redirect=redirect,
         cookie=cookie,
@@ -880,25 +892,25 @@ def logout():
 @templating.templated("user/whoami.html")
 def whoami(things):
     """
-    Tells you who you are logged in as, and presents the account maintainace
+    Tells you who you are logged in as, and presents the account maintenance
     links
     """
     # Find out who we are if logged in
-    fsc = get_config()
-    template_args = {'orcid_enabled': fsc.orcid_enabled}
+    template_args = {}
 
     user = get_context().user
 
-    try:
-        template_args['username'] = user.username if user.username else ""
-        template_args['orcid'] = user.orcid_id if user.orcid_id else ""
+    if user is not None:
+        template_args['username'] = user.username
+        template_args['orcid_id'] = user.orcid_id
+        template_args['noirlab_id'] = user.noirlab_id
+        template_args['preferred_id'] = user.orcid_id or user.noirlab_id or \
+                                        user.username
         template_args['fullname'] = user.fullname
+        template_args['email'] = user.email
         template_args['is_superuser'] = user.superuser
         template_args['user_admin'] = user.user_admin
         template_args['file_permission_admin'] = user.file_permission_admin
-    except AttributeError:
-        # no user
-        pass
 
     # Construct the "things" part of the URL for the link that want to be
     # able to take you back to the same form contents
@@ -1154,81 +1166,103 @@ def needs_login(staff=False, misc_upload=False, superuser=False,
     return decorator
 
 
-@templating.templated("user/orcid.html")
-def orcid(code):
+@templating.templated("user/oauth.html")
+def oauth_login(service, code):
     """
-    Generates and handles ORCID backed accounts
+    Generates and handles OAuth (e.g. ORCID, NOIRlab SSO) backed accounts
 
-    ``code`` This is the ORCID supplied authentication code.  We can use this
-    to request the users identity from the ORCID service.  On the first pass
-    to this endpoint there is no code, and we redirect the user to the ORCID
-    login page.
+    ``service`` is the OAuth service to use. Either 'ORCID' or 'NOIRlab'.
+
+    ``code`` This is the Oauth supplied authentication code.  We can use this
+    to request the users identity from the OAuth service.  On the first pass
+    to this endpoint there is no code, and we redirect the user to the
+    respective Oauth login page.
     """
 
     fsc = get_config()
-    if not fsc.orcid_enabled:
+    if not fsc.oauth_enabled:
         return dict(
             notification_message="",
-            reason_bad="ORCID not enabled on this system"
+            reason_bad="OAuth not enabled on this system"
+        )
+
+    if service == 'NOIRlab':
+        oauth = OAuthNOIR()
+    elif service == 'ORCID':
+        oauth = OAuthORCID()
+    else:
+        return dict(
+            notification_message="",
+            reason_bad=f"OAuth for {service} not configured on this system"
         )
 
     notification_message = ""
     reason_bad = ""
 
-    redirect_url = fsc.orcid_redirect_url
-
     ctx = get_context()
 
     if code:
-        # Need to POST the token to ORCID to get the credentials
-        data = {
-            "client_id": fsc.orcid_client_id,
-            "client_secret": fsc.orcid_client_secret,
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": redirect_url
-        }
-        orcid_token_url = 'https://%s/oauth/token' % fsc.orcid_server
-        r = requests.post(orcid_token_url, json=data)
-        if r.status_code == 200:
-            response_data = r.json()
-            orcid_id = response_data["orcid"]
-            # create a session for this orcid id
-            user = ctx.session.query(User).\
-                filter(User.orcid_id == orcid_id).one_or_none()
-            if user is None:
-                # Authorized as ORCID user and we haven't seen this ORCID before
-                if ctx.user:
-                    # Add ORCID to existing user
-                    ctx.user.orcid_id = orcid_id
-                    ctx.session.save(ctx.user)
-                else:
-                    # make a new user record with our ORCID data
-                    user = User('')
-                    user.orcid_id = orcid_id
-                    user.fullname = response_data['name']
-                    session = ctx.session
-                    session.add(user)
-                    session.commit()
+        try:
+            oauth.request_tokens(code)
 
-            cookie = user.log_in()
-            exp = datetime.datetime.utcnow() + datetime.timedelta(days=365)
-            ctx.cookies.set('gemini_archive_session', cookie,
-                            expires=exp, path="/")
-            ctx.resp.redirect_to('/searchform')
-        else:
-            reason_bad = "Error communicating with ORCID service"
+            # This populates oauth.oauth_id, email and fullname
+            oauth.decode_id_token()
+
+            # Find any existing user entry for this oauth_id.
+            user = oauth.find_user_by_oauth_id(ctx)
+
+            if user is None:
+                # Authenticated via OAuth, but we haven't seen this oauth_id
+                # (orcid_id or noirlab_id) before
+                if ctx.user:
+                    # But we do have a valid session cookie for an existing user
+                    # - User is already signed in, and just signed in via OAuth.
+                    # This is how we/they associate their OAuth ID with their
+                    # existing archive user record
+                    oauth.add_oauth_id_to_user(ctx, ctx.user)
+                    user = ctx.user
+                else:
+                    # No valid session cookie - they are not logged in.
+                    # But maybe oauth provided an email address that we
+                    # recognize? (NOIRlab SSO does, ORCID doesn't)
+                    user = oauth.find_user_by_email(ctx)
+                    if user:
+                        # OAuth Email matches a user email.
+                        # Add this OAuth ID to that user
+                        oauth.add_oauth_id_to_user(ctx, ctx.user)
+                    else:
+                        # We don't recognize them at all. Create a new archive
+                        # user record for them and associate this oauth_id
+                        user = oauth.create_user(ctx)
+
+            # Check for an updated email address from the OAuth id
+            if oauth.email is not None and user.email != oauth.email:
+                user.email = oauth.email
+                ctx.session.commit()
+
+        except Exception as e:
+            return dict(notification_message="", reason_bad=e)
+
+        cookie = user.log_in(by=service)
+        exp = datetime.datetime.utcnow() + datetime.timedelta(days=365)
+        ctx.cookies.set('gemini_archive_session', cookie,
+                        expires=exp, path="/")
+        ctx.resp.redirect_to('/searchform')
+
     else:
-        # Send them to ORCID, which will call back here with their token
-        orcid_url = f'https://{fsc.orcid_server}/oauth/authorize?client_id=' \
-                    f'{fsc.orcid_client_id}' \
-                    f'&response_type=code&scope=/authenticate' \
-                    f'&redirect_uri={urllib.parse.quote(redirect_url)}'
-        ctx.resp.redirect_to(orcid_url)
+        # No auth code - Send them to the OAuth server to authenticate, which
+        # will send them back here with their code
+        try:
+            oauth_url = oauth.authorization_url()
+        except Exception as e:
+            return dict(notification_message="", reason_bad=e)
+
+        ctx.resp.redirect_to(oauth_url)
 
     template_args = dict(
         notification_message=notification_message,
-        reason_bad=reason_bad
+        reason_bad=reason_bad,
+        via='OAuth'
     )
 
     return template_args
