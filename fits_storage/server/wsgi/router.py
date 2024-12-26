@@ -29,7 +29,7 @@ from fits_storage.web.progsobserved import progsobserved, sitemap
 from fits_storage.web.user import whoami, login, logout, request_account, \
     request_password_reset, change_password, change_email, password_reset, \
     user_list, staff_access, admin_change_email, admin_change_password, \
-    admin_file_permissions, export_users
+    admin_file_permissions
 
 from fits_storage.web.userprogram import my_programs
 

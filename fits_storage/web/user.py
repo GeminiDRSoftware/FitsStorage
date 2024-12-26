@@ -1232,34 +1232,3 @@ def orcid(code):
     )
 
     return template_args
-
-
-@needs_cookie(magic_cookie='gemini_user_transfer', content_type='json')
-def export_users():
-    # Exports user data to sync account data between servers
-
-    ctx = get_context()
-    resp = ctx.resp
-    resp.content_type = 'application/json'
-
-    # Specification of users data to export is hardwired here
-    query = ctx.session.query(User)\
-        .filter(or_(User.email.endswith('@gemini.edu'),
-                    User.email.endswith('@noirlab.edu')))\
-        .filter(User.gemini_staff == True)
-
-    users = query.all()
-
-    export_list = []
-    attributes = ['id', 'username', 'fullname', 'password', 'salt', 'email',
-                  'gemini_staff', 'account_created', 'password_changed']
-    for user in users:
-        export_user = {}
-        for attribute in attributes:
-            export_user[attribute] = getattr(user, attribute)
-            if isinstance(export_user[attribute], datetime.datetime):
-                export_user[attribute] = export_user[attribute].isoformat()
-        export_list.append(export_user)
-
-    resp.append_json(export_list)
-    resp.status = Return.HTTP_OK
