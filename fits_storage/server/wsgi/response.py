@@ -186,6 +186,13 @@ class Response(object):
         # The minimal
         self._cookies_to_send[name] = value
         ck = self._cookies_to_send[name]
+
+        # Sensible cookie attributes. We don't set secure here as we use
+        # straight http in some internal network environments.
+        ck['httponly'] = True
+        ck['samesite'] = 'Strict'
+
+        # Handle any attributes passed as keywords
         for k, v in kw.items():
             if k == 'expires':
                 ck['expires'] = v.strftime('%a, %d %b %Y %H:%M:%S GMT')

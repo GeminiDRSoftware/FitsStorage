@@ -26,39 +26,39 @@ that we will maintain the format of the HTML so your software may stop working i
 it's easier, more robust, and faster to use one of the JSON APIs to obtain that information.</p>
 
 <h2 id="concepts">Basic Concepts</h2>
-<p>URLs on the archive are of the form <code>https://archive.gemini.edu/ <i>FEATURE</i>/<i>SELECTION</i></code> where
+<p>URLs on the archive are of the form <code>https://archive.gemini.edu/<i>FEATURE</i>/<i>SELECTION</i></code> where
 <i>FEATURE</i> and <i>SELECTION</i> are the archive feature you want to access, and the data selection criteria
-respecively, as explained below. This applies to the human-oriented features of the archive as well as the APIs.</p>
+respectively, as explained below. This applies to the human-oriented features of the archive as well as the APIs.</p>
 
 <p>Generally you should fetch these URLs with an HTTP GET. A small number of API functions can accept an HTTP POST with
 additional information for the query, this will be described for those individual cases. The archive uses 
-<code>https://</code> URLS. If you try to access the archive with a <code>http://</code> URL you will receive an 
+<code>https://</code> URLs. If you try to access the archive with a <code>http://</code> URL you will receive an
 HTTP REDIRECT to the <code>https://</code> URL. It is more efficient to use <code>https://</code> directly.</p>
 
 <h3>Archive Features</h3>
-<p>You have probbaly used the regular search form for the archive, and noticed that the URL for that is
+<p>You have probably used the regular search form for the archive, and noticed that the URL for that is
 <code>https://archive.gemini.edu/<i>searchform</i></code>. "searchform" is a good example of an archive feature 
 in this context, and we'll use it with a lot of our examples below. We'll discuss a complete list of features
-later.<p>
+later.</p>
 
 <h3>Selection Criteria</h3>
 <p>This is a key concept of the archive system. Search terms used to select data in the archive are placed
 <i>directly in the URL</i> separated by slashes, just like directories in a normal URL. Many things that you will want
 to search by in the archive, such as Gemini Program IDs or UT dates have a prescribed standard format, and the
 archive will recognise these automatically for what they are. For example 8 digit numbers that refer to valid
-dates such as <code>20140410</code> will be recognised automatically as a UT date, and strings such as GN-2010B-Q-123 will
-be recognized automatically as Gemini Program IDs.</p>
-<p>So, using these examples, using <code>GN-2010B-Q-123</code> as the selection would select data from that program ID, and
-using <code>GN-2010B-Q-123/20140410</code> would select data from that program ID that was taken on that UT date.
+dates such as <code>20140410</code> will be recognised automatically as a date, and strings such as GN-2010B-Q-123 will
+be recognised automatically as Gemini Program IDs.</p>
+<p>Following these examples, using <code>GN-2010B-Q-123</code> as the selection would select data from that program ID, and
+using <code>GN-2010B-Q-123/20140410</code> would select data from that program ID that was taken on that UTC date.
 It does not matter what order you specify these in.</p>
 <p>In this way, we can build up URLs that refer to the search or search results of various searches on the archive. All
 these should be accessed with regular HTTP GET, there's no need to HTTP POST search parameters to the system, we provide 
 a <a href="http://en.wikipedia.org/wiki/Representational_state_transfer">RESTful</a> interface to the data.</p>
 
 <p>If you add /object=foobar to the URL (it's a selection criteria just like the others) then it will only return files with 
-that object name. The problem is that the object name in that sense is whatever they called it in the OT, and it's free 
-form, so if they want to call it pauls_kewl_galaxy or candidate_12 they can do, and they do... So if you did the phase 2 and 
-you know what you called it, then it works great, or if you're lucky and your object only has one name that can be spelled 
+that object name. The problem is that the object name in that sense is whatever was entered in the OT, and it's free
+form, so if the PI wants to call it my_cool_galaxy or candidate_12 they can do, and they do... So - if you did the phase 2, and
+you remember what you called it, then it works great, or if you're lucky and your object only has one name that can be spelled
 one way...</p>
 
 <p>But what you almost certainly really want to do is to resolve the name and search by ra and dec. The API doesn't do that 
@@ -79,13 +79,13 @@ arcsec)</p>
 <h3>searchform</h3>
 <p>The regular search form for the archive. When you pass a selection criteria to the search form it will pre-populate
 the fields of the form with the selection criteria you have passed, and will execute that search. This is how it works
-when you do a search and then bookmark the resulting web page or copy the URL for future use etc - when you do the search, 
+when you do a search and then bookmark the resulting web page or copy the URL for future use etc. - when you do the search,
 it simply places the search terms from the form into the URL and redirects your browser to that URL. If you re-visit this
 URL later, it will re-do the search and return you the filled out search form with the results. You can then of course 
 modify the fields in the form and search again if you wish.</p>
 
 <h3>summary</h3>
-<p>This works a lot like searchform, except it just sends you the simple results table. You don't get the search form itself,
+<p>This works a lot like searchform, except it just sends you the results table. You don't get the search form itself,
 nor do you get the tabs to see associated calibrations or observation logs, you simply get the main search results table showing
 the results of the search as specified by the selection criteria you specified in the URL. You can also use <kbd>ssummary</kbd> 
 (short summary) and <kbd>lsummary</kbd> (long summary) to get versions with fewer and more columns respectively.</p>
@@ -143,6 +143,7 @@ If the file is not compressed this will be the same as file_md5</td>
 searchform results tables. You should almost always include /canonical as one of your selection criteria (see note below). 
 As with jsonfilelist, you get a list of dictionaries, one dictionary per file. You get all the keys from jsonfilelist
 plus a lot more that contain details of the data, as follows:</p>
+
 <table>
 <tr><th>Key</th><th>Description</th></tr>
 <tr>
@@ -285,10 +286,9 @@ Also inside the tar archive is a <code>README.txt</code> file with some details 
 <code>md5sums.txt</code> file that contains the MD5 hash of each file in the download, so that file integrity can 
 easily be checked using the <code>md5sum</code> program installed on most UNIX-like systems.</p>
 
-<p>Secondly, the <code>/file</code> URL accepts a single filename and will return you just that file, uncompressed
-and ready to use.</p>
+<p>Secondly, the <code>/file</code> URL accepts a single filename and will return you just that file.</p>
 
-<h3>Authentication</h3>
+<h3 id="authentication">Authentication</h3>
 
 <p>Note that these URLs will provide public data without any need to authenticate. However, they do require
 authentication in order to download proprietary data. In the case where you do not authenticate, the 
@@ -300,31 +300,33 @@ a <a href="http://en.wikipedia.org/wiki/HTTP_cookie">web cookie</a> is a small p
 server to your browser that your browser stores and presents back to the web server. 
 When you log in to your account on the archive, the server sends you a cookie called
 <code>gemini_archive_session</code>. The value of this cookie identifies you to the system and verifies that
-you have sucessfully logged in. In order to authenticate yourself to the download service, you need to send the
-same cookie to the server with your request. If you want to do this from a script or the command line you will
-first have to find the value of that cookie from your browser, and then include it in your download request headers.</p>
+you have successfully logged in. In order to authenticate yourself to the download service, you need to send the
+same cookie back to the server with your request. If you want to do this from a script or the command line you will
+first have to get the value of that cookie, and then include it in your download request headers.</p>
 
-<p>Finding the value of the cookie depends on your browser. In Firefox, navigate to any archive page, then go to 
-Tools - Page Info, then inside Security there is a View Cookies button. In Safari first go to Preferences - Advanced
-and turn on "Show Develop menu" then navigate to an archive page and in the Develop menu click "Show Web Inspector" then
-select Cookies in the Resources tab. The cookie you need is called <code>gemini_archive_session</code>.</p>
+<p>When you log in to the archive, the value is provided on the page that tells you that you successfully logged in.
+You can simply log in again to get back to that page. You may be able to extract the value from your browsers cookie store,
+though this varies by browser and many modern browsers do not make this easy for security reasons.
+The cookie you need is called <code>gemini_archive_session</code>.</p>
 
-<p>The value of the cookie you need will be a long apparently random string of characters. You should be able to copy
-/ paste it into to your script. Be sure to keep that cookie value confidential, anyone who has it can access your archive account. If
+<p>The value of the cookie is a long apparently random string of characters. You should be able to copy
+and paste it into to your script. A better plan is to set the value in an environment variable,
+perhaps set in your shell login scripts, and reference that in your scripts. Be sure to keep that cookie
+value confidential, anyone who has it can access your archive account. If
 you need to reset it (for example because it became known to someone else), then simply use a web browser to
 <strong>Log Out</strong> of the archive and the old value will no longer be accepted by the server. When you log back
-in to the archive, a new value will be sent to the browser where you logged in.</p>
+in to the archive, a new value will be generated.</p>
 
-<p>An example of how you might use this cookie in python would be the following (thx Erik Dennihy):</p>
+<p>An example of how you might use this cookie in python is:</p>
 
 <pre>
 import requests
 
-cookies = dict(gemini_archive_session='my_archive_cookie')
-r = requests.get('https://archive.gemini.edu/download/my_archive_search....',cookies=cookies,stream=True)
-handle = open('data.tar','wb')
-for chunk in r.iter_content(chunk_size=256):
-     handle.write(chunk)
+cookies = {'gemini_archive_session': 'my_archive_cookie_value==='}
+r = requests.get('https://archive.gemini.edu/download/my_archive_search....', cookies=cookies, stream=True)
+with open('data.tar', 'wb') as fd:
+    for chunk in r.iter_content(chunk_size=4096):
+        fd.write(chunk)
 </pre>
 
 <h2 id="selection">Selection Criteria</h2>
@@ -340,7 +342,7 @@ because we use the same software for internal data management, where old files m
 which case the database record will reflect that file version can be canonical but no longer present on disk.</p>
 
 <p>The search form and data summaries assume <strong>canonical</strong> as one of the search criteria as you are almost always looking
-for the most recent (canonical) version of the file. The JSON APIs do not do this so as to allow you to deliberately look for information on 
+for the most recent (canonical) version of the file. The JSON APIs do not do this to allow you to deliberately look for information on
 previous versions of the file. Assuming you don't want to do that, <strong>you should always have /canonical as one your selection
 criteria with the JSON APIs</strong>.</p>
 
@@ -446,10 +448,10 @@ criteria with the JSON APIs</strong>.</p>
 </tr>
 
 <tr>
-  <td>Science Quality</td>
+  <td>Processing Intent</td>
   <td></td>
-  <td>sq</td>
-  <td>Can be 'sq' for science quality or 'ql' for quick look</td>
+  <td>Science-Quality</td>
+  <td>Can be 'Science-Quality' or 'Quick-Look'</td>
 </tr>
 
 <tr>
@@ -561,8 +563,9 @@ criteria with the JSON APIs</strong>.</p>
 
 <h2 id="sample_code">Sample python code</h2>
 <h3>Simple file list using jsonfilelist</h3>
-<p>This is a simple example in python that constructs a jsonfilelist URL, fetches the JSON document text into a string,
-parses that into a list of dictionaries, and then loops through showing some details of the files we found.</p>
+<p>This is a simple example in python 2 that constructs a jsonfilelist URL, fetches the JSON document into a string, then decodes the JSON document
+into a list of dictionaries, and then loops through showing some details of the files we found.</p>
+
 <div class="sample"><pre><code>
 import urllib
 import json
@@ -588,7 +591,33 @@ for f in files:
 
 </code></pre></div>
 
-<p>Gives the following output:</p>
+<p>The <code>urllib</code> and <code>json</code> modules are used here to illustrate the underlying principles.
+    In more modern python 3 environments, the <code>requests</code> module is preferred:</p>
+
+<div class="sample"><pre><code>
+import requests
+
+# Construct the URL. We'll use the jsonfilelist service
+url = "https://archive.gemini.edu/jsonfilelist/"
+
+# List the files for GN-2010B-Q-22 taken with GMOS-N on 2010-12-31
+url += "canonical/GN-2010B-Q-22/GMOS-N/20101231"
+
+# Open the URL and fetch the JSON document
+r = requests.get(url)
+
+# Decode the JSON
+files = r.json()
+
+# This is a list of dictionaries each containing info about a file
+for f in files:
+    print("Filename: %s" % f['filename'])
+    print("-- file size: %d, data size: %d" % (f['file_size'], f['data_size']))
+
+</code></pre></div>
+
+
+<p>Both of these give the following output:</p>
 <div class="sample"><pre><code>
 Filename: N20101231S0338.fits.bz2
 -- file size: 21314852, data size: 57548160
@@ -608,8 +637,7 @@ Filename: N20101231S0343.fits.bz2
 <h3>More details of the files using jsonsummary</h3>
 <p>Similar to the example above, but getting more details about the observations using the jsonsummary API</p>
 <div class="sample"><pre><code>
-import urllib
-import json
+import requests
 
 # Construct the URL. We'll use the jsonsummary service
 url = "https://archive.gemini.edu/jsonsummary/"
@@ -617,25 +645,21 @@ url = "https://archive.gemini.edu/jsonsummary/"
 # List the OBJECT files taken with GMOS-N on 2010-12-31
 url += "canonical/OBJECT/GMOS-N/20101231"
 
-# Open the URL and fetch the JSON document text into a string
-u = urllib.urlopen(url)
-jsondoc = u.read()
-u.close()
-
-# Decode the JSON
-files = json.loads(jsondoc)
+# Open the URL and fetch and decode the JSON
+r = requests.get(url)
+files = r.json()
 
 # This is a list of dictionaries each containing info about a file
 total_data_size = 0
-print "%20s %22s %10s %8s %s" % ("Filename", "Data Label", "ObsClass",
-                                 "QA state", "Object Name")
+print("%20s %22s %10s %8s %s" % ("Filename", "Data Label", "ObsClass",
+                                 "QA state", "Object Name"))
 for f in files:
     total_data_size += f['data_size']
-    print "%20s %22s %10s %8s %s" % (f['name'], f['data_label'],
+    print("%20s %22s %10s %8s %s" % (f['name'], f['data_label'],
                                      f['observation_class'], f['qa_state'],
-                                     f['object'])
+                                     f['object']))
 
-print "Total data size: %d" % total_data_size
+print("Total data size: %d" % total_data_size)
 
 </code></pre></div>
 
