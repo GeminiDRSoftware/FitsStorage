@@ -32,8 +32,6 @@
 
 {% if logged_in %}
   <H3>Welcome, you are logged in to the Gemini Archive.</H3>
-  <P>Your account has the following login methods registered: {{ login_methods }}.</P>
-  <P>To add additional login methods, simply log in using the new method below.</P>
   {% if thing_string %}
     <p><a href="/searchform/{{ thing_string }}">Click here to go back to your search form</a></p>
     <p><a href="/searchform">Click here to go to an empty search form</a></p>
@@ -42,6 +40,9 @@
   {% endif %}
   <p>In order to access proprietary data, your programs need to be registered with your archive account.</p>
   <p><a href="/my_programs">Click here to register programs</a></p>
+
+<P>Your account has the following authentication methods registered: {{ login_methods }}.</P>
+<P>To add additional authentication methods, simply log in using the new method below.</P>
 
    <H3>API access token</H3>
    <p>If you access the archive API from scripts and would like to have those
@@ -156,7 +157,10 @@ to your archive account.</LI>
 
 <P>If you log in by a new method (e.g. ORCID) <strong>while you are already logged into a GOA
     account</strong> (for example from a previous username-password login), the system will
-    <strong>add that new login method</strong> (e.g. ORCID iD) to your existing account.</P>
+    <strong>add that new login method</strong> (e.g. ORCID iD) <strong>to your existing account.</strong>.</P>
+
+<P><strong>If that's not what you intend</strong> - i.e. if you want to log in as a different user,
+    <strong>simply <a href="/logout">Log Out</a> before logging in as the new user.</strong></P>
 
 <P>If you log in by ORCID or NOIRLab and GOA doesn't already have an account corresponding
     to that ORCID or NOIRLab ID, we will simply create a new account for you as you log in.

@@ -305,7 +305,8 @@ same cookie back to the server with your request. If you want to do this from a 
 first have to get the value of that cookie, and then include it in your download request headers.</p>
 
 <p>When you log in to the archive, the value is provided on the page that tells you that you successfully logged in.
-You can simply log in again to get back to that page. You may be able to extract the value from your browsers cookie store,
+You can simply return to the <a href="/login">login page</a> to retrieve the value. You may also be able to extract
+    the value from your browsers cookie store,
 though this varies by browser and many modern browsers do not make this easy for security reasons.
 The cookie you need is called <code>gemini_archive_session</code>.</p>
 
@@ -314,7 +315,7 @@ and paste it into to your script. A better plan is to set the value in an enviro
 perhaps set in your shell login scripts, and reference that in your scripts. Be sure to keep that cookie
 value confidential, anyone who has it can access your archive account. If
 you need to reset it (for example because it became known to someone else), then simply use a web browser to
-<strong>Log Out</strong> of the archive and the old value will no longer be accepted by the server. When you log back
+<strong><a href="/logout">Log Out</a></strong> of the archive and the old value will no longer be accepted by the server. When you log back
 in to the archive, a new value will be generated.</p>
 
 <p>An example of how you might use this cookie in python is:</p>
