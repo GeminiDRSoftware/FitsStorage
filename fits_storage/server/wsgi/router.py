@@ -104,7 +104,6 @@ url_map = Map([
     Rule('/admin_change_email', admin_change_email),
     Rule('/admin_change_password', admin_change_password),
     Rule('/admin_file_permissions', admin_file_permissions),
-    Rule('/export_users', export_users),
 
     # Tape stuff
     Rule('/tape', tape),
