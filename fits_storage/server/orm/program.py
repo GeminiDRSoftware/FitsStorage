@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
 
+from fits_storage.server.orm.publication import Publication
 
 class Program(Base):
     """
@@ -24,7 +25,7 @@ class Program(Base):
     # *constraint*. However, we do define a foreign key in the *relationship*
     # to program in Header.
 
-    publications = relationship('Publication', secondary='programpublication',
+    publications = relationship(Publication, secondary='programpublication',
                                 back_populates='programs', collection_class=set)
 
     def __init__(self, progdict):
