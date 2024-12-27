@@ -852,7 +852,7 @@ def login(things):
         login_methods=', '.join(login_methods),
         username=username,
         redirect=redirect,
-        cookie=cookie,
+        cookie=user.cookie if user else None,
     )
 
     return template_args

@@ -32,7 +32,7 @@
 
 {% if logged_in %}
   <H3>Welcome, you are logged in to the Gemini Archive.</H3>
-  <P>Your account has the following login methods available: {{ login_methods }}.</P>
+  <P>Your account has the following login methods registered: {{ login_methods }}.</P>
   <P>To add additional login methods, simply log in using the new method below.</P>
   {% if thing_string %}
     <p><a href="/searchform/{{ thing_string }}">Click here to go back to your search form</a></p>
@@ -42,7 +42,7 @@
   {% endif %}
   <p>In order to access proprietary data, your programs need to be registered with your archive account.</p>
   <p><a href="/my_programs">Click here to register programs</a></p>
-<hr>
+
    <H3>API access token</H3>
    <p>If you access the archive API from scripts and would like to have those
      scripts authenticate as you (for example to access your proprietary data),
@@ -58,6 +58,7 @@
    <!-- The text field that the javascript copyCookie function looks at-->
    <div id="cookie" style="display:none;"><pre>{{ cookie }}</pre></div>
 
+<hr>
 {% endif %}
 
 {% if reason_bad %}
