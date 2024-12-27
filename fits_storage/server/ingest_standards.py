@@ -45,7 +45,7 @@ def ingest_standards(session, filename, logger=DummyLogger()):
                 std = PhotStandard()
                 session.add(std)
             else:
-                logger.warning("Standard %s already exists. Updating from"
+                logger.warning("Standard %s already exists. Updating from "
                                "provided file.", std.name)
             # Populate the details
             try:
