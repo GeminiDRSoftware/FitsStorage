@@ -140,8 +140,10 @@ if fsc.using_s3:
 if options.demon and options.force:
     logger.info("Force not not available when running as daemon")
     exit(2)
-if int(options.alopeke) + int(options.zorro) + int(options.igrins) != 1:
-    logger.info("You must supply exactly one of alopeke, zorro or igrins")
+if int(options.alopeke) + int(options.zorro) + int(options.igrins) \
+        + int(options.maroonx) != 1:
+    logger.info("You must supply exactly one of alopeke, zorro, igrins or "
+                "maroonx")
     exit(3)
 
 # Get the VI Helper instance

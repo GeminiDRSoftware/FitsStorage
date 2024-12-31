@@ -383,10 +383,10 @@ class IGRINSVIHelper(VisitorInstrumentHelper):
 class MAROONXVIHelper(VisitorInstrumentHelper):
     def __init__(self, staging_dir=None, dest_dir=None, logger=None):
         super(MAROONXVIHelper, self).__init__(staging_dir=staging_dir,
-                                             dest_dir=dest_dir, logger=logger)
+                                              dest_dir=dest_dir, logger=logger)
 
         if self.staging_dir is None:
-            self.staging_dir = vi_staging_path.get('MAROONX')
+            self.staging_dir = vi_staging_path.get('MAROON-X')
 
         self.filename_cre = re.compile(
             r'^N20\d\d[01]\d[0123]\dM\d+.fits(.bz2)?')
@@ -396,3 +396,7 @@ class MAROONXVIHelper(VisitorInstrumentHelper):
 
     def fixheader(self, hdulist):
         return False
+
+    def list_datedirs(self):
+        # Maroon-X doesn't use datedirs, everything is in the top-level
+        return ['.']
