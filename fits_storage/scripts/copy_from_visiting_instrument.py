@@ -8,7 +8,7 @@ from optparse import OptionParser
 
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.server.visitor_instrument_helper import AlopekeVIHelper, \
-    ZorroVIHelper, IGRINSVIHelper
+    ZorroVIHelper, IGRINSVIHelper, MAROONXVIHelper
 from fits_storage.queues.queue.ingestqueue import IngestQueue
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
 
@@ -80,6 +80,8 @@ parser.add_option("--zorro", action="store_true", dest="zorro",
                   default=False, help="Copy Zorro data")
 parser.add_option("--igrins", action="store_true", dest="igrins",
                   default=False, help="Copy IGRINS data")
+parser.add_option("--maroonx", action="store_true", dest="maroonx",
+                  default=False, help="Copy MAROON-X data")
 parser.add_option("--datepre", action="store", dest="datepre", default=None,
                   help="Date prefix to filter directory names on")
 parser.add_option("--onepass", action="store_true", dest="onepass",
@@ -152,6 +154,9 @@ elif options.zorro:
                                dest_dir=options.destdir)
 elif options.igrins:
     vihelper = IGRINSVIHelper(logger=logger, staging_dir=options.srcdir,
+                               dest_dir=options.destdir)
+elif options.maroonx:
+    vihelper = MAROONXVIHelper(logger=logger, staging_dir=options.srcdir,
                                dest_dir=options.destdir)
 
 

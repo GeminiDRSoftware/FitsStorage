@@ -378,3 +378,21 @@ class IGRINSVIHelper(VisitorInstrumentHelper):
 
     def fixheader(self, hdulist):
         return fix_igrins(hdulist)
+
+
+class MAROONXVIHelper(VisitorInstrumentHelper):
+    def __init__(self, staging_dir=None, dest_dir=None, logger=None):
+        super(MAROONXVIHelper, self).__init__(staging_dir=staging_dir,
+                                             dest_dir=dest_dir, logger=logger)
+
+        if self.staging_dir is None:
+            self.staging_dir = vi_staging_path.get('MAROONX')
+
+        self.filename_cre = re.compile(
+            r'^N20\d\d[01]\d[0123]\dM\d+.fits(.bz2)?')
+
+        self.instrument_name = 'MAROON-X'
+        self.dest_dir = os.path.join(self.dest_dir, 'maroonx')
+
+    def fixheader(self, hdulist):
+        return False
