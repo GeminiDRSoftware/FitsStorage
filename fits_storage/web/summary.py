@@ -203,8 +203,8 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
     sumgen = SummaryGenerator(sumtype, links, uri, user, user_progid_list, user_obsid_list, user_file_list,
                               additional_columns)
 
-    download_all_url = f'{url_prefix}{selection.to_url}'
-    json_results_url = f'/jsonsummary{selection.to_url}'
+    download_all_url = f'{url_prefix}{selection.to_url()}'
+    json_results_url = f'/jsonsummary{selection.to_url()}'
 
     class RowYielder(object):
         """
