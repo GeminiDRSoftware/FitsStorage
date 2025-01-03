@@ -6,7 +6,7 @@ import time
 from optparse import OptionParser
 
 
-from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.server.visitor_instrument_helper import AlopekeVIHelper, \
     ZorroVIHelper, IGRINSVIHelper, MAROONXVIHelper
 from fits_storage.queues.queue.ingestqueue import IngestQueue
@@ -94,13 +94,28 @@ parser.add_option("--destdir", action="store", default=None, dest="destdir",
                   help="Destination Directory to copy to (omit for default)")
 (options, args) = parser.parse_args()
 
+instrument = None
+if options.alopeke:
+    instrument = 'alopeke'
+elif options.zorro:
+    instrument = 'zorro'
+elif options.igrins:
+    instrument = 'igrins'
+elif options.maroonx:
+    instrument = 'maroonx'
+else:
+    logger.info("You must supply exactly one of alopeke, zorro, igrins or "
+                "maroonx")
+    exit(3)
+
 # Logging level to debug?
 setdebug(options.debug)
 setdemon(options.demon)
+setlogfilesuffix(instrument)
 
 # Announce startup
-logger.info("***  copy_from_visiting_instrument.py - starting up at %s"
-            % datetime.datetime.now())
+logger.info("***  copy_from_visiting_instrument.py - starting up at %s for "
+            "instrument %s", datetime.datetime.now(), instrument)
 
 # Need to set up the global loop variable before we define the signal
 # handlers. This is the loop forever variable later, allowing us to stop
@@ -140,11 +155,7 @@ if fsc.using_s3:
 if options.demon and options.force:
     logger.info("Force not not available when running as daemon")
     exit(2)
-if int(options.alopeke) + int(options.zorro) + int(options.igrins) \
-        + int(options.maroonx) != 1:
-    logger.info("You must supply exactly one of alopeke, zorro, igrins or "
-                "maroonx")
-    exit(3)
+
 
 # Get the VI Helper instance
 vihelper = None
