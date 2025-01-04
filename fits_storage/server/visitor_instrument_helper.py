@@ -203,6 +203,7 @@ class VisitorInstrumentHelper(object):
         self.subdir = None
 
         self.instrument_name = None
+        self.instrument_dirname = None
 
     def fixheader(self, hdulist):
         self.logger.error('fixheader() called on generic VI helper instance')
@@ -338,7 +339,8 @@ class AlopekeVIHelper(VisitorInstrumentHelper):
             r'^N20\d\d[01]\d[0123]\dA\d\d\d\d[br].fits(.bz2)?')
 
         self.instrument_name = 'ALOPEKE'
-        self.dest_dir = os.path.join(self.dest_dir, 'alopeke')
+        self.instrument_dirname = self.instrument_name.lower()
+        self.dest_dir = os.path.join(self.dest_dir, self.instrument_dirname)
 
     def fixheader(self, hdulist):
         return fix_zorro_or_alopeke(hdulist, 'ALOPEKE', 'Gemini-North')
@@ -356,7 +358,8 @@ class ZorroVIHelper(VisitorInstrumentHelper):
             r'^S20\d\d[01]\d[0123]\dZ\d\d\d\d[br].fits(.bz2)?')
 
         self.instrument_name = 'ZORRO'
-        self.dest_dir = os.path.join(self.dest_dir, 'zorro')
+        self.instrument_dirname = self.instrument_name.lower()
+        self.dest_dir = os.path.join(self.dest_dir, self.instrument_dirname)
 
     def fixheader(self, hdulist):
         return fix_zorro_or_alopeke(hdulist, 'ZORRO', 'Gemini-South')
@@ -374,7 +377,8 @@ class IGRINSVIHelper(VisitorInstrumentHelper):
             r'^SDC[HKS]_20\d\d[01]\d[0123]\d_\d{4}.fits(.bz2)?')
 
         self.instrument_name = 'IGRINS'
-        self.dest_dir = os.path.join(self.dest_dir, 'igrins')
+        self.instrument_dirname = self.instrument_name.lower()
+        self.dest_dir = os.path.join(self.dest_dir, self.instrument_dirname)
 
     def fixheader(self, hdulist):
         return fix_igrins(hdulist)
@@ -392,7 +396,8 @@ class MAROONXVIHelper(VisitorInstrumentHelper):
             r'^N20\d\d[01]\d[0123]\dM\d+.fits(.bz2)?')
 
         self.instrument_name = 'MAROON-X'
-        self.dest_dir = os.path.join(self.dest_dir, 'maroonx')
+        self.instrument_dirname = 'maroonx'
+        self.dest_dir = os.path.join(self.dest_dir, self.instrument_dirname)
 
     def fixheader(self, hdulist):
         return False
