@@ -42,12 +42,11 @@ internet connection. Sorry.
 class ContextResponseIterator(object):
     def __init__(self, response, context_closer):
         self._resp = response
-        self._cls = context_closer
+        self._context_closer = context_closer
         self._ctx = get_context()
         self._closed = False
 
     def __iter__(self):
-        session = self._ctx.session
         try:
             for chunk in self._ctx.resp:
                 yield chunk
@@ -58,15 +57,13 @@ class ContextResponseIterator(object):
 
     def close(self):
         if not self._closed:
-            ctx = self._ctx
             try:
-                session = ctx.session
-                session.commit()
-                ctx.usagelog.set_finals(ctx)
-                session.commit()
-                session.close()
+                self._ctx.session.commit()
+                self._ctx.usagelog.set_finals(self._ctx)
+                self._ctx.session.commit()
+                self._ctx.session.close()
             finally:
-                self._cls()
+                self._context_closer()
                 self._closed = True
 
 
@@ -129,6 +126,7 @@ class ArchiveContextMiddleware(object):
                         badword in self.ctx.req.env.user_agent:
                     # Blocked!
                     usagelog.add_note(f"Blocked - User agent {badword}")
+                    session.commit()
                     self.ctx.resp.content_type = 'text/plain'
                     self.ctx.resp.status = Return.HTTP_FORBIDDEN
                     return self.ctx.resp.append(blocked_msg).respond()
@@ -145,9 +143,12 @@ class ArchiveContextMiddleware(object):
             if ipp and ipp.deny and not allowed_url:
                 # Blocked!
                 usagelog.add_note(f"Blocked - IPPrefix {ipp.prefix}")
+                session.commit()
                 self.ctx.resp.content_type = 'text/plain'
                 self.ctx.resp.status = Return.HTTP_FORBIDDEN
                 return self.ctx.resp.append(blocked_msg).respond()
+
+        # Actually handle the request
         try:
             result = self.application(environ, start_response)
             return ContextResponseIterator(result, self.close)
