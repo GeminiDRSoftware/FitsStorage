@@ -821,6 +821,7 @@ def login(things):
                 cookie = user.log_in(by='local_account')
                 valid_request = True
             else:
+                user = None
                 reason_bad = 'Username / password not valid. ' \
                              'If you need to reset your password, ' \
                              '<a href="/request_password_reset">Click Here</a>'
