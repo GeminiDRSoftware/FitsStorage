@@ -60,7 +60,7 @@ class FitsStorageConfig(dict):
              'robot_badness_threshold']
     _lists = ['blocked_urls', 'export_destinations', 'gemini_fits_upload_auth',
               'gemini_api_authorization', 'block_user_agent_substrings',
-              'gemini_user_transfer']
+              'allow_user_agent_strings', 'gemini_user_transfer']
 
     def __init__(self, configfile=None, configstring=None,
                  builtin=True, builtinonly=False):

@@ -122,7 +122,8 @@ class ArchiveContextMiddleware(object):
                 self.close()
 
         # If we're the archive, block requests we don't like here.
-        if self.is_archive and not self.ctx.usagelog.user_id:
+        if self.is_archive and not self.ctx.usagelog.user_id and \
+                self.ctx.req.user_agent not in fsc.allow_user_agent_strings:
             # User agent check
             for badword in fsc.block_user_agent_substrings:
                 if self.ctx.req.env.user_agent and \
