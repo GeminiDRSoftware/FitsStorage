@@ -46,8 +46,6 @@ def packdefaults(self):
               self.get('qa_state') == 'NotFail' and \
               self.get('cols') == 'CTOWBEQ'
 
-    print(f"pack defaults {default} - selection: {self}")
-
     if default:
         self.pop('engineering')
         self.pop('site_monitoring')
