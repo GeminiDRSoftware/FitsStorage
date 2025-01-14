@@ -393,8 +393,14 @@ def fileserver(filenamegiven):
     if item is None:
         downloadlog.numresults = 0
     else:
+        filedownloadlog = FileDownloadLog(ctx.usagelog)
+        filedownloadlog.diskfile_filename = diskfile.filename
+        filedownloadlog.diskfile_file_md5 = diskfile.file_md5
+        filedownloadlog.diskfile_file_size = diskfile.file_size
+        session.add(filedownloadlog)
         # Is the client allowed to get this file?
-        if icanhave(ctx, item):
+        if icanhave(ctx, item, filedownloadlog):
+            filedownloadlog.canhaveit = True
             # Send them the data
             downloadlog.sending_files = True
             sendonefile(item.diskfile, content_type=content_type, filenamegiven=filenamegiven)
