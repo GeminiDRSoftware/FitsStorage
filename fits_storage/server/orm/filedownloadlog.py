@@ -29,6 +29,7 @@ class FileDownloadLog(Base):
     staff_access = Column(Boolean)
     magic_access = Column(Boolean)
     eng_access = Column(Boolean)
+    inst_team_access = Column(Boolean)
     canhaveit = Column(Boolean)
 
     notes = Column(Text)

@@ -33,6 +33,7 @@ class User(Base):
     misc_upload = Column(Boolean)
     user_admin = Column(Boolean)
     file_permission_admin = Column(Boolean)
+    instrument_team = Column(Text)
     superuser = Column(Boolean)
     reset_token = Column(Text)
     reset_token_expires = Column(DateTime)
