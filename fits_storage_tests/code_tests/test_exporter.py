@@ -17,7 +17,7 @@ class dummy_qe(object):
 
 
 def test_reset():
-    exp = Exporter(None, None)
+    exp = Exporter(None, DummyLogger())
     exp.got_destination_info = True
     exp.destination_md5 = 'e781568aff61e671dce3e4ca38cd1323'
     exp.destination_ingest_pending = False
@@ -33,7 +33,7 @@ def test_reset():
 
 
 def test_get_destination_file_info():
-    exp = Exporter(None, None)
+    exp = Exporter(None, DummyLogger())
 
     eqe = dummy_qe()
     eqe.filename = 'N20200127S0023.fits.bz2'
