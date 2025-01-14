@@ -73,6 +73,7 @@ def reset_pi_access(filedownloadlog):
         filedownloadlog.eng_access = False
         filedownloadlog.magic_access = False
         filedownloadlog.pi_access = False
+        filedownloadlog.inst_team_access = False
 
 
 def is_users_program(session, user, user_progid_list, program_id, filedownloadlog):
@@ -114,6 +115,12 @@ def is_user_obsid(session, user, user_obsid_list, obsid, filedownloadlog):
         return True
     return False
 
+def is_user_instrument_team(user, instrument, filedownloadlog):
+    if user.instrument_team == instrument:
+        if filedownloadlog:
+            filedownloadlog.inst_team_access = True
+        return True
+    return False
 
 def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False,
                    user_progid_list=None, user_obsid_list=None,
@@ -153,6 +160,8 @@ def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False,
     if is_user_obsid(session, user, user_obsid_list, header.observation_id, filedownloadlog):
         return True
     if is_user_file_permission(session, user, user_file_list, path, filename, filedownloadlog):
+        return True
+    if is_user_instrument_team(user, header.instrument, filedownloadlog):
         return True
     return False
 
