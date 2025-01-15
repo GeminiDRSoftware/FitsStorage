@@ -10,8 +10,10 @@ def to_url(self, with_columns=False):
     """
     self._url = ''
 
-    # Pack defaults into 'defaults' item if appropriate
-    self.packdefaults()
+    # Pack defaults into 'defaults' item if appropriate. Note whether we
+    # modified the selection here, so that we can leave it in the same packed
+    # state as we found it.
+    packed = self.packdefaults()
 
     # We only want one of data_label, observation_id, program_id in the URL,
     # the most specific one should carry.
@@ -146,5 +148,9 @@ def to_url(self, with_columns=False):
                 self._url += '/not_site_monitoring'
         else:
             self._url += '/%s' % self[key]
+
+    # Leave the selection in the same 'packed' state as we found it.
+    if packed:
+        self.unpackdefaults()
 
     return self._url

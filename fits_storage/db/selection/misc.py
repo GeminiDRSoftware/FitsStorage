@@ -20,7 +20,9 @@ def unpackdefaults(self):
     what that actually means.
 
     This is currently only applicable to use in /searchform, but could be
-    expanded to other endpoints too if desired
+    expanded to other endpoints too if desired.
+
+    Return True if we modified the dict, False otherwise.
     """
 
     # If defaults is present and set to True
@@ -32,15 +34,18 @@ def unpackdefaults(self):
         self['site_monitoring'] = False
         self['qa_state'] = 'NotFail'
         self['cols'] = 'CTOWBEQ'
+        return True
+    return False
 
 
 def packdefaults(self):
     """
     If the selection dict has all the settings that correspond to 'defaults'
     set in their default state, remove them and replace them with a single
-    'defaults': True entry
-    """
+    'defaults': True entry.
 
+    Return True if we modified the selection dict, False otherwise.
+    """
     default = self.get('engineering') is False and \
               self.get('site_monitoring') is False and \
               self.get('qa_state') == 'NotFail' and \
@@ -52,3 +57,5 @@ def packdefaults(self):
         self.pop('qa_state')
         self.pop('cols')
         self['defaults'] = True
+        return True
+    return False
