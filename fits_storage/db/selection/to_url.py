@@ -23,6 +23,12 @@ def to_url(self, with_columns=False):
     if 'observation_id' in self:
         self.pop('program_id', None)
 
+    # We don't want daterange or nightrange if date or night is present
+    if 'date' in self:
+        self.pop('daterange', None)
+    if 'night' in self:
+        self.pop('nightrange', None)
+
     # Handle defaults separately, so it always ends up at the front of the URL
     if self.get('defaults') is True:
         self._url += '/defaults'
