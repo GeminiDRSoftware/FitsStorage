@@ -152,7 +152,7 @@ def selection_spotcheck_helper(spot_checks):
     # in the results list. If number==0, filename is ignored
     server = getserver()
     for (selection, number, filename) in spot_checks:
-        print(f"Spot checking {selection} = {filename}")
+        print(f"Spot checking {selection}: {number} - {filename}")
         url = f"{server}/jsonsummary/{selection}"
         req = requests.get(url)
         assert req.status_code == http.HTTPStatus.OK
