@@ -49,8 +49,13 @@ inst_spotchecks = [
     ('defaults/date=20200101/NIFS', 62, 'N20200101S0007.fits'),
     ('defaults/date=20200127/NIRI', 532, 'N20200127S0023.fits'),
     ('defaults/date=20200302/GSAOI', 135, 'S20200303S0025.fits'),
-    ('defaults/date=20230214/GHOST', 26, 'S20230215S0011.fits')
-
+    ('defaults/date=20230214/GHOST', 26, 'S20230215S0011.fits'),
+    ('defaults/date=20250109/IGRINS-2', 41, 'N20250109S0281.fits'),
+    ('defaults/date=20200131/IGRINS', 99, 'SDCS_20200130_0013.fits'),
+    ('defaults/date=20200215/ALOPEKE', 340, 'N20200215A0169r.fits'),
+    ('defaults/date=20200108/ZORRO', 274, 'S20200108Z0001b.fits'),
+    ('defaults/date=20241227/MAROON-X', 29, 'N20241227M0100.fits'),
+    ('defaults/date=20221006/GRACES', 108, 'N20221006G0005.fits')
 ]
 
 def test_progidetc_spotchecks():
