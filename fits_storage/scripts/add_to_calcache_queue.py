@@ -6,6 +6,7 @@ import sys
 from sqlalchemy.exc import IntegrityError
 
 from fits_storage.queues.queue import CalCacheQueue
+from fits_storage.queues.orm.calcachequeueentry import CalCacheQueueEntry
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
@@ -31,10 +32,16 @@ parser.add_option("--debug", action="store_true", dest="debug",
                   help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon",
                   help="Run as a background demon, do not generate stdout")
-parser.add_option("--bulk-add", action="store_true", dest="bulk_add",
-                  help="Add all the entries in one database commit. This is a "
-                       "lot faster for a large number of entries, but any one "
-                       "of them has an error, they will all fail to add")
+parser.add_option("--no-bulk-add", action="store_true", dest="no_bulk_add",
+                  help="Add the entries in individual database commits. This is"
+                       " a lot slower for a large number of entries, but avoids"
+                       " the problem with a bulk add where if any one entry has"
+                       " an error, they will all fail to add")
+parser.add_option("--no-precheck", action="store_true", dest="noprecheck",
+                  help="Do not exclude header IDs already on the queue from the"
+                       " initial header list. We do this by default so that we "
+                       "can reasonably safely do a bulk commit, otherwise this "
+                       "is really slow for large numbers of entries.")
 options, args = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
@@ -56,6 +63,14 @@ with session_scope() as session:
     # We use the header.ut_datetime as the sortkey for the queue
     query = session.query(Header).join(DiskFile)\
         .filter(DiskFile.canonical == True)
+
+    if not options.noprecheck:
+        subquery = session.query(CalCacheQueueEntry.obs_hid).\
+            filter(CalCacheQueueEntry.inprogress == False).\
+            filter(CalCacheQueueEntry.fail_dt !=
+                   CalCacheQueueEntry.fail_dt_false)
+
+        query = query.filter(Header.id.not_in(subquery))
 
     if not options.ignore_mdbad:
         query = query.filter(DiskFile.mdready == True)
@@ -88,19 +103,17 @@ with session_scope() as session:
     for header in headers:
         items.append((header.id, header.diskfile.filename))
 
-    # Note, we don't try and batch these commits as if there's an
-    # IntegrityError resulting from an entry already existing, that will
-    # fail the entire commit and thus the entire batch.
+
     ccq = CalCacheQueue(session, logger=logger)
-    commit = False if options.bulk_add else True
+    individual_commit = True if options.no_bulk_add else False
     i = 0
     n = len(items)
     for (hid, filename) in items:
         i += 1
         logger.info("Adding hid %d - filename %s to CalCache queue (%d/%d)",
                     hid, filename, i, n)
-        ccq.add(hid, filename, commit=commit)
-    if options.bulk_add:
+        ccq.add(hid, filename, commit=individual_commit)
+    if not individual_commit:
         try:
             logger.info("Committing bulk-add.")
             session.commit()
