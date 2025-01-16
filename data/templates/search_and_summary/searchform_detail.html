@@ -10,31 +10,31 @@
 
 {%- macro column_sel(text, ident, std=False) -%}
     <input type='checkbox' name='col_selection' value='{{ ident }}' id='{{ ident }}'
-           {% if (col_sel[ident] is not defined and std) or col_sel[ident] %} checked{% endif %} />
+           {% if (col_sel[ident] is not defined and std) or col_sel[ident] %} checked{% endif %}>
     <label for='{{ ident }}'>{{ text }}</label>
 {%- endmacro %}
 
 <div class="right">
     <label>PI/CoI Name:</label>
-    <input type="text" placeholder="(leave empty for Any)" name="PIname" value="{{ updated.PIname }}"/>
+    <input type="text" placeholder="(leave empty for Any)" name="PIname" value="{{ updated.PIname }}">
     <span class="help">(no punctuation; separate with spaces)
         <span class="helpright">Matches all words. Write <b>!word</b> to reject results that contain it</span>
     </span><br>
 
     <label>Program Title:</label>
-    <input type="text" placeholder="(leave empty for Any)" name="ProgramText" value="{{ updated.ProgramText }}"/>
+    <input type="text" placeholder="(leave empty for Any)" name="ProgramText" value="{{ updated.ProgramText }}">
     <span class="help">(no punctuation; separate with spaces)
         <span class="helpright">Text search the program Title. Matches all words. Write <b>!word</b> to reject results that contain it</span>
     </span><br>
 
     <label>Publication:</label>
-    <input id="publication" type="text" placeholder="(leave empty for Any)" name="publication" value="{{ updated.publication }}"/>
+    <input id="publication" type="text" placeholder="(leave empty for Any)" name="publication" value="{{ updated.publication }}">
     <span class="help">(bibliography code of related publication)
         <span class="helpright">Search for data related to a publication by it's bibliography code.</span>
     </span><br>
 
     <label>Target Name:</label>
-    <input id="object_name" type="text" placeholder="(leave blank for Any)" name="object" value="{{ updated.object }}" />
+    <input id="object_name" type="text" placeholder="(leave blank for Any)" name="object" value="{{ updated.object }}">
     <span class="help"> (Name of Target)
         <span class="helpright">Enter a target name here. If you don't <i>Resolve</i> the target name into a co-ordinate search, this will do a
             search on the target name as specified in the phase-II. Be aware that observers sometimes use a different target name to what you
@@ -61,21 +61,21 @@
     <br>
 
     <label>RA:</label>
-    <input id="ra" type="text" placeholder="(leave blank for Any)" name="ra" value="{{ updated.ra }}"/>
+    <input id="ra" type="text" placeholder="(leave blank for Any)" name="ra" value="{{ updated.ra }}">
     <span class="help"> (HH:MM:SS.ss or decimal degrees)
         <span class="helpright">Right Ascension. You can use HH:MM:SS[.ss...] or decimal degrees. In either case you can specify a single value or a
             range, eg 11:22:33 - 12:34:56. If you enter a single value, also see the Search Radius field.</span>
     </span><br>
 
     <label>Dec:</label>
-    <input id="dec" type="text" placeholder="(leave blank for Any)" name="dec" value="{{ updated.dec }}" />
+    <input id="dec" type="text" placeholder="(leave blank for Any)" name="dec" value="{{ updated.dec }}">
     <span class="help"> ([+-]DD:MM:SS.ss or decimal degrees)
         <span class="helpright">Declination. You can use [+|-]DD:MM:SS[.ss...] or decimal degrees. In either case you can specify a single value
             or a range, eg 11:22:33 - 12:34:56 or -65:43:21 - -12:34:56. If you enter a single value, also see the Search Radius field.</span>
     </span><br>
 
     <label>Search radius:</label>
-    <input type="text" placeholder="(leave blank for 180 arcsec)" name="sr" value="{{ updated.sr }}" />
+    <input type="text" placeholder="(leave blank for 180 arcsec)" name="sr" value="{{ updated.sr }}">
     <span class="help"> (arcsecs or decimal degrees)
         <span class="helpright">Search radius in arcseconds, unless you specify "d" or "degs" to make it decimal degrees. i.e. <b>180</b> means
             180 arcseconds, <b>10degs</b> or <b>10d</b> means 10 degrees. <br>If RA and/or dec  has been given as a single value (as opposed to
@@ -137,7 +137,7 @@
         <br>
 
         Filename Prefix:
-        <input id="filepre" type="text" placeholder="(leave empty for Any)" name="filepre" value="{{ updated.filepre }}" />
+        <input id="filepre" type="text" placeholder="(leave empty for Any)" name="filepre" value="{{ updated.filepre }}">
         <span class="help">(help)
             <span class="helpright">Specify the first part of the filename to match by.</span>
         </span>
@@ -155,7 +155,7 @@
 
 <div class="left">
     <label>Program ID:</label>
-    <input type="text" placeholder="(leave empty for Any)" name="program_id" value="{{ updated.program_id }}"/>
+    <input type="text" placeholder="(leave empty for Any)" name="program_id" value="{{ updated.program_id }}">
     <span class="help">(or Obs. ID / Data Label. Exact Match)
         <span class="helpleft">You can put a program ID, Observation ID or Data Label into this box. The search will be for an exact match to what you put in,
             substring type matches are not provided. Example: GN-2001A-Q-1</span>
@@ -163,7 +163,7 @@
     <br>
 
     <label>Date: </label>
-    <input type="text" placeholder="(leave empty for Any)" name="date" value="{{ updated.date }}" />
+    <input type="text" placeholder="(leave empty for Any)" name="date" value="{{ updated.date }}">
     <select id="datetype" name="datetype">
         {{ generate_option_list(datetype_options, updated.datetype) }}
     </select>
@@ -220,7 +220,7 @@
 
     <div id="Spec" style="display:none">
         <label class="wide">Central Wavelength: </label>
-        <input type="text" placeholder="(Any)" name="cenwlen" size="8" value="{{ updated.cenwlen }}" />
+        <input type="text" placeholder="(Any)" name="cenwlen" size="8" value="{{ updated.cenwlen }}">
         <span class="help"> (microns, eg 1.2 or 2.0-2.4)
             <span class="helpleft">Central Wavelength in microns.  The valid range is 0.2-30 microns.  You can supply a single value or a range.
                 If you use a single value, we assume a range of +-0.1. Note this just searches for files where the <b>central wavelength</b> of a
@@ -279,6 +279,7 @@
                 <td>{{ column_sel('Raw CC', 'col_rcc') }}</td>
                 <td>{{ column_sel('Raw WV', 'col_rwv') }}</td>
                 <td>{{ column_sel('Raw BG', 'col_rbg') }}</td>
+                <td></td>
             </tr>
         </table>
     </div>
@@ -291,7 +292,7 @@
 
         <label>Exposure Time:</label>
         <input id="GMOSexpT" class="inst_clearable" name="exposure_time" type="text" placeholder="(leave blank for Any)"
-               {{ set_value_if(updated.exposure_time, 'GMOS' in updated.inst) }} />
+               {{ set_value_if(updated.exposure_time, 'GMOS' in updated.inst) }}>
         <span class="help">(Exposure Time)
             <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5.
                 If you give a range, we search the range you give, eg 500 - 800.</span>
@@ -333,7 +334,7 @@
             <option value="">Any</option>
             {{ generate_option_list(gmos_mask_options, updated.focal_plane_mask, 'GMOS' in updated.inst) }}
         </select>
-        <input id="custom_mask" class="mask" name="custom_mask" type="text" placeholder="(custom mask)" value="{{ updated.custom_mask }}"/>
+        <input id="custom_mask" class="mask" name="custom_mask" type="text" placeholder="(custom mask)" value="{{ updated.custom_mask }}">
         <span class="help">(Focal Plane Mask)
             <span class="helpleft">Select a GMOS mask. To select a custom mask name, or one not listed in the pulldown, select "custom" and them put the
                 mask name in the text field. This will do a "starts with" match, so you can use a full mask name, or just the first part and the latter
@@ -416,7 +417,7 @@
 
         <label>Exposure Time:</label>
         <input id="GHOSTexpT" class="inst_clearable" name="exposure_time" type="text"
-               placeholder="(leave blank for Any)"{{ set_value_if(updated.exposure_time, 'GHOST' in updated.inst) }} />
+               placeholder="(leave blank for Any)"{{ set_value_if(updated.exposure_time, 'GHOST' in updated.inst) }}>
         <span class="help">(Exposure Time)
             <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way,
                 eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</span>
@@ -507,7 +508,7 @@
     <div class="right">
         <label>Exposure Time:</label>
         <input id="GNIRSexpT" class="inst_clearable" name="exposure_time" type="text" placeholder="(leave blank for Any)"
-               {{ set_value_if(updated.exposure_time, updated.inst == 'GNIRS') }}  />
+               {{ set_value_if(updated.exposure_time, updated.inst == 'GNIRS') }}>
         <span class="help">(Exposure Time)
             <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5.
                 If you give a range, we search the range you give, eg 50 - 80.</span>
@@ -516,7 +517,7 @@
 
         <label>Coadds:</label>
         <input id="GNIRScoadds" name="coadds" type="text" placeholder="(leave blank for Any)"
-               {{ set_value_if(updated.coadds, updated.inst == 'GNIRS') }} />
+               {{ set_value_if(updated.coadds, updated.inst == 'GNIRS') }}>
         <span class="help">(Coadds)
             <span class="helpright">Specify the number of coadds here. This is an exact integer match</span>
         </span>
@@ -591,7 +592,7 @@
     <div class="right">
         <label>Exposure Time:</label>
         <input id="NIRIexpT" class="inst_clearable" name="exposure_time" type="text" placeholder="(leave blank for Any)"
-               {{ set_value_if(updated.exposure_time, updated.inst == 'NIRI') }} />
+               {{ set_value_if(updated.exposure_time, updated.inst == 'NIRI') }}>
         <span class="help">(Exposure Time)
             <span class="helpright">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 50 - 80.</span>
         </span>
@@ -599,7 +600,7 @@
 
         <label>Coadds:</label>
         <input id="NIRIcoadds" name="coadds" type="text" placeholder="(leave blank for Any)"
-               {{ set_value_if(updated.coadds, updated.inst == 'NIRI') }} />
+               {{ set_value_if(updated.coadds, updated.inst == 'NIRI') }}>
         <span class="help">(Coadds)
             <span class="helpright">Specify the number of coadds here. This is an exact integer match</span>
         </span><br>
@@ -651,7 +652,7 @@
     <div class="right">
         <label>Exposure Time:</label>
         <input id="NIFSexpT" class="inst_clearable" name="exposure_time" type="text" placeholder="(leave blank for Any)"
-               {{ set_value_if(updated.exposure_time, updated.inst == 'NIFS') }} />
+               {{ set_value_if(updated.exposure_time, updated.inst == 'NIFS') }}>
         <span class="help">(Exposure Time)
             <span class="helpright">Specify Exposure Time here. If you give a single number we search half a second each way,
                 eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</span>
@@ -660,7 +661,7 @@
 
         <label>Coadds:</label>
         <input id="NIFScoadds" name="coadds" type="text" placeholder="(leave blank for Any)"
-               {{ set_value_if(updated.coadds, updated.inst == 'NIFS') }} />
+               {{ set_value_if(updated.coadds, updated.inst == 'NIFS') }}>
         <span class="help">(Coadds)
             <span class="helpright">Specify the number of coadds here. This is an exact integer match</span>
         </span>
@@ -785,7 +786,7 @@
 
         <label>Exposure Time:</label>
         <input id="F2expT" class="inst_clearable" name="exposure_time" type="text" placeholder="(leave blank for Any)"
-               {{ set_value_if(updated.exposure_time, updated.inst == 'F2') }} />
+               {{ set_value_if(updated.exposure_time, updated.inst == 'F2') }}>
         <span class="help">(Exposure Time)
             <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches
                 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</span>
@@ -833,7 +834,7 @@
 
     <label>Exposure Time:</label>
     <input id="GSAOIexpT" class="inst_clearable" name="exposure_time" type="text" placeholder="(leave blank for Any)"
-           {{ set_value_if(updated.exposure_time, updated.inst == 'GSAOI') }} />
+           {{ set_value_if(updated.exposure_time, updated.inst == 'GSAOI') }}>
     <span class="help">(Exposure Time)
         <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</span>
     </span>
@@ -898,21 +899,20 @@
 
 
 <div class="next center">
-    <input type="submit" name="Search" value="Search" onclick="return validateDateRange();" />
-    <input type="reset" value="Reset to previous search" />
-    <input type="button" value="Start Over" onclick="window.location='/searchform'" />
-    <input type="submit" name="ObsLogsOnly" value="Search ObsLogs Only" />
+    <input type="submit" name="Search" value="Search" onclick="return validateDateRange();">
+    <input type="reset" value="Reset to previous search">
+    <input type="button" value="Start Over" onclick="window.location='/searchform'">
+    <input type="submit" name="ObsLogsOnly" value="Search ObsLogs Only">
     {%- if archive_style -%}
-        <input type="submit" name="ProgramsOnly" value="Search Programs Only" />
+        <input type="submit" name="ProgramsOnly" value="Search Programs Only">
     {%- endif -%}
     <span class="help">(help on buttons)
-        <span class="helpright"><ul>
-            <li><b>Search - </b>Search as per the form fields.</li>
-            <li><b>Reset to previous search - </b>Resets the form to the settings from when you last hit search.</li>
-            <li><b>Start Over - </b>Resets the form to the blank initial defaults.</li>
-            <li><b>Search ObsLogs Only - </b>Search for ObsLogs by Date and/or Program ID.</li>
-            <li><b>Search Programs Only - </b>Search for Science Program and Publication Info by Program ID and/or Program Title words.</li>
-        </ul>
+        <span class="helpright">
+            <b>Search - </b>Search as per the form fields.<br>
+            <b>Reset to previous search - </b>Resets the form to the settings from when you last hit search.<br>
+            <b>Start Over - </b>Resets the form to the blank initial defaults.<br>
+            <b>Search ObsLogs Only - </b>Search for ObsLogs by Date and/or Program ID.<br>
+            <b>Search Programs Only - </b>Search for Science Program and Publication Info by Program ID and/or Program Title words.
         </span>
     </span>
     <br>
