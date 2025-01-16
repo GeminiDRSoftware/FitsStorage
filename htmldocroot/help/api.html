@@ -73,6 +73,9 @@ decimal degrees as simply as,</p>
 <p>This will default to a 3 arcmin radius cone search. You can specify the cone search radius by adding /sr=10 (units are 
 arcsec)</p>
 
+<p>The <code>defaults</code> selection criteria is a convenience short-cut that applies sensible defaults to the selection, such
+as excluding engineering data and site monitoring data.</p>
+
 <h2 id="features">Features</h2>
 <p>Here is a list of the available features on the system:</p>
 
@@ -177,7 +180,7 @@ plus a lot more that contain details of the data, as follows:</p>
 <td>procmode</td>
 <td>Type of data for processed science/calibrations.  This is one of 'sq' for science quality, 'ql' for quick look, or '' for raw.</td>
 </tr><tr>
-<td>calibration_program</td>>
+<td>calibration_program</td>
 <td>Boolean that says if this is calibration program data</td>
 </tr><tr>
 <td>requested_iq<br/>requested_cc<br/>requested_bg<br/>requested_wv</td>
