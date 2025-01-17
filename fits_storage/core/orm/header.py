@@ -177,8 +177,12 @@ class Header(Base):
             self.science_verification = bool(gemprog.is_sv)
             self.calibration_program = bool(gemprog.is_cal)
         else:
-            # program ID is None - mark as engineering
-            self.engineering = True
+            # program ID is None - mark as engineering, unless it is
+            # site_monitoring (this avoids all the skycam data being eng)
+            if self.site_monitoring:
+                self.engineering = False
+            else:
+                self.engineering = True
             self.science_verification = False
 
         # Do we have an engineering over-ride header?
