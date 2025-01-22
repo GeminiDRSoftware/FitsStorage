@@ -116,7 +116,7 @@ def is_user_obsid(session, user, user_obsid_list, obsid, filedownloadlog):
     return False
 
 def is_user_instrument_team(user, instrument, filedownloadlog):
-    if user.instrument_team == instrument:
+    if user and user.instrument_team == instrument:
         if filedownloadlog:
             filedownloadlog.inst_team_access = True
         return True
