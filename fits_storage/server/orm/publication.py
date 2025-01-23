@@ -41,7 +41,10 @@ class Publication(Base):
         bibcode : str
             Bibliography code for the publication
         """
-        self.bibcode = bibcode
+        if isinstance(bibcode, str):
+            self.bibcode = bibcode.strip()
+        else:
+            self.bibcode = bibcode
 
 
 class ProgramPublication(Base):

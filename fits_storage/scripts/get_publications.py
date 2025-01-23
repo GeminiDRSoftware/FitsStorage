@@ -53,6 +53,8 @@ with session_scope() as session:
                            "bibcode - id %s", pub.get('id'))
             m += 1
             continue
+        # Some of them seem to have trailing whitespace
+        bibcode = bibcode.strip()
         logger.debug("Processing publication %s", bibcode)
 
         # Do we have a publication with this bibcode in the database?
