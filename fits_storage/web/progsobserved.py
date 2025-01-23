@@ -5,6 +5,7 @@ summaries.
 """
 from sqlalchemy import join, func
 import datetime
+import urllib.parse
 
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
@@ -88,7 +89,7 @@ def sitemap():
     # This is a little kludgey. The template outputs searchform/{{ item.prog }}
     for publication in query:
         item = dict()
-        item['prog'] = f'publication={publication.bibcode}'
+        item['prog'] = f'publication={urllib.parse.quote(publication.bibcode)}'
 
         program_ids = []
         for program in publication.programs:
