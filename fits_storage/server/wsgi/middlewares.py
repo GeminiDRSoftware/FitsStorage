@@ -133,6 +133,7 @@ class ArchiveContextMiddleware(object):
                     self.ctx.resp.content_type = 'text/plain'
                     self.ctx.resp.status = Return.HTTP_FORBIDDEN
                     usagelog.status = self.ctx.resp.status
+                    session.commit()
                     return self.ctx.resp.append(blocked_msg).respond()
             # IPPrefix check - Find if this request comes from a known IPPrefix
             ipp = get_ipprefix_from_db(session, self.ctx.req.env.remote_ip)
@@ -150,6 +151,7 @@ class ArchiveContextMiddleware(object):
                 self.ctx.resp.content_type = 'text/plain'
                 self.ctx.resp.status = Return.HTTP_FORBIDDEN
                 usagelog.status = self.ctx.resp.status
+                session.commit()
                 return self.ctx.resp.append(blocked_msg).respond()
         try:
             result = self.application(environ, start_response)
