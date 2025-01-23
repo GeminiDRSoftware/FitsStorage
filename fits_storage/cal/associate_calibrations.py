@@ -122,15 +122,14 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
     for header in headers:
         obs_hids.append(header.id)
 
-    stmt = select(Header, CalCache)\
+    stmt = select(Header, CalCache.caltype, CalCache.rank)\
         .join(CalCache, CalCache.cal_hid == Header.id)\
         .where(CalCache.obs_hid.in_(obs_hids))
 
     if caltype != 'all':
         stmt = stmt.where(CalCache.caltype == caltype)
 
-    stmt = stmt.distinct().order_by(CalCache.caltype).\
-        order_by(CalCache.obs_hid).order_by(CalCache.rank)
+    stmt = stmt.distinct().order_by(CalCache.caltype).order_by(CalCache.rank)
 
     calheaders = []
     calhids = []
