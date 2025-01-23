@@ -62,9 +62,11 @@ def sitemap():
 
     # query for the programs
     query = session.query(Header.program_id, func.max(Header.ut_datetime))\
+        .join(DiskFile).filter(DiskFile.canonical == True)\
         .group_by(Header.program_id)\
         .filter(Header.engineering == False)\
-        .filter(Header.calibration_program == False)
+        .filter(Header.calibration_program == False)\
+        .filter(Header.ut_datetime != None)
 
     for prog, last in query:
         item = dict()
@@ -91,9 +93,13 @@ def sitemap():
         program_ids = []
         for program in publication.programs:
             program_ids.append(program.program_id)
-        last = session.query(func.max(Header.ut_datetime))\
-            .filter(Header.program_id.in_(program_ids)).first()
-        if last:
+
+        last = session.query(func.max(Header.ut_datetime)) \
+            .join(DiskFile).filter(DiskFile.canonical == True)\
+            .filter(Header.program_id.in_(program_ids))\
+            .filter(Header.ut_datetime != None)\
+            .first()
+        if last and last[0]:
             last = last[0]
             item['last'] = last.date().isoformat()
             interval = now - last
