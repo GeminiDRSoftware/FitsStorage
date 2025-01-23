@@ -108,7 +108,9 @@ def download_post():
                 thelist.append(str(field.value))
         else:
             thelist.append(fields.value)
-    return download(selection = {'filelist': thelist},
+    selection = Selection()
+    selection['filelist'] = thelist
+    return download(selection = selection,
                     associated_calibrations = False)
 
 
