@@ -19,6 +19,6 @@
 <priority>0.5</priority>
 </url>
 {%- for item in items %}
-<url><loc>https://archive.gemini.edu/searchform/{{ item.prog }}</loc><lastmod>{{ item.last }}</lastmod><changefreq>{{ item.freq }}</changefreq><priority>0.8</priority></url>
+<url><loc>https://archive.gemini.edu/searchform/defaults/{{ item.prog }}</loc><lastmod>{{ item.last }}</lastmod><changefreq>{{ item.freq }}</changefreq><priority>0.8</priority></url>
 {%- endfor %}
 </urlset>
