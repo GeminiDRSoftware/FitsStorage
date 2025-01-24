@@ -107,7 +107,8 @@ class CalibrationGMOS(Calibration):
 
                 # and specphot and spectwilight if it is not a specphot...
                 if 'STANDARD' not in self.types:
-                    self.applicable.append('spectwilight')
+                    # spectwilights are really slitillums
+                    # self.applicable.append('spectwilight')
                     self.applicable.append('specphot')
 
                     if self.descriptors['central_wavelength'] is not None:
