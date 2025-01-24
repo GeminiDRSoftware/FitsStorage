@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from fits_storage.cal.calibration import get_cal_object
 from fits_storage.gemini_metadata_utils import cal_types
@@ -85,8 +85,8 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
     """
     This function takes a list of :class:`fits_storage.orm.header.Header`
     from a search result and generates a list of the associated calibration
-    :class:`fits_storage.orm.header.Header` We return a priority ordered
-    (best first) list
+    :class:`fits_storage.orm.header.Header` We return list ordered by caltype
+    and by priority (rank) order.
 
     This is the same interface as associate_cals above, but this version
     queries the :class:`~CalCache` table rather
@@ -117,19 +117,32 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
     # as we can do one big 'distinct' query rather than de-duplicating after
     # the fact.
 
+    # There's a subtlety here though - in sql you can't use ORDER BY and
+    # DISTINCT ON with an expression in the order by that's not in the distinct
+    # on, which makes sense as it would be undefined how to deal with duplicate
+    # values in a different column. So we have to eliminate duplicates caused
+    # by the same cal_hid having multiple entries with different values of rank
+    # and/or caltype by selecting say min() or max() of those and grouping by
+    # cal_hid. Note that caltype is an enumerated type. These duplicates can
+    # occur when the same file (header id) is actually a valid calibration for
+    # multiple caltypes, or applies to different extentions (e.g. GHOST) with
+    # different ranks.
+
     # Make a list of the obs_hids
     obs_hids = []
     for header in headers:
         obs_hids.append(header.id)
 
-    stmt = select(Header, CalCache.caltype, CalCache.rank)\
+    # Build the calcache query...
+    stmt = select(Header, func.min(CalCache.caltype), func.min(CalCache.rank))\
         .join(CalCache, CalCache.cal_hid == Header.id)\
         .where(CalCache.obs_hid.in_(obs_hids))
 
     if caltype != 'all':
         stmt = stmt.where(CalCache.caltype == caltype)
 
-    stmt = stmt.distinct().order_by(CalCache.caltype).order_by(CalCache.rank)
+    stmt = stmt.distinct().group_by(CalCache.cal_hid, Header.id)\
+        .order_by(func.min(CalCache.caltype)).order_by(func.min(CalCache.rank))
 
     calheaders = []
     calhids = []
