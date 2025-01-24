@@ -18,3 +18,5 @@ from fits_storage_tests.liveserver_tests.test_cals_nifs import *
 from fits_storage_tests.liveserver_tests.test_cals_f2 import *
 from fits_storage_tests.liveserver_tests.test_cals_igrins2 import *
 from fits_storage_tests.liveserver_tests.test_provenance_history import *
+from fits_storage_tests.liveserver_tests.test_sitemap import *
+from fits_storage_tests.liveserver_tests.test_fileserver import *
