@@ -117,6 +117,22 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
     # as we can do one big 'distinct' query rather than de-duplicating after
     # the fact.
 
+    # There's a subtlety here though - in sql you can't use ORDER BY and
+    # DISTINCT ON with an expression in the order by that's not in the distinct
+    # on, which makes sense as it would be undefined how to deal with duplicate
+    # values in a different column. So this will lead to duplicate results in
+    # the output if there is a file that is in the calcache as two different
+    # calibration types. It will appear twice in the join result, with different
+    # caltypes and thus both will survive the distinct. The only way I can see
+    # to fix this is to do two queries - one to get (actually unique) list of
+    # cal_hids, then a second query to sort those by caltype, which would need
+    # to do some kind of .first() type clause to deal with the fact that some
+    # of them may have entries with multiple different caltypes.
+    # Currently (2025-01) there are no genuine cases where a file should have
+    # two different caltypes. This happened in error for slitillum vs
+    # spectwilight and spectwilight which was fixed by removing spectwilight
+    # from applicable, but genuine cases of this could occur in the future.
+
     # Make a list of the obs_hids
     obs_hids = []
     for header in headers:
