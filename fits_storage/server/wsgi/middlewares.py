@@ -106,7 +106,7 @@ class ArchiveContextMiddleware(object):
             self.ctx.usagelog = usagelog
 
             try:
-                self.ctx.usagelog.user_id = request.user.id
+                self.ctx.usagelog.user_id = self.ctx.user.id
             except AttributeError:
                 # No user defined
                 pass
