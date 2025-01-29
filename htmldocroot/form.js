@@ -2,11 +2,12 @@ function validateDateRange() {
   //get posted resource name value
   var inputString = document.getElementsByName("date")[0].value;
   //should be in the word\word\word format
+  //allow optional spaces around the - in date ranges, because people do that.
   var blankre=/^$/;
   var ymdre=/^20[0123][0-9][01][0-9][0-3][0-9]$/;
-  var ymdrangere=/^20[0123][0-9][01][0-9][0-3][0-9]-20[0123][0-9][01][0-9][0-3][0-9]$/;
+  var ymdrangere=/^20[0123][0-9][01][0-9][0-3][0-9]\s*-\s*20[0123][0-9][01][0-9][0-3][0-9]$/;
   var ymdtre=/^20[0123][0-9][01][0-9][0-3][0-9]T[012][0-9][0-6][0-9][0-6][0-9]$/;
-  var ymdtrangere=/^20[0123][0-9][01][0-9][0-3][0-9]T[012][0-9][0-6][0-9][0-6][0-9](.?[0-9]*)-20[0123][0-9][01][0-9][0-3][0-9]T[012][0-9][0-6][0-9][0-6][0-9](.?[0-9]*)$/;
+  var ymdtrangere=/^20[0123][0-9][01][0-9][0-3][0-9]T[012][0-9][0-6][0-9][0-6][0-9](.?[0-9]*)\s*-\s*20[0123][0-9][01][0-9][0-3][0-9]T[012][0-9][0-6][0-9][0-6][0-9](.?[0-9]*)$/;
   var todayyesterdayre=/^(today|yesterday)$/;
   //If the inputString is NOT a match
   if (! (blankre.test(inputString) ||
