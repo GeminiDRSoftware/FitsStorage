@@ -110,7 +110,8 @@ def searchform(things, orderby):
         # Check if the URL they came to is normalized.
         normalized_url = selection.to_url(with_columns=True)
         submitted_url = ctx.req.env.uri.removeprefix("/searchform")
-        quoted_submitted_url = submitted_url.replace('&', '%26')
+        quoted_submitted_url = (submitted_url.replace('&', '%26').
+                                replace(' ', '%20'))
         # print(f"normalized URL: {normalized_url}")
         # print(f"submitted URL: {submitted_url}")
         # print(f"quoted submitted URL: {quoted_submitted_url}")
