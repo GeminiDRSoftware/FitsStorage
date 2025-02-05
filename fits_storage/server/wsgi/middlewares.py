@@ -139,7 +139,10 @@ class ArchiveContextMiddleware(object):
             ipp = get_ipprefix_from_db(session, self.ctx.req.env.remote_ip)
 
             try:
-                allowed_url = self.ctx.req.env.unparsed_uri.startswith('/login')
+                allowed_url = (
+                    self.ctx.req.env.unparsed_uri.startswith('/login') or
+                    self.ctx.req.env.unparsed_uri.startswith('/orcid') or
+                    self.ctx.req.env.unparsed_uri.startswith('/noirlabsso'))
                 # Maybe we should allow request_account etc. here too, but
                 # that seems risky, so they'll need to use another ISP for that.
             except AttributeError:
