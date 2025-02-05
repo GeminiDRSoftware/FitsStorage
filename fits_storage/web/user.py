@@ -1230,7 +1230,7 @@ def oauth_login(service, code):
                     if user:
                         # OAuth Email matches a user email.
                         # Add this OAuth ID to that user
-                        oauth.add_oauth_id_to_user(ctx, ctx.user)
+                        oauth.add_oauth_id_to_user(ctx, user)
                     else:
                         # We don't recognize them at all. Create a new archive
                         # user record for them and associate this oauth_id
