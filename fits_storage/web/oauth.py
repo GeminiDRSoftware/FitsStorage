@@ -204,6 +204,11 @@ class OAuth(object):
         if self.oauth_id is None:
             raise OAuthError("oauth_id not set in find_user_by_email")
 
+        # If the Oauth service didn't tell us an Email, we can't do this.
+        # DO NOT let it search on User.email == None or '' !!!
+        if not self.email:
+            return None
+
         return ctx.session.query(User).filter(User.email == self.email)\
             .one_or_none()
 
