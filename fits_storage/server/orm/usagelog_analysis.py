@@ -72,8 +72,10 @@ class UsageLogAnalysis(Base):
         # from usagelog. Invalid URLs incur a 5 point penalty if they are not
         # from an allowlisted user agent. The user agent test prevents the
         # astropy tests that probe non-existent files from being flagged
+        status_score = 0
         if self.usagelog.user_agent not in self.fsc.allow_user_agent_strings:
-            status_score = 5 if self.usagelog.status == 404 else 0
+            if self.usagelog.status == 404:
+                status_score = 5
 
         self.total_score = self.uri_score + self.agent_score + \
                            self.referer_score + status_score
