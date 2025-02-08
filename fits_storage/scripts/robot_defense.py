@@ -174,7 +174,7 @@ if args.update:
             if ipp.allow:
                 logger.warning("Prefix %s would be DENIED (badness %d > %d), "
                                "but has ALLOW flag set", ipp.prefix,
-                               ipp.badmess, fsc.robot_badness_threshold)
+                               ipp.badness, fsc.robot_badness_threshold)
             elif ipp.deny:
                 logger.info("Updating Badness on already denied prefix %s: %d",
                             ipp.prefix, ipp.badness)
