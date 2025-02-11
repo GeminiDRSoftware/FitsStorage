@@ -333,8 +333,8 @@ if __name__ == "__main__":
             todo_list = dhs_list - known_list
             logger.info("%d new files to check", len(todo_list))
             for filename in todo_list:
-                if 'tmp' in filename:
-                    #logger.info("Ignoring tmp file: %s", filename)
+                if 'tmp' in filename or not filename.endswith('.fits'):
+                    logger.info("Ignoring tmp file: %s", filename)
                     continue
                 filename = os.path.split(filename)[1]
                 if check_present(session, filename):
