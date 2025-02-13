@@ -142,9 +142,11 @@ class ArchiveContextMiddleware(object):
                 allowed_url = (
                     self.ctx.req.env.unparsed_uri.startswith('/login') or
                     self.ctx.req.env.unparsed_uri.startswith('/orcid') or
-                    self.ctx.req.env.unparsed_uri.startswith('/noirlabsso'))
+                    self.ctx.req.env.unparsed_uri.startswith('/noirlabsso') or
+                    self.ctx.req.env.unparsed_uri.startswith('/logout'))
                 # Maybe we should allow request_account etc. here too, but
-                # that seems risky, so they'll need to use another ISP for that.
+                # that seems risky, so they'll need to use another ISP for that,
+                # or just use orcid.
             except AttributeError:
                 allowed_url = False
 
