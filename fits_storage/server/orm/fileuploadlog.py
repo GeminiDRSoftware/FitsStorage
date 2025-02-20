@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, DateTime, Boolean
+from sqlalchemy import Integer, Text, DateTime, Boolean, BigInteger
 from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
@@ -22,7 +22,7 @@ class FileUploadLog(Base):
     ut_transfer_complete = Column(DateTime(timezone=False))
 
     filename = Column(Text, index=True)
-    size = Column(Integer)
+    size = Column(BigInteger)
     md5 = Column(Text)
     processed_cal = Column(Boolean)
 
