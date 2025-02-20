@@ -58,7 +58,7 @@ def miscfiles(handle=None):
 @templating.templated("miscfiles/miscfiles.html")
 def bare_page():
     user = get_context().user
-    can_add = user.misc_upload if user else False
+    can_add = (user.misc_upload or user.superuser) if user else False
     return dict(can_add=can_add)
 
 
