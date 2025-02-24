@@ -1,5 +1,6 @@
 """
-This module handles the web 'logreports' functions - presenting data from the usage, query, upload and download logs
+This module handles the web 'logreports' functions - presenting data from the
+usage, query, upload and download logs
 """
 import datetime
 import dateutil.parser
@@ -31,16 +32,21 @@ from .user import needs_login
 from . import templating
 
 from fits_storage.config import get_config
-#fsc = get_config()
 
-def logs(session, filter_func = None):
-    aQueryLog = session.query(QueryLog, func.row_number().over(QueryLog.usagelog_id).label('row_number'))
-    aDownloadLog = session.query(DownloadLog, func.row_number().over(DownloadLog.usagelog_id).label('row_number'))
+
+def logs(session, filter_func=None):
+    aQueryLog = session.query(QueryLog,
+                              func.row_number().over().label('row_number'))
+    aDownloadLog = session.query(DownloadLog,
+                                 func.row_number().over().label('row_number'))
+
     if filter_func:
         aQueryLog = filter_func(session, aQueryLog.join(UsageLog))
         aDownloadLog = filter_func(session, aDownloadLog.join(UsageLog))
+
     class AliasedQueryLog(Base):
         __table__ = aQueryLog.cte('query_log')
+
     class AliasedDownloadLog(Base):
         __table__ = aDownloadLog.cte('download_log')
 
@@ -79,7 +85,6 @@ def usagereport():
             user = session.query(User).filter(User.username == value).first()
             if user:
                 username = user.username
-                user_id = user.id
         elif key == 'ipaddr' and len(value):
             ipaddr = str(value)
         elif key == 'this' and len(value):
@@ -120,15 +125,19 @@ def usagereport():
                     pass
             return query
 
-        # Subquery to add a "row count" to the QueryLog and the DownloadLog. This is an easy way to pick just
-        # the first relation when joining a one-to-many with potentially more than one result per match.
-        # The underlying mechanism is the windowing capability of PostgreSQL (using the 'OVER ...' clause)
+        # Subquery to add a "row count" to the QueryLog and the DownloadLog.
+        # This is an easy way to pick just the first relation when joining a
+        # one-to-many with potentially more than one result per match. The
+        # underlying mechanism is the windowing capability of PostgreSQL
+        # (using the 'OVER ...' clause)
         aql, adl = logs(session, filter_usagelog)
 
         query = (
             session.query(UsageLog, aql, adl)
-                   .outerjoin(aql, and_(aql.usagelog_id==UsageLog.id, aql.row_number == 1))
-                   .outerjoin(adl, and_(adl.usagelog_id==UsageLog.id, adl.row_number == 1))
+                   .outerjoin(aql, and_(aql.usagelog_id==UsageLog.id,
+                                        aql.row_number == 1))
+                   .outerjoin(adl, and_(adl.usagelog_id==UsageLog.id,
+                                        adl.row_number == 1))
             )
         query = filter_usagelog(session, query)
 
@@ -148,9 +157,11 @@ def usagedetails(ulid):
 
     session = get_context().session
 
-    # Subquery to add a "row count" to the QueryLog and the DownloadLog. This is an easy way to pick just
-    # the first relation when joining a one-to-many with potentially more than one result per match.
-    # The underlying mechanism is the windowing capability of PostgreSQL (using the 'OVER ...' clause)
+    # Subquery to add a "row count" to the QueryLog and the DownloadLog. This
+    # is an easy way to pick just the first relation when joining a
+    # one-to-many with potentially more than one result per match. The
+    # underlying mechanism is the windowing capability of PostgreSQL (using
+    # the 'OVER ...' clause)
     def filter_usagelog(session, query):
         return query.filter(UsageLog.id == ulid)
 
@@ -158,13 +169,18 @@ def usagedetails(ulid):
     usagelog, user, querylog, downloadlog = (
         session.query(UsageLog, User, aql, adl)
                .outerjoin(User, User.id == UsageLog.user_id)
-               .outerjoin(aql, and_(aql.usagelog_id==UsageLog.id, aql.row_number == 1))
-               .outerjoin(adl, and_(adl.usagelog_id==UsageLog.id, adl.row_number == 1))
+               .outerjoin(aql, and_(aql.usagelog_id==UsageLog.id,
+                                    aql.row_number == 1))
+               .outerjoin(adl, and_(adl.usagelog_id==UsageLog.id,
+                                    adl.row_number == 1))
                .filter(UsageLog.id == ulid).one()
         )
 
-    filedownloadlogs = session.query(FileDownloadLog).filter(FileDownloadLog.usagelog_id==ulid)
-    fileuploadlogs = session.query(FileUploadLog).filter(FileUploadLog.usagelog_id==ulid)
+    filedownloadlogs = session.query(FileDownloadLog)\
+        .filter(FileDownloadLog.usagelog_id==ulid)
+
+    fileuploadlogs = session.query(FileUploadLog)\
+        .filter(FileUploadLog.usagelog_id==ulid)
 
     return dict(
         ulog  = usagelog,
@@ -181,11 +197,11 @@ def usagedetails(ulid):
 @templating.templated("logreports/downloadlog.html", with_generator=True)
 def downloadlog(patterns):
     """
-    This accepts a list of filename patterns and returns a log showing all the downloads
-    of the files that match the selection.
+    This accepts a list of filename patterns and returns a log showing all the
+    downloads of the files that match the selection.
 
-    "downloadlog" is a bit of a misnomer, maybe. The use case here is to let people
-    know who, and when, has downloaded a certain file (or files).
+    "downloadlog" is a bit of a misnomer, maybe. The use case here is to let
+    people know who, and when, has downloaded a certain file (or files).
     """
 
     def calc_permission(fdl):
@@ -201,10 +217,10 @@ def downloadlog(patterns):
 
     session = get_context().session
 
-    hsq = session.query(Header, func.row_number().over(Header.diskfile_id).label('row_number')).subquery()
-    aHeader = aliased(Header, hsq)
-    dfsq = session.query(DiskFile, func.row_number().over(DiskFile.filename).label('row_number')).subquery()
-    aDiskFile = aliased(DiskFile, dfsq)
+    hsq = session.query(Header, func.row_number().over(Header.diskfile_id)
+                        .label('row_number')).subquery()
+    dfsq = session.query(DiskFile, func.row_number().over(DiskFile.filename)
+                         .label('row_number')).subquery()
 
     class Queries(object):
         def __init__(self, patterns):
@@ -222,11 +238,11 @@ def downloadlog(patterns):
             for pattern in self.pt:
                 yield (
                     pattern,
-                    session.query(FileDownloadLog, User)#, aHeader.data_label)
-                            .join(UsageLog)
-                            .outerjoin(User)
-                            .filter(FileDownloadLog.diskfile_filename.like(pattern + '%'))
-                            .order_by(desc(FileDownloadLog.ut_datetime))
+                    session.query(FileDownloadLog, User).join(UsageLog)
+                        .outerjoin(User)
+                        .filter(FileDownloadLog.diskfile_filename.like(
+                                                                pattern + '%'))
+                        .order_by(desc(FileDownloadLog.ut_datetime))
                     )
 
     return dict(
@@ -296,7 +312,8 @@ def usagestats():
     user_stats_sq = (
         session.query(UsageLog.user_id, func.count(1).label("downloads"))
                 .filter(UsageLog.this=='searchform')
-                .filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
+                .filter(UsageLog.utdatetime >= start)
+                .filter(UsageLog.utdatetime < end)
                 .group_by(UsageLog.user_id).order_by(desc(func.count(1)))
                 .limit(10).subquery()
         )
@@ -309,7 +326,8 @@ def usagestats():
     user_stats_sq = (
         session.query(UsageLog.user_id, func.sum(UsageLog.bytes).label("bytes"))
             .filter(UsageLog.this=='download')
-            .filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
+            .filter(UsageLog.utdatetime >= start)
+            .filter(UsageLog.utdatetime < end)
             .group_by(UsageLog.user_id).order_by(desc(func.sum(UsageLog.bytes)))
             .limit(10).subquery()
         )
