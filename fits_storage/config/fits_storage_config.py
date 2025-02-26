@@ -86,7 +86,8 @@ class FitsStorageConfig(dict):
         configfile: config file to read. See class documentation
         configstring: config file to read. See class documentation
         builtin: whether to read the built-in minimal configuration file.
-        builtinonly: whether to skip reading additional configuration files
+        builtinonly: whether to skip reading additional configuration files.
+                     - does not preclude use of configstring of configfile
 
         Returns
         -------
