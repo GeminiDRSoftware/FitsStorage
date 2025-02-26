@@ -1,1 +1,2 @@
 pytest
+-r requirements_server.txt

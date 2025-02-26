@@ -1,1 +1,9 @@
 include data/*
+recursive-include data/templates *.html *.json *.xml *.macro *.txt
+include fits_storage/config/fits_storage.conf
+recursive-include fits_storage/fits_validator/dataDefinition *.def
+include fits_storage_tests/*.json fits_storage_tests/*.xml
+exclude fits_storage_tests/test_liverserver.py fits_storage_tests/test_testserver.py
+recursive-include htmldocroot *.html *.css *.js *.gif *.ico *.png
+exclude htmldocroot/google*.html robots.txt
+include requirements.txt requirements_dev.txt requirements_server.txt
