@@ -8,7 +8,7 @@ from . import Base
 
 from fits_storage.core.orm.diskfile import DiskFile
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 from fits_storage.file_parser import build_parser
 from fits_storage.gemini_metadata_utils import GeminiProgram, \
     gemini_gain_settings, gemini_readspeed_settings, obs_types, obs_classes, \

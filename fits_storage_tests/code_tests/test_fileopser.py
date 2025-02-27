@@ -16,7 +16,7 @@ from fits_storage.server.orm.fileuploadlog import FileUploadLog
 
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 from fits_storage.core.ingester import Ingester
 from fits_storage.core.orm.diskfile import DiskFile
 

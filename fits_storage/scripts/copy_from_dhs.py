@@ -14,7 +14,7 @@ import astrodata
 from fits_storage.fits_verify import fitsverify
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.queues.queue import IngestQueue
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.gemini_metadata_utils import gemini_date, CHILE_OFFSET
 from fits_storage.db import session_scope

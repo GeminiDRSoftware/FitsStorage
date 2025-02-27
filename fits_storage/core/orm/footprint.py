@@ -6,7 +6,7 @@ from sqlalchemy import Integer, Text
 from . import Base
 from .header import Header
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 class Footprint(Base):
     """

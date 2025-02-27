@@ -8,7 +8,7 @@ from ipaddress import ip_network
 
 from sqlalchemy.exc import IntegrityError
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.server.orm.ipprefix import IPPrefix
 

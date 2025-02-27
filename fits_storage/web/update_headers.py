@@ -4,7 +4,7 @@ from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
 
 from .user import needs_cookie
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsRequest
 

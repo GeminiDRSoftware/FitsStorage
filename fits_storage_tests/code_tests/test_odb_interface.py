@@ -14,7 +14,7 @@ from fits_storage.server.orm.program import Program
 from fits_storage.server.orm.obslog_comment import ObslogComment
 
 from fits_storage.db import sessionfactory
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 
 def test_odb_interface():

@@ -4,7 +4,7 @@ from sqlalchemy import Integer, Text, Enum
 from .diskfile import DiskFile
 from ...fits_verify import fitsverify
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 from fits_storage.config import get_config
 
 from . import Base

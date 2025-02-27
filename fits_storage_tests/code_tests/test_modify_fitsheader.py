@@ -2,7 +2,7 @@ import os.path
 import types
 from astropy.io import fits
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.scripts.modify_fitsheader import *
 

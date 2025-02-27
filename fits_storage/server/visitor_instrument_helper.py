@@ -5,7 +5,7 @@ import json
 
 from datetime import datetime, timedelta
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 from fits_storage.config import get_config
 
 """

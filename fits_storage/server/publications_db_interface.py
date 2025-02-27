@@ -2,7 +2,7 @@ import requests
 import http
 import json
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 def get_publications(json_inject=None, logger=DummyLogger()):
     """

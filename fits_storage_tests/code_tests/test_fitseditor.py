@@ -6,7 +6,7 @@ import astrodata
 from fits_storage_tests.code_tests.helpers import get_test_config, make_diskfile
 
 from fits_storage.server.fitseditor import FitsEditor
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 def get_from_file(fpfn, headers=[]):
     get_test_config()
