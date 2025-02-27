@@ -6,7 +6,7 @@ from fits_storage.server.aws_s3 import Boto3Helper
 from fits_storage.config import get_config
 from fits_storage.core.hashes import md5sum
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 fsc = get_config(builtinonly=True, reload=True)
 # Need to pull in test bucket keys for these to run.

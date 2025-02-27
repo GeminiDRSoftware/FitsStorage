@@ -4,7 +4,7 @@ from time import strptime
 
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header

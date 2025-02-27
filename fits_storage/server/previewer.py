@@ -13,7 +13,7 @@ from sqlalchemy.exc import NoResultFound
 from gemini_instruments.gmos.pixel_functions import get_bias_level
 from gempy.library.spectral import Spek1D
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 from fits_storage.config import get_config
 
 from fits_storage.server.orm.preview import Preview

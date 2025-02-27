@@ -13,7 +13,7 @@ import re
 import requests
 
 from fits_storage.config import get_config
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 
 class TapeDrive(object):

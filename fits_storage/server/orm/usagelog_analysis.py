@@ -4,7 +4,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, DateTime
 from sqlalchemy.orm import relationship
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.core.orm import Base
 from fits_storage.server.orm.usagelog import UsageLog

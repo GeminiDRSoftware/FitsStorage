@@ -5,7 +5,7 @@ This module contains utility functions for interacting with AWS S3
 import os
 
 from fits_storage.config import get_config
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.core.hashes import md5sum
 from contextlib import contextmanager

@@ -6,7 +6,7 @@ of dictionaries can be used directly, or can be passed as a JSON document
 over HTTP to a remote server, which then uses this code to ingest the data.
 """
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.server.orm.notification import Notification
 from fits_storage.server.orm.program import Program

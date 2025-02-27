@@ -9,7 +9,7 @@ import tempfile
 import hashlib
 
 from fits_storage.core.hashes import md5sum
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.core.orm.file import File
 

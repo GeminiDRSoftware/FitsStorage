@@ -6,7 +6,7 @@ from fits_storage.core.orm import Base
 from fits_storage.core.orm.header import PROCMODE_ENUM
 from fits_storage.gemini_metadata_utils import gemini_processing_modes
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 
 class Reduction(Base):
