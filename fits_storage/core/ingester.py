@@ -7,9 +7,6 @@ from sqlalchemy import or_
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
-from fits_storage.queues.queue.exportqueue import ExportQueue
-from fits_storage.queues.queue.calcachequeue import CalCacheQueue
-from fits_storage.queues.queue.previewqueue import PreviewQueue
 
 from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
@@ -30,6 +27,9 @@ if fsc.is_archive:
     from fits_storage.server.orm.miscfile import MiscFile, is_miscfile
 
 if fsc.is_server:
+    from fits_storage.queues.queue.exportqueue import ExportQueue
+    from fits_storage.queues.queue.calcachequeue import CalCacheQueue
+    from fits_storage.queues.queue.previewqueue import PreviewQueue
     from fits_storage.server.orm.reduction import Reduction
     from fits_storage.server.orm.obslog import Obslog
     from fits_storage.server.orm.provenancehistory import \

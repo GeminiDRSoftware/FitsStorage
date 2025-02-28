@@ -6,8 +6,8 @@ from sqlalchemy import Integer, Text, DateTime, Numeric, Date, Time, \
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.file import File
-from fits_storage.db.selection import Selection
-from fits_storage.db.list_headers import list_headers, list_obslogs
+from fits_storage.db.list_headers import list_headers
+from fits_storage.db.list_obslogs import  list_obslogs
 from fits_storage.web.standards import get_standard_obs, list_phot_std_obs
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
 
