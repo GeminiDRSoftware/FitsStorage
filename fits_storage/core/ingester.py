@@ -188,7 +188,10 @@ class Ingester(object):
             # file, as if processing failed after diskfile entry, there could
             # still be value in re-trying those. That will need to be triggered
             # manually by re=adding them with force=True
-            self.s.delete(iqe)
+            if fsc.is_server:
+                # in non-server mode, the iqe is an ORM instance, but is never
+                # added to the session, so we shouldn't attempt to delete it
+                self.s.delete(iqe)
             self.s.commit()
             return True
 
