@@ -418,8 +418,6 @@ class CalibrationGHOST(Calibration):
         # Must totally match instrument, detector_x_bin, detector_y_bin, filter
         flat_descriptors = [
             Header.instrument,
-            Ghost.read_speed_setting,
-            Ghost.gain_setting,
             Ghost.focal_plane_mask,
             ]
 
