@@ -11,12 +11,15 @@ from fits_storage.cal.orm.gpi import Gpi
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.file import File
-from fits_storage.server.orm.program import Program
-from fits_storage.server.orm.publication import Publication, ProgramPublication
+
 
 from fits_storage.config import get_config
 fsc = get_config()
 
+if fsc.is_server:
+    from fits_storage.server.orm.program import Program
+    from fits_storage.server.orm.publication import (Publication,
+                                                     ProgramPublication)
 
 queryselection_filters = (
     ('present',               DiskFile.present),
@@ -489,13 +492,13 @@ def filter(self, query):
             query = query.filter(Header.central_wavelength > lower)\
                 .filter(Header.central_wavelength < upper)
 
-    if 'publication' in self:
+    if fsc.is_server and 'publication' in self:
         query = query.join(Program, Header.program_id == Program.program_id)\
             .join(ProgramPublication, Program.id == ProgramPublication.program_id)\
             .join(Publication, Publication.id == ProgramPublication.publication_id)\
             .filter(Publication.bibcode == self['publication'])
 
-    if 'PIname' in self or 'ProgramText' in self:
+    if fsc.is_server and ('PIname' in self or 'ProgramText' in self):
         query = query.join(Program, Header.program_id == Program.program_id)
         if 'PIname' in self:
             query = query.filter(
