@@ -5,9 +5,8 @@ import datetime
 
 from sqlalchemy.exc import NoResultFound
 from fits_storage.server.orm.obslog import Obslog
-from fits_storage.db.list_headers import list_obslogs, list_headers
-from fits_storage.db.selection import Selection
-
+from fits_storage.db.list_headers import list_headers
+from fits_storage.db.list_obslogs import list_obslogs
 from fits_storage.server.access_control_utils import icanhave
 from fits_storage.server.wsgi.context import get_context
 
