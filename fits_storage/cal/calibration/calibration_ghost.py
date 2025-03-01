@@ -119,8 +119,9 @@ class CalibrationGHOST(Calibration):
                 self.applicable.append('processed_arc')
                 self.applicable.append('flat')
                 self.applicable.append('processed_flat')
-                self.applicable.append('spectwilight')
-                self.applicable.append('specphot')
+                self.applicable.append('standard')
+                self.applicable.append('processed_standard')
+
 
     # @not_imaging
     def arc(self, processed=False, howmany=2):
@@ -470,53 +471,8 @@ class CalibrationGHOST(Calibration):
 
         return query.all(howmany)
 
-    # We don't handle processed ones (yet)
-    @not_processed
-    # @not_imaging
-    def spectwilight(self, processed=False, howmany=None, return_query=False):
-        """
-        Method to find the best spectwilight - ie spectroscopy twilight
-        ie MOS / IFU / LS twilight
 
-        This will find GHOST spec twilights matching
-        focal plane mask, and x and y binning.
-        It matches within 1 year.
-
-        Parameters
-        ----------
-
-        processed : bool
-            Indicate if we want to retrieve processed or raw spec twilights
-        howmany : int, default 2
-            How many do we want results
-
-        Returns
-        -------
-            list of :class:`fits_storage.orm.header.Header`
-            records that match the criteria
-        """
-        # Default number to associate
-        howmany = howmany if howmany else 2
-
-        filters = []
-
-        query = (
-            self.get_query()
-                # They are OBJECT spectroscopy frames with target twilight
-                .raw().OBJECT().spectroscopy(True).object('Twilight')
-                .add_filters(*filters)
-                .match_descriptors(Header.instrument,
-                                   Ghost.detector_x_bin,
-                                   Ghost.detector_y_bin,
-                                   Ghost.focal_plane_mask)
-                .max_interval(days=365)
-            )
-        return query.all(howmany)
-
-    # We don't handle processed ones (yet)
-    @not_processed
-    # @not_imaging
-    def specphot(self, processed=False, howmany=None, return_query=False):
+    def standard(self, processed=False, howmany=None):
         """
         Method to find the best specphot observation
 
@@ -537,31 +493,30 @@ class CalibrationGHOST(Calibration):
             list of :class:`fits_storage.orm.header.Header` records that match
         """
         # Default number to associate
-        howmany = howmany if howmany else 4
+        howmany = howmany if howmany else 1
 
-        filters = []
+        # Detector binning doesn't have to match, DRAGONS is clever enough
+        # now to use specphots with different binning.
 
-        query = (
-            self.get_query()
-                # They are OBJECT partnerCal or progCal spectroscopy frames with target not twilight
-                .raw().OBJECT()  # .spectroscopy(True) * per above, they are all spectroscopy
-                .add_filters(Header.observation_class.in_(['partnerCal', 'progCal']),
-                             Header.object != 'Twilight',
-                             *filters)
-            # Detector binning doesn't have to match, DRAGONS is clever enough
-            # now to use specphots with different binning.
+        # 25-Sep-2024 there was a slack discussion about focal_plane_mask
+        # matching. In principle, the fpm (HR|SR) doesn't need to match, but
+        # in practice if you want to use a specphot with a different fpm to
+        # the science, you have to reduce a bunch of calibrations that you
+        # otherwise wouldn't, and since ghost has limited configuration
+        # options, the chances of their not being a same fpm specphot are
+        # basically zero, and thus it's best to just require fpm to match
+        # here to keep things simple for the user.
 
-            # 25-Sep-2024 there was a slack discussion about focal_plane_mask
-            # matching. In principle, the fpm (HR|SR) doesn't need to match, but
-            # in practice if you want to use a specphot with a different fpm to
-            # the science, you have to reduce a bunch of calibrations that you
-            # otherwise wouldn't, and since ghost has limited configuration
-            # options, the chances of their not being a same fpm specphot are
-            # basically zero, and thus it's best to just require fpm to match
-            # here to keep things simple for the user.
-                .match_descriptors(Header.instrument,
-                                   Ghost.focal_plane_mask)
-            )
+        query = (self.get_query()
+                 .match_descriptors(Header.instrument,
+                                    Ghost.focal_plane_mask)
+                 .max_interval(days=365))
+        if processed:
+            query = query.standard(processed)
+        else:
+            query = query.add_filters([Header.observation_class.in_(
+                ['partnerCal', 'progCal'])]).raw().OBJECT()
+
         return query.all(howmany)
 
     def bpm(self, processed=False, howmany=1):
