@@ -170,7 +170,8 @@ class CalibrationGHOST(Calibration):
             .arc(processed)\
             .add_filters(*filters)\
             .match_descriptors(Header.instrument,
-                               Header.focal_plane_mask)\
+                               Header.focal_plane_mask,
+                               Ghost.arm)\
             .max_interval(days=365)
 
         return query.all(howmany)
@@ -376,6 +377,7 @@ class CalibrationGHOST(Calibration):
         flat_descriptors = [
             Header.instrument,
             Header.spectroscopy,
+            Ghost.arm,
             Ghost.read_speed_setting,
             Ghost.gain_setting,
             Ghost.focal_plane_mask,
@@ -509,6 +511,7 @@ class CalibrationGHOST(Calibration):
 
         query = (self.get_query()
                  .match_descriptors(Header.instrument,
+                                    Ghost.arm,
                                     Ghost.focal_plane_mask)
                  .max_interval(days=365))
         if processed:
