@@ -170,7 +170,7 @@ class Ingester(object):
             self.l.debug("Already in file table as %s", trimmed_name)
         except NoResultFound:
             fileobj = File(iqe.filename)
-            self.l.info("Adding new file table entry for %s", iqe.filename)
+            self.l.debug("Adding new file table entry for %s", iqe.filename)
             self.s.add(fileobj)
             self.s.commit()
 
@@ -347,7 +347,7 @@ class Ingester(object):
                 return None
             self.local_copy_of_s3_file = True
 
-        self.l.debug("Adding new DiskFile entry for file "
+        self.l.info("Adding new DiskFile entry for file "
                      f"name {fileobj.name} - id {fileobj.id}")
 
         # Instantiating the DiskFile object with a bzip2 filename will trigger
