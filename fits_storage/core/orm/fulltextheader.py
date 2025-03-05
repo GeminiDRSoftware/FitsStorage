@@ -48,6 +48,8 @@ class FullTextHeader(Base):
         self.fulltext += repr(ad.phu).strip()
         self.fulltext += "\n"
         for i in range(len(ad)):
-            self.fulltext += "\n--- HDU {} ---\n".format(i)
+            # We label these as "i+1" so that the PHU is 0 and the extensions
+            # start from 1.
+            self.fulltext += f"\n--- HDU {i+1} ---\n"
             self.fulltext += repr(ad[i].hdr).strip()
             self.fulltext += '\n'
