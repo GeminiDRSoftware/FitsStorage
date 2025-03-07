@@ -14,7 +14,7 @@ from fits_storage.server.orm.tapestuff import Tape, TapeWrite, TapeFile
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.server.tapeutils import TapeDrive
 from fits_storage.db.list_headers import list_headers
-from fits_storage.db.selection import getselection, openquery
+from fits_storage.db.selection.get_selection import from_url_things
 
 from fits_storage.config import get_config
 
@@ -100,9 +100,9 @@ logger.info("TapeDrive: %s; TapeLabel: %s",
 # Generate a file list from the selection
 logger.info("Building the file list")
 things = options.selection.split('/')
-selection = getselection(things)
+selection = from_url_things(things)
 logger.info("Selection: %s", selection)
-logger.info("Selection is open: %s", openquery(selection))
+logger.info("Selection is open: %s", selection.openquery)
 
 with session_scope() as session:
     logger.info("Getting header object list")

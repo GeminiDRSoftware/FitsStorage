@@ -59,7 +59,8 @@ class FitsStorageConfig(dict):
              'fits_closed_result_limit', 'min_dhs_age_seconds',
              'robot_badness_threshold']
     _lists = ['blocked_urls', 'export_destinations', 'gemini_fits_upload_auth',
-              'gemini_api_authorization', 'block_user_agent_substrings']
+              'gemini_api_authorization', 'block_user_agent_substrings',
+              'allow_user_agent_strings', 'gemini_user_transfer']
 
     def __init__(self, configfile=None, configstring=None,
                  builtin=True, builtinonly=False):
@@ -85,7 +86,8 @@ class FitsStorageConfig(dict):
         configfile: config file to read. See class documentation
         configstring: config file to read. See class documentation
         builtin: whether to read the built-in minimal configuration file.
-        builtinonly: whether to skip reading additional configuration files
+        builtinonly: whether to skip reading additional configuration files.
+                     - does not preclude use of configstring of configfile
 
         Returns
         -------

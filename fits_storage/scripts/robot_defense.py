@@ -36,7 +36,7 @@ parser.add_argument('--ip', type=str,
                          "Do not do log analysis.")
 parser.add_argument('--date', action="store", dest='date', default=None,
                     help='Date range to operate on for --analyse or --update. '
-                         'Can be a YYYYMMDD date, today or yesterdat, or a '
+                         'Can be a YYYYMMDD date, today or yesterday, or a '
                          'yyyymmdd-YYYYMMDD daterange')
 parser.add_argument('--analyse', action='store_true', dest='analyse',
                     help='Perform usagelog analysis, see --date')
@@ -94,6 +94,11 @@ if args.update and not args.date:
 if args.analyse:
     logger.info("Analysing log for timestamp range: %s - %s", start, end)
 
+    # Note, don't filter on http_status here: a) don't filter out the redirects
+    # as the searchform url normalization would clean up the duplicates that
+    # we flag on, b) don't filter 404s as we flag those as bad requests too.
+    # c) Don't filter denied requests as we should keep updating the badness
+    # score for those prefixes if they keep attempting access.
     query = session.query(UsageLog.id).filter(UsageLog.utdatetime >= start)\
         .filter(UsageLog.utdatetime < end)
     ulids = query.all()
@@ -166,7 +171,16 @@ if args.update:
         logger.debug("Badness score for prefix %s is now %d",
                      ipp.prefix, ipp.badness)
         if ipp.badness > fsc.robot_badness_threshold:
-            logger.info("Setting DENY flag for prefix %s: %d > %d",
-                        ipp.prefix, ipp.badness, fsc.robot_badness_threshold)
-            ipp.deny = True
+            if ipp.allow:
+                logger.warning("Prefix %s would be DENIED (badness %d > %d), "
+                               "but has ALLOW flag set", ipp.prefix,
+                               ipp.badness, fsc.robot_badness_threshold)
+            elif ipp.deny:
+                logger.info("Updating Badness on already denied prefix %s: %d",
+                            ipp.prefix, ipp.badness)
+            else:
+                logger.info("Setting DENY flag for prefix %s: Badness %d > %d",
+                            ipp.prefix, ipp.badness,
+                            fsc.robot_badness_threshold)
+                ipp.deny = True
         session.commit()

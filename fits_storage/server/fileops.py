@@ -66,7 +66,7 @@ def ingest_upload(args, session, logger):
     logger.info("ingest_upload: filename: %s, fileuploadlog_id: %s, "
                 "processed_cal: %s", filename, fileuploadlog_id, processed_cal)
 
-    fileuploadlog = session.query(FileUploadLog).get(fileuploadlog_id)
+    fileuploadlog = session.get(FileUploadLog, fileuploadlog_id)
 
     # Move the file to its appropriate location in storage_root/path or S3
 
@@ -132,8 +132,12 @@ def ingest_upload(args, session, logger):
     iq = IngestQueue(session, logger)
     iqe = iq.add(filename, path, no_defer=True)
 
-    fileuploadlog.ingestqueue_id = iqe.id
-    session.commit()
+    # iq.add returns None if the file is already on the queue
+    if iqe is not None:
+        fileuploadlog.ingestqueue_id = iqe.id
+        session.commit()
+    else:
+        logger.info("File is already on queue, not added")
     return True
 
 

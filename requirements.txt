@@ -1,1 +1,12 @@
-SQLAlchemy<=2.0.0
+# These requirements.txt files are mostly an aid for developers - in production
+# use cases, we expect FitsStorage will be installed alongside DRAGONS, which
+# provides the astrodata and gemini_instruments packages that are needed
+# by FitsStorage
+#
+# astrodata
+# gemini_instruments
+SQLAlchemy>=2
+python-dateutil
+requests
+jinja2
+simplejson

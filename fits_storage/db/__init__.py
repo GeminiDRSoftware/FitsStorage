@@ -3,7 +3,7 @@ from datetime import date, datetime
 
 from sqlalchemy import create_engine, String, Date, DateTime
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.sqltypes import NullType
 
@@ -40,12 +40,19 @@ def sessionfactory(reload=False):
                     'echo': fsc.database_debug}
         else:
             args = {'echo': fsc.database_debug}
-        _saved_engine = create_engine(fsc.database_url, **args)
-        _saved_sessionfactory = sessionmaker(_saved_engine)
+        _saved_engine = create_engine(fsc.database_url, future=True, **args)
+        _saved_sessionfactory = sessionmaker(_saved_engine, future=True)
     return _saved_sessionfactory()
 
 
-Base = declarative_base()
+# Add __allow_unmapped__ for SQLAlchemy 2.0 compatibility
+class _Base:
+    """Compatibility class that enforces the __allow_unmapped__ attribute in
+    the declarative Base class.
+    """
+    __allow_unmapped__ = True
+
+Base = declarative_base(cls=_Base)
 
 
 @contextmanager

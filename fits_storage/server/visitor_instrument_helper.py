@@ -5,7 +5,7 @@ import json
 
 from datetime import datetime, timedelta
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 from fits_storage.config import get_config
 
 """
@@ -98,9 +98,13 @@ def fix_zorro_or_alopeke(fits, instr, telescope):
             dt = datetime.strptime(dateobs, '%Y-%m-%d')
             if 'CAL' in pheader['OBSID']:
                 pheader['RELEASE'] = dt.strftime('%Y-%m-%d')
-            elif '-FT-' in pheader['OBSID']:
+            elif '-FT-' in pheader['OBSID'] or '-DD-' in pheader['OBSID']:
                 pheader['RELEASE'] = (dt + timedelta(days=183)).\
                     strftime('%Y-%m-%d')
+            elif pheader['OBSID'] in ['GN-2024B-DD-101', 'GS-2024B-DD-101']:
+                # These Steve Howell DD programs should be immediately public
+                # per email 2024-01-09
+                pheader['RELEASE'] = dt.strftime('%Y-%m-%d')
             else:
                 pheader['RELEASE'] = (dt + timedelta(days=365)).\
                     strftime('%Y-%m-%d')
@@ -199,6 +203,7 @@ class VisitorInstrumentHelper(object):
         self.subdir = None
 
         self.instrument_name = None
+        self.instrument_dirname = None
 
     def fixheader(self, hdulist):
         self.logger.error('fixheader() called on generic VI helper instance')
@@ -216,7 +221,7 @@ class VisitorInstrumentHelper(object):
             return True
 
         if filename.endswith('.bz2'):
-            fn = filename.rstrip('bz2')
+            fn = filename.removesuffix('.bz2')
             dest_path = os.path.join(self.dest_dir, self.subdir, fn)
             if os.access(dest_path, os.F_OK | os.R_OK):
                 return True
@@ -334,7 +339,8 @@ class AlopekeVIHelper(VisitorInstrumentHelper):
             r'^N20\d\d[01]\d[0123]\dA\d\d\d\d[br].fits(.bz2)?')
 
         self.instrument_name = 'ALOPEKE'
-        self.dest_dir = os.path.join(self.dest_dir, 'alopeke')
+        self.instrument_dirname = self.instrument_name.lower()
+        self.dest_dir = os.path.join(self.dest_dir, self.instrument_dirname)
 
     def fixheader(self, hdulist):
         return fix_zorro_or_alopeke(hdulist, 'ALOPEKE', 'Gemini-North')
@@ -352,7 +358,8 @@ class ZorroVIHelper(VisitorInstrumentHelper):
             r'^S20\d\d[01]\d[0123]\dZ\d\d\d\d[br].fits(.bz2)?')
 
         self.instrument_name = 'ZORRO'
-        self.dest_dir = os.path.join(self.dest_dir, 'zorro')
+        self.instrument_dirname = self.instrument_name.lower()
+        self.dest_dir = os.path.join(self.dest_dir, self.instrument_dirname)
 
     def fixheader(self, hdulist):
         return fix_zorro_or_alopeke(hdulist, 'ZORRO', 'Gemini-South')
@@ -370,7 +377,31 @@ class IGRINSVIHelper(VisitorInstrumentHelper):
             r'^SDC[HKS]_20\d\d[01]\d[0123]\d_\d{4}.fits(.bz2)?')
 
         self.instrument_name = 'IGRINS'
-        self.dest_dir = os.path.join(self.dest_dir, 'igrins')
+        self.instrument_dirname = self.instrument_name.lower()
+        self.dest_dir = os.path.join(self.dest_dir, self.instrument_dirname)
 
     def fixheader(self, hdulist):
         return fix_igrins(hdulist)
+
+
+class MAROONXVIHelper(VisitorInstrumentHelper):
+    def __init__(self, staging_dir=None, dest_dir=None, logger=None):
+        super(MAROONXVIHelper, self).__init__(staging_dir=staging_dir,
+                                              dest_dir=dest_dir, logger=logger)
+
+        if self.staging_dir is None:
+            self.staging_dir = vi_staging_path.get('MAROON-X')
+
+        self.filename_cre = re.compile(
+            r'^N20\d\d[01]\d[0123]\dM\d+.fits(.bz2)?')
+
+        self.instrument_name = 'MAROON-X'
+        self.instrument_dirname = 'maroonx'
+        self.dest_dir = os.path.join(self.dest_dir, self.instrument_dirname)
+
+    def fixheader(self, hdulist):
+        return False
+
+    def list_datedirs(self):
+        # Maroon-X doesn't use datedirs, everything is in the top-level
+        return ['.']

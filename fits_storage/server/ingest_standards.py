@@ -4,7 +4,7 @@ in the Fits Storage System.
 """
 from fits_storage.core.orm.photstandard import PhotStandard
 from fits_storage.core.geometryhacks import add_point
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 mag_pairs = (
     (4, 'u_mag'),
@@ -45,7 +45,7 @@ def ingest_standards(session, filename, logger=DummyLogger()):
                 std = PhotStandard()
                 session.add(std)
             else:
-                logger.warning("Standard %s already exists. Updating from"
+                logger.warning("Standard %s already exists. Updating from "
                                "provided file.", std.name)
             # Populate the details
             try:

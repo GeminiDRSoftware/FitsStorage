@@ -4,7 +4,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, DateTime
 from sqlalchemy.orm import relationship
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.core.orm import Base
 from fits_storage.server.orm.usagelog import UsageLog
@@ -15,6 +15,7 @@ from fits_storage.server.prefix_helpers import get_ipprefix
 from fits_storage.gemini_metadata_utils.telescope_instruments import \
     obs_types, obs_classes
 
+from fits_storage.config import get_config
 
 class UsageLogAnalysis(Base):
     """
@@ -54,6 +55,7 @@ class UsageLogAnalysis(Base):
         self.agent_score = 0
         self.referer_score = 0
         self.total_score = 0
+        self.fsc = get_config()
 
     def analyse(self, api=None, logger=DummyLogger()):
         """
@@ -67,8 +69,13 @@ class UsageLogAnalysis(Base):
         self.referer_score = score_referrer(self.usagelog.referer)
 
         # We don't need a column to store this, as it's a direct lookup
-        # from usagelog. Invalid URLs incur a 5 point penalty
-        status_score = 5 if self.usagelog.status == 404 else 0
+        # from usagelog. Invalid URLs incur a 5 point penalty if they are not
+        # from an allowlisted user agent. The user agent test prevents the
+        # astropy tests that probe non-existent files from being flagged
+        status_score = 0
+        if self.usagelog.user_agent not in self.fsc.allow_user_agent_strings:
+            if self.usagelog.status == 404:
+                status_score = 5
 
         self.total_score = self.uri_score + self.agent_score + \
                            self.referer_score + status_score

@@ -8,6 +8,8 @@
 import pytest
 pytest.register_assert_rewrite('fits_storage_tests.liveserver_tests.helpers')
 
+from fits_storage_tests.liveserver_tests.test_jsonfilelist_etc import *
+from fits_storage_tests.liveserver_tests.test_spot_check_selections import *
 from fits_storage_tests.liveserver_tests.test_cals_gmos import *
 from fits_storage_tests.liveserver_tests.test_cals_ghost import *
 from fits_storage_tests.liveserver_tests.test_cals_niri import *
@@ -16,3 +18,5 @@ from fits_storage_tests.liveserver_tests.test_cals_nifs import *
 from fits_storage_tests.liveserver_tests.test_cals_f2 import *
 from fits_storage_tests.liveserver_tests.test_cals_igrins2 import *
 from fits_storage_tests.liveserver_tests.test_provenance_history import *
+from fits_storage_tests.liveserver_tests.test_sitemap import *
+from fits_storage_tests.liveserver_tests.test_fileserver import *

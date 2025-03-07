@@ -2,6 +2,7 @@
 This module contains a helper class for generating preview images
 """
 import os
+import os.path
 import numpy
 import matplotlib
 matplotlib.use('Agg')
@@ -12,13 +13,10 @@ from sqlalchemy.exc import NoResultFound
 from gemini_instruments.gmos.pixel_functions import get_bias_level
 from gempy.library.spectral import Spek1D
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 from fits_storage.config import get_config
 
 from fits_storage.server.orm.preview import Preview
-
-class PreviewException(Exception):
-    pass
 
 
 class Previewer(object):
@@ -118,7 +116,8 @@ class Previewer(object):
                 status = False
                 upload = False
             else:
-                # Preview file doesn't exist, not in scavenge only mode
+                # Preview file doesn't exist, not in scavenge only mode.
+                # Go ahead and make the preview.
                 status = self.make_preview_file()
                 upload = status
         else:
@@ -160,8 +159,10 @@ class Previewer(object):
             if self.s3.upload_file(self.filename, self.fpfn) is None:
                 self.logger.error("Error uploading %s to S3 as %s",
                                   self.fpfn, self.filename)
+
+            self.delete_file()
+        if self.using_s3:
             try:
-                os.unlink(self.fpfn)
                 os.unlink(self.diskfile.fullpath)
             except Exception:
                 pass
@@ -201,9 +202,9 @@ class Previewer(object):
             self.logger.error("IO Error on %s", self.fpfn)
             self.delete_file()
             return False
-        except PreviewException:
-            self.logger.error("Unable to make preview for %s",
-                              self.diskfile.filename)
+        except Exception:
+            self.logger.error("Exception rendering preview for %s",
+                              self.diskfile.filename, exc_info=True)
             self.delete_file()
             return False
 

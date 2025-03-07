@@ -6,7 +6,7 @@ from fits_storage_tests.code_tests.helpers import make_empty_testing_db_env, \
 
 from fits_storage.db import sessionfactory
 from fits_storage.config import get_config
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
 from fits_storage.core.ingester import Ingester

@@ -8,4 +8,6 @@ User-agent: *
 Allow: /help/
 Allow: /searchform/
 Allow: /programinfo/
+Allow: /sitemap.xml
+Allow: /$
 Disallow: /

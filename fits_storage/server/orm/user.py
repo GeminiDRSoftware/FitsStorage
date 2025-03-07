@@ -23,6 +23,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     orcid_id = Column(String(20), index=True)
+    noirlab_id = Column(Text, index=True)
     username = Column(Text, nullable=False, index=True)
     fullname = Column(Text)
     password = Column(Text)
@@ -32,12 +33,15 @@ class User(Base):
     misc_upload = Column(Boolean)
     user_admin = Column(Boolean)
     file_permission_admin = Column(Boolean)
+    instrument_team = Column(Text)
     superuser = Column(Boolean)
     reset_token = Column(Text)
     reset_token_expires = Column(DateTime)
     cookie = Column(Text, index=True)
     account_created = Column(DateTime)
     password_changed = Column(DateTime)
+    last_login = Column(DateTime)
+    last_login_by = Column(Text)
 
     def __init__(self, username):
         """
@@ -174,11 +178,14 @@ class User(Base):
         """
         self.cookie = standard_b64encode(urandom(256)).decode('utf-8')
 
-    def log_in(self):
+    def log_in(self, by=None):
         """
         Call this when a user successfully logs in.
         Returns the session cookie.
         Don't forget to commit the session afterwards.
+
+        by is a text string describing how the user authenticated. In-use
+        values are 'local_account', 'orcid', 'noirlab'
 
         Returns
         -------
@@ -187,10 +194,15 @@ class User(Base):
         # Void any outstanding password reset tokens
         self._clear_reset_token()
         # Generate a new session cookie only if one doesn't exist
-        # (don't want to expire existing sessions just becaue we logged in from
+        # (don't want to expire existing sessions just because we logged in from
         # a new machine)
         if self.cookie is None:
             self.generate_cookie()
+
+        # Record last_login time and login method
+        self.last_login = datetime.utcnow()
+        self.last_login_by = by
+
         return self.cookie
 
     def log_out_all(self):

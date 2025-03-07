@@ -23,7 +23,7 @@ from xml.dom.minidom import parseString
 
 from fits_storage.gemini_metadata_utils import GeminiProgram
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 
 def extract_data(node, replace=True):

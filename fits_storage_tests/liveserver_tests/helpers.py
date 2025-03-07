@@ -143,3 +143,36 @@ def fetch_helper(base_url, filename, buzzwords):
 
     for word in buzzwords:
         assert word in results
+
+
+def selection_spotcheck_helper(spot_checks):
+    # spot_checks is a list of tuples, each tuple is
+    # (selection, number, filename). For each tuple, we fetch jsonsummary for
+    # the selection, and assert the number of results and that filename is
+    # in the results list. If number==0, filename is ignored
+    server = getserver()
+    for (selection, number, filename) in spot_checks:
+        print(f"Spot checking {selection}: {number} - {filename}")
+        url = f"{server}/jsonsummary/{selection}"
+        req = requests.get(url)
+        assert req.status_code == http.HTTPStatus.OK
+        results = req.json()
+        assert len(results) == number
+        if number != 0:
+            names = []
+            for item in results:
+                names.append(item['name'])
+            assert filename in names
+
+
+def get_fileinfo(filename):
+    # Returns a jsonfile list dict for the filename given
+    url = f"{getserver()}/jsonfilelist/present/{filename}"
+    req = requests.get(url, timeout=10)
+    assert req.status_code == http.HTTPStatus.OK
+    assert req.headers['content-type'] == 'application/json'
+    j = req.json()
+    assert isinstance(j, list)
+    assert len(j) == 1
+    j = j[0]
+    return j

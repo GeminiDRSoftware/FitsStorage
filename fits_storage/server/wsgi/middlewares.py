@@ -106,7 +106,7 @@ class ArchiveContextMiddleware(object):
             self.ctx.usagelog = usagelog
 
             try:
-                self.ctx.usagelog.user_id = request.user.id
+                self.ctx.usagelog.user_id = self.ctx.user.id
             except AttributeError:
                 # No user defined
                 pass
@@ -122,7 +122,8 @@ class ArchiveContextMiddleware(object):
                 self.close()
 
         # If we're the archive, block requests we don't like here.
-        if self.is_archive and not self.ctx.usagelog.user_id:
+        if self.is_archive and not self.ctx.usagelog.user_id and \
+                self.ctx.req.env.user_agent not in fsc.allow_user_agent_strings:
             # User agent check
             for badword in fsc.block_user_agent_substrings:
                 if self.ctx.req.env.user_agent and \
@@ -131,14 +132,21 @@ class ArchiveContextMiddleware(object):
                     usagelog.add_note(f"Blocked - User agent {badword}")
                     self.ctx.resp.content_type = 'text/plain'
                     self.ctx.resp.status = Return.HTTP_FORBIDDEN
+                    usagelog.status = self.ctx.resp.status
+                    session.commit()
                     return self.ctx.resp.append(blocked_msg).respond()
             # IPPrefix check - Find if this request comes from a known IPPrefix
             ipp = get_ipprefix_from_db(session, self.ctx.req.env.remote_ip)
 
             try:
-                allowed_url = self.ctx.req.env.unparsed_uri.startswith('/login')
+                allowed_url = (
+                    self.ctx.req.env.unparsed_uri.startswith('/login') or
+                    self.ctx.req.env.unparsed_uri.startswith('/orcid') or
+                    self.ctx.req.env.unparsed_uri.startswith('/noirlabsso') or
+                    self.ctx.req.env.unparsed_uri.startswith('/logout'))
                 # Maybe we should allow request_account etc. here too, but
-                # that seems risky, so they'll need to use another ISP for that.
+                # that seems risky, so they'll need to use another ISP for that,
+                # or just use orcid.
             except AttributeError:
                 allowed_url = False
 
@@ -147,6 +155,8 @@ class ArchiveContextMiddleware(object):
                 usagelog.add_note(f"Blocked - IPPrefix {ipp.prefix}")
                 self.ctx.resp.content_type = 'text/plain'
                 self.ctx.resp.status = Return.HTTP_FORBIDDEN
+                usagelog.status = self.ctx.resp.status
+                session.commit()
                 return self.ctx.resp.append(blocked_msg).respond()
         try:
             result = self.application(environ, start_response)

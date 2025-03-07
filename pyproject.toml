@@ -4,7 +4,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = "fits_storage"
-version = "3.0.0-dev"
+version = "3.4.0-dev"
 authors = [
   { name="Paul Hirst", email="paul.hirst@noirlab.edu" },
 ]
@@ -21,6 +21,15 @@ classifiers = [
 "Homepage" = "https://www.gemini.edu"
 
 [tool.setuptools]
-packages = ['fits_storage', 'fits_storage.config',
-    'fits_storage.core', 'fits_storage.core.orm', 'fits_storage.db',
-    'fits_storage.cal', 'fits_storage.cal.calibration', 'fits_storage.cal.orm']
+packages = ['fits_storage',
+    'fits_storage.config',
+    'fits_storage.core', 'fits_storage.core.orm',
+    'fits_storage.db', 'fits_storage.db.selection',
+    'fits_storage.cal', 'fits_storage.cal.calibration', 'fits_storage.cal.orm',
+    'fits_storage.fits_validator', 'fits_storage.gemini_metadata_utils',
+    'fits_storage.queues', 'fits_storage.queues.orm',
+    'fits_storage.queues.queue',
+    'fits_storage.scripts',
+    'fits_storage.server', 'fits_storage.server.orm',
+    'fits_storage.server.wsgi', 'fits_storage.web',
+    'fits_storage_tests', 'fits_storage_tests.code_tests']

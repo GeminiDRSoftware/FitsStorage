@@ -322,7 +322,8 @@ def gmos_gratingname(string):
     ambiguous and could be confused with a filter or band (eg 'H'). Also, most
     of the use cases for this are where gratings are swapped.
 
-    This function doesn't match or return the component ID.
+    This function accepts but does not return the component ID. It also
+    accepts and ignores '+' in gmos grating names
 
     If the string argument matches a grating, we return the official name for
     that grating. Otherwise, we return None
@@ -340,6 +341,13 @@ def gmos_gratingname(string):
     """
     gmos_gratings = ('MIRROR', 'B480', 'B600', 'R600', 'R400', 'R831',
                      'R150', 'B1200')
+
+    # trim component ID if present
+    if '_G' in string:
+        string = string.split('_G')[0]
+
+    # remove any leading or trailing + characters
+    string = string.strip('+')
 
     return string if string in gmos_gratings else None
 

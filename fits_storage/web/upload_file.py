@@ -11,7 +11,7 @@ from .user import needs_cookie
 
 from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsRequest
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.config import get_config
 fsc = get_config()

@@ -43,11 +43,15 @@ class CalibrationIgrins2(Calibration):
         return query.all(howmany)
     
     def flat(self, processed=False, howmany=None):
-        # Default 20 flats, closest in time. Note this will split some flat
+        # Default 30 flats, closest in time. Note this will split some flat
         # observations if the science frame is mid-way between 2 groups of flats
-        howmany = howmany if howmany else 20
+        # Updated from 20 to 30 by request from Hyewon 20250123
+        howmany = howmany if howmany else 30
 
-        filters = []
+        # FLAT exposures with less than 2 secs (typically 1.64s) are test frames
+        # that should be excluded. (HS 2025204)
+        filters = [Header.exposure_time >= 2.0]
+        
         query = self.get_query() \
             .flat(processed) \
             .add_filters(*filters) \

@@ -8,7 +8,7 @@ from . import Base
 
 from fits_storage.core.orm.diskfile import DiskFile
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 from fits_storage.file_parser import build_parser
 from fits_storage.gemini_metadata_utils import GeminiProgram, \
     gemini_gain_settings, gemini_readspeed_settings, obs_types, obs_classes, \
@@ -37,6 +37,7 @@ fsc = get_config()
 
 if fsc.is_server:
     from fits_storage.server.orm.obslog_comment import ObslogComment
+    from fits_storage.server.orm.program import Program
 
 
 class Header(Base):
@@ -128,6 +129,13 @@ class Header(Base):
                                        primaryjoin='Header.data_label=='
                                                    'ObslogComment.data_label'
                                        )
+        # Note, we don't define foreign key constraints on Program.program_id
+        # for similar reasons.
+        programs = relationship(Program,
+                                foreign_keys=Program.program_id,
+                                primaryjoin='Header.program_id=='
+                                            'Program.program_id'
+                                )
 
     def __init__(self, diskfile, logger=DummyLogger()):
         self.diskfile_id = diskfile.id
@@ -169,8 +177,12 @@ class Header(Base):
             self.science_verification = bool(gemprog.is_sv)
             self.calibration_program = bool(gemprog.is_cal)
         else:
-            # program ID is None - mark as engineering
-            self.engineering = True
+            # program ID is None - mark as engineering, unless it is
+            # site_monitoring (this avoids all the skycam data being eng)
+            if self.site_monitoring:
+                self.engineering = False
+            else:
+                self.engineering = True
             self.science_verification = False
 
         # Do we have an engineering over-ride header?

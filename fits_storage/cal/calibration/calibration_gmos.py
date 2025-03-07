@@ -107,7 +107,8 @@ class CalibrationGMOS(Calibration):
 
                 # and specphot and spectwilight if it is not a specphot...
                 if 'STANDARD' not in self.types:
-                    self.applicable.append('spectwilight')
+                    # spectwilights are really slitillums
+                    # self.applicable.append('spectwilight')
                     self.applicable.append('specphot')
 
                     if self.descriptors['central_wavelength'] is not None:
@@ -816,8 +817,8 @@ class CalibrationGMOS(Calibration):
                                    Gmos.disperser)
                 # Must match central wavelength to within some tolerance.
                 .tolerance(central_wavelength=tol)
-                # Absolute time separation must be within 1 year
-                .max_interval(days=365)
+                # Absolute time separation must be within 6 months (KL20250204)
+                .max_interval(days=183)
             )
 
         orderby = self._closest_wlen_time_order(time_range=365,

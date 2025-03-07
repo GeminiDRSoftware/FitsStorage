@@ -458,7 +458,7 @@ class SummaryGenerator(object):
             datalabel = str(header.data_label),
             dl        = GeminiDataLabel(header.data_label),
             comment   = comment,
-            display_prog  = False if header.calibration_program else True
+            display_prog = True if header.programs else False
             )
 
     def ut_datetime(self, header, **kw):

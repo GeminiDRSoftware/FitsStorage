@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 __all__ = ["Provenance", "History", "ingest_provenancehistory"]
 

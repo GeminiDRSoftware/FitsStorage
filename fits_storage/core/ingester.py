@@ -3,15 +3,10 @@ This module contains code for ingesting files into the FitsStorage system.
 """
 import os
 
-import dateutil.parser
-
 from sqlalchemy import or_
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
-from fits_storage.queues.queue.exportqueue import ExportQueue
-from fits_storage.queues.queue.calcachequeue import CalCacheQueue
-from fits_storage.queues.queue.previewqueue import PreviewQueue
 
 from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
@@ -32,6 +27,9 @@ if fsc.is_archive:
     from fits_storage.server.orm.miscfile import MiscFile, is_miscfile
 
 if fsc.is_server:
+    from fits_storage.queues.queue.exportqueue import ExportQueue
+    from fits_storage.queues.queue.calcachequeue import CalCacheQueue
+    from fits_storage.queues.queue.previewqueue import PreviewQueue
     from fits_storage.server.orm.reduction import Reduction
     from fits_storage.server.orm.obslog import Obslog
     from fits_storage.server.orm.provenancehistory import \
@@ -47,7 +45,8 @@ class Ingester(object):
     then feed it files one at a time by calling ingest_file().
     """
     def __init__(self, session, logger,
-                 skip_md=True, skip_fv=True, make_previews=False):
+                 skip_md=True, skip_fv=True, make_previews=False,
+                 override_engineering=False):
         """
         Instantiate the Ingester class with a session, logger and configuration
         items.
@@ -66,6 +65,12 @@ class Ingester(object):
             during ingestion is more efficient overall as we already have the
             file fetched, open, and uncompressed, but slows down the ingest
             significantly.
+        override_engineering: bool (default False)
+            - If True, declare the file to be not engineering, irrespective of
+            what the headers suggest. This is intended for use by the DRAGONS
+            local calibration manager as if a user has uploaded a file, they
+            certainly want to use that file irrespective of whether the headers
+            indicate that it's engineering.
         """
 
         self.s = session
@@ -78,11 +83,13 @@ class Ingester(object):
         # convenience and to allow poking them for testing
         fsc = get_config()
         self.storage_root = fsc.storage_root
+        self.is_server = fsc.is_server
         self.using_s3 = fsc.using_s3
         self.using_previews = fsc.using_previews
         self.using_sqlite = fsc.using_sqlite
         self.is_archive = fsc.is_archive
         self.export_destinations = fsc.export_destinations
+        self.override_engineering = override_engineering
 
         # If we're using S3, store the S3 helper object here
         if self.using_s3:
@@ -90,17 +97,18 @@ class Ingester(object):
                                   storage_root=fsc.s3_staging_dir)
             self.local_copy_of_s3_file = None
 
-        # Instantiate some queue manager objects here
-        self.exportqueue = ExportQueue(session, logger=self.l)
-        if self.is_archive:
-            self.calcachequeue = CalCacheQueue(session, logger=self.l)
-        if self.using_previews:
-            self.previewqueue = PreviewQueue(session, logger=self.l)
+        if self.is_server:
+            # Instantiate some queue manager objects here
+            self.exportqueue = ExportQueue(session, logger=self.l)
+            if self.is_archive:
+                self.calcachequeue = CalCacheQueue(session, logger=self.l)
+            if self.using_previews:
+                self.previewqueue = PreviewQueue(session, logger=self.l)
 
     def ingest_file(self, iqe: IngestQueueEntry):
         """
         Ingests a file into the database. If the file isn't known to the
-        database at all, all (file, diskfile, header, etc) table entries are
+        database at all, all (file, diskfile, header, etc.) table entries are
         created. If the file is already in the database but has been
         modified, the existing diskfile entry is marked as not present and
         new diskfile and header entries are created.
@@ -162,7 +170,7 @@ class Ingester(object):
             self.l.debug("Already in file table as %s", trimmed_name)
         except NoResultFound:
             fileobj = File(iqe.filename)
-            self.l.info("Adding new file table entry for %s", iqe.filename)
+            self.l.debug("Adding new file table entry for %s", iqe.filename)
             self.s.add(fileobj)
             self.s.commit()
 
@@ -180,7 +188,10 @@ class Ingester(object):
             # file, as if processing failed after diskfile entry, there could
             # still be value in re-trying those. That will need to be triggered
             # manually by re=adding them with force=True
-            self.s.delete(iqe)
+            if fsc.is_server:
+                # in non-server mode, the iqe is an ORM instance, but is never
+                # added to the session, so we shouldn't attempt to delete it
+                self.s.delete(iqe)
             self.s.commit()
             return True
 
@@ -222,8 +233,10 @@ class Ingester(object):
                                 iqe.filename, destination)
                     self.exportqueue.add(iqe.filename, iqe.path, destination)
 
-        # Finally, delete the iqe we have just completed
-        if iqe.failed is False:
+        # Finally, delete the iqe we have just completed.
+        # If we're not a server (ie the DRAGONS embedded local calibration
+        # manager, the iqe will not be in the session and can't be deleted)
+        if iqe.failed is False and self.is_server:
             self.s.delete(iqe)
         self.s.commit()
 
@@ -334,7 +347,7 @@ class Ingester(object):
                 return None
             self.local_copy_of_s3_file = True
 
-        self.l.debug("Adding new DiskFile entry for file "
+        self.l.info("Adding new DiskFile entry for file "
                      f"name {fileobj.name} - id {fileobj.id}")
 
         # Instantiating the DiskFile object with a bzip2 filename will trigger
@@ -419,6 +432,9 @@ class Ingester(object):
         fulltextheader, we press on regardless after noting the failure as
         that might still get something useful in to the database.
 
+        If override_engineering was set to True when the Ingester was
+        instantiated, we unconditionally set header.engineering=False
+
         Parameters
         ----------
         diskfile - the diskfile to add
@@ -458,21 +474,26 @@ class Ingester(object):
             iqe.seterror(message)
             self.s.commit()
 
-        try:
-            self.l.debug("Adding Provenance and History")
-            ingest_provenancehistory(diskfile, logger=self.l)
-            self.s.commit()
-        except:
-            message = f"Exception adding Provenance and History for " \
-                      f"{diskfile.filename}- see log file"
-            self.l.error(message, exc_info=True)
-            self.s.rollback()
-            iqe.seterror(message)
-            self.s.commit()
+        if self.is_server:
+            try:
+                self.l.debug("Adding Provenance and History")
+                ingest_provenancehistory(diskfile, logger=self.l)
+                self.s.commit()
+            except:
+                message = f"Exception adding Provenance and History for " \
+                          f"{diskfile.filename}- see log file"
+                self.l.error(message, exc_info=True)
+                self.s.rollback()
+                iqe.seterror(message)
+                self.s.commit()
 
         try:
             self.l.debug("Adding new Header entry")
             header = Header(diskfile, self.l)
+            if header.engineering and self.override_engineering is True:
+                self.l.warn("Overriding engineering status on file %s",
+                            diskfile.filename)
+                header.engineering = False
             self.s.add(header)
             self.s.commit()
         except:

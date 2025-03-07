@@ -73,7 +73,7 @@ if options.odb is None and options.xmlfile is None:
     logger.error("No ODB specified, exiting")
     exit()
 
-# Are we using and xml inject?
+# Are we using an xml inject?
 if options.xmlfile:
     with open(options.xmlfile) as f:
         xml = f.read()
@@ -83,6 +83,9 @@ else:
 # Get the programs as a list of dictionaries
 programs = get_odb_prog_dicts(options.odb, semester, options.active,
                               options.notifypi, logger, xml_inject=xml)
+if programs is None:
+    logger.error("Failed to get programs from ODB. Exiting")
+    exit(1)
 logger.info("Got %d programs from ODB", len(programs))
 
 if options.dryrun:

@@ -26,7 +26,7 @@ from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsRequest
 
 from fits_storage.server.orm.fileuploadlog import FileUploadLog
 
-from fits_storage.logger import DummyLogger
+from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.config import get_config
 
@@ -58,7 +58,7 @@ def miscfiles(handle=None):
 @templating.templated("miscfiles/miscfiles.html")
 def bare_page():
     user = get_context().user
-    can_add = user.misc_upload if user else False
+    can_add = (user.misc_upload or user.superuser) if user else False
     return dict(can_add=can_add)
 
 

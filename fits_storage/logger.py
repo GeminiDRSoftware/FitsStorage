@@ -103,23 +103,3 @@ def setlogfilesuffix(suffix):
     new_filehandler.setFormatter(formatter)
     logger.removeHandler(filehandler)
     logger.addHandler(new_filehandler)
-
-
-class DummyLogger(object):
-    """
-    A dummy object that you can treat as a logger but which
-    does absolutely nothing.
-    """
-    def noop(self, *args, **kwargs):
-        pass
-
-    def justprint(self, *args, **kwargs):
-        print(*args)
-
-    def __init__(self, print=False):
-        f = self.justprint if print else self.noop
-
-        self.info = f
-        self.error = f
-        self.debug = f
-        self.warning = f

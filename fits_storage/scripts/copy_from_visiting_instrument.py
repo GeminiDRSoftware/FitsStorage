@@ -6,9 +6,9 @@ import time
 from optparse import OptionParser
 
 
-from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.server.visitor_instrument_helper import AlopekeVIHelper, \
-    ZorroVIHelper, IGRINSVIHelper
+    ZorroVIHelper, IGRINSVIHelper, MAROONXVIHelper
 from fits_storage.queues.queue.ingestqueue import IngestQueue
 from fits_storage.queues.orm.ingestqueueentry import IngestQueueEntry
 
@@ -80,6 +80,8 @@ parser.add_option("--zorro", action="store_true", dest="zorro",
                   default=False, help="Copy Zorro data")
 parser.add_option("--igrins", action="store_true", dest="igrins",
                   default=False, help="Copy IGRINS data")
+parser.add_option("--maroonx", action="store_true", dest="maroonx",
+                  default=False, help="Copy MAROON-X data")
 parser.add_option("--datepre", action="store", dest="datepre", default=None,
                   help="Date prefix to filter directory names on")
 parser.add_option("--onepass", action="store_true", dest="onepass",
@@ -92,13 +94,28 @@ parser.add_option("--destdir", action="store", default=None, dest="destdir",
                   help="Destination Directory to copy to (omit for default)")
 (options, args) = parser.parse_args()
 
+instrument = None
+if options.alopeke:
+    instrument = 'alopeke'
+elif options.zorro:
+    instrument = 'zorro'
+elif options.igrins:
+    instrument = 'igrins'
+elif options.maroonx:
+    instrument = 'maroonx'
+else:
+    logger.info("You must supply exactly one of alopeke, zorro, igrins or "
+                "maroonx")
+    exit(3)
+
 # Logging level to debug?
 setdebug(options.debug)
 setdemon(options.demon)
+setlogfilesuffix(instrument)
 
 # Announce startup
-logger.info("***  copy_from_visiting_instrument.py - starting up at %s"
-            % datetime.datetime.now())
+logger.info("***  copy_from_visiting_instrument.py - starting up at %s for "
+            "instrument %s", datetime.datetime.now(), instrument)
 
 # Need to set up the global loop variable before we define the signal
 # handlers. This is the loop forever variable later, allowing us to stop
@@ -138,9 +155,7 @@ if fsc.using_s3:
 if options.demon and options.force:
     logger.info("Force not not available when running as daemon")
     exit(2)
-if int(options.alopeke) + int(options.zorro) + int(options.igrins) != 1:
-    logger.info("You must supply exactly one of alopeke, zorro or igrins")
-    exit(3)
+
 
 # Get the VI Helper instance
 vihelper = None
@@ -152,6 +167,9 @@ elif options.zorro:
                                dest_dir=options.destdir)
 elif options.igrins:
     vihelper = IGRINSVIHelper(logger=logger, staging_dir=options.srcdir,
+                               dest_dir=options.destdir)
+elif options.maroonx:
+    vihelper = MAROONXVIHelper(logger=logger, staging_dir=options.srcdir,
                                dest_dir=options.destdir)
 
 
@@ -191,12 +209,16 @@ with session_scope() as session:
                         logger.info("Dry run, not actually copying %s", filename)
                         continue
 
+                    # 20241011 policy change - do *not* compress the files
+                    # on dataflow. It just creates overhead in inevitable
+                    # subsequent updates.
                     logger.info("Copying %s", filename)
-                    if vihelper.fix_and_copy(filename):
+                    if vihelper.fix_and_copy(filename, compress=False):
                         logger.debug("Copy appeared to succeed")
                         # Add to ingest queue?
                         if not options.noqueue:
-                            path = f"{vihelper.instrument_name.lower()}/" \
+                            filename = filename.removesuffix(".bz2")
+                            path = f"{vihelper.instrument_dirname}/" \
                                    f"{vihelper.subdir}"
                             logger.info("Adding %s in %s to ingest queue",
                                         filename, path)
@@ -207,8 +229,8 @@ with session_scope() as session:
 
             # If we didn't do anything, wait a while before looping
             if loop and not did_something:
-                logger.info("No action taken this pass, waiting 60 secs")
-                time.sleep(60)
+                logger.info("No action taken this pass, waiting 1 hour")
+                time.sleep(3600)
 
         except KeyboardInterrupt:
             loop=False

@@ -1,0 +1,23 @@
+body {
+ margin-left: 10px;
+ margin-right: 10px;
+}
+
+.loginboxes {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.loginbox {
+  background-color: AliceBlue;
+  flex-basis: 33%;
+  flex-grow: 1;
+  margin: 8px;
+  padding: 8px;
+}
+
+.loginlogo {
+  width:100%
+}
