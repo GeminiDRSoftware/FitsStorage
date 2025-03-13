@@ -47,9 +47,12 @@ class CalibrationGNIRS(Calibration):
             self.applicable.append('lampoff_flat')
             self.applicable.append('processed_flat')
 
-        # Spectroscopy OBJECT frames require a flat and arc (if < L band) and telluric_standard
+        # Spectroscopy OBJECT frames require a flat and arc (if < L band) and telluric
         if (self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == True):
-            self.applicable.append('telluric_standard')
+            self.applicable.append('telluric')
+            self.applicable.append('processed_telluric')
+            self.applicable.append('standard')
+            self.applicable.append('processed_standard')
             if self.descriptors['central_wavelength'] < 2.8:
                 self.applicable.append('arc')
             # GNIRS spectroscopy flats are a little complex
@@ -425,20 +428,22 @@ class CalibrationGNIRS(Calibration):
         [desc(Header.observation_id == self.descriptors['observation_id'])])
 
 
-    def telluric_standard(self, processed=False, howmany=None):
+    def telluric(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS telluric observations for this target frame
 
-        This will find GNIRS telluric standards with matching wavelength, disperser, focal plane mask,
-        camera, and filter name.  It looks only for a qa_state of 'Pass' or 'Undefined'.  It matches
-        within 1 day.
+        This will find GNIRS telluric standards with matching wavelength,
+        disperser, focal plane mask, camera, array name, and filter name.
+        For raw data, it looks only for a qa_state of 'Pass' or 'Undefined'.
+        For processed data, the 'TELLURIC' tag must be present.
+        It matches within 1 day.
 
         Parameters
         ----------
 
         processed : bool
             Indicate if we want to retrieve processed or raw telluric standards
-        howmany : int, default 1 if processed else 10
+        howmany : int, default 1 if processed else 8
             How many matches to return
 
         Returns
@@ -448,19 +453,73 @@ class CalibrationGNIRS(Calibration):
         if howmany is None:
             howmany = 1 if processed else 8
 
-        query = (
-            self.get_query()
-                .telluric_standard(processed=processed, OBJECT=True, partnerCal=True)
-                # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name
-                .match_descriptors(Header.central_wavelength,
-                                   Gnirs.disperser,
-                                   Gnirs.focal_plane_mask,
-                                   Gnirs.camera,
-                                   Gnirs.array_name,
-                                   Gnirs.filter_name)
-                # Usable is not OK for these - may be partly saturated for example
-                .add_filters(or_(Header.qa_state == 'Pass', Header.qa_state == 'Undefined'))
-                # Absolute time separation must be within 1 day
-                .max_interval(days=1)
-            )
+        query = self.get_query().spectroscopy(True).OBJECT()
+        # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name
+        query = query.match_descriptors(Header.central_wavelength,
+                                        Header.spectroscopy,
+                                        Gnirs.disperser,
+                                        Gnirs.focal_plane_mask,
+                                        Gnirs.camera,
+                                        Gnirs.array_name,
+                                        Gnirs.filter_name)
+        if processed:
+            query = query.filter(Header.types.contains('TELLURIC'))
+        else:
+            query = query.raw().filter(Header.observation_class == 'partnerCal')
+            # Usable is not OK for these - may be partly saturated for example
+            query = query.add_filters(or_(Header.qa_state == 'Pass', Header.qa_state == 'Undefined'))
+
+        # Absolute time separation must be within 1 day
+        query = query.max_interval(days=1)
+
+        return query.all(howmany)
+
+    def standard(self, processed=False, howmany=None):
+        """
+        Find the optimal GNIRS (spectro)photometric standard observations for
+        this target frame
+
+        This will find GNIRS flux standards with matching wavelength,
+        disperser, focal plane mask, camera, array name, and filter name.
+        For raw data, it looks only for a qa_state of 'Pass' or 'Undefined'.
+        For processed data, the 'STANDARD' tag must be present.
+        It matches within 1 day.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw (spectro)
+             photometric standards
+        howmany : int, default 1 if processed else 8
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
+
+        if howmany is None:
+            howmany = 1 if processed else 8
+
+        query = self.get_query().spectroscopy(True).OBJECT()
+        # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name
+        query = query.match_descriptors(Header.central_wavelength,
+                                        Header.spectroscopy,
+                                        Gnirs.disperser,
+                                        Gnirs.focal_plane_mask,
+                                        Gnirs.camera,
+                                        Gnirs.array_name,
+                                        Gnirs.filter_name)
+        if processed:
+            query = query.filter(Header.types.contains('STANDARD'))
+        else:
+            query = query.raw().filter(Header.observation_class == 'partnerCal')
+            # Usable is not OK for these - may be partly saturated for example
+            query = query.add_filters(
+                or_(Header.qa_state == 'Pass', Header.qa_state == 'Undefined'))
+
+        # Absolute time separation must be within 1 day
+        query = query.max_interval(days=1)
+
         return query.all(howmany)
