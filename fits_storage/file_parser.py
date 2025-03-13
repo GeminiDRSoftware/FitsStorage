@@ -296,8 +296,12 @@ class AstroDataFileParser(FileParser):
 
     def central_wavelength(self):
         if 'SPECT' in self.ad.tags and 'GPI' not in self.ad.tags:
-            return self._try_or_none(lambda: self.ad.central_wavelength(asMicrometers=True),
+            dv= self._try_or_none(lambda: self.ad.central_wavelength(asMicrometers=True),
                                      "Unable to parse wavelength from header")
+            if dv is not None:
+                # The descriptor returns a numpy.float32 sometimes. SQLAlchemy
+                # can't handle that.
+                return float(dv)
         return None
 
     def coadds(self):

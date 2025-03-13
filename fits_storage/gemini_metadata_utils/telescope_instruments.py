@@ -280,14 +280,16 @@ def gemini_reduction_state(string: str) -> str:
 
 
 cal_types = (
-    'bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark',
-    'processed_flat', 'processed_arc', 'processed_fringe', 'pinhole',
-    'processed_pinhole', 'ronchi_mask', 'spectwilight', 'lampoff_flat',
-    'qh_flat', 'specphot', 'photometric_standard', 'telluric_standard',
-    'domeflat', 'lampoff_domeflat', 'mask', 'polarization_standard',
-    'astrometric_standard', 'polarization_flat', 'processed_standard',
-    'processed_slitillum', 'slitillum', 'processed_bpm',
+    'bias', 'processed_bias', 'dark', 'processed_dark', 'processed_bpm',
+    'flat', 'processed_flat', 'arc', 'processed_arc',
+    'pinhole', 'processed_pinhole', 'processed_fringe','ronchi_mask',
+    'lampoff_flat', 'qh_flat', 'domeflat', 'lampoff_domeflat',
+    'mask', 'slitillum', 'processed_slitillum',
+    'standard', 'processed_standard', 'telluric', 'processed_telluric',
+    'polarization_standard', 'astrometric_standard', 'polarization_flat',
+    'specphot', 'photometric_standard',
 )
+# photometric_standard and specphot should be deprecated in favor of standard
 
 
 def gemini_caltype(string: str) -> str:

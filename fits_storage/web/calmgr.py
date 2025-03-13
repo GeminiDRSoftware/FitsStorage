@@ -51,7 +51,8 @@ args_for_cals = {
     'processed_flat': ('flat', {'processed': True}),
     'processed_standard': ('standard', {'processed': True}),
     'processed_bpm': ('bpm', {'processed': True}),
-    'processed_pinhole': ('pinhole', {'processed': True})
+    'processed_pinhole': ('pinhole', {'processed': True}),
+    'processed_telluric': ('telluric', {'processed': True})
     }
 
 
