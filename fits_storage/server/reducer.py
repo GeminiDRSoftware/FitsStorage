@@ -84,6 +84,7 @@ class Reducer(object):
         self.makeworkingdir()
         self.getrawfiles()
         self.call_reduce()
+        self.set_reduction_metadata()
         self.capture_reduced_files()
         if not self.nocleanup:
             self.cleanup()
@@ -179,17 +180,39 @@ class Reducer(object):
 
         return True
 
+    def set_reduction_metadata(self):
+        # Ensure that the files have the appropriate reduction
+        # metadata:
+        # PROCMODE [Science-Quality | Quick-Look]
+        # PROCSOFT [DRAGONS | Free form string]
+        # PROCSVER [version string]
+        # should all have been added by DRAGONS.
+        #
+        # Processing Intent - PROCITNT [Science-Quality | Quick-Look]
+        # Processing initiated by - PROCINBY [Free form string,
+        #           with reserved values such as GOA, Gemini-SOS, etc]
+        # Processing Level - PROCLEVL [Integer. Blank for undefined]
+        # Processing Tag - PROCTAG [Gemini assigned string]
+        pass
+
     def capture_reduced_files(self):
+        # self.set_reduction_metadata() should have run on the files before
+        # getting to this point, so they should be ready to go by now.
+
+        # We may need to support multiple ways of capturing the products:
+        # 1) Ingest locally  - ie Copy the files to upload_staging, and add a
+        # fileops queue entry to upload_ingest them. If this is an archive
+        # worker host, it would need permission to access S3 to upload, and then
+        # the actual ingest would happen on the archive server where
+        # service_ingest_queue is running
+        # 2) We could simplify things by HTTP POSTing the file directly to
+        # another fits server (eg the archive). This has the disadvantage that
+        # the transfer is not queued, but the advantage that the server running
+        # the reduction needs no S3 write access. It will need read access
+        # anyway unless we re-factor things to HTTP GET the input files rather
+        # than fetching directly from S3.
+
         self.l.info("Capture Reduced Files not implemented yet")
-        # Consideration of how we will use this operationally. If we are
-        # running on a "standalone" fits storage instance, the simplest thing
-        # would be to copy the files to storage_root and ingest them, having
-        # configured export_destinations to push these to the archive and tape
-        # server as appropriate. However, we have to have direct access to the
-        # database where the reducequeue lives, which would nominally be the
-        # archive database, so we're not standalone in the sense that we don't
-        # have an independent database. In that context, what we want to do is
-        # upload the files to S3, and then ingest them, ie upload_ingest.
 
         return False
 
