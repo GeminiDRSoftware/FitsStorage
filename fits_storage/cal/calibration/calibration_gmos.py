@@ -105,10 +105,9 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('flat')
                 self.applicable.append('processed_flat')
 
-                # and specphot and spectwilight if it is not a specphot...
+                # and specphot and if it is not a specphot...
+                # specphot should be replaced with standard now.
                 if 'STANDARD' not in self.types:
-                    # spectwilights are really slitillums
-                    # self.applicable.append('spectwilight')
                     self.applicable.append('specphot')
 
                     if self.descriptors['central_wavelength'] is not None:
@@ -695,67 +694,6 @@ class CalibrationGMOS(Calibration):
         return results
 
 
-    # We don't handle processed ones (yet)
-    @not_processed
-    @not_imaging
-    def spectwilight(self, processed=False, howmany=None):
-        """
-        Note - DRAGONS has no concept of a spectwilight. The slit illumination
-        function is a slitillum. This function may be deprecated in future.
-
-        Method to find the best spectwilight - ie spectroscopy twilight
-        ie MOS / IFU / LS twilight
-
-        This will match on 'Twilight' spectroscopy for the same instrument, filter,
-        focal plane mask, disperser, and amp read area with the same
-        x and y binning and a central wavelength within 0.02 microns within 1 year.
-
-        Parameters
-        ----------
-
-        processed : bool
-            Indicate if we want to retrieve processed or raw spectwilights.  Currently processed are not supported.
-        howmany : int, default 1
-            How many matches to return
-
-        Returns
-        -------
-            list of :class:`fits_storage.orm.header.Header` records that match the criteria
-        """
-        # Default number to associate
-        howmany = howmany if howmany else 2
-
-        filters = []
-        # The science amp_read_area must be equal or substring of the
-        # cal amp_read_area. If the science frame uses all the amps, then they
-        # must be a direct match as all amps must be there - this is more efficient
-        # for the DB as it will use the index. Otherwise, the science frame could
-        # have a subset of the amps thus we must do the substring match.
-
-        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
-            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
-        elif self.descriptors['amp_read_area'] is not None:
-                filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
-
-        return (
-            self.get_query()
-                # They are OBJECT spectroscopy frames with target twilight
-                .raw().OBJECT().spectroscopy(True).object('Twilight')
-                .add_filters(*filters)
-                .match_descriptors(Header.instrument,
-                                   Gmos.detector_x_bin,
-                                   Gmos.detector_y_bin,
-                                   Gmos.filter_name,
-                                   Gmos.disperser,
-                                   Gmos.focal_plane_mask)
-                # Must match central wavelength to within some tolerance.
-                # We don't do separate ones for dithers in wavelength?
-                # tolerance = 0.02 microns
-                .tolerance(central_wavelength=self._wavelength_tolerance())
-                # Absolute time separation must be within 1 year
-                .max_interval(days=365)
-                .all(howmany)
-            )
 
     # We don't handle processed ones (yet)
     @not_processed
@@ -781,6 +719,9 @@ class CalibrationGMOS(Calibration):
         -------
             list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
+        # TODO - Deprecate this and ensure "standard" is functionally equivalent
+        # in spectroscopy.
+
         # Default number to associate
         howmany = howmany if howmany else 4
 
