@@ -41,6 +41,9 @@ class ReduceQueueEntry(OrmQueueMixin, Base):
     intent = Column(Text)  # Goes into PROCITNT header
     initiatedby = Column(Text)  # Goes into PROCINBY header
     tag = Column(Text)  # Goes into PROCTAG header
+    recipe = Column(Text)
+    capture_files = Column(Boolean)
+    capture_monitoring = Column(Boolean)
     error = Column(Text)
 
     def __init__(self, filenames):

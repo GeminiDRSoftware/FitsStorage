@@ -99,7 +99,18 @@ class Reducer(object):
             self.set_reduction_metadata()
 
         if not self.rqe.failed:
-            self.capture_reduced_files()
+            if self.rqe.capture_files:
+                self.capture_reduced_files()
+            else:
+                self.l.info("Not capturing Output files from this processing "
+                            "run")
+
+        if not self.rqe.failed:
+            if self.rqe.capture_monitoring:
+                self.capture_monitoring()
+            else:
+                self.l.info("Not capturing monitoring values from this "
+                            "processing run")
 
         if self.nocleanup or (self.fsc.fits_system_status == 'development'
                               and self.rqe.failed):
@@ -270,7 +281,7 @@ class Reducer(object):
         #
         # Processing Intent - PROCITNT [Science-Quality | Quick-Look]
         # Processing initiated by - PROCINBY [Free form string,
-        #           with reserved values such as GOA, Gemini-SOS, etc]
+        #           with reserved values such as GOA, Gemini-SOS, e.t.c.]
         # Processing Level - PROCLEVL [Integer. Blank for undefined]
         # Processing Tag - PROCTAG [Gemini assigned string]
 
@@ -363,6 +374,12 @@ class Reducer(object):
 
             foq.add(fo_req, filename=filename, response_required=False)
 
+    def capture_monitoring(self):
+        """
+        Capture monitoring values from the reduced data files
+        """
+        self.l.warning("reducer capture_monitoring() not implemented yet")
+
 
     def cleanup(self):
         """
@@ -414,6 +431,12 @@ class Reducer(object):
         # Tell Reduce() not to upload calibrations. We do that ourselves here.
         reduce.upload = None
 
+        # Are we specifying a recipe name?
+        if self.rqe.recipe:
+            self.l.info(f"Specifying recipe name {self.rqe.recipe} for "
+                        f"Reduce()")
+            reduce.recipename = self.rqe.recipe
+
         # chdir into the working directory for DRAGONS. Store the current
         # working dir so we can go back after
         pwd = os.getcwd()
@@ -431,6 +454,6 @@ class Reducer(object):
         finally:
             os.chdir(pwd)
 
-        self.l.info("DRAGONS Reduce.runr() appeared to complete sucessfully")
+        self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
         self.reduced_files = reduce.output_filenames
         self.l.info("Output files are: %s", reduce.output_filenames)
