@@ -34,6 +34,8 @@ class ReduceQueue(Queue):
         rqe.intent = intent
         rqe.tag = tag
         rqe.recipe = recipe
+        rqe.capture_files = capture_files
+        rqe.capture_monitoring = capture_monitoring
 
         self.session.add(rqe)
         try:

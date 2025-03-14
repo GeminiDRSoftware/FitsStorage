@@ -17,6 +17,9 @@ from fits_storage.gemini_metadata_utils import gemini_processing_modes
 from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsRequest
 from fits_storage.queues.orm.reducequeentry import ReduceQueueEntry
 
+from fits_storage.server.orm.monitoring import Monitoring
+from fits_storage.server.orm.processinglog import ProcessingLog
+
 # DRAGONS imports
 from recipe_system.reduction.coreReduce import Reduce
 from gempy.utils.logutils import customize_logger
@@ -398,6 +401,7 @@ class Reducer(object):
     def call_reduce(self):
         """
         Invoke the DRAGONS Reduce() class.
+        Add an entry to ProcessingLog
 
         Set self.rqe.failed via logrqeerror if fails.
         """
@@ -417,6 +421,7 @@ class Reducer(object):
         self.l.debug("DRAGONS [calibs] Configuration:")
         for key in dragons_config['calibs']:
             self.l.debug(f">>>    {key} : {dragons_config['calibs'][key]}")
+
 
         # Call Reduce()
         try:
@@ -445,6 +450,9 @@ class Reducer(object):
                     self.workingdir)
         os.chdir(self.workingdir)
 
+        processinglog = ProcessingLog(self.rqe)
+        self.s.add(processinglog)
+        self.s.commit()
         try:
             reduce.runr()
         except Exception:
@@ -454,6 +462,9 @@ class Reducer(object):
         finally:
             os.chdir(pwd)
 
-        self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
         self.reduced_files = reduce.output_filenames
+        processinglog.end(len(self.reduced_files), self.rqe.failed)
+        self.s.commit()
+
+        self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
         self.l.info("Output files are: %s", reduce.output_filenames)
