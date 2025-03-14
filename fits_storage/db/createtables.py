@@ -100,6 +100,7 @@ if fsc.is_server:
     from fits_storage.server.orm.obslog import Obslog
     from fits_storage.server.orm.obslog_comment import ObslogComment
     from fits_storage.server.orm.reduction import Reduction
+    from fits_storage.server.orm.monitoring import Monitoring
 
     from fits_storage.server.orm.qastuff import QAreport, \
         QAmetricIQ, QAmetricZP, QAmetricSB, QAmetricPE
