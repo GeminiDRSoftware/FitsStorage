@@ -34,6 +34,19 @@ if __name__ == "__main__":
                         help="Filename of a file containing a list of files to"
                              "add to the queue as a single entry")
 
+    parser.add_argument("--initiatedby", action="store", type=str, default=None,
+                        help="Processing Initiated By record for reduced data."
+                             "Cannot be defaulted in production environments")
+
+    parser.add_argument("--intent", action="store", type=str, default=None,
+                        help="Processing Intent record for reduced data. "
+                             "Science-Quality or Quick-Look. Can use sq or ql."
+                             "Cannot be defaulted in production environments")
+
+    parser.add_argument("--tag", action="store", type=str, default=None,
+                        help="Processing Tag record for reduced data."
+                             "Cannot be defaulted in production environments")
+
     parser.add_argument("--logsuffix", action="store", type=str,
                         dest="logsuffix", default=None,
                         help="Extra suffix to add on logfile")
@@ -52,6 +65,29 @@ if __name__ == "__main__":
     logger.info("*** add_to_reduce_queue.py - starting up at {}"
                 .format(datetime.datetime.now()))
     logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
+
+    initiatedby = options.initiatedby
+    intent = options.intent
+    tag = options.tag
+    # Check for default processing records in production servers
+    if fsc.fits_system_status == 'development':
+        if initiatedby is None:
+            logger.warning("No Processing Initiated By specified. "
+                           "Setting to DEVELOPER")
+            initiatedby = 'DEVELOPER'
+        if intent is None:
+            logger.warning("No Processing Intent specified. "
+                           "Setting to Quick-Look")
+            intent = 'Quick-Look'
+        if tag is None:
+            logger.warning("No Processing Tag specified."
+                           "Setting to TEST")
+            tag = 'TEST'
+    else:
+        # Not a development server
+        if None in (initiatedby, intent, tag):
+            logger.error("Required Processing Record not specified, aborting")
+            exit(1)
 
     if options.filenames:
         # Just add a list of filename
@@ -100,7 +136,7 @@ if __name__ == "__main__":
             rq = ReduceQueue(session, logger=logger)
             logger.info("Queuing a batch of %s files for reduce, starting with %s",
                         len(validfiles), validfiles[0])
-            rq.add(validfiles)
+            rq.add(validfiles, intent=intent, initiatedby=initiatedby, tag=tag)
         else:
             logger.error("No valid files to add")
 

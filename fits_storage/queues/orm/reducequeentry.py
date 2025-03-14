@@ -38,6 +38,9 @@ class ReduceQueueEntry(OrmQueueMixin, Base):
     added = Column(DateTime)
     sortkey = Column(Text, index=True)
     filename = Column(Text)
+    intent = Column(Text)  # Goes into PROCITNT header
+    initiatedby = Column(Text)  # Goes into PROCINBY header
+    tag = Column(Text)  # Goes into PROCTAG header
     error = Column(Text)
 
     def __init__(self, filenames):

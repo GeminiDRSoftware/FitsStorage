@@ -48,7 +48,8 @@ class FileUploadLog(Base):
         usagelog : :class:`~usagelog.Usagelog`
             Corresponding usagelog entry
         """
-        self.usagelog_id = usagelog.id
+        if usagelog is not None:
+            self.usagelog_id = usagelog.id
 
     def add_note(self, note):
         """

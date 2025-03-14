@@ -7,20 +7,24 @@ import os.path
 import shutil
 import bz2
 
+from astropy.io import fits
+
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
 from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.gemini_metadata_utils import gemini_processing_modes
 
-from fits_storage.config import get_config
-
-if get_config().using_s3:
-    from fits_storage.server.aws_s3 import get_helper
+from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsRequest
+from fits_storage.queues.orm.reducequeentry import ReduceQueueEntry
 
 # DRAGONS imports
 from recipe_system.reduction.coreReduce import Reduce
 from gempy.utils.logutils import customize_logger
 from recipe_system import cal_service
 
+from fits_storage.config import get_config
+if get_config().using_s3:
+    from fits_storage.server.aws_s3 import get_helper
 
 class Reducer(object):
     """
@@ -49,7 +53,7 @@ class Reducer(object):
         session - database session
         logger - Fits Storage Logger
         """
-        fsc = get_config()
+        self.fsc = get_config()
         self.s = session
         self.l = logger
         self.nocleanup = nocleanup
@@ -57,8 +61,8 @@ class Reducer(object):
 
         # We pull these configuration values into the local namespace for
         # convenience and to allow poking them for testing
-        self.reduce_dir = fsc.reduce_dir
-        self.using_s3 = fsc.using_s3
+        self.reduce_dir = self.fsc.reduce_dir
+        self.using_s3 = self.fsc.using_s3
 
         # We store the reducequeueentry passed for reduction in the class for
         # convenience and to facilitate the seterror convenience function
@@ -80,14 +84,82 @@ class Reducer(object):
         """
         This is the main action function for the reducer
         """
+        self.validate()
 
-        self.makeworkingdir()
-        self.getrawfiles()
-        self.call_reduce()
-        self.set_reduction_metadata()
-        self.capture_reduced_files()
-        if not self.nocleanup:
+        if not self.rqe.failed:
+            self.makeworkingdir()
+
+        if not self.rqe.failed:
+            self.getrawfiles()
+
+        if not self.rqe.failed:
+            self.call_reduce()
+
+        if not self.rqe.failed:
+            self.set_reduction_metadata()
+
+        if not self.rqe.failed:
+            self.capture_reduced_files()
+
+        if self.nocleanup or (self.fsc.fits_system_status == 'development'
+                              and self.rqe.failed):
+            self.l.warning("Not cleaning up working directory")
+        else:
             self.cleanup()
+
+        if self.rqe.failed:
+            return False
+
+        # Yay. If we got here, we successfully reduced the data.
+        self.l.debug("Deleting competed rqe id %d", self.rqe.id)
+        self.s.delete(self.rqe)
+
+        # Delete any equivlent rqe entries that are marked as failed
+        failed_rqes = self.s.query(ReduceQueueEntry) \
+            .filter(ReduceQueueEntry.fail_dt != self.rqe.fail_dt_false) \
+            .filter(ReduceQueueEntry.filename == self.rqe.filename) \
+            .filter(ReduceQueueEntry.filenames == self.rqe.filenames) \
+            .filter(ReduceQueueEntry.intent == self.rqe.intent) \
+            .filter(ReduceQueueEntry.initiatedby == self.rqe.initiatedby) \
+            .filter(ReduceQueueEntry.tag == self.rqe.tag)
+
+        for failed_rqe in failed_rqes:
+            self.l.info("Deleting failed reducequeue entry %d having "
+                        "successfully processed equivalent request" %
+                        failed_rqe.id)
+            self.s.delete(failed_rqe)
+        self.s.commit()
+
+    def validate(self):
+        """
+        Validate the request looks sensible and has the required metadata
+        before starting work on it.
+
+        Set self.rqe.failed via logrqeerror if not.
+
+        """
+        if len(self.rqe.filenames) == 0:
+            self.logrqeerror("Reducer Validation failed: No files to reduce")
+
+        if self.rqe.intent not in gemini_processing_modes:
+            self.logrqeerror("Reducer Validation failed: Invalid "
+                             f"Processing Intent: {self.rqe.intent}")
+
+        if not self.rqe.initiatedby:
+            self.logrqeerror("Reducer Validation failed: No Processing "
+                             "Initiated By value")
+        if not self.rqe.tag:
+            self.logrqeerror("Reducer Validation failed: No Processing Tag "
+                             "value")
+
+        # Check upload_staging_dir is configured and exists as we need it to
+        # capture the reduced products.
+        if not (self.fsc.upload_staging_dir and
+                os.path.exists(self.fsc.upload_staging_dir) and
+                os.path.isdir(self.fsc.upload_staging_dir)):
+            self.logrqeerror(f"Upload Staging Directory "
+                             f"{self.fsc.upload_staging_dir} not valid")
+
 
     def makeworkingdir(self):
         """
@@ -100,24 +172,26 @@ class Reducer(object):
         reduce_dir does not exist in a suitable form.
         """
         if not os.path.isdir(self.reduce_dir):
-            self.logrqeerror("Configured reduce_dir does not exist or is not a "
-                             "directory: %s" % self.reduce_dir)
-            raise OSError
+            self.logrqeerror(f"Configured reduce_dir does not exist or is not a "
+                             f"directory: {self.reduce_dir}")
+            return
 
         self.workingdir = os.path.join(self.reduce_dir, str(self.rqe.id))
 
         if os.path.exists(self.workingdir):
-            self.logrqeerror("Reduce Working directory for this reduce queue"
-                             "entry ID already exists: %s." % self.workingdir)
-            raise OSError
+            self.logrqeerror(f"Reduce Working directory for this reduce queue"
+                             f"entry ID already exists: {self.workingdir}")
+            return
 
         self.l.info("Creating working directory for this reduction job: %s",
                     self.workingdir)
         try:
             os.mkdir(self.workingdir)
         except Exception:
-            self.l.error("Failed to create working directory for this "
-                         "reduction job at %s", self.workingdir, exc_info=True)
+            self.logrqeerror(f"Failed to create working directory for this "
+                             f"reduction job at {self.workingdir}",
+                             exc_info=True)
+            raise
 
 
     def getrawfiles(self):
@@ -125,9 +199,8 @@ class Reducer(object):
         Copy the raw files into the working directory, and uncompress them if
         required.
 
-        Returns True on success, False on failure.
+        Set self.rqe.failed via logrqeerror if fails.
         """
-
         for filename in self.rqe.filenames:
             possible_filenames = [filename, filename+'.bz2']
             query = self.s.query(DiskFile).filter(DiskFile.present == True)\
@@ -137,7 +210,7 @@ class Reducer(object):
             except NoResultFound:
                 self.logrqeerror('Cannot find diskfile for filename %s'
                                  % filename)
-                return False
+                return
             except MultipleResultsFound:
                 self.logrqeerror('Multiple results for diskfile with filename'
                                  '%s' % filename)
@@ -149,8 +222,8 @@ class Reducer(object):
                 # Fetch from S3. Note that if it's S3 it's almost certainly
                 # compressed too. Use a with fetch_temporary from aws_s3 so that
                 # we don't leave it behind in s3_staging after we decompress it?
-                self.l.error("S3 not implemented yet is reducer.py")
-                return False
+                self.logrqeerror("S3 not implemented yet in reducer.py")
+                return
 
             # Copy the file into the working directory, decompressing it if
             # appropriate to ensure that AstroData doesn't end up doing that
@@ -176,16 +249,23 @@ class Reducer(object):
                                    "when decompressing %s", df.fullpath)
             else:
                 # Simple file copy
-                shutil.copyfile(df.fullpath, outfile)
-
-        return True
+                try:
+                    shutil.copyfile(df.fullpath, outfile)
+                except Exception:
+                    self.logrqeerror(f"Failed to copy raw data file from "
+                                     f"{df.fullpath} to {outfile}",
+                                     exc_info=True)
+                    return
 
     def set_reduction_metadata(self):
-        # Ensure that the files have the appropriate reduction
-        # metadata:
-        # PROCMODE [Science-Quality | Quick-Look]
+        """
+        Ensure that the captured files have the appropriate reduction metadata
+
+        Set self.rqe.failed via logrqeerror if fails.
+        """
         # PROCSOFT [DRAGONS | Free form string]
         # PROCSVER [version string]
+        # PROCMODE [Science-Quality | Quick-Look]
         # should all have been added by DRAGONS.
         #
         # Processing Intent - PROCITNT [Science-Quality | Quick-Look]
@@ -193,28 +273,96 @@ class Reducer(object):
         #           with reserved values such as GOA, Gemini-SOS, etc]
         # Processing Level - PROCLEVL [Integer. Blank for undefined]
         # Processing Tag - PROCTAG [Gemini assigned string]
-        pass
+
+        dragons_headers = ('PROCSOFT', 'PROCSVER', 'PROCMODE')
+        for filename in self.reduced_files:
+            fullpath = os.path.join(self.workingdir, filename)
+            with fits.open(fullpath, mode='update',
+                           do_not_scale_image_data=True) as hdul:
+                hdr = hdul[0].header
+
+                # Check that the dragons provided headers are present and correct
+                for kw in dragons_headers:
+                    if kw not in hdr:
+                        self.logrqeerror(f"Reduced File {filename} is missing {kw} "
+                                         f"header! Aborting.")
+                        return
+                    if not hdr[kw]:
+                        self.logrqeerror(f"Reduced File {filename} has null {kw} "
+                                         f"header! Aborting.")
+                        return
+                if hdr['PROCSOFT'] != 'DRAGONS':
+                    self.logrqeerror(f"Reduced File {filename} was apparently not "
+                                     f"reduced with DRAGONS, but {hdr['PROCSOFT']}. "
+                                     f"Aborting.")
+                    return
+
+                # Check / expand PROCMODE header
+                if hdr['PROCMODE'] == 'sq':
+                    hdr['PROCMODE'] = 'Science-Quality'
+                elif hdr['PROCMODE'] == 'ql':
+                    hdr['PROCMODE'] = 'Quick-Look'
+                elif hdr['PROCMODE'] == 'qa':
+                    hdr['PROCMODE'] = 'Quality-Assessment'
+
+                if hdr['PROCMODE'] not in gemini_processing_modes:
+                    self.logrqeerror(f"Reduced File {filename} has invalid PROCMODE "
+                                     f"value: {hdr['PROCMODE']}. Aborting!")
+                    return
+
+                # Add the values from the rqe
+                hdr['PROCITNT'] = self.rqe.intent
+                hdr['PROCINBY'] = self.rqe.initiatedby
+                hdr['PROCTAG'] = self.rqe.tag
+
+                for kw in ['PROCSOFT', 'PROCSVER', 'PROCMODE', 'PROCITNT',
+                           'PROCINBY', 'PROCTAG']:
+                    if kw in hdr:
+                        self.l.debug(f"{filename}: {kw} = {hdr[kw]}")
+                    else:
+                        self.l.debug(f"{filename}: {kw} MISSING")
 
     def capture_reduced_files(self):
-        # self.set_reduction_metadata() should have run on the files before
-        # getting to this point, so they should be ready to go by now.
+        # Metadata should be already set.
+        # Set self.rqe.failed via logrqeerror if fails.
 
-        # We may need to support multiple ways of capturing the products:
-        # 1) Ingest locally  - ie Copy the files to upload_staging, and add a
-        # fileops queue entry to upload_ingest them. If this is an archive
-        # worker host, it would need permission to access S3 to upload, and then
-        # the actual ingest would happen on the archive server where
-        # service_ingest_queue is running
-        # 2) We could simplify things by HTTP POSTing the file directly to
-        # another fits server (eg the archive). This has the disadvantage that
-        # the transfer is not queued, but the advantage that the server running
-        # the reduction needs no S3 write access. It will need read access
-        # anyway unless we re-factor things to HTTP GET the input files rather
-        # than fetching directly from S3.
+        # We ingest the files locally  - ie copy the files to upload_staging,
+        # and add a fileops queue entry to upload_ingest them. If this is an
+        # archive worker host, it would need permission to access S3 to
+        # upload, and then the actual ingest would happen on the archive
+        # server where service_ingest_queue is running. If we just have a
+        # local storageroot e.g. for development testing, that's all we need.
+        # We could also run with a local storage root and use export to
+        # push the files to the archive, though that may require some
+        # configuration changes as it's a hybrid configuration
 
-        self.l.info("Capture Reduced Files not implemented yet")
+        # TODO - enhance fileops upload_ingest and S3 helper to be able to
+        # put things in a "directory" on S3 and use the processing tag for that
+        # directory name.
 
-        return False
+        foq = FileopsQueue(self.s, logger=self.l)
+        for filename in self.reduced_files:
+
+            # Copy to upload staging
+            src = os.path.join(self.workingdir, filename)
+            dst = os.path.join(self.fsc.upload_staging_dir, filename)
+            self.l.info(f"Copying {src} to {dst}")
+            try:
+                shutil.copyfile(src, dst)
+            except Exception:
+                self.logrqeerror(f"Exception copying {src} to {dst}",
+                                 exc_info=True)
+                return
+
+            # Add a fileops ingest_upload queue entry
+            self.l.info(f"Adding fileops ingest_upload request for {filename}")
+            fo_req = FileOpsRequest(request="ingest_upload",
+                                    args={"filename": filename,
+                                          "processed_cal": False,
+                                          "fileuploadlog_id": None})
+
+            foq.add(fo_req, filename=filename, response_required=False)
+
 
     def cleanup(self):
         """
@@ -233,14 +381,15 @@ class Reducer(object):
     def call_reduce(self):
         """
         Invoke the DRAGONS Reduce() class.
+
+        Set self.rqe.failed via logrqeerror if fails.
         """
         # See https://dragons.readthedocs.io/projects/recipe-system-users-manual/en/v3.2.3/appendices/full_api_example.html#api-example
 
         # Add the DRAGONS customizations (ie additional log levels) to logger
         customize_logger(self.l)
 
-        # Need to figure out how we want to handle reduced calibrations, and
-        # how to configure the calmgr appropriately.
+        # Configure the cal manager to only fetch things from the archive.
         configstring = """
         [calibs]
         databases = https://archive.gemini.edu get
@@ -248,34 +397,40 @@ class Reducer(object):
         dragons_config = cal_service.globalConf
         dragons_config.read_string(configstring)
 
-        self.l.debug("DRAGONS calibs Configuration:")
+        self.l.debug("DRAGONS [calibs] Configuration:")
         for key in dragons_config['calibs']:
-            self.l.debug(f"{key} : {dragons_config['calibs'][key]}")
+            self.l.debug(f">>>    {key} : {dragons_config['calibs'][key]}")
 
         # Call Reduce()
-        reduce = Reduce()
+        try:
+            reduce = Reduce()
+        except Exception:
+            self.logrqeerror("Exception instantiating Reduce()", exc_info=True)
+            return
 
         # Tell Reduce() what files to reduce
         reduce.files.extend(self.rqe.filenames)
 
-        # Tell Reduce() not to upload calibrations (for now)
+        # Tell Reduce() not to upload calibrations. We do that ourselves here.
         reduce.upload = None
 
         # chdir into the working directory for DRAGONS. Store the current
         # working dir so we can go back after
         pwd = os.getcwd()
 
+        self.l.info("Calling DRAGONS Reduce.runr() in directory %s",
+                    self.workingdir)
+        os.chdir(self.workingdir)
+
         try:
-            os.chdir(self.workingdir)
-            self.l.info("Calling DRAGONS Reduce.runr() in directory %s",
-                        self.workingdir)
             reduce.runr()
         except Exception:
-            self.logrqeerror("Exception from DRAGONS Reduce()", exc_info=True)
+            self.logrqeerror("Exception from DRAGONS Reduce.runr()",
+                             exc_info=True)
+            return
         finally:
             os.chdir(pwd)
 
         self.l.info("DRAGONS Reduce.runr() appeared to complete sucessfully")
         self.reduced_files = reduce.output_filenames
         self.l.info("Output files are: %s", reduce.output_filenames)
-

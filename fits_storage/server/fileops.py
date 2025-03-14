@@ -66,7 +66,13 @@ def ingest_upload(args, session, logger):
     logger.info("ingest_upload: filename: %s, fileuploadlog_id: %s, "
                 "processed_cal: %s", filename, fileuploadlog_id, processed_cal)
 
-    fileuploadlog = session.get(FileUploadLog, fileuploadlog_id)
+    # When called to ingest processed data, fileuploadlog_id is None
+    if fileuploadlog_id:
+        fileuploadlog = session.get(FileUploadLog, fileuploadlog_id)
+    else:
+        # Create a "dummy" FileUploadLog that's not in the DB session but
+        # will allow its values to be set.
+        fileuploadlog = FileUploadLog(None)
 
     # Move the file to its appropriate location in storage_root/path or S3
 

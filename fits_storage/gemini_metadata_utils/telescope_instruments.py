@@ -173,7 +173,8 @@ def gemini_instrument(string, gmos=False, other=False):
 # by that type in postgres will respect the order in the enum, which is the
 # order here. We use this sort to return calibrations "processed first", so the
 # order should generally be from least to most processed.
-gemini_processing_modes = ('Failed', 'Raw', 'Quick-Look', 'Science-Quality')
+gemini_processing_modes = ('Failed', 'Raw', 'Quick-Look', 'Science-Quality',
+                           'Quality-Assessment')
 
 
 def gemini_processing_mode(string: str) -> str:
