@@ -22,7 +22,7 @@ class ProcessingLog(Base):
     processing_completed = Column(DateTime(timezone=False))
     cpu_secs = Column(Float)
     failed = Column(Boolean)
-
+    log = Column(Text)
 
     def __init__(self, rqe):
         """

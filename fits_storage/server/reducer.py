@@ -1,7 +1,8 @@
 """
 This module contains code for reducing data with DRAGONS
 """
-
+import io
+import logging
 import os
 import os.path
 import shutil
@@ -418,10 +419,18 @@ class Reducer(object):
         dragons_config = cal_service.globalConf
         dragons_config.read_string(configstring)
 
-        self.l.debug("DRAGONS [calibs] Configuration:")
-        for key in dragons_config['calibs']:
-            self.l.debug(f">>>    {key} : {dragons_config['calibs'][key]}")
+        # Start the log capture for the processing log at this point
+        logcapture = io.StringIO()
+        handler = logging.StreamHandler(stream=logcapture)
+        formatter = logging.Formatter(
+            '%(asctime)s %(levelname)-8s - %(message)s')
+        handler.setFormatter(formatter)
+        handler.setLevel(15)  # DRAGONS FULLINFO level
+        self.l.addHandler(handler)
 
+        self.l.info("DRAGONS [calibs] Configuration:")
+        for key in dragons_config['calibs']:
+            self.l.info(f">>>    {key} : {dragons_config['calibs'][key]}")
 
         # Call Reduce()
         try:
@@ -450,6 +459,7 @@ class Reducer(object):
                     self.workingdir)
         os.chdir(self.workingdir)
 
+        # Instantiate the ProcessingLog record with initial values from the rqe
         processinglog = ProcessingLog(self.rqe)
         self.s.add(processinglog)
         self.s.commit()
@@ -463,8 +473,17 @@ class Reducer(object):
             os.chdir(pwd)
 
         self.reduced_files = reduce.output_filenames
+
         processinglog.end(len(self.reduced_files), self.rqe.failed)
-        self.s.commit()
 
         self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
         self.l.info("Output files are: %s", reduce.output_filenames)
+
+        # Terminate log capture
+        self.l.removeHandler(handler)
+
+        # Add the captured log output and close the logcapture StringIO
+        processinglog.log = logcapture.getvalue()
+        logcapture.close()
+
+        self.s.commit()
