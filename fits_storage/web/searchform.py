@@ -912,7 +912,8 @@ dropdown_options = {
          ("progCal", "progCal"),
          ("dayCal", "dayCal"),
          ("partnerCal", "partnerCal"),
-         ("acqCal", "acqCal")],
+         ("acqCal", "acqCal"),
+         ("nightCal", "nightCal")],
     "obs_typ_options":
         [("OBJECT", "OBJECT"),
          ("BIAS", "BIAS"),
