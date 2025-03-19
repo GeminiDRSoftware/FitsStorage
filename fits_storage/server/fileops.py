@@ -138,7 +138,7 @@ def ingest_upload(args, session, logger):
 
     # Queue it for ingest. We can pass no_defer=True here as we know that
     # the file is complete and ready to go.
-    logger.info("Queueing %s for Ingest", filename)
+    logger.info(f"Queueing {path}/{filename} for Ingest")
     iq = IngestQueue(session, logger)
     iqe = iq.add(filename, path, no_defer=True)
 
