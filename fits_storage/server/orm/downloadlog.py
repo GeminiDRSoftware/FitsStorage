@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, DateTime, Boolean
+from sqlalchemy import Integer, BigInteger, Text, DateTime, Boolean
 from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
@@ -13,8 +13,8 @@ class DownloadLog(Base):
     """
     __tablename__ = 'downloadlog'
 
-    id = Column(Integer, primary_key=True)
-    usagelog_id = Column(Integer, ForeignKey(UsageLog.id), nullable=False,
+    id = Column(BigInteger, primary_key=True)
+    usagelog_id = Column(BigInteger, ForeignKey(UsageLog.id), nullable=False,
                          index=True)
     usagelog = relationship(UsageLog, order_by=id)
 

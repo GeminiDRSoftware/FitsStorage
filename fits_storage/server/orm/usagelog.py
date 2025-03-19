@@ -14,7 +14,7 @@ class UsageLog(Base):
     """
     __tablename__ = 'usagelog'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     utdatetime = Column(DateTime(timezone=False), index=True)
     user_id = Column(Integer, ForeignKey(User.id), nullable=True, index=True)
     ip_address = Column(Text, index=True)

@@ -1,7 +1,7 @@
 import datetime
 
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, DateTime
+from sqlalchemy import BigInteger, Integer, DateTime
 from sqlalchemy.orm import relationship
 
 from fits_storage.logger_dummy import DummyLogger
@@ -28,8 +28,8 @@ class UsageLogAnalysis(Base):
     individual usagelog_entry.
     """
     __tablename__ = 'usagelog_analysis'
-    id = Column(Integer, primary_key=True)
-    usagelog_id = Column(Integer, ForeignKey('usagelog.id'), nullable=False,
+    id = Column(BigInteger, primary_key=True)
+    usagelog_id = Column(BigInteger, ForeignKey('usagelog.id'), nullable=False,
                          index=True)
     usagelog = relationship(UsageLog, order_by=id)
 
