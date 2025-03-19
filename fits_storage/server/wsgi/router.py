@@ -194,9 +194,9 @@ url_map = Map([
     #      methods=['POST']),
     #
     Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
-    Rule('/upload_file/<filename>', upload_file, methods=['POST']),   # The generic upload_file server
-    Rule('/upload_processed_cal/<filename>',                        # The processed_cal upload server
-        partial(upload_file, processed_cal=True), methods=['POST']),
+    Rule('/upload_file/<seq_of:things>', upload_file, methods=['POST']),   # The generic upload_file server
+    #Rule('/upload_processed_cal/<filename>',                        # The processed_cal upload server
+    #    partial(upload_file, processed_cal=True), methods=['POST']),
     #
 
     #

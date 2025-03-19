@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, DateTime, Boolean, BigInteger
+from sqlalchemy import BigInteger, Text, DateTime, Boolean
 from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
@@ -13,8 +13,8 @@ class FileUploadLog(Base):
     """
     __tablename__ = 'fileuploadlog'
 
-    id = Column(Integer, primary_key=True)
-    usagelog_id = Column(Integer, ForeignKey(UsageLog.id),
+    id = Column(BigInteger, primary_key=True)
+    usagelog_id = Column(BigInteger, ForeignKey(UsageLog.id),
                          nullable=False, index=True)
     usagelog = relationship(UsageLog, order_by=id)
 
@@ -22,20 +22,16 @@ class FileUploadLog(Base):
     ut_transfer_complete = Column(DateTime(timezone=False))
 
     filename = Column(Text, index=True)
+    path = Column(Text)
     size = Column(BigInteger)
     md5 = Column(Text)
     processed_cal = Column(Boolean)
-
-    invoke_status = Column(Integer)
-    invoke_pid = Column(Integer)
 
     destination = Column(Text)
     s3_ut_start = Column(DateTime(timezone=False))
     s3_ut_end = Column(DateTime(timezone=False))
     s3_ok = Column(Boolean)
     file_ok = Column(Boolean)
-
-    ingestqueue_id = Column(Integer)
 
     notes = Column(Text)
 

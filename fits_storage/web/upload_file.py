@@ -18,7 +18,7 @@ fsc = get_config()
 
 
 @needs_cookie(magic_cookie='gemini_fits_upload_auth', annotate=FileUploadLog)
-def upload_file(filename, processed_cal=False):
+def upload_file(things):
     """
     This handles uploading files, including processed calibrations.
     It has to be called via a POST request with a binary data payload
@@ -26,15 +26,32 @@ def upload_file(filename, processed_cal=False):
     If upload authentication is enabled, the request must contain
     the authentication cookie for the request to be processed.
 
+    'things' will be a list of path elements, ie /path/to/file.fits becomes
+    things=['path', 'to', 'file.fits']
+
     Log Entries are inserted into the FileUploadLog table
     """
-
     ctx = get_context()
-
     session = ctx.session
+
+    if len(things) == 0:
+        ctx.resp.status = Return.HTTP_NOT_FOUND
+        return
+
+    # Handle the special case /processed_cal "path"
+    if len(things) == 2 and things[0] == 'processed_cal':
+        processed_cal = True
+        filename = things[1]
+        path = ''
+    else:
+        processed_cal = False
+        fullpath = os.path.join(*things)
+        filename = os.path.basename(fullpath)
+        path = os.path.dirname(fullpath)
 
     fileuploadlog = FileUploadLog(ctx.usagelog)
     fileuploadlog.filename = filename
+    fileuploadlog.path = path
     fileuploadlog.processed_cal = processed_cal
     session.add(fileuploadlog)
     session.commit()
@@ -44,13 +61,16 @@ def upload_file(filename, processed_cal=False):
         ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
         return
 
-    # Stream the data into the upload_staging file.
+    # Stream the data into the upload_staging file. We replicate the path
+    # in the upload_staging directory.
+    fsc = get_config()
+    dir = os.path.join(fsc.upload_staging_dir, path)
+    os.makedirs(dir, exist_ok=True)
     # Calculate the md5 and size as we do it
     m = hashlib.md5()
     size = 0
     chunksize = 1000000  # 1MB
-    fsc = get_config()
-    fullfilename = os.path.join(fsc.upload_staging_dir, filename)
+    fullfilename = os.path.join(dir, filename)
     # Content Length may or may not be defined. It's not required and if the
     # exporter is compressing on-the-fly, it won't know the length of the
     # compressed data ahead of time. Still, it's useful to log it.
@@ -87,7 +107,8 @@ def upload_file(filename, processed_cal=False):
     fileuploadlog.md5 = md5
 
     # Construct the verification dictionary and json encode it
-    verification = {'filename': filename, 'size': size, 'md5': md5}
+    verification = {'filename': filename, 'path': path, 'size': size,
+                    'md5': md5}
     # And write that back to the client
     ctx.resp.append_json([verification])
 
@@ -97,6 +118,7 @@ def upload_file(filename, processed_cal=False):
 
     fo_req = FileOpsRequest(request="ingest_upload",
                             args={"filename": filename,
+                                  "path": path,
                                   "processed_cal": processed_cal,
                                   "fileuploadlog_id": fileuploadlog.id})
 

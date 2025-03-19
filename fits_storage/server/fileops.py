@@ -56,6 +56,7 @@ def ingest_upload(args, session, logger):
     fsc = get_config()
     try:
         filename = args['filename']
+        path = args['path']
         fileuploadlog_id = args['fileuploadlog_id']
         processed_cal = args['processed_cal']
     except KeyError:
@@ -63,8 +64,8 @@ def ingest_upload(args, session, logger):
                      exc_info=True)
         return False
 
-    logger.info("ingest_upload: filename: %s, fileuploadlog_id: %s, "
-                "processed_cal: %s", filename, fileuploadlog_id, processed_cal)
+    logger.info(f"ingest_upload: {filename=}, {path=}, {fileuploadlog_id=}, "
+                f"{processed_cal=}")
 
     # When called to ingest processed data, fileuploadlog_id is None
     if fileuploadlog_id:
@@ -77,8 +78,9 @@ def ingest_upload(args, session, logger):
     # Move the file to its appropriate location in storage_root/path or S3
 
     # Construct the full path names and move the file into place
-    path = 'processed_cals' if processed_cal else ''
-    src = os.path.join(fsc.upload_staging_dir, filename)
+    path = 'processed_cals' if processed_cal else path
+
+    src = os.path.join(fsc.upload_staging_dir, path, filename)
     dst = os.path.join(path, filename)
     fileuploadlog.destination = dst
 
@@ -114,6 +116,8 @@ def ingest_upload(args, session, logger):
     else:
         try:
             dst = os.path.join(fsc.storage_root, dst)
+            # Ensure destination path exists
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
             logger.debug("Moving %s to %s" % (src, dst))
             if is_miscfile(src):
                 srcmeta = miscfile_meta_path(src)
