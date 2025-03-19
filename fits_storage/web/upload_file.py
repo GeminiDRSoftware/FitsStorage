@@ -65,7 +65,11 @@ def upload_file(things):
     # in the upload_staging directory.
     fsc = get_config()
     dir = os.path.join(fsc.upload_staging_dir, path)
-    os.makedirs(dir, exist_ok=True)
+    # Ensure directory (and necessary parents) exists. There's a subtlety here
+    # with permissions
+    old_umask = os.umask(0x002)
+    os.makedirs(dir, mode=0o775, exist_ok=True)
+    os.umask(old_umask)
     # Calculate the md5 and size as we do it
     m = hashlib.md5()
     size = 0
