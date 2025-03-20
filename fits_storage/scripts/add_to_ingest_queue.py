@@ -83,7 +83,7 @@ if __name__ == "__main__":
     parser.add_argument("--s3filepre", action="store", type=str,
                         dest="s3filepre", default=None,
                         help="If adding from S3, only request filenames with "
-                             "this prefix")
+                             "this prefix. Use this for paths on S3 too.")
 
     parser.add_argument("--listfile", action="store", type=str, dest="listfile",
                         default=None,
@@ -224,7 +224,11 @@ if __name__ == "__main__":
                 after = datetime.datetime.fromisoformat(options.after)
             else:
                 after = None
-            logger.info("Queueing for Ingest: (%s/%s): %s", i, n, filename)
+            if fsc.using_s3:
+                # If filename comes from S3, it is actually a keyname with path
+                path = os.path.dirname(filename)
+                filename = os.path.basename(filename)
+            logger.info(f"Queueing for Ingest: ({i}/{n}): {path} / {filename}")
             iq.add(filename, path, force=options.force,
                    force_md5=options.force_md5, after=after)
 
