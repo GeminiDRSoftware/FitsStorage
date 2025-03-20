@@ -345,7 +345,8 @@ class Ingester(object):
 
         # If we're ingesting from S3, fetch a local copy now
         if self.using_s3:
-            if not self.s3.fetch_to_storageroot(iqe.filename,):
+            if not (self.s3.fetch_to_storageroot (os.path.join(
+                    iqe.path, iqe.filename))):
                 # Failed to fetch the file from S3.
                 message = f"Failed to fetch {iqe.filename} from S3"
                 self.l.error(message)
