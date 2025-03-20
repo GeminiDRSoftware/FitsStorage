@@ -142,6 +142,23 @@ class Boto3Helper(object):
         self.s3_client.copy(copy_source, to_bucket, keyname,
                             ExtraArgs={'Metadata': md})
 
+    def rename(self, oldkey, newkey):
+        # There's no move or rename on S3, have to copy and delete.
+        # This function is to rename within the same bucket
+        # As with copy, need to handle metadata
+        md = self.get_key(oldkey).metadata
+        copy_source = {
+            'Bucket': self.bucket.name,
+            'Key': oldkey
+        }
+        self.s3_client.copy(copy_source, self.bucket.name, newkey,
+                            ExtraArgs={'Metadata': md})
+        if self.exists_key(newkey):
+            self.s3_client.delete_object(Bucket=self.bucket.name, Key=oldkey)
+        else:
+            self.l.error(f"Error renaming {oldkey} to {newkey} - new key"
+                         f"does not exist after copy. Not deleting old key")
+
     def upload_file(self, keyname, filename, extra_meta={}):
         md5 = md5sum(filename)
         try:

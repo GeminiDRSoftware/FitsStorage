@@ -8,9 +8,9 @@ from fits_storage.core.hashes import md5sum
 
 from fits_storage.logger_dummy import DummyLogger
 
-fsc = get_config(builtinonly=True, reload=True)
+#fsc = get_config(builtinonly=True, reload=True)
 # Need to pull in test bucket keys for these to run.
-# fsc = get_config()
+fsc = get_config()
 logger = DummyLogger(print=True)
 
 
@@ -50,9 +50,16 @@ def test_aws_s3(tmp_path):
     srmd5 = md5sum(srfpfn)
     assert srmd5 == md5
 
-    assert bh.delete_key(filename)
+    newfilename = "testrename.dat"
+    bh.rename(filename, newfilename)
 
+    assert bh.exists_key(newfilename)
     assert not bh.exists_key(filename)
+    assert bh.get_md5(newfilename) == md5
+
+    assert bh.delete_key(newfilename)
+
+    assert not bh.exists_key(newfilename)
 
 
 @pytest.mark.skipif(fsc.testing_aws_access_key == '',
