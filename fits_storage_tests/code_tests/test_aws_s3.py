@@ -8,9 +8,9 @@ from fits_storage.core.hashes import md5sum
 
 from fits_storage.logger_dummy import DummyLogger
 
-#fsc = get_config(builtinonly=True, reload=True)
+fsc = get_config(builtinonly=True, reload=True)
 # Need to pull in test bucket keys for these to run.
-fsc = get_config()
+# fsc = get_config()
 logger = DummyLogger(print=True)
 
 
