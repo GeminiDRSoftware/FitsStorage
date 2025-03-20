@@ -292,6 +292,13 @@ class DiskFile(Base):
         """
         return os.path.join(self.storage_root, self.path, self.filename)
 
+    @property
+    def keyname(self):
+        """
+        Get the keyname used with S3.
+        """
+        return os.path.join(self.path, self.filename)
+
     def get_file_size(self):
         """
         Get the size of the file
