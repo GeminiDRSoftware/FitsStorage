@@ -144,13 +144,14 @@ class Ingester(object):
         """
         fsc = get_config()
 
-        self.l.debug("Considering file for ingest: %s", iqe.filename)
+        self.l.debug(f"Considering {iqe.path}/{iqe.filename} for ingest")
 
         # First, check if the file actually exists. If it doesn't, bail out.
         # Do not attempt to make the file as not present in the database.
         if self.using_s3:
-            if not self.s3.exists_key(iqe.filename):
-                message = f"Cannot access {iqe.filename} in S3 bucket"
+            keyname = os.path.join(iqe.path, iqe.filename)
+            if not self.s3.exists_key(keyname):
+                message = f"Cannot access {keyname} in S3 bucket"
                 self.l.error(message)
                 iqe.seterror(message)
                 self.s.commit()
@@ -256,21 +257,26 @@ class Ingester(object):
         -------
         True if we do need to add a diskfile entry, False otherwise
         """
-        # Does a diskfile for this file already exist that is marked as
-        # present? Also check there is not more than one of them.
+        # Does a diskfile for this file already exist with the same path, that
+        # is marked as present? This allows catching that we should not have
+        # both a compressed and uncompressed version of the same file.
+        # Also check there is not more than one of them.
         query = self.s.query(DiskFile) \
             .filter(DiskFile.file_id == fileobj.id) \
+            .filter(DiskFile.path == iqe.path) \
             .filter(DiskFile.present == True)
         try:
             diskfile = query.one()
         except MultipleResultsFound:
             self.l.error("Database Integrity Error - multiple diskfiles marked "
-                         f"as present for file id {fileobj.id} "
-                         f"name {fileobj.name}. Aborting Ingest")
+                         f"as present for file id {fileobj.id} at path "
+                         f"{iqe.path} with name {fileobj.name}. Aborting "
+                         f"Ingest")
             return False
         except NoResultFound:
             self.l.debug("No diskfile marked as present found for file id "
-                         f"{fileobj.id} name {fileobj.name}. Will add one.")
+                         f"{fileobj.id} name {fileobj.name} at path {iqe.path}. "
+                         f"Will add one.")
             return True
 
         # If we get here, a diskfile does exist that is marked as present.
@@ -292,7 +298,7 @@ class Ingester(object):
         # Next, check if the md5 matches.
         if self.using_s3:
             # In S3, we store the md5 in the s3 object metadata
-            file_md5 = self.s3.get_md5(diskfile.filename)
+            file_md5 = self.s3.get_md5(diskfile.keyname)
         else:
             file_md5 = diskfile.get_file_md5()
         if diskfile.file_md5 == file_md5:
@@ -325,6 +331,7 @@ class Ingester(object):
         # present or canonical and mark them as not present and not canonical
         olddiskfiles = self.s.query(DiskFile) \
             .filter(DiskFile.file_id == fileobj.id) \
+            .filter(DiskFile.path == iqe.path) \
             .filter(or_(DiskFile.present == True, DiskFile.canonical == True))
 
         for odf in olddiskfiles:
@@ -338,7 +345,7 @@ class Ingester(object):
 
         # If we're ingesting from S3, fetch a local copy now
         if self.using_s3:
-            if not self.s3.fetch_to_storageroot(iqe.filename):
+            if not self.s3.fetch_to_storageroot(iqe.filename,):
                 # Failed to fetch the file from S3.
                 message = f"Failed to fetch {iqe.filename} from S3"
                 self.l.error(message)
