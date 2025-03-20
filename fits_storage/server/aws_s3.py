@@ -3,6 +3,7 @@ This module contains utility functions for interacting with AWS S3
 """
 
 import os
+from sys import exc_info
 
 from fits_storage.config import get_config
 from fits_storage.logger_dummy import DummyLogger
@@ -160,7 +161,9 @@ class Boto3Helper(object):
 
     def fetch_to_storageroot(self, keyname, fullpath=None, skip_tests=False):
         """
-        Fetch the file from s3 and put it in the storage_root directory.
+        Fetch the file from s3. By default, put it in the storage_root directory
+        under the same path as in the keyname. If fullpath is specified, put the
+        file there, discarding any path from the keyname.
         Do some validation, and re-try as appropriate
         Return True if succeeded, False otherwise
         """
@@ -178,6 +181,13 @@ class Boto3Helper(object):
                              "S3 download", fullpath)
                 return False
 
+        # Ensure any subdirectories needed exist
+        try:
+            os.makedirs(os.path.dirname(fullpath), exist_ok=True)
+        except OSError:
+            self.l.error(f"Unable to create necessary subdirectories: "
+                         f"{os.path.dirname(fullpath)}", exc_info=True)
+            return False
         try:
             self.s3_client.download_file(self.bucket.name, keyname, fullpath)
         except RetriesExceededError:
