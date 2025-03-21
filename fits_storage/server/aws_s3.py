@@ -146,6 +146,7 @@ class Boto3Helper(object):
         # There's no move or rename on S3, have to copy and delete.
         # This function is to rename within the same bucket
         # As with copy, need to handle metadata
+        # raise on error
         md = self.get_key(oldkey).metadata
         copy_source = {
             'Bucket': self.bucket.name,
@@ -158,6 +159,7 @@ class Boto3Helper(object):
         else:
             self.l.error(f"Error renaming {oldkey} to {newkey} - new key"
                          f"does not exist after copy. Not deleting old key")
+            raise OSError("New S3 key does not exist in rename operation")
 
     def upload_file(self, keyname, filename, extra_meta={}):
         md5 = md5sum(filename)
