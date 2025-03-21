@@ -7,6 +7,8 @@ from fits_storage.config import get_config
 
 from fits_storage.db import sessionfactory
 from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.fulltextheader import FullTextHeader
+from fits_storage.core.orm.header import Header
 
 fsc = get_config()
 
@@ -46,6 +48,9 @@ if __name__ == "__main__":
                         default=None, help="Select files by (case sensitive) "
                                            "filename prefix. Note - filename, "
                                            "not S3 keyname")
+    parser.add_argument("--iraf-bias", action="store_true", dest="irafbias",
+                        default=False, help="IRAF processed BIAS selection")
+
     parser.add_argument("--current-path", action="store", dest="currentpath",
                         default=None, help="Select files on current path."
                                            "Leave blank to specify files in"
@@ -74,6 +79,7 @@ if __name__ == "__main__":
         exit()
 
     session = sessionfactory()
+
     if options.filepre == 'by-filepre':
         query = session.query(DiskFile).filter(DiskFile.present==True) \
             .filter(DiskFile.filename.startswith(options.filepre))
@@ -84,6 +90,40 @@ if __name__ == "__main__":
             query = query.filter(DiskFile.path==options.currentpath)
 
         for df in query:
+            try:
+                moveorlist(df, move=options.move, dest=options.dest)
+            except:
+                break
+        session.commit()
+
+    if options.irafbias:
+        # This is messy as we have to grep the fulltextheader to tell the
+        # difference between DRAGONS and IRAF.
+        query = session.query(Header).join(DiskFile) \
+            .filter(DiskFile.present==True) \
+            .filter(Header.observation_type=='BIAS') \
+            .filter(Header.types.contains('PROCESSED'))
+
+        if options.currentpath is None:
+            query = query.filter(DiskFile.path=="")
+        else:
+            query = query.filter(DiskFile.path==options.currentpath)
+
+        dstring = "GBIAS   = 'Compatibility'      / For IRAF compatibility"
+        istring = "GBIAS   = '20"
+        for df in query:
+            try:
+                fth = session.query(FullTextHeader) \
+                    .filter(FullTextHeader.diskfile_id==df.id).one()
+            except Exception:
+                logger.info("Exception finding fulltextheader", exc_info=True)
+                break
+            if dstring in fth.fulltext:
+                logger.debug(f"{df.filename} is DRAGONS - skipping")
+                continue
+            if istring not in fth.fulltext:
+                logger.warning(f"{df.filename} not DRAGONS or IRAF - skipping")
+                continue
             try:
                 moveorlist(df, move=options.move, dest=options.dest)
             except:
