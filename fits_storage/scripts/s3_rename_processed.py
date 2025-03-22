@@ -109,12 +109,13 @@ if __name__ == "__main__":
         else:
             query = query.filter(DiskFile.path==options.currentpath)
 
-        diskfiles = query.all()
-        logger.info(f"Found {len(diskfiles)} candidates to check")
+        headers = query.all()
+        logger.info(f"Found {len(headers)} candidates to check")
         dstring = "GBIAS   = 'Compatibility'      / For IRAF compatibility"
         istring = "GBIAS   = '20"
 
-        for df in diskfiles:
+        for h in headers:
+            df = h.diskfile
             logger.debug(f"Processing {df.filename}")
             try:
                 fth = session.query(FullTextHeader) \
