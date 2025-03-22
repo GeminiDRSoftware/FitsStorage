@@ -12,23 +12,6 @@ from fits_storage.core.orm.header import Header
 
 fsc = get_config()
 
-def moveorlist(df, move=False, dest=None):
-    if move:
-        if dest is None:
-            raise ValueError("Refusing to move to destinaion=None")
-        oldkey = df.keyname
-        newkey = f"{options.dest}/{df.filename}"
-        logger.info(f"Rename S3 key: {oldkey} to {newkey}")
-        try:
-            s3.rename(oldkey, newkey)
-            df.path = dest
-        except Exception:
-            logger.error("S3 rename failed", exc_info=True)
-            raise
-    else:
-        logger.info(f"Filename: {df.filename} at path: {df.path}")
-
-
 if __name__ == "__main__":
     # Option Parsing
     from argparse import ArgumentParser
@@ -70,6 +53,22 @@ if __name__ == "__main__":
                 .format(datetime.datetime.now()))
     logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
 
+
+    def moveorlist(df, move=False, dest=None):
+        if move:
+            if dest is None:
+                raise ValueError("Refusing to move to destination=None")
+            oldkey = df.keyname
+            newkey = f"{options.dest}/{df.filename}"
+            logger.info(f"Rename S3 key: {oldkey} to {newkey}")
+            try:
+                s3.rename(oldkey, newkey)
+                df.path = dest
+            except Exception:
+                logger.error("S3 rename failed", exc_info=True)
+                raise
+        else:
+            logger.info(f"Filename: {df.filename} at path: {df.path}")
 
     if fsc.using_s3:
         from fits_storage.server.aws_s3 import get_helper
@@ -131,3 +130,4 @@ if __name__ == "__main__":
             except:
                 break
         session.commit()
+
