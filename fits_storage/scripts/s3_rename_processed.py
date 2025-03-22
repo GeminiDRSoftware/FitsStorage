@@ -112,7 +112,8 @@ if __name__ == "__main__":
         logger.info(f"Found {len(diskfiles)} candidates to check")
         dstring = "GBIAS   = 'Compatibility'      / For IRAF compatibility"
         istring = "GBIAS   = '20"
-        for df in query:
+
+        for df in diskfiles:
             try:
                 fth = session.query(FullTextHeader) \
                     .filter(FullTextHeader.diskfile_id==df.id).one()
