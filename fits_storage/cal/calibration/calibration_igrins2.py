@@ -48,9 +48,9 @@ class CalibrationIgrins2(Calibration):
         # Updated from 20 to 30 by request from Hyewon 20250123
         howmany = howmany if howmany else 30
 
-        # FLAT exposures with less than 2 secs (typically 1.64s) are test frames
-        # that should be excluded. (HS 2025204)
-        filters = [Header.exposure_time >= 2.0]
+        # FLAT exposures with less than 3.5 secs (typically 3.2) are test frames
+        # that should be excluded. (HS 2025204, 20250321 doubled to 3.2)
+        filters = [Header.exposure_time >= 3.5]
         
         query = self.get_query() \
             .flat(processed) \
