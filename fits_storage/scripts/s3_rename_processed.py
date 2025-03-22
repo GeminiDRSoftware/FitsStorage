@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("--demon", action="store_true", dest="demon",
                         help="Run in the background, do not generate stdout")
 
-    parser.add_argument("--dest", action="store", dest="dest", default="",
+    parser.add_argument("--dest", action="store", dest="dest", default=None,
                         help="Destination folder (prefix) to use")
 
     parser.add_argument("--by-filepre", action="store", dest="filepre",
