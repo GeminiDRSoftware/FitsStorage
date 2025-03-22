@@ -55,6 +55,7 @@ if __name__ == "__main__":
 
 
     def moveorlist(df, move=False, dest=None):
+        logger.debug(f"in move or list on {df.filename}")
         if move:
             if dest is None:
                 raise ValueError("Refusing to move to destination=None")
@@ -127,6 +128,7 @@ if __name__ == "__main__":
                 logger.warning(f"{df.filename} not DRAGONS or IRAF - skipping")
                 continue
             try:
+                logger.debug(f"move or list on {df.filename}")
                 moveorlist(df, move=options.move, dest=options.dest)
             except:
                 break
