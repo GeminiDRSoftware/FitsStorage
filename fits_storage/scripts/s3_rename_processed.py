@@ -129,6 +129,7 @@ if __name__ == "__main__":
                 continue
             try:
                 moveorlist(df, move=options.move, dest=options.dest)
+                df.path=options.dest
             except:
                 break
         session.commit()
