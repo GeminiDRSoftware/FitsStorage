@@ -109,6 +109,8 @@ if __name__ == "__main__":
         else:
             query = query.filter(DiskFile.path==options.currentpath)
 
+        diskfiles = query.all()
+        logger.info(f"Found {len(diskfiles)} candidates to check")
         dstring = "GBIAS   = 'Compatibility'      / For IRAF compatibility"
         istring = "GBIAS   = '20"
         for df in query:
