@@ -55,7 +55,6 @@ if __name__ == "__main__":
 
 
     def moveorlist(df, move=False, dest=None):
-        logger.debug(f"in move or list on {df.filename}")
         if move:
             if dest is None:
                 raise ValueError("Refusing to move to destination=None")
@@ -116,25 +115,19 @@ if __name__ == "__main__":
 
         for h in headers:
             df = h.diskfile
-            logger.debug(f"Processing {df.filename}")
             try:
                 fth = session.query(FullTextHeader) \
                     .filter(FullTextHeader.diskfile_id==df.id).one()
             except Exception:
-                print("Exception")
                 logger.info("Exception finding fulltextheader", exc_info=True)
                 break
             if dstring in fth.fulltext:
-                print("not dragons")
                 logger.debug(f"{df.filename} is DRAGONS - skipping")
                 continue
             if istring not in fth.fulltext:
-                print("not either")
                 logger.warning(f"{df.filename} not DRAGONS or IRAF - skipping")
                 continue
             try:
-                print("move or list")
-                logger.debug(f"move or list on {df.filename}")
                 moveorlist(df, move=options.move, dest=options.dest)
             except:
                 break
