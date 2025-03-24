@@ -102,6 +102,7 @@ if fsc.is_server:
     from fits_storage.server.orm.reduction import Reduction
     from fits_storage.server.orm.monitoring import Monitoring
     from fits_storage.server.orm.processinglog import ProcessingLog
+    from fits_storage.server.orm.processingtag import ProcessingTag
 
 
     from fits_storage.server.orm.qastuff import QAreport, \
