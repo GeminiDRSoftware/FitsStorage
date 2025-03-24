@@ -15,7 +15,7 @@ class ProcessingTag(Base):
     # need a user-friendly way to add values.
 
     id = Column(Integer, primary_key=True)
-    tag = Column(Text, nullable=False, index=True)
+    tag = Column(Text, nullable=False, unique=True, index=True)
     domain = Column(Text, nullable=False, index=True)
     priority = Column(Integer, nullable=False, index=True)  # Higher is higher
     published = Column(Boolean, index=True)

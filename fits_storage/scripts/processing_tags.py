@@ -83,6 +83,18 @@ if __name__ == "__main__":
             logger.error("Need to specify priortiy with addtag")
             exit(1)
 
+        # Check if already exists
+        query = session.query(ProcessingTag) \
+            .filter(ProcessingTag.tag==options.addtag)
+
+        try:
+            query.one()
+            logger.error(f"Processing tag with name {options.addtag} already"
+                         f"exists. Aborting.")
+            exit(4)
+        except NoResultFound:
+            pass
+        
         tag = ProcessingTag(tag=options.addtag, domain=options.domain,
                             priority=options.priority,
                             published=options.published)
