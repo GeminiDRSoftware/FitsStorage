@@ -66,6 +66,7 @@ class Reducer(object):
         # We pull these configuration values into the local namespace for
         # convenience and to allow poking them for testing
         self.reduce_dir = self.fsc.reduce_dir
+        self.reduce_calcache_dir = self.fsc.reduce_calcache_dir
         self.using_s3 = self.fsc.using_s3
 
         # We store the reducequeueentry passed for reduction in the class for
@@ -358,11 +359,13 @@ class Reducer(object):
         foq = FileopsQueue(self.s, logger=self.l)
         for filename in self.reduced_files:
 
-            # Copy to upload staging
+            # Copy to upload staging, put in tag directory there
             src = os.path.join(self.workingdir, filename)
-            dst = os.path.join(self.fsc.upload_staging_dir, filename)
+            dstpath = os.path.join(self.fsc.upload_staging_dir, self.rqe.tag)
+            dst = os.path.join(dstpath, filename)
             self.l.info(f"Copying {src} to {dst}")
             try:
+                os.makedirs(dstpath, exist_ok=True)
                 shutil.copyfile(src, dst)
             except Exception:
                 self.logrqeerror(f"Exception copying {src} to {dst}",
@@ -374,6 +377,7 @@ class Reducer(object):
             fo_req = FileOpsRequest(request="ingest_upload",
                                     args={"filename": filename,
                                           "processed_cal": False,
+                                          "path": self.rqe.tag,
                                           "fileuploadlog_id": None})
 
             foq.add(fo_req, filename=filename, response_required=False)
@@ -416,6 +420,11 @@ class Reducer(object):
         [calibs]
         databases = https://archive.gemini.edu get
         """
+
+        # If we're using a reduce calibration cache, set it here
+        if self.reduce_calcache_dir:
+            configstring += f"system_calcache_dir = {self.reduce_calcache_dir}"
+
         dragons_config = cal_service.globalConf
         dragons_config.read_string(configstring)
 
