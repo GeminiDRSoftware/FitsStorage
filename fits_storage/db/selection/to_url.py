@@ -152,6 +152,8 @@ def to_url(self, with_columns=False):
                 self._url += '/site_monitoring'
             else:
                 self._url += '/not_site_monitoring'
+        elif key == 'processing_tag':
+            self._url += '/processing_tag=%s' % self[key]
         else:
             self._url += '/%s' % self[key]
 

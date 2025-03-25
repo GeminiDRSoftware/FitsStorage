@@ -71,6 +71,7 @@ getselection_key_value = {
     'nightrange': 'nightrange',
     'entrytimedaterange': 'entrytimedaterange',
     'lastmoddaterange': 'lastmoddaterange',
+    'processing_tag': 'processing_tag'
     }
 
 # Some elements of the URL entries set themselves as the value for a

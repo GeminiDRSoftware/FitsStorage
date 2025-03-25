@@ -60,6 +60,7 @@ class Header(Base):
     science_verification = Column(Boolean, index=True)
     calibration_program = Column(Boolean, index=True)
     processing = Column(PROCMODE_ENUM)
+    processing_tag = Column(Text, index=True)
     observation_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
     telescope = Column(TELESCOPE_ENUM, index=True)
@@ -191,6 +192,7 @@ class Header(Base):
             self.engineering = eng_data
 
         self.processing = parser.processing()
+        self.processing_tag = parser.processing_tag()
         self.observation_id = parser.observation_id()
         self.data_label = parser.data_label()
         self.instrument = parser.instrument()

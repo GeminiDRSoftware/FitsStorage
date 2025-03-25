@@ -9,6 +9,7 @@ sayselection_defs = {
     'observation_class': 'ObsClass',
     'filename': 'Filename',
     'processing': 'Processing',
+    'processing_tag': 'Processing Tag',
     'object': 'Object Name',
     'engineering': 'Engineering Data',
     'science_verification': 'Science Verification Data',

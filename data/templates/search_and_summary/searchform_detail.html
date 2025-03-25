@@ -251,6 +251,16 @@
             search for a particular type or reduced data, or for raw data only.</span>
     </span><br>
 
+    <label>Processing Tag:</label>
+    <select class="ddw" name="processing_tag">
+        <option value="default">Default</option>
+        {{ generate_option_list(processing_tag_options, updated.processing_tag) }}
+    </select>
+    <span class="help">(Processing Tag)
+        <span class="helpleft">Reduced data in the archive is tagged by processing batch. Select here if you would like to
+            search for a particular batch of reduced data. This list populates from the current search results.</span>
+    </span><br>
+
 </div>
 
 {%- if col_sel is defined %}

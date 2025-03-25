@@ -24,6 +24,8 @@ from .summary_generator import formdata_to_compressed, search_col_mapping
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
 
+from fits_storage.db.list_headers import available_processing_tags
+
 from fits_storage.config import get_config
 
 
@@ -159,6 +161,17 @@ def searchform(things, orderby):
             summary_body('customsearch', selection, orderby,
                          additional_columns=selection_to_column_names(
                              selection)))
+
+        # Update the available processing tags
+        if hasattr(selection, 'available_processing_tags'):
+            apts = selection.available_processing_tags
+        else:
+            apts = available_processing_tags(selection)
+        processing_tag_pairs = []
+        for i in apts:
+            if i is not None:
+                processing_tag_pairs.append((i, i))
+        template_args['processing_tag_options'] = processing_tag_pairs
 
     return template_args
 
@@ -934,6 +947,7 @@ dropdown_options = {
         [("Raw", "Raw Data"),
          ("Science-Quality", "Science Quality"),
          ("Quick-Look", "Quick Look")],
+    "processing_tag_options": [],
     "bin_options":
         [("1x1", "1x1"),
          ("1x2", "1x2"),

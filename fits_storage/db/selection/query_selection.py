@@ -12,7 +12,6 @@ from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.file import File
 
-
 from fits_storage.config import get_config
 fsc = get_config()
 
@@ -20,6 +19,8 @@ if fsc.is_server:
     from fits_storage.server.orm.program import Program
     from fits_storage.server.orm.publication import (Publication,
                                                      ProgramPublication)
+    # To support default processing tags:
+    from fits_storage.db.list_headers import default_processing_tags
 
 queryselection_filters = (
     ('present',               DiskFile.present),
@@ -48,7 +49,7 @@ queryselection_filters = (
     ('pre_image',             Header.pre_image),
     ('raw_cc',                Header.raw_cc),
     ('raw_iq',                Header.raw_iq),
-    ('processing',            Header.processing)
+    ('processing',            Header.processing),
     )
 
 
@@ -59,7 +60,7 @@ def querypropcoords(query):
                             Header.release <= func.now()))
 
 
-def filter(self, query):
+def filter(self, query, ignore_processing_tag=False):
     """
     Given an sqlalchemy query object, add filters for the items in the selection
     and return the query object
@@ -519,6 +520,21 @@ def filter(self, query):
     if 'standard' in self:
         query = query.filter(Header.types.ilike('%''STANDARD''%'))
 
+    if not ignore_processing_tag:
+        if fsc.is_server and 'processing_tag' in self:
+            if self['processing_tag'] == 'default':
+                # Generate the list of processing_tags to include. This involves
+                # a lookup on the processing_tags table
+                tags = default_processing_tags(self)
+                # Search for data that is Raw, or has this tag.
+                query = query.filter(or_(
+                    Header.processing=='Raw', Header.processing_tag.in_(tags)))
+            else:
+                # Search for a specific processing tag
+                # Search for data that is Raw, or has this tag.
+                query = query.filter(or_(
+                    Header.processing=='Raw',
+                    Header.processing_tag==self['processing_tag']))
     return query
 
 

@@ -34,6 +34,7 @@ def unpackdefaults(self):
         self['site_monitoring'] = False
         self['qa_state'] = 'NotFail'
         self['cols'] = 'CTOWBEQ'
+        self['processing_tag'] = 'default'
         return True
     return False
 
@@ -49,13 +50,15 @@ def packdefaults(self):
     default = self.get('engineering') is False and \
               self.get('site_monitoring') is False and \
               self.get('qa_state') == 'NotFail' and \
-              self.get('cols') == 'CTOWBEQ'
+              self.get('cols') == 'CTOWBEQ' and \
+              self.get('processing_tag') == 'default'
 
     if default:
         self.pop('engineering')
         self.pop('site_monitoring')
         self.pop('qa_state')
         self.pop('cols')
+        self.pop('processing_tag')
         self['defaults'] = True
         return True
     return False

@@ -7,12 +7,13 @@ from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
 
-from sqlalchemy import asc, desc, nullslast
+from sqlalchemy import asc, desc, nullslast, func
 
 from fits_storage.config import get_config
 
 if get_config().is_server:
     from fits_storage.server.wsgi.context import get_context
+    from fits_storage.server.orm.processingtag import ProcessingTag
 
 
 def list_headers(selection, orderby, session=None, unlimit=False):
@@ -91,3 +92,75 @@ def list_headers(selection, orderby, session=None, unlimit=False):
 
     # Return the list of DiskFile objects
     return query.all()
+
+def available_processing_tags(selection, session=None):
+    """
+    List the available processing tags for the selection. Cache the result
+    in the selection object to for efficiency
+    """
+    print("available_processing_tags starting")
+    if session is None:
+        session = get_context().session
+
+    # The basic query...
+    query = session.query(Header.processing_tag).join(DiskFile).join(File)
+
+    # Add the selection...
+    print(f"Calling filter with ignore_processing_tag=True")
+    query = selection.filter(query, ignore_processing_tag=True)
+
+    query = query.group_by(Header.processing_tag)
+
+    processing_tags = []
+    for row in query.all():
+        if row[0] is not None:
+            print(f"{row=}")
+            processing_tags.append(row[0])
+
+    selection.available_processing_tags = processing_tags
+    print(f"available_processing_tags returning {processing_tags}")
+    return processing_tags
+
+def default_processing_tags(selection, session=None):
+    """
+    List the default processing tags for the selection. Note, we return
+    a list of tag values, not processing_tag ORM instances
+    """
+    if session is None:
+        session = get_context().session
+
+    # Get the available processing_tags. It may be stashed in the selction
+    # object from a previous call
+    if hasattr(selection, 'available_processing_tags'):
+        available_tags = selection.available_processing_tags
+    else:
+        available_tags = available_processing_tags(selection, session=session)
+
+    # This needs a subquery to do in SQL
+    # SELECT id, domain, pri FROM
+    #   (SELECT id, domain, pri, MAX(pri) OVER (PARTITION BY domain) AS maxpri FROM foo)
+    # AS ss WHERE pri=maxpri;
+
+    # For now hybrid solution so can manipulate in python at least untile we're
+    # sure this is the long term solution. There will be a very small number of
+    # records here, so there's no significant performance issue
+
+    # Get domain, max_priority pairs
+    dmpquery = session.query(ProcessingTag.domain,
+                          func.max(ProcessingTag.priority)) \
+        .filter(ProcessingTag.tag.in_(available_tags)) \
+        .group_by(ProcessingTag.domain)
+
+    tag_values = []
+    for (domain, maxpri) in dmpquery.all():
+        # Bear in mind there could be multiple tags for this domain with the
+        # same priority - include them all
+        dptags = session.query(ProcessingTag) \
+            .filter(ProcessingTag.domain==domain) \
+            .filter(ProcessingTag.priority==maxpri) \
+            .all()
+        for dptag in dptags:
+            tag_values.append(dptag.tag)
+
+    print(f"default_processing_tags returning {tag_values}")
+    return tag_values
