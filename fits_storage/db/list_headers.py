@@ -98,7 +98,6 @@ def available_processing_tags(selection, session=None):
     List the available processing tags for the selection. Cache the result
     in the selection object to for efficiency
     """
-    print("available_processing_tags starting")
     if session is None:
         session = get_context().session
 
@@ -106,7 +105,6 @@ def available_processing_tags(selection, session=None):
     query = session.query(Header.processing_tag).join(DiskFile).join(File)
 
     # Add the selection...
-    print(f"Calling filter with ignore_processing_tag=True")
     query = selection.filter(query, ignore_processing_tag=True)
 
     query = query.group_by(Header.processing_tag)
@@ -114,11 +112,9 @@ def available_processing_tags(selection, session=None):
     processing_tags = []
     for row in query.all():
         if row[0] is not None:
-            print(f"{row=}")
             processing_tags.append(row[0])
 
     selection.available_processing_tags = processing_tags
-    print(f"available_processing_tags returning {processing_tags}")
     return processing_tags
 
 def default_processing_tags(selection, session=None):
@@ -162,5 +158,4 @@ def default_processing_tags(selection, session=None):
         for dptag in dptags:
             tag_values.append(dptag.tag)
 
-    print(f"default_processing_tags returning {tag_values}")
     return tag_values
