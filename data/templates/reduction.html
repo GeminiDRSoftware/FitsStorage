@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block title %}Reduction information for: {{ filename }}{% endblock %}
+{% block body %}
+{% if filename == 'Not Found' %}
+    <h1>Could not find file</h1>
+{% else %}
+    <h1>Reduction information for File: {{ filename }}</h1>
+    {% if reduction == "None" %}
+        <P>No Reduction Information found</P>
+    {% else %}
+        <h2>Reduction</h2>
+        <TABLE class="nowrap">
+            <tr class='alternating'><td>Processing Intent</td><td>{{ reduction.processing_intent }}</td></tr>
+            <tr class='alternating'><td>Processing Software mode</td><td>{{ reduction.software_mode }}</td></tr>
+            <tr class='alternating'><td>Processing Software Used</td><td>{{ reduction.software_used }}</td></tr>
+            <tr class='alternating'><td>Processing Software Version</td><td>{{ reduction.software_version }}</td></tr>
+            <tr class='alternating'><td>Processing Initiate By</td><td>{{ reduction.processing_initiated_by }}</td></tr>
+            <tr class='alternating'><td>Processing Reviewed By</td><td>{{ reduction.processing_reviewed_by }}</td></tr>
+            <tr class='alternating'><td>Processing Review Outcome</td><td>{{ reduction.processing_review_outcome }}</td></tr>
+            <tr class='alternating'><td>Processing Level</td><td>{{ reduction.processing_level }}</td></tr>
+            <tr class='alternating'><td>Processing Tag</td><td>{{ reduction.processing_tag }}</td></tr>
+        </TABLE>
+    {% endif %}
+    {% if processing_tag == "None" %}
+        <P>No Processing Tag Information found</P>
+    {% else %}
+        <h2>Processing Tag Information</h2>
+        <TABLE class="nowrap">
+            <tr class='alternating'><td>Tag Name</td><td>{{ processing_tag.tag }}</td></tr>
+            <tr class='alternating'><td>Domain</td><td>{{ processing_tag.domain }}</td></tr>
+            <tr class='alternating'><td>Priority</td><td>{{ processing_tag.priority }}</td></tr>
+            <tr class='alternating'><td>Published</td><td>{{ processing_tag.published }}</td></tr>
+        </TABLE>
+    {% endif %}
+{% endif %}
+{% endblock %}

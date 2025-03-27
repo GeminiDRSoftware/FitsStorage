@@ -33,7 +33,7 @@
       {%- elif column.key == 'observation_class' -%}{{ generate_uri_link(column.content, row.uri) }}
       {%- elif column.key == 'observation_type' -%}{{ generate_uri_link(column.content, row.uri) }}
       {%- elif column.key == 'object' -%}{{ generate_object(column.content) }}
-      {%- elif column.key == 'download' -%}{{ generate_download(column.content, row.sumtype, row.has_provenance) }}
+      {%- elif column.key == 'download' -%}{{ generate_download(column.content, row.sumtype, row.has_provenance, row.has_reduction) }}
     {%- endif -%}
   {%- endif -%}
 {%- endfor %}
@@ -101,10 +101,12 @@
 {%- endif -%}
 {%- endmacro -%}
 
-{%- macro generate_download(col, sumtype, has_provenance) -%}
+{%- macro generate_download(col, sumtype, has_provenance, has_reduction) -%}
 <div class='center'>
-{%- if col.prev %}<span class="preview"><a rel="nofollow" href="/preview/{{ col.name }}">[P]</a> </span>{% endif -%}
-{%- if has_provenance %}<a rel="nofollow" href="/history/{{ col.name }}" target="_blank">[H]</a>{% endif -%}
+{%- if col.prev %}<span class="preview"><a rel="nofollow" href="/preview/{{ col.name }}">[P] </a> </span>{% endif -%}
+{%- if has_provenance %}<a rel="nofollow" href="/history/{{ col.name }}" target="_blank">[H] </a>{% endif -%}
+{%- if has_reduction %}<a rel="nofollow" href="/reduction/{{ col.name }}" target="_blank">[R] </a>{% endif -%}
+
 {%- if col.name.endswith('.fits') %}
 <a rel="nofollow" href="/file/{{ col.name }}.bz2">[D]</a>
 {%- else -%}

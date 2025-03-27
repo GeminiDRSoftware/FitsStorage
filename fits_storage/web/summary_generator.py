@@ -355,6 +355,16 @@ class SummaryGenerator(object):
             row.has_provenance = True
         else:
             row.has_provenance = False
+
+        row.has_reduction = False
+        if header.reduction_orms:
+            try:
+                if header.reduction_orms[0].processing_level !=0:
+                    row.has_reduction = True
+            except:
+                pass
+
+
         for colkey, col in ((x, self.columns[x]) for x in self.wanted):
             c = ColWrapper(self, colkey, col)
 

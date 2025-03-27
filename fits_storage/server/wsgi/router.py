@@ -52,6 +52,7 @@ from fits_storage.web.gmoscaltwilightdetails import gmoscaltwilightdetails, \
 from fits_storage.web.gmoscalfilelist import gmoscalbiasfiles
 
 from fits_storage.web.history import history
+from fits_storage.web.reduction import reduction
 
 from fits_storage.web.preview import preview
 
@@ -161,8 +162,9 @@ url_map = Map([
     Rule('/download/<selection(SEL,ASSOC):selection,associated_calibrations>',
          download, methods=['GET']),
 
-    # History and Provenance
+    # History and Provenance, and Reduction
     Rule('/history/<thing>', history),
+    Rule('/reduction/<thing>', reduction),
 
     # Previews
     Rule('/preview/<filenamegiven>', preview),

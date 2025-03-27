@@ -38,6 +38,8 @@ fsc = get_config()
 if fsc.is_server:
     from fits_storage.server.orm.obslog_comment import ObslogComment
     from fits_storage.server.orm.program import Program
+    from fits_storage.server.orm.reduction import Reduction
+    from fits_storage.server.orm.processingtag import ProcessingTag
 
 
 class Header(Base):
@@ -137,6 +139,13 @@ class Header(Base):
                                 primaryjoin='Header.program_id=='
                                             'Program.program_id'
                                 )
+        # Reduction has a foreign key definition, ProcessingTag does not, for
+        # same reasons as above.
+        reduction_orms = relationship(Reduction)
+        processing_tag_orms = relationship(ProcessingTag,
+                                          foreign_keys=ProcessingTag.tag,
+                                          primaryjoin='Header.processing_tag=='
+                                                      'ProcessingTag.tag')
 
     def __init__(self, diskfile, logger=DummyLogger()):
         self.diskfile_id = diskfile.id
