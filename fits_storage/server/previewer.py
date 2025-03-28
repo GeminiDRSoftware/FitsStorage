@@ -177,7 +177,7 @@ class Previewer(object):
         Return True on Success, False on error
         """
         if not os.path.isdir(self.path):
-            self.logger.error("Previewpath %s is not a directory")
+            self.logger.error("Previewpath %s is not a directory", self.path)
             return False
 
         if os.path.exists(self.fpfn):
