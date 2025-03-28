@@ -449,7 +449,10 @@ class SummaryGenerator(object):
         :param kw:
         :return:
         """
-        return header.processing
+        if header.processing == 'Raw':
+            return header.processing
+        else:
+            return f"{header.processing} - {header.processing_tag}"
 
     def datalabel(self, header, **kw):
         """
