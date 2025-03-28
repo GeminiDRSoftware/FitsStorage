@@ -104,6 +104,9 @@ def available_processing_tags(selection, session=None):
     # The basic query...
     query = session.query(Header.processing_tag).join(DiskFile).join(File)
 
+    # "Unpublished" tags should be *available* - ie they show up in the pulldown
+    # so do not exclude them here.
+
     # Add the selection...
     query = selection.filter(query, ignore_processing_tag=True)
 
@@ -141,19 +144,24 @@ def default_processing_tags(selection, session=None):
     # sure this is the long term solution. There will be a very small number of
     # records here, so there's no significant performance issue
 
+    # Only "published" tags should ever be the default, so don't include
+    # priorities for unpublished tags in the maximum available priority
     # Get domain, max_priority pairs
     dmpquery = session.query(ProcessingTag.domain,
                           func.max(ProcessingTag.priority)) \
         .filter(ProcessingTag.tag.in_(available_tags)) \
+        .filter(ProcessingTag.published == True) \
         .group_by(ProcessingTag.domain)
 
     tag_values = []
     for (domain, maxpri) in dmpquery.all():
         # Bear in mind there could be multiple tags for this domain with the
-        # same priority - include them all
+        # same priority - include them all.
+        # Only "published" tags should ever be the default
         dptags = session.query(ProcessingTag) \
-            .filter(ProcessingTag.domain==domain) \
-            .filter(ProcessingTag.priority==maxpri) \
+            .filter(ProcessingTag.domain == domain) \
+            .filter(ProcessingTag.priority == maxpri) \
+            .filter(ProcessingTag.published == True) \
             .all()
         for dptag in dptags:
             tag_values.append(dptag.tag)
