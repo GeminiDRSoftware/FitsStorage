@@ -157,7 +157,7 @@ url_map = Map([
     Rule('/sitemap.xml', sitemap),
 
     # File server and downloads
-    Rule('/file/<filenamegiven>', fileserver),
+    Rule('/file/<seq_of:things>', fileserver),
     Rule('/download/', download_post, methods=['POST']),
     Rule('/download/<selection(SEL,ASSOC):selection,associated_calibrations>',
          download, methods=['GET']),
@@ -167,7 +167,7 @@ url_map = Map([
     Rule('/reduction/<thing>', reduction),
 
     # Previews
-    Rule('/preview/<filenamegiven>', preview),
+    Rule('/preview/<seq_of:things>', preview),
 
     # QA metrics
     Rule('/qareport', qareport, methods=['POST']),

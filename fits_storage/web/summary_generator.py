@@ -649,7 +649,10 @@ class SummaryGenerator(object):
         if canhave_header(None, self.user, header, user_progid_list=self.user_progid_list,
                           user_obsid_list=self.user_obsid_list, user_file_list=self.user_file_list,
                           path=diskfile.path, filename=diskfile.filename):
-            ret = dict(name=file.name)
+            filepath = f"{diskfile.path}/{diskfile.filename}" if diskfile.path else diskfile.filename
+            ret = dict(filepath=filepath,
+                       header_id=header.id,
+                       diskfile_id=diskfile.id)
             # Preview link
             fsc = get_config()
             if fsc.using_previews and preview is not None:

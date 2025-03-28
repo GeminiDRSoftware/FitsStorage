@@ -29,7 +29,7 @@ from fits_storage.db.list_headers import list_headers
 from fits_storage.config import get_config
 fsc = get_config()
 
-# We assume that servers used as archive use a calibraiton association cache table
+# Servers used as archive use a calibration association cache table
 if fsc.is_archive:
     from fits_storage.cal.associate_calibrations import associate_cals_from_cache as associate_cals
 else:
@@ -301,7 +301,7 @@ def is_regular_file(session, diskfile):
         header = session.query(Header).filter(Header.diskfile_id == diskfile.id).one()
         return header, 'application/fits'
     except MultipleResultsFound:
-        raise MultipleResultsFound("Multiple files found!")
+        raise MultipleResultsFound("Multiple regular files found!")
 
 def is_obslog(session, diskfile):
     try:
@@ -315,7 +315,7 @@ def is_misc(session, diskfile):
         miscfile = session.query(MiscFile).filter(MiscFile.diskfile_id == diskfile.id).one()
         return miscfile, 'application/octect-stream'
     except MultipleResultsFound:
-        raise MultipleResultsFound("Multiple files found!")
+        raise MultipleResultsFound("Multiple miscfiles found!")
 
 supported_tests = (
     is_regular_file,
@@ -323,59 +323,67 @@ supported_tests = (
     is_misc
 )
 
-def fileserver(filenamegiven):
+def fileserver(things):
     """
-    This is the fileserver funciton. It always sends exactly one fits file, uncompressed.
-    It handles authentication for serving the files too
+    This is the fileserver function. It always sends exactly one file.
+    It handles authentication for serving the files too.
+    The "filenamegiven" includes the path, allowing specific processing_tag
+    versions to be downloaded. If the request is for the .bz2 version, we send
+    that, if the request is for the .fits version, we send that.
     """
 
     ctx = get_context()
-
-#    # OK, first find the file they asked for in the database
-#    # tart up the filename if possible
-#    if not things:
-#        ctx.resp.status = Return.HTTP_NOT_FOUND
-#        return
-
-#    filenamegiven = things.pop(0)
-    filename = gemini_fitsfilename(filenamegiven)
-    if not filename:
-        filename = filenamegiven
-
     session = ctx.session
+
+    if len(things) == 0:
+        return Return.HTTP_BAD_REQUEST
+    elif len(things) == 1:
+        filename = things[0]
+        path = ''
+    else:
+        filename = things.pop(-1)
+        path = '/'.join(things)
 
     # Instantiate the download log
     downloadlog = DownloadLog(ctx.usagelog)
     session.add(downloadlog)
     downloadlog.query_started = datetime.datetime.utcnow()
 
-    try:
-        try:
-            file = session.query(File).filter(File.name == filename).one()
-        except NoResultFound:
-            file = None
-        if file is None:
-            if not filename.endswith('.bz2'):
-                needs_bzip2 = True
-                filename = f"{filename}.bz2"
-            else:
-                needs_bunzip2 = True
-                filename = filename[:-4]
-            file = session.query(File).filter(File.name == filename).one()
+    # Form the basic query
+    query = session.query(DiskFile).filter(DiskFile.present == True)
 
-        # OK, we should have the file record now.
-        # Next, find the canonical diskfile for it
-        diskfile = (
-            session.query(DiskFile)
-                    .filter(DiskFile.present == True)
-                    .filter(DiskFile.file_id == file.id)
-                    .one()
-            )
-        # Note that either of those queries can trigger NoResultFound
-    except NoResultFound:
-        downloadlog.add_note("Not found in File table")
-        ctx.resp.status = Return.HTTP_NOT_FOUND
+    # If no path was provided, it will be an empty string, and that is also
+    # what the diskfile tables has for files in the "root" of the path, so we
+    # don't need a conditional on this
+    query = query.filter(DiskFile.path == path)
+
+    # Need to handle the presence or lack of .bz2.
+    # Record which was requested for later
+    filenamerequested = filename
+    try:
+        # First just query as is.
+        diskfile = query.filter(DiskFile.filename == filename).one()
+    except MultipleResultsFound:
+        downloadlog.add_note("Error! Multiple present files found!")
+        ctx.resp.status = Return.HTTP_BAD_REQUEST
         return
+    except NoResultFound:
+        # "Flip" the .bz2 of the filename
+        if filename.endswith('.bz2'):
+            filename = filename[:-4]
+        else:
+            filename += '.bz2'
+
+        # and search again
+        try:
+            diskfile = query.filter(DiskFile.filename == filename).one()
+        except MultipleResultsFound:
+            downloadlog.add_note("Error! Multiple present files found!")
+            ctx.resp.status = Return.HTTP_BAD_REQUEST
+            return
+        except NoResultFound:
+            diskfile = None
+
 
     item = None
     # And now find the header record...
@@ -405,7 +413,8 @@ def fileserver(filenamegiven):
             filedownloadlog.canhaveit = True
             # Send them the data
             downloadlog.sending_files = True
-            sendonefile(item.diskfile, content_type=content_type, filenamegiven=filenamegiven)
+            sendonefile(item.diskfile, content_type=content_type,
+                        filenamegiven=filenamerequested)
             downloadlog.download_completed = datetime.datetime.utcnow()
         else:
             # Refuse to send data
@@ -486,7 +495,7 @@ def sendonefile(diskfile, content_type=None, filenamegiven=None):
     """
     Send the (one) fits file referred to by the diskfile object to the
     client. This sends data as compressed or uncompressed depending on the
-    givebn filename extension (.bz2 for compressed).  If no given filename is
+    given filename extension (.bz2 for compressed).  If no given filename is
     passed, the filename is taken from the diskfile entry.
     """
     fsc = get_config()

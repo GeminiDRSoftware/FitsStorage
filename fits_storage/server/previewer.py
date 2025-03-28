@@ -35,7 +35,7 @@ class Previewer(object):
     spectrum = None
     s3_helper = None
 
-    def __init__(self, diskfile, session, logger=None, path = None,
+    def __init__(self, diskfile, session, logger=None, previewpath = None,
                  using_s3 = None, force=False, scavengeonly=False):
         self.diskfile = diskfile
         self.session = session
@@ -43,17 +43,20 @@ class Previewer(object):
 
         fsc = get_config()
         self.using_s3 = using_s3 if using_s3 is not None else fsc.using_s3
-        self.path = path if path is not None else fsc.previewpath
-        self.path = fsc.s3_staging_dir if self.using_s3 else self.path
+        self.previewpath = previewpath if previewpath is not None else fsc.preview_path
+        self.previewpath = fsc.s3_staging_dir if self.using_s3 else self.previewpath
 
         # Push our logger instance into the diskfile if it doesn't have one.
         # diskfiles from a database session do not get __init__()ed.
         if not hasattr(self.diskfile, '_logger'):
             self.diskfile._logger = logger
 
-        self.filename = diskfile.filename + '_preview.jpg'
+        self.filename = os.path.join(diskfile.path,
+                                     diskfile.filename.removesuffix('.bz2') \
+                                     .removesuffix('.fits') + '.jpg'
+                                     )
 
-        self.fpfn = os.path.join(self.path, self.filename)
+        self.fpfn = os.path.join(self.previewpath, self.filename)
 
         # self.spectrum = len(diskfile.get_ad_object[0].shape) == 1
         # This doesn't work when diskfile comes from the database as there's
@@ -66,6 +69,8 @@ class Previewer(object):
         if self.using_s3:
             from fits_storage.server.aws_s3 import Boto3Helper
             self.s3 = Boto3Helper()
+
+
     def delete_file(self):
         """
         Delete the preview file. Fail silently if unable
@@ -176,8 +181,8 @@ class Previewer(object):
 
         Return True on Success, False on error
         """
-        if not os.path.isdir(self.path):
-            self.logger.error("Previewpath %s is not a directory", self.path)
+        if not os.path.isdir(self.previewpath):
+            self.logger.error("Previewpath %s is not a directory", self.previewpath)
             return False
 
         if os.path.exists(self.fpfn):
@@ -186,6 +191,8 @@ class Previewer(object):
 
         try:
             self.logger.info("Rendering preview for %s", self.diskfile.filename)
+            # Ensure the path within the previewpath exists
+            os.makedirs(os.path.dirname(self.fpfn), exist_ok=True)
             with open(self.fpfn, 'wb') as fp:
                 if self.spectrum:
                     rendered = self.render_spectrum(fp)
