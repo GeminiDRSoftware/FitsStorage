@@ -112,13 +112,29 @@ def available_processing_tags(selection, session=None):
 
     query = query.group_by(Header.processing_tag)
 
-    processing_tags = []
+    unsorted_tags = []
     for row in query.all():
         if row[0] is not None:
-            processing_tags.append(row[0])
+            unsorted_tags.append(row[0])
 
-    selection.available_processing_tags = processing_tags
-    return processing_tags
+    # Do an extra query here against the ProcessingTags table to sort these
+    # into descending priority order.
+    query = session.query(ProcessingTag.tag) \
+        .filter(ProcessingTag.tag.in_(unsorted_tags)) \
+        .order_by(desc(ProcessingTag.priority))
+
+    sorted_tags = []
+    for tag in query.all():
+        sorted_tags.append(tag[0])
+
+    # Pass through any tags that are used in the
+    # header table but are not in the ProcessingTags table though.
+    for tag in unsorted_tags:
+        if tag not in sorted_tags:
+            sorted_tags.append(tag)
+
+    selection.available_processing_tags = sorted_tags
+    return sorted_tags
 
 def default_processing_tags(selection, session=None):
     """
