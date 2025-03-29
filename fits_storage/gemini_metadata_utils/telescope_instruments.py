@@ -227,7 +227,8 @@ def gemini_observation_type(string):
     return string if string in obs_types else None
 
 
-obs_classes = ('dayCal', 'partnerCal', 'acqCal', 'acq', 'science', 'progCal')
+obs_classes = ('dayCal', 'partnerCal', 'acqCal', 'acq', 'science', 'progCal',
+               'nightCal')
 
 
 def gemini_observation_class(string):

@@ -50,7 +50,9 @@ def main():
                            "comment if you want to set it. You can also specify"
                            " 'hdu' = 'PHU' (the default, to update the PHU only"
                            "), 'ALL' (to update ALL HDUs) or an integer (to "
-                           "specify an individual HDU to update")
+                           "specify an individual HDU to update. Instead of "
+                           "'new_value' you can specify 'from_keyword' which"
+                           "will get the new value from an existing keyword.")
     parser.add_option("--dryrun", action="store_true", dest="dryrun",
                       help="Do not actually modify files, but run through the "
                            "files and report what would actually be done")
@@ -136,8 +138,8 @@ def main():
         #  old_value: old keyword value (only for modify)}
         actions = []
         cre = re.compile(r"(?P<act>ADD:|SET:|UPDATE:)"
-                          "(?P<key>[A-Z0-9_]+)="
-                          "(?P<a>[\w+.-]+)(?:=(?P<b>[\w+.-]+))?")
+                         r"(?P<key>[A-Z0-9_]+)="
+                         r"(?P<a>[\w+.-]+)(?:=(?P<b>[\w+.-]+))?")
         for string in options.actions:
             if m := cre.match(string):
                 action = {'action': m['act'].rstrip(':'),
@@ -189,6 +191,7 @@ def apply_action(hdulist, actdict, logger):
     keyword = actdict.get('keyword')
     old_value = actdict.get('old_value')
     new_value = actdict.get('new_value')
+    from_keyword = actdict.get('from_keyword')
     comment = actdict.get('comment')
     hdu = actdict.get('hdu', 0)
 
@@ -218,6 +221,14 @@ def apply_action(hdulist, actdict, logger):
 
         kw_exists = keyword in header
         current_value = header.get(keyword)
+
+        if from_keyword is not None:
+            if from_keyword not in header:
+                logger.warning(f"from_keyword keyword {keyword} is not "
+                               f"present in header. Skipping action")
+                continue
+            else:
+                new_value = header[from_keyword]
 
         if action not in ['ADD', 'SET', 'UPDATE']:
             logger.error("Invalid action. This should NOT happen")
