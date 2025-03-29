@@ -115,9 +115,9 @@ def searchform(things, orderby):
         quoted_submitted_url = (submitted_url.replace('&', '%26').
                                 replace(' ', '%20').
                                 replace('+', '%2B').
-                                replace('/', '%2F'))
-        # print(f"normalized URL: {normalized_url}")
-        # print(f"submitted URL: {submitted_url}")
+                                replace('%2F', '%252F'))
+        # print(f"normalized URL:       {normalized_url}")
+        # print(f"submitted URL:        {submitted_url}")
         # print(f"quoted submitted URL: {quoted_submitted_url}")
         if normalized_url not in (submitted_url, quoted_submitted_url):
             ctx.resp.redirect_to('/searchform' + normalized_url)
