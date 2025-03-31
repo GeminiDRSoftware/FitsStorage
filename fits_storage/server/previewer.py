@@ -11,7 +11,13 @@ import matplotlib.pyplot as plt
 from sqlalchemy.exc import NoResultFound
 
 from gemini_instruments.gmos.pixel_functions import get_bias_level
-from gempy.library.spectral import Spek1D
+
+# This causes a circular import if fits storage tries to call dragons and
+# fits storage has using_previews=True. This is because it does a
+# 'from geminidr.gemini.lookups import DQ_definitions as DQ' which means that
+# the geminidr __init__.py gets imported and that has all the cal service stuff
+# in it.
+# from gempy.library.spectral import Spek1D
 
 from fits_storage.logger_dummy import DummyLogger
 from fits_storage.config import get_config
@@ -454,34 +460,35 @@ class Previewer(object):
         fig = plt.figure(frameon=False)
 
         if full.ndim == 1:
+            pass
             # plot a spectra
             # full = ad[0].data
             # full = full[~numpy.isnan(full)]
             # full = numpy.squeeze(full)
-            spek = Spek1D(ad[0])
-            flux = spek.flux
-            variance = numpy.sqrt(spek.variance)
+            # spek = Spek1D(ad[0])
+            # flux = spek.flux
+            # variance = numpy.sqrt(spek.variance)
             # mask values below a certain threshold
-            flux_masked = numpy.ma.masked_where(spek.mask == 16, flux)
-            variance_masked = numpy.ma.masked_where(spek.mask == 16, variance)
+            # flux_masked = numpy.ma.masked_where(spek.mask == 16, flux)
+            # variance_masked = numpy.ma.masked_where(spek.mask == 16, variance)
 
-            try:
-                plt.title(spek.filename)
-                plt.xlabel("wavelength %s" % spek.spectral_axis_unit)
-                plt.ylabel("flux density %s" % spek.unit)
-            except Exception as e:
-                pass
-            try:
-                x_axis = spek.spectral_axis
+            # try:
+                # plt.title(spek.filename)
+                # plt.xlabel("wavelength %s" % spek.spectral_axis_unit)
+                # plt.ylabel("flux density %s" % spek.unit)
+            # except Exception as e:
+                # pass
+            # try:
+                # x_axis = spek.spectral_axis
                 # full = full[~numpy.isnan(full)]
                 # full = numpy.squeeze(full)
-                plt.plot(x_axis, flux_masked, label="data")
-                plt.plot(x_axis, variance_masked, color='r', label="stddev")
-                plt.legend()
-            except Exception as e:
-                self.logger.warning("Recovering (simplified preview) from Exception", exc_info=True)
-                plt.plot(flux_masked)
-                plt.plot(variance_masked, color='r')
+                # plt.plot(x_axis, flux_masked, label="data")
+                # plt.plot(x_axis, variance_masked, color='r', label="stddev")
+                # plt.legend()
+            # except Exception as e:
+                # self.logger.warning("Recovering (simplified preview) from Exception", exc_info=True)
+                # plt.plot(flux_masked)
+                # plt.plot(variance_masked, color='r')
         else:
             ax = plt.Axes(fig, [0, 0, 1, 1])
             ax.set_axis_off()
@@ -494,61 +501,61 @@ class Previewer(object):
         return True
 
 
-    # This isn't used - needs some refactoring and rework to paste all the
-    # spectra into one plot and do away with the idx thing.
-    def render_spectra_preview(self, ad, outfile, idx):
-        """
-        Pass in an astrodata object and a file-like outfile. This function will
-        create a jpeg rendering of the ad object and write it to the outfile.
-
-        Parameters:
-        ----------
-        ad: <AstroData>
-            An instance of AstroData
-
-        outfile: <str>
-           Filename to write.
-
-        Returns:
-        -------
-        <void>
-
-        """
-        add = ad[idx]
-
-        # plot without axes or frame
-        fig = plt.figure(frameon=False)
-
-        spek = Spek1D(add)
-        flux = spek.flux
-        variance = numpy.sqrt(spek.variance)
-        # mask values below a certain threshold
-        flux_masked = numpy.ma.masked_where(spek.mask == 16, flux)
-        variance_masked = numpy.ma.masked_where(spek.mask == 16, variance)
-
-        try:
-            if len(ad) > 1:
-                plt.title(spek.filename)
-            else:
-                plt.title("%s - %d" % (spek.filename, idx))
-            plt.xlabel("wavelength %s" % spek.spectral_axis_unit)
-            plt.ylabel("flux density %s" % spek.unit)
-        except Exception as e:
-            pass
-        try:
-            x_axis = spek.spectral_axis
-            # full = full[~numpy.isnan(full)]
-            # full = numpy.squeeze(full)
-            plt.plot(x_axis, flux_masked, label="data")
-            plt.plot(x_axis, variance_masked, color='r', label="stddev")
-            plt.legend()
-        except Exception as e:
-            self.logger.debug("Exception. Generating simplified preview instead",
-                         exc_info=True)
-            plt.plot(flux_masked)
-            plt.plot(variance_masked, color='r')
-
-        fig.savefig(outfile, format='jpg')
-
-        plt.close()
-        return True
+    # # This isn't used - needs some refactoring and rework to paste all the
+    # # spectra into one plot and do away with the idx thing.
+    # def render_spectra_preview(self, ad, outfile, idx):
+    #     """
+    #     Pass in an astrodata object and a file-like outfile. This function will
+    #     create a jpeg rendering of the ad object and write it to the outfile.
+    #
+    #     Parameters:
+    #     ----------
+    #     ad: <AstroData>
+    #         An instance of AstroData
+    #
+    #     outfile: <str>
+    #        Filename to write.
+    #
+    #     Returns:
+    #     -------
+    #     <void>
+    #
+    #     """
+    #     add = ad[idx]
+    #
+    #     # plot without axes or frame
+    #     fig = plt.figure(frameon=False)
+    #
+    #     spek = Spek1D(add)
+    #     flux = spek.flux
+    #     variance = numpy.sqrt(spek.variance)
+    #     # mask values below a certain threshold
+    #     flux_masked = numpy.ma.masked_where(spek.mask == 16, flux)
+    #     variance_masked = numpy.ma.masked_where(spek.mask == 16, variance)
+    #
+    #     try:
+    #         if len(ad) > 1:
+    #             plt.title(spek.filename)
+    #         else:
+    #             plt.title("%s - %d" % (spek.filename, idx))
+    #         plt.xlabel("wavelength %s" % spek.spectral_axis_unit)
+    #         plt.ylabel("flux density %s" % spek.unit)
+    #     except Exception as e:
+    #         pass
+    #     try:
+    #         x_axis = spek.spectral_axis
+    #         # full = full[~numpy.isnan(full)]
+    #         # full = numpy.squeeze(full)
+    #         plt.plot(x_axis, flux_masked, label="data")
+    #         plt.plot(x_axis, variance_masked, color='r', label="stddev")
+    #         plt.legend()
+    #     except Exception as e:
+    #         self.logger.debug("Exception. Generating simplified preview instead",
+    #                      exc_info=True)
+    #         plt.plot(flux_masked)
+    #         plt.plot(variance_masked, color='r')
+    #
+    #     fig.savefig(outfile, format='jpg')
+    #
+    #     plt.close()
+    #     return True
