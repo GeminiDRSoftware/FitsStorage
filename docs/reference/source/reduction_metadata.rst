@@ -289,14 +289,88 @@ supplied DRAGONS reductions and, and legacy IRAF reductions by the SOS/DAS etc.
 GOA needs to be able to tell from this tag which of the many reductions it
 should offer by default in the search results.
 
-This would be a string of the form TTT-YYYYMMDD-NNN-LABEL where TTT is a
-number to indicate the priority of this type of reduction, YYYYMMDD is a
-date, NNN is a serial number to avoid date clashes and LABEL is something
-like GOA_AUTOMATIC, GHOST_SV, PI, etc etc.
+Rather than encoding priority etc values into the tag, the tag is just that -
+a label, and the processing_tag table describes their properties.
 
-Values of TTT and NNN would be chosen such that the “largest” value of this
-string represents the reduction that should be offered by default in the
-search results.
+The Processing Tag is also used as the path (or key prefix in the case of S3)
+for where to store the files. Filenames have to be unique within a processing
+tag.
+
+Example processing tag names:
+
+IRAF_BIAS: Legacy DAS / SOS IRAF reduced GMOS BIASes
+
+IRAF_FLAT: Legact DAS / SOS IRAF reduced GMOS Twilight flats
+
+GOA_DRAGONS_3.2_GMOS_BIAS: GMOS BIASes reduced by GOA with DRAGONS 3.2
+
+USNGO_GHOST: USGNO GHOST reductions
+
+IGRINS2_PLP:  IGRINS-2 PLP data products
+
+Processing Tag Metadata, searching and calibration association
+--------------------------------------------------------------
+
+Metadata regarding the processing tags is stored in the processing_tag table,
+and there is a processing_tags.py script to aid in manipulating it. The
+processing tag of an individual reduced data file is given in the processing_tag
+column of the Header table entry for that file. There is no database schema
+foreign key relationship between this and the processing_tags table, which
+allows data to be ingested even if it has a processing_tag that is not in the
+processing_tag table, however it will not show up by default in search queries
+until this is added.
+
+The metadata for each processing tag stored in the processing_tag table are:
+
+tag: the tag name - matched against Header.processing_tag
+
+domain: The domain to which this tag applies. For example GMOS_BIAS,
+GMOS_IMAGING, GMOS_LONGSLIT, GHOST, etc. Domains must be non-overlapping
+(hence separating GMOS_BIAS from GMOS_IMAGING and GMOS_LONGSLIT). The rationale
+for this should become clear when we discuss search results
+
+priority: An integer priority (higher is better) of this tag.
+
+published: Boolean to say of this tag is "published". Tags that are not
+published will still be visible in the archive, but will never be selected by
+default and will never be used in calibration association.
+
+Searches for reduced data
+"""""""""""""""""""""""""
+
+Individual processing tags can be specified in the selection criteria of a
+search. If there is no processing tag specification in the selection, no
+search filtering is done by processing tag and all processed data will show up.
+This, however is rarely the case, as the default search criteria specify
+searching on the special processing tag value of "default".
+
+When we get a searchform (or other) search for the "default" processing tag
+value, we first search the database with no processing tag search constraints,
+to generate a list of processing tags relevant to the other search criteria
+given. This is the available tags list and is used to populate the processing
+tags pulldown in the search form with the search results. This allows the user
+to subsequently re-run the search with any applicable processing tag. We then
+look at the metadata of the available tags and generate a list of tags
+containing the highest priority tag for each domain, and exluding tags that are
+marked as "not published". This is the default tags list, and if the search is
+for the "default" processing tag, we include results from all the tags on this
+list.
+
+This means that by leaving the setting at "Default", users will see the highest
+priority, "published", reduced data applicable, and they'll get a list of all
+available tags in the pulldown if they want to search for a specific one.
+
+Calibration Association
+"""""""""""""""""""""""
+
+The current implementation of the calibration association makes it difficult to
+implement the same strategy in the calibration manager. This could be added
+in future, but for now, when searching for processed calibrations, the
+calibration manager will only return results having "published" reduction tags,
+and will simply sort results in descending priority order. Given that for most
+processed calibrations, only one file is requested, the result will be from the
+highest priority tag available.
+
 
 Retention of superseded data products
 -------------------------------------
