@@ -88,11 +88,12 @@ def cals_info(cal_obj, caltype, procmode=None, qtype='UNKNOWN', log=no_func, add
             for cal in cals:
                 if cal.diskfile.present:
                     if http:
-                        url = "http://{host}/file/{name}".format(host=hostname,
-                                                                 name=cal.diskfile.file.name)
+                        urlpath = f"{cal.diskfile.path}/{cal.diskfile.filename}"\
+                            if cal.diskfile.path else f"{cal.diskfile.filename}"
+                        url = f"http://{hostname}/file/{urlpath}"
                     else:
-                        path = os.path.join(storage_root, cal.diskfile.file.path, cal.diskfile.file.name)
-                        url = "file://{}".format(path)
+                        path = os.path.join(storage_root, cal.diskfile.path, cal.diskfile.filename)
+                        url = f"file://{path}"
                 else:
                     # Once we are sending new stlye processed calibrations to the GSA,
                     # we can form a URL to the GSA here and return that.
