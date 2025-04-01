@@ -9,12 +9,17 @@ from fits_storage.gemini_metadata_utils import UT_DATETIME_SECS_EPOCH
 
 from ast import literal_eval
 
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, or_
 from sqlalchemy.orm import join
 from datetime import timedelta
 
 from fits_storage import gemini_metadata_utils as gmu
 
+from fits_storage.config import get_config
+fsc = get_config()
+
+if fsc.is_server:
+    from fits_storage.server.orm.processingtag import ProcessingTag
 
 _remappings = {
     "shuffle_pixels": "nod_pixels"
@@ -111,6 +116,15 @@ class CalQuery(object):
         else:
             query = session.query(Header).select_from(join(Header, DiskFile))
 
+        if fsc.is_server:
+            # Join against processing tag and sort by descending tag priority order
+            query = query.join(ProcessingTag,
+                               Header.processing_tag == ProcessingTag.tag)
+            query = query.filter(or_(Header.processing == 'Raw',
+                                     ProcessingTag.published == True))
+            query = query.order_by(desc(ProcessingTag.priority))
+            
+        # Does this even work? The value being passed is 'sq' I think...
         if procmode == 'Science-Quality':
             query = query.filter(Header.processing == procmode)
 
