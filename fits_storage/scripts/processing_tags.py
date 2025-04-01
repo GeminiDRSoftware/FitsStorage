@@ -17,6 +17,15 @@ fsc = get_config()
 if __name__ == "__main__":
     parser = ArgumentParser()
 
+    # Bool doesn't work as you'd expect...
+    def str2bool(value):
+        if isinstance(value, bool):
+            return value
+        if value.lower() in ('yes', 'true', 't', 'y', '1'):
+            return True
+        else:
+            return False
+
     parser.add_argument("--debug", action="store_true", dest="debug",
                         help="Increase log level to debug")
 
@@ -34,7 +43,7 @@ if __name__ == "__main__":
                         help="Priority, for add, update or list")
 
     parser.add_argument("--published", action="store", dest="published",
-                        type=bool, default=None,
+                        type=str2bool, default=None,
                         help="published [bool], for add, update, or list")
 
     parser.add_argument("--addtag", action="store", dest="addtag", type=str,
