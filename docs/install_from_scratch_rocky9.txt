@@ -76,13 +76,6 @@ df -h .
 
 
 # As fitsdata
-pip3 install astrodata
-pip3 uninstall astrodata  # We just wanted the dependencies really...
-pip3 install -r /opt/FitsStorage/requirements.txt
-pip3 install -r /opt/FitsStorage/requirements_server.txt # For servers
-pip3 install -r /opt/FitsStorage/requirements_dev.txt   # For development systems
-conda install uwsgi
-pip3 install boto3 # if required
 cd /opt/DRAGONS
 git clone git@github.com:/GeminiDRSoftware/DRAGONS .
 git fetch
@@ -92,6 +85,15 @@ git clone git@github.com:GeminiDRSoftware/FitsStorage.git .
 git switch release/3.2.x  # or main, depending what you want...
 cd /opt/FitsStorageConfigurations
 git clone git@github.com:/phirstgemini/FitsStorageConfigurations .
+
+pip3 install astrodata
+pip3 uninstall astrodata  # We just wanted the dependencies really...
+pip3 install -r /opt/FitsStorage/requirements.txt
+pip3 install -r /opt/FitsStorage/requirements_server.txt # For servers
+pip3 install -r /opt/FitsStorage/requirements_dev.txt   # For development systems
+conda install uwsgi
+pip3 install boto3 # if required
+
 create_tables.py
 ingest_standards.py
 touch /data/logs/uwsgi.log
@@ -103,7 +105,7 @@ sudo cp /opt/FitsStorage/system_install_files/etc_systemd_system/* /etc/systemd/
 sudo mkdir /opt/uwsgi
 sudo chown fitsweb:fitsdata /opt/uwsgi
 sudo cp /opt/FitsStorage/system_install_files/fitsservice.ini /opt/uwsgi
-sudo cp /opt/FitsStorage/system_install_files/nginx-fits /etc/nginx/nginx.conf
+sudo cp /opt/FitsStorage/system_install_files/fits_server-nginx.conf /etc/nginx/nginx.conf
 sudo systemctl start fits-nginx
 sudo systemctl status fits-nginx
 sudo systemctl enable fits-nginx
