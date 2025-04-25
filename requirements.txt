@@ -7,6 +7,5 @@
 # gemini_instruments
 SQLAlchemy>=2
 python-dateutil
-requests
-jinja2
-simplejson
+numpy
+astropy
