@@ -29,7 +29,5 @@ packages = ['fits_storage',
     'fits_storage.fits_validator', 'fits_storage.gemini_metadata_utils',
     'fits_storage.queues', 'fits_storage.queues.orm',
     'fits_storage.queues.queue',
-    'fits_storage.scripts',
     'fits_storage.server', 'fits_storage.server.orm',
-    'fits_storage.server.wsgi', 'fits_storage.web',
-    'fits_storage_tests', 'fits_storage_tests.code_tests']
+    'fits_storage.server.wsgi', 'fits_storage.web']

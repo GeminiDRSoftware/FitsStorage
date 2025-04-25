@@ -1,2 +1,5 @@
 psycopg2-binary
-pyjwt # if oauth_login enabled
+pyjwt
+requests
+jinja2
+simplejson
