@@ -50,7 +50,8 @@ do activate
 conda config --add channels conda-forge
 conda config --add channels http://astroconda.gemini.edu/public
 #conda create -p /opt/miniforge3/envs/dragons python=3.10 "numpy<2" dragons
-conda create -p /opt/miniforge3/envs/fitsdata python=3.10
+conda create -p /opt/miniforge3/envs/fitsdata python=3.10 # Going to need 3.12
+conda install fitsverify
 
 # In bash profile, add:
 export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
