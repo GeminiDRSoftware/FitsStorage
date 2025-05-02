@@ -626,8 +626,10 @@ class SummaryGenerator(object):
                 cw = '%.3f' % header.central_wavelength
             except TypeError:
                 cw = ''
-            return "%s : %s" % (disp, cw)
-
+            if cw:
+                return "%s : %s" % (disp, cw)
+            else:
+                return str(disp)
         else:
             return header.filter_name
 
