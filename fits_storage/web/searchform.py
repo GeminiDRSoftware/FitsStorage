@@ -110,15 +110,13 @@ def searchform(things, orderby):
         # Check if the URL they came to is normalized.
         normalized_url = selection.to_url(with_columns=True)
         submitted_url = ctx.req.env.uri.removeprefix("/searchform")
-        # Kludge escaping in the target names here to prevent infinite redirect
-        # loops. Would be good to fix this properly...
-        quoted_submitted_url = (submitted_url.replace('&', '%26').
-                                replace(' ', '%20').
-                                replace('+', '%2B').
-                                replace('%2F', '%252F'))
+        quoted_submitted_url = urllib.parse.quote(submitted_url)
         # print(f"normalized URL:       {normalized_url}")
         # print(f"submitted URL:        {submitted_url}")
         # print(f"quoted submitted URL: {quoted_submitted_url}")
+        # This should match on submitted_url now we have dealt properly (I
+        # hope) with '/' characters in object names. Remove the
+        # quoted_submitted_url logic in future
         if normalized_url not in (submitted_url, quoted_submitted_url):
             ctx.resp.redirect_to('/searchform' + normalized_url)
 

@@ -205,7 +205,8 @@ def from_url_things(things):
                 # Good through 2029, don't match full filenames :-)
                 selection['filepre'] = thing
             elif key in {'object', 'Object'}:
-                selection['object'] = value
+                # Handle the custom escaping of '/' characters here
+                selection['object'] = value.replace('=slash=', '/')
             elif thing in {'LS', 'MOS', 'IFS'}:
                 selection['mode'] = thing
                 selection['spectroscopy'] = True
