@@ -75,7 +75,8 @@ class UsageLogAnalysis(Base):
         status_score = 0
         if self.usagelog.user_agent not in self.fsc.allow_user_agent_strings:
             if self.usagelog.status == 404:
-                status_score = 5
+                # This happens too much for innocuous reasons, don't penalize it
+                status_score = 0
 
         self.total_score = self.uri_score + self.agent_score + \
                            self.referer_score + status_score

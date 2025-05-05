@@ -72,13 +72,15 @@ def to_url(self, with_columns=False):
                 # It's a non-standard one
                 self._url += '/progid=%s' % self[key]
         elif key == 'object':
-            # We need to double-escape this because the webserver/wsgi code (
-            # outside our control) will de-escape it for us and we'll be left
-            # with, for instance, /s that we can't differentiate from those
-            # in the path.
-            self._url += '/object=%s' % urllib.parse.quote(
-                self[key]).replace('/', '%252F')
+            # We custom escape '/' characters here as if we use standard url
+            # escping, the webserver/wsgi layer (outside our control) will
+            # de-escape it for us and we'll be left with / in the name that we
+            # can't differentiate from path separators. '/' needs special
+            # handling because we do an explicit split on '/' in the router
+            # code to generate the url things list.
+            self._url += '/object=%s' % self[key].replace('/', '=slash=')
         elif key == 'publication':
+            # Need to handle '&' characters in bibcodes, but not '/'s
             self._url += '/publication=%s' % urllib.parse.quote(self[key])
         elif key == 'spectroscopy':
             if self[key] is True:

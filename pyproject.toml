@@ -4,6 +4,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = "fits_storage"
+# Don't forget to also update fits_storage/__init__.py
 version = "3.4.0-dev"
 authors = [
   { name="Paul Hirst", email="paul.hirst@noirlab.edu" },
@@ -29,7 +30,5 @@ packages = ['fits_storage',
     'fits_storage.fits_validator', 'fits_storage.gemini_metadata_utils',
     'fits_storage.queues', 'fits_storage.queues.orm',
     'fits_storage.queues.queue',
-    'fits_storage.scripts',
     'fits_storage.server', 'fits_storage.server.orm',
-    'fits_storage.server.wsgi', 'fits_storage.web',
-    'fits_storage_tests', 'fits_storage_tests.code_tests']
+    'fits_storage.server.wsgi', 'fits_storage.web']

@@ -7,7 +7,7 @@ After=network.target remote-fs.target nss-lookup.target
 # Be careful with this! Change to another file if needed
 TimeoutStartSec=10
 User=fitsweb
-ExecStart=/opt/anaconda3/envs/dragons/bin/uwsgi --ini /opt/uwsgi/fitsservice.ini
+ExecStart=/opt/miniforge3/envs/fitsdata/bin/uwsgi --ini /opt/uwsgi/fitsservice.ini
 
 [Install]
 WantedBy=multi-user.target

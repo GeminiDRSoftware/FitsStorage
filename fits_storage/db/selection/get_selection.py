@@ -71,7 +71,8 @@ getselection_key_value = {
     'nightrange': 'nightrange',
     'entrytimedaterange': 'entrytimedaterange',
     'lastmoddaterange': 'lastmoddaterange',
-    'processing_tag': 'processing_tag'
+    'processing_tag': 'processing_tag',
+    'readmode': 'readmode',
     }
 
 # Some elements of the URL entries set themselves as the value for a
@@ -205,7 +206,8 @@ def from_url_things(things):
                 # Good through 2029, don't match full filenames :-)
                 selection['filepre'] = thing
             elif key in {'object', 'Object'}:
-                selection['object'] = value
+                # Handle the custom escaping of '/' characters here
+                selection['object'] = value.replace('=slash=', '/')
             elif thing in {'LS', 'MOS', 'IFS'}:
                 selection['mode'] = thing
                 selection['spectroscopy'] = True
