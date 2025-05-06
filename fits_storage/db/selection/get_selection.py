@@ -72,6 +72,7 @@ getselection_key_value = {
     'entrytimedaterange': 'entrytimedaterange',
     'lastmoddaterange': 'lastmoddaterange',
     'readmode': 'readmode',
+    'welldepth': 'welldepth',
     }
 
 # Some elements of the URL entries set themselves as the value for a
