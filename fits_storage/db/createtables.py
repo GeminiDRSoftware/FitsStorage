@@ -128,7 +128,7 @@ def get_fitsweb_granthelper():
          'nici', 'ghost', 'photstandard', 'photstandardobs', 'footprint',
          'preview', 'obslog', 'miscfile', 'obslog_comment', 'program',
          'publication', 'programpublication', 'provenance', 'history',
-         'reduction'])
+         'reduction', 'processingtag'])
 
     # For the notification system:
     grant.select('notification')
