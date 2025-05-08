@@ -20,7 +20,8 @@ fsc = get_config()
 @needs_cookie(magic_cookie='gemini_fits_upload_auth', annotate=FileUploadLog)
 def upload_file(things):
     """
-    This handles uploading files, including processed calibrations.
+    This handles uploading files, including processed calibrations and other
+    reduced data products
     It has to be called via a POST request with a binary data payload
 
     If upload authentication is enabled, the request must contain
@@ -59,6 +60,7 @@ def upload_file(things):
     if ctx.env.method != 'POST':
         fileuploadlog.add_note("Aborted - not HTTP POST")
         ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
+        session.commit()
         return
 
     # Stream the data into the upload_staging file. We replicate the path
@@ -127,3 +129,4 @@ def upload_file(things):
                                   "fileuploadlog_id": fileuploadlog.id})
 
     fq.add(fo_req, filename=filename, response_required=False)
+    session.commit()
