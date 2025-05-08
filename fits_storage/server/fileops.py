@@ -67,7 +67,7 @@ def ingest_upload(args, session, logger):
     logger.info(f"ingest_upload: {filename=}, {path=}, {fileuploadlog_id=}, "
                 f"{processed_cal=}")
 
-    # When called to ingest processed data, fileuploadlog_id is None
+    # When called to ingest locally processed data, fileuploadlog_id is None
     if fileuploadlog_id:
         fileuploadlog = session.get(FileUploadLog, fileuploadlog_id)
     else:
