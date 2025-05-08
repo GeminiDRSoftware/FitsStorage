@@ -51,7 +51,7 @@ pid = "%s|%s" % (pid_sci, pid_caleng)
 pid_cre = re.compile(pid)
 
 # This matches an observation id with the project id and obsnum as groups
-obsid = "(?P<progid>%s)-(?P<obsid>\d+)" % pid
+obsid = r"(?P<progid>%s)-(?P<obsid>\d+)" % pid
 obsid_cre = re.compile(obsid)
 
 # This matches a data-label with an optional extension
