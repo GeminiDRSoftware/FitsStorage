@@ -210,7 +210,11 @@ class Boto3Helper(object):
         try:
             self.s3_client.download_file(self.bucket.name, keyname, fullpath)
         except RetriesExceededError:
-            self.l.error("Retries Exceeded", exc_info=True)
+            self.l.error("S3 client Retries Exceeded", exc_info=True)
+            return False
+        except ClientError:
+            self.l.error(f"S3 Client Error - {keyname=} {fullpath=}",
+                         exc_info=True)
             return False
 
         if skip_tests:
