@@ -7,6 +7,9 @@ import os
 import os.path
 import shutil
 import bz2
+import json
+import http
+import requests
 
 from astropy.io import fits
 
@@ -20,6 +23,9 @@ from fits_storage.queues.orm.reducequeentry import ReduceQueueEntry
 
 from fits_storage.server.orm.monitoring import Monitoring
 from fits_storage.server.orm.processinglog import ProcessingLog
+
+from fits_storage.core.hashes import md5sum
+from fits_storage.server.bz2stream import StreamBz2Compressor
 
 # DRAGONS imports
 from recipe_system.reduction.coreReduce import Reduce
@@ -68,6 +74,7 @@ class Reducer(object):
         self.reduce_dir = self.fsc.reduce_dir
         self.reduce_calcache_dir = self.fsc.reduce_calcache_dir
         self.using_s3 = self.fsc.using_s3
+        self.upload_url = self.fsc.reducer_upload_url
 
         # We store the reducequeueentry passed for reduction in the class for
         # convenience and to facilitate the seterror convenience function
@@ -75,6 +82,14 @@ class Reducer(object):
 
         # Initialize these to None here, they are set as they are used
         self.workingdir = None
+
+        # If we are uploading reduced files to an upload_url, make the
+        # requests session here.
+        if self.upload_url:
+            self.rs = requests.Session()
+            requests.utils.add_dict_to_cookiejar(
+                self.rs.cookies,
+                {'gemini_fits_upload_auth': self.fsc.export_auth_cookie})
 
     def logrqeerror(self, message, exc_info=False):
         """
@@ -342,45 +357,118 @@ class Reducer(object):
         # Metadata should be already set.
         # Set self.rqe.failed via logrqeerror if fails.
 
-        # We ingest the files locally  - ie copy the files to upload_staging,
-        # and add a fileops queue entry to upload_ingest them. If this is an
-        # archive worker host, it would need permission to access S3 to
-        # upload, and then the actual ingest would happen on the archive
-        # server where service_ingest_queue is running. If we just have a
-        # local storageroot e.g. for development testing, that's all we need.
-        # We could also run with a local storage root and use export to
-        # push the files to the archive, though that may require some
-        # configuration changes as it's a hybrid configuration
+        if self.upload_url is None:
+            # We ingest the files locally  - ie copy the files to upload_staging
+            # and add a fileops queue entry to upload_ingest them. This doesn't
+            # work for an archive / distriubuted environment as the fileops
+            # queue entry could get serviced by any host
 
-        # TODO - enhance fileops upload_ingest and S3 helper to be able to
-        # put things in a "directory" on S3 and use the processing tag for that
-        # directory name.
+            foq = FileopsQueue(self.s, logger=self.l)
+            for filename in self.reduced_files:
 
-        foq = FileopsQueue(self.s, logger=self.l)
-        for filename in self.reduced_files:
+                # Copy to upload staging, put in tag directory there
+                src = os.path.join(self.workingdir, filename)
+                dstpath = os.path.join(self.fsc.upload_staging_dir,
+                                       self.rqe.tag)
+                dst = os.path.join(dstpath, filename)
+                self.l.info(f"Copying {src} to {dst}")
+                try:
+                    os.makedirs(dstpath, exist_ok=True)
+                    shutil.copyfile(src, dst)
+                except Exception:
+                    self.logrqeerror(f"Exception copying {src} to {dst}",
+                                     exc_info=True)
+                    return
 
-            # Copy to upload staging, put in tag directory there
-            src = os.path.join(self.workingdir, filename)
-            dstpath = os.path.join(self.fsc.upload_staging_dir, self.rqe.tag)
-            dst = os.path.join(dstpath, filename)
-            self.l.info(f"Copying {src} to {dst}")
+                # Add a fileops ingest_upload queue entry
+                self.l.info(f"Adding fileops ingest_upload request for {filename}")
+                fo_req = FileOpsRequest(request="ingest_upload",
+                                        args={"filename": filename,
+                                              "processed_cal": False,
+                                              "path": self.rqe.tag,
+                                              "fileuploadlog_id": None})
+
+                foq.add(fo_req, filename=filename, response_required=False)
+        else:
+            # Compress and Post the uploaded files to self.upload_url
+            for filename in self.reduced_files:
+                if self.export_reduced_file(filename):
+                    return
+
+    def export_reduced_file(self, filename):
+        # Compress and export a file to a remote server.
+        # logrqerror and return True on error
+
+        # Get a file-like-object for the data to export
+        # Note that we always export bz2 compressed data.
+        fpfn = os.path.join(self.workingdir, filename)
+        with open(fpfn, mode='rb') as f:
+            if filename.endswith('.bz2'):
+                destination_filename = filename
+                flo = f
+            else:
+                destination_filename = filename + '.bz2'
+                flo = StreamBz2Compressor(f)
+
+            # Construct upload URL.
+            dst = os.path.join(self.rqe.tag, destination_filename)
+            url = f"{self.upload_url}/{dst}"
+            self.l.info(f"Transferring file {filename} to {url}")
+
             try:
-                os.makedirs(dstpath, exist_ok=True)
-                shutil.copyfile(src, dst)
-            except Exception:
-                self.logrqeerror(f"Exception copying {src} to {dst}",
+                req = self.rs.post(url, data=flo, timeout=10)
+            except requests.Timeout:
+                self.logrqeerror(f"Timeout posting to: {url}",
                                  exc_info=True)
-                return
+                return True
+            except requests.ConnectionError:
+                self.logrqeerror(f"ConnectionError posting to: {url}",
+                                 exc_info=True)
+                return True
+            except requests.RequestException:
+                self.logrqeerror(f"RequestException posting to: {url}",
+                                 exc_info=True)
+                return True
 
-            # Add a fileops ingest_upload queue entry
-            self.l.info(f"Adding fileops ingest_upload request for {filename}")
-            fo_req = FileOpsRequest(request="ingest_upload",
-                                    args={"filename": filename,
-                                          "processed_cal": False,
-                                          "path": self.rqe.tag,
-                                          "fileuploadlog_id": None})
+            self.l.debug("Got http status %s and response %s",
+                         req.status_code, req.text)
+            if req.status_code != http.HTTPStatus.OK:
+                self.logrqeerror(
+                    f"Bad HTTP status: {req.status_code} from "
+                    f"upload post to url: {url}")
+                return True
 
-            foq.add(fo_req, filename=filename, response_required=False)
+            # The response should be a short json document
+            if flo is f:
+                # Need to provide the extra properties that our bz2streamer
+                # provides that are used in the verification.
+                flo.bytes_output = os.path.getsize(fpfn)
+                flo.md5sum_output = md5sum(fpfn)
+            try:
+                verification = json.loads(req.text)[0]
+                if verification['filename'] != destination_filename:
+                    et = "Transfer Verification Filename mismatch: " \
+                         f"{verification['filename']} vs {destination_filename}"
+                    self.logrqeerror(et)
+                    return True
+                if verification['size'] != flo.bytes_output:
+                    et = "Transfer Verification size mismatch: " \
+                            f"{verification['size']} vs {flo.bytes_output}"
+                    self.logrqeerror(et)
+                    return True
+                if verification['md5'] != flo.md5sum_output:
+                    et = "Transfer Verification md5 mismatch: " \
+                         f"{verification['md5']} vs {flo.md5sum_output}"
+                    self.logrqeerror(et)
+                    return True
+
+            except (TypeError, ValueError, KeyError):
+                error_text = "Exception during transfer verification"
+                self.logrqeerror(error_text, exc_info=True)
+                return True
+
+            self.l.debug("Transfer Verification succeeded")
+        return False
 
     def capture_monitoring(self):
         """
