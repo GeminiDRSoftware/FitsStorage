@@ -230,12 +230,17 @@ def download(selection, associated_calibrations):
                 filedownloadlog.canhaveit = True
                 md5file += "%s  %s\n" % (header.diskfile.file_md5,
                                          header.diskfile.filename)
+                path = header.diskfile.path
+                filename = header.diskfile.filename
                 if fsc.using_s3:
-                    with s3.fetch_temporary(header.diskfile.filename) as buffer:
+                    keyname = f"{path}/{filename}" if path else filename
+                    with s3.fetch_temporary(keyname) as buffer:
                         # Write buffer into tarfile
                         # - create a tarinfo object
                         tarinfo = make_tarinfo(
-                            header.diskfile.filename,
+                            # We use the keyname in the tarfile to avoid clashes
+                            # if they have results from multiple paths
+                            keyname,
                             size = header.diskfile.file_size,
                             uid = 0, gid = 0,
                             uname = 'gemini', gname = 'gemini',
@@ -255,7 +260,8 @@ def download(selection, associated_calibrations):
                             raise
 
                 else:
-                    tar.add(header.diskfile.fullpath, header.diskfile.filename)
+                    tar.add(header.diskfile.fullpath,
+                            f"{path}/{filename}" if path else filename)
             else:
                 # Permission denied, add to the denied list
                 filedownloadlog.canhaveit = False
@@ -507,6 +513,7 @@ def sendonefile(diskfile, content_type=None, filenamegiven=None):
         resp.content_type = content_type
 
     fname = diskfile.filename
+    path = diskfile.path
     if filenamegiven is None:
         filenamegiven = fname
 
@@ -516,6 +523,7 @@ def sendonefile(diskfile, content_type=None, filenamegiven=None):
     if fsc.using_s3:
         # S3 file server
         # resp.content_length = diskfile.data_size
+        keyname = f"{path}/{fname}" if path else fname
         with s3.fetch_temporary(fname) as buffer:
             if diskfile.compressed:
                 if filenamegiven.lower().endswith('.bz2'):
