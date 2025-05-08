@@ -524,7 +524,7 @@ def sendonefile(diskfile, content_type=None, filenamegiven=None):
         # S3 file server
         # resp.content_length = diskfile.data_size
         keyname = f"{path}/{fname}" if path else fname
-        with s3.fetch_temporary(fname) as buffer:
+        with s3.fetch_temporary(keyname) as buffer:
             if diskfile.compressed:
                 if filenamegiven.lower().endswith('.bz2'):
                     resp.content_length = diskfile.file_size
