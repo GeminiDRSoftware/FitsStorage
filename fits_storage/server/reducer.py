@@ -253,11 +253,31 @@ class Reducer(object):
             # At this point, df should be a valid DiskFile object
             if self.using_s3:
                 s3helper = get_helper()
-                # Fetch from S3. Note that if it's S3 it's almost certainly
-                # compressed too. Use a with fetch_temporary from aws_s3 so that
-                # we don't leave it behind in s3_staging after we decompress it?
-                self.logrqeerror("S3 not implemented yet in reducer.py")
-                return
+                # Fetch from S3 into the working dir
+                keyname = f"{df.path}/{df.filename}" if df.path else df.filename
+                self.l.info(f"Fetching {keyname} from S3 to decompress")
+                working_filename = df.filename.removesuffix('.bz2')
+                outfile = os.path.join(self.workingdir, working_filename)
+                if df.compressed:
+                    chunksize = 1000000  # 1MB
+                    self.l.debug(f"Decompressing from S3 into {outfile}")
+                    # We could verify the data md5 too while we do this. Size is
+                    # a good quick sanity check for now though.
+                    numbytes = 0
+                    with bz2.open(s3helper.fetch_temporary(keyname)) as infile:
+                        with open(outfile, "wb") as outfile:
+                            while True:
+                                chunk = infile.read(chunksize)
+                                if not chunk:
+                                    break
+                                numbytes += len(chunk)
+                                outfile.write(chunk)
+                    if numbytes != df.data_size:
+                        self.l.warning("Did not get correct number of bytes "
+                                       "when decompressing %s", df.fullpath)
+                else:
+                    self.l.info(f"Fetching {keyname} from S3")
+                    s3helper.fetch_to_storageroot(keyname, outfile)
 
             # Copy the file into the working directory, decompressing it if
             # appropriate to ensure that AstroData doesn't end up doing that
