@@ -82,7 +82,7 @@ rangePatterns = (
     re.compile(r'(\S+)\s+\.\.\s+(\S+)'),
     )
 
-radecPattern = '^[-+]?\d{1,2}:\d{2}:\d{2}(?:\.\d+)?$'
+radecPattern = r'^[-+]?\d{1,2}:\d{2}:\d{2}(?:\.\d+)?$'
 
 typeCoercion = (
     int,
@@ -486,7 +486,7 @@ class KeywordDescriptor(object):
 
          - FILTER2:
            - char:       Open
-           - pattern:    '.*G\d{4}'
+           - pattern:    r'.*G\d{4}'
            - pattern:    '[LHJKx]_\(order_\d\)'
 
          - RAWCC:
