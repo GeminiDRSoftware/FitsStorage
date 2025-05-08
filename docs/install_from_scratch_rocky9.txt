@@ -1,7 +1,7 @@
 # Update and basic installs
 sudo dnf update
 sudo dnf autoremove
-sudo dnf install nginx postgresql-server sysstat wget
+sudo dnf install nginx postgresql-server sysstat wget vim
 sudo dnf group install "Development Tools"
 
 # Add to /etc/passwd:
@@ -22,8 +22,8 @@ sudo systemctl daemon-reload
 sudo postgresql-setup --initdb
 sudo -i -u postgres
   vi /data/postgres/pgdata/postgresql.conf
-    shared_buffers = 512MB    # 25% of ram if ram > 1GB
-    effective_cache_size = 4GB   # 50% of ram size ish
+    shared_buffers = 4GB    # 25% of ram if ram > 1GB
+    effective_cache_size = 8GB   # 50% of ram size ish
     max_connections = 200  # we're using 100 for uwsgi, plus scripts.
 sudo systemctl start postgresql
 sudo systemctl status postgresql
