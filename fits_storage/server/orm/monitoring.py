@@ -1,3 +1,5 @@
+import numpy as np
+
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, BigInteger, Text, DateTime, Float
 
@@ -39,9 +41,39 @@ class Monitoring(Base):
     software_version = Column(Text)
     processing_tag = Column(Text, index=True)
 
+    keyword = Column(Text, index=True)
     label = Column(Text, index=True)
-    ext = Column(Integer)
+    adid = Column(Integer)
     value_int = Column(Integer)
     value_float = Column(Float)
     value_text = Column(Text)
     notes = Column(Text)
+
+    def __init__(self, ad):
+        """
+        Instantiate a monitoring table entry from an astrodata instance.
+        This attempts to set the filename, data_label, ut_datetime,
+        software_used, software_version and processing_tag, and if possible
+        the adid (ad.id) value from the ad instance (ie FITS headers).
+        """
+
+        if ad is not None:
+            self.filename = ad.filename
+            self.data_label = ad.data_label()
+            self.ut_datetime = ad.ut_datetime()
+            self.software_used = ad.phu.get('PROCSOFT')
+            self.software_version = ad.phu.get('PROCSVER')
+            self.processing_tag = ad.phu.get('PROCTAG')
+
+            try:
+                self.adid = ad.id
+            except ValueError:
+                pass
+
+    def set_value(self, value):
+        if isinstance(value, (int, np.integer)):
+            self.value_int = value
+        elif isinstance(value, (float, np.floating)):
+            self.value_float = value
+        else:
+            self.value_text = str(value)

@@ -13,6 +13,9 @@ import requests
 
 from astropy.io import fits
 
+import astrodata
+import gemini_instruments
+
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
 from fits_storage.core.orm.diskfile import DiskFile
@@ -474,7 +477,28 @@ class Reducer(object):
         """
         Capture monitoring values from the reduced data files
         """
-        self.l.warning("reducer capture_monitoring() not implemented yet")
+        for filename in self.reduced_files:
+            self.l.debug(f"Capturing Monitoring values from {filename}")
+
+            try:
+                fpfn = os.path.join(self.workingdir, filename)
+                ad = astrodata.open(fpfn)
+                # This simplistic approach won't be viable in the long term.
+                if filename.endswith("_bias.fits"):
+                    # Capture bias values
+                    for slice in ad:
+                        for keyword in ('OVERSCAN', 'OVERRMS'):
+                            mon = Monitoring(slice)
+                            mon.keyword = keyword
+                            mon.label = slice.amp_read_area()
+                            mon.set_value(slice.hdr.get(keyword))
+                            self.s.add(mon)
+                            self.s.commit()
+            except Exception:
+                self.l.warning("Exception capturing BIAS monitoring data",
+                               exc_info=True)
+
+
 
 
     def cleanup(self):
