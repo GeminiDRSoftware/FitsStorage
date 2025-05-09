@@ -258,13 +258,37 @@ class Reducer(object):
                 self.l.info(f"Fetching {keyname} from S3 to decompress")
                 working_filename = df.filename.removesuffix('.bz2')
                 outfile = os.path.join(self.workingdir, working_filename)
+                chunksize = 1000000  # 1MB
+                self.l.info(f"Fetching from S3 into {outfile}")
+                # We could verify the data md5 too while we do this. Size is
+                # a good quick sanity check for now though.
+                numbytes = 0
+                with s3helper.fetch_temporary(
+                        keyname, decompress=df.compressed) as infile:
+                    with open(outfile, "wb") as outfile:
+                        while True:
+                            chunk = infile.read(chunksize)
+                            if not chunk:
+                                break
+                            numbytes += len(chunk)
+                            outfile.write(chunk)
+                    if numbytes != df.data_size:
+                        self.l.warning("Did not get correct number of bytes "
+                                       "when decompressing %s", df.fullpath)
+
+            else:
+                # Copy the file into the working directory, decompressing it if
+                # appropriate to ensure that AstroData doesn't end up doing that
+                # multiple times and to facilitate memory mapping
+                outfile = os.path.join(df.filename.removesuffix('.bz2'),
+                                       self.workingdir, filename)
                 if df.compressed:
                     chunksize = 1000000  # 1MB
-                    self.l.debug(f"Decompressing from S3 into {outfile}")
+                    self.l.debug(f"Decompressing {df.fullpath} into {outfile}")
                     # We could verify the data md5 too while we do this. Size is
                     # a good quick sanity check for now though.
                     numbytes = 0
-                    with bz2.open(s3helper.fetch_temporary(keyname)) as infile:
+                    with bz2.open(df.fullpath, "rb") as infile:
                         with open(outfile, "wb") as outfile:
                             while True:
                                 chunk = infile.read(chunksize)
@@ -276,40 +300,14 @@ class Reducer(object):
                         self.l.warning("Did not get correct number of bytes "
                                        "when decompressing %s", df.fullpath)
                 else:
-                    self.l.info(f"Fetching {keyname} from S3")
-                    s3helper.fetch_to_storageroot(keyname, outfile)
-
-            # Copy the file into the working directory, decompressing it if
-            # appropriate to ensure that AstroData doesn't end up doing that
-            # multiple times and to facilitate memory mapping
-            outfile = os.path.join(df.filename.removesuffix('.bz2'),
-                                   self.workingdir, filename)
-            if df.compressed:
-                chunksize = 1000000  # 1MB
-                self.l.debug(f"Decompressing {df.fullpath} into {outfile}")
-                # We could verify the data md5 too while we do this. Size is
-                # a good quick sanity check for now though.
-                numbytes = 0
-                with bz2.open(df.fullpath, "rb") as infile:
-                    with open(outfile, "wb") as outfile:
-                        while True:
-                            chunk = infile.read(chunksize)
-                            if not chunk:
-                                break
-                            numbytes += len(chunk)
-                            outfile.write(chunk)
-                if numbytes != df.data_size:
-                    self.l.warning("Did not get correct number of bytes "
-                                   "when decompressing %s", df.fullpath)
-            else:
-                # Simple file copy
-                try:
-                    shutil.copyfile(df.fullpath, outfile)
-                except Exception:
-                    self.logrqeerror(f"Failed to copy raw data file from "
-                                     f"{df.fullpath} to {outfile}",
-                                     exc_info=True)
-                    return
+                    # Simple file copy
+                    try:
+                        shutil.copyfile(df.fullpath, outfile)
+                    except Exception:
+                        self.logrqeerror(f"Failed to copy raw data file from "
+                                         f"{df.fullpath} to {outfile}",
+                                         exc_info=True)
+                        return
 
     def set_reduction_metadata(self):
         """
