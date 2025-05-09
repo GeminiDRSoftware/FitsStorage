@@ -3,7 +3,7 @@ This module contains utility functions for interacting with AWS S3
 """
 
 import os
-from sys import exc_info
+import bz2
 
 from fits_storage.config import get_config
 from fits_storage.logger_dummy import DummyLogger
@@ -245,12 +245,15 @@ class Boto3Helper(object):
             return False
 
     @contextmanager
-    def fetch_temporary(self, keyname, **kwarg):
+    def fetch_temporary(self, keyname, decompress=False, **kwarg):
         _, fullpath = mkstemp(dir=self.s3_staging_dir)
         try:
             if not self.fetch_to_storageroot(keyname, fullpath, **kwarg):
                 raise DownloadError("Could not download the file")
-            yield open(fullpath, mode='rb')
+            if decompress:
+                yield bz2.open(fullpath, mode='rb')
+            else:
+                yield open(fullpath, mode='rb')
         finally:
             if os.path.exists(fullpath):
                 os.unlink(fullpath)
