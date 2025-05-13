@@ -134,4 +134,16 @@ def findfiles(selection, win_start, interval, logger=DummyLogger()):
 
     return filenames
 
-
+def parse_listfile(fp):
+    # Parse a list of lists file. One list per line. Ignore blank lines and
+    # comment lines. Lists can be comma and/or space separated.
+    # Pass an open file pointer. We will return a list of lists.
+    lists = []
+    for line in fp:
+        line = line.strip()
+        if line.startswith('#') or len(line) == 0:
+            continue
+        line = line.replace(',', ' ')
+        files = line.split()
+        lists.append(files)
+    return lists

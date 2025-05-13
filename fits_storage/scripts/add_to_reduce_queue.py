@@ -9,9 +9,9 @@ from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 
 from fits_storage.db import session_scope
 from fits_storage.core.orm.diskfile import DiskFile
-
 from fits_storage.queues.queue.reducequeue import ReduceQueue
 
+from fits_storage.server.reduce_list import parse_listfile
 
 if __name__ == "__main__":
     # Option Parsing
@@ -31,8 +31,9 @@ if __name__ == "__main__":
                              "single entry to the queue")
 
     parser.add_argument("--listfile", action="store", type=str, default=None,
-                        help="Filename of a file containing a list of files to"
-                             "add to the queue as a single entry")
+                        help="Filename of a file containing one or more lists "
+                             "of files to add to the queue, each list as a "
+                             "single entry. One list per line in the file.")
 
     parser.add_argument("--initiatedby", action="store", type=str, default=None,
                         help="Processing Initiated By record for reduced data."
@@ -106,53 +107,55 @@ if __name__ == "__main__":
         logger.info("Adding single entry list of filenames: %s",
                     options.filenames)
         files = options.filenames
+        lists = [files]
 
     elif options.listfile:
-        # Get list of files from list file
+        # Get list(s) of files from list file
         logger.info("Adding files from list file: %s" % options.listfile)
-        files = []
-        with open(options.listfile) as f:
-            for line in f:
-                files.append(line.strip())
+        with open(options.listfile) as fp:
+            lists = parse_listfile(fp)
 
     else:
-        logger.info("No list of filenames was provided.")
+        logger.info("No list(s) of filenames was provided.")
         files = []
 
     with session_scope() as session:
-        # Check that all the filenames given are valid and ensure they end in
-        # .fits
-        validfiles = []
-        for filename in files:
-            if filename.endswith('.fits.bz2'):
-                filename = filename.removesuffix('.bz2')
-            elif filename.endswith('.fits'):
-                pass
+        for filelist in lists:
+            # Check that all the filenames given are valid and ensure they end
+            # in .fits
+            validfiles = []
+            for filename in filelist:
+                if filename.endswith('.fits.bz2'):
+                    filename = filename.removesuffix('.bz2')
+                elif filename.endswith('.fits'):
+                    pass
+                else:
+                    filename += '.fits'
+
+                possible_filenames = [filename, filename+'.bz2']
+
+                query = session.query(DiskFile) \
+                    .filter(DiskFile.present == True)\
+                    .filter(DiskFile.filename.in_(possible_filenames))
+
+                if query.count() == 0:
+                    logger.error("Filename %s not found in database, not adding "
+                                 "this list to the queue", filename)
+                else:
+                    validfiles.append(filename)
+
+            logger.debug("List of validated files: %s", validfiles)
+
+            if len(validfiles):
+                rq = ReduceQueue(session, logger=logger)
+                logger.info(f"Queuing a batch of {len(validfiles)} files for "
+                            f"reduce, starting with {validfiles[0]}")
+                rq.add(validfiles, intent=intent, initiatedby=initiatedby,
+                       tag=tag, recipe=options.recipe,
+                       capture_files=options.capture_files,
+                       capture_monitoring=options.capture_monitoring)
             else:
-                filename += '.fits'
-
-            possible_filenames = [filename, filename+'.bz2']
-
-            query = session.query(DiskFile).filter(DiskFile.present == True)\
-                .filter(DiskFile.filename.in_(possible_filenames))
-
-            if query.count() == 0:
-                logger.error("Filename %s not found in database, not adding "
-                             "this list to the queue", filename)
-            else:
-                validfiles.append(filename)
-
-        logger.debug("List of validated files: %s", validfiles)
-
-        if len(validfiles):
-            rq = ReduceQueue(session, logger=logger)
-            logger.info("Queuing a batch of %s files for reduce, starting with %s",
-                        len(validfiles), validfiles[0])
-            rq.add(validfiles, intent=intent, initiatedby=initiatedby, tag=tag,
-                   recipe=options.recipe, capture_files=options.capture_files,
-                   capture_monitoring=options.capture_monitoring)
-        else:
-            logger.error("No valid files to add")
+                logger.error("No valid files to add")
 
     logger.info("*** add_to_reducequeue.py exiting normally at %s",
                 datetime.datetime.now())

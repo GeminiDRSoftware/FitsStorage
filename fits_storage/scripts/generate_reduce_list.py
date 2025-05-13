@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
                 if fp:
                     fp.write(f"# {win_start} for {ndays.days} days, "
-                             f"{selection}: {len(filenames)} files}\n")
+                             f"{selection}: {len(filenames)} files\n")
                     fp.write(' '.join(filenames))
                     fp.write('\n\n')
 
