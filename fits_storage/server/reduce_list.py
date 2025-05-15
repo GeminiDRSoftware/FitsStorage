@@ -62,6 +62,9 @@ class ReduceListConfig():
             exit(4)
         return start, end
 
+    def group(self):
+        return self.config.getboolean('DEFAULT', 'group')
+
     def sectname(self, thedate):
         for (sectname, sectstart, sectend) in self.configsects:
             if thedate >= sectstart and thedate <= sectend:
@@ -113,7 +116,11 @@ def findfiles(selection, win_start, interval, logger=DummyLogger()):
     win_end = win_start + interval
     daterange = f"{win_start.strftime('%Y%m%d')}-{win_end.strftime('%Y%m%d')}"
     logger.info(f"Daterange: {daterange}; Selection: {selection}")
-    selection += f"/{daterange}"
+
+    if selection is None:
+        selection = f"/{daterange}"
+    else:
+        selection += f"/{daterange}"
 
 
     url = baseurl + selection
