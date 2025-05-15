@@ -1,0 +1,2 @@
+[{"action": "ADD", "keyword": "RAWGEMQA", "new_value": "BAD", "comment": "Duplicate file, set to Fail"},
+{"action": "ADD", "keyword": "RAWPIREQ", "new_value": "NO", "comment": "Duplicate file, set to Fail"}]
