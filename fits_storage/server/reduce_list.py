@@ -76,7 +76,7 @@ class ReduceListConfig():
         self.l.debug(f"Window starting {thedate}, "
                      f"config section {thesectname}")
         ndays = datetime.timedelta(
-            days=self.config[thesectname].getint('ndays'))
+            days=self.config[thesectname].getint('ndays')-1)
 
         try:
             stepdays = self.config[thesectname].getint('stepdays')
@@ -96,19 +96,26 @@ class ReduceListConfig():
         thesectname = self.sectname(thedate)
 
         # Iterate through the relevant instrument configs
-        iterable_names = literal_eval(self.config[thesectname]['instconfs'])
-        self.l.debug(f"{iterable_names=}")
+        try:
+            insconf_string = self.config[thesectname]['instconfs']
+            iterable_names = literal_eval(insconf_string)
+            self.l.debug(f"{iterable_names=}")
 
-        iterables = [literal_eval(self.config[thesectname][i])
-                     for i in iterable_names]
-        self.l.debug(f"{iterables=}")
-
+            iterables = [literal_eval(self.config[thesectname][i])
+                         for i in iterable_names]
+            self.l.debug(f"{iterables=}")
+        except KeyError:
+            self.l.debug("No instconf defined")
+            iterables = []
         selections = []
         base = self.config[thesectname]['base']
-        for ic in itertools.product(*iterables):
-            selection = f"{base}/{'/'.join(ic)}"
-            self.l.debug(f"{selection=}")
-            selections.append(selection)
+        if iterables:
+            for ic in itertools.product(*iterables):
+                selection = f"{base}/{'/'.join(ic)}"
+                self.l.debug(f"{selection=}")
+                selections.append(selection)
+        else:
+            selections = [base]
         return selections
 
 def findfiles(selection, win_start, interval, logger=DummyLogger()):
@@ -138,6 +145,8 @@ def findfiles(selection, win_start, interval, logger=DummyLogger()):
             filenames.append(f"{jf['path']}/{jf['filename']}")
         else:
             filenames.append(jf['filename'])
+
+    logger.debug(f"findfiles found {len(filenames)} files")
 
     return filenames
 

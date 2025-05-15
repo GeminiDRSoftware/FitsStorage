@@ -89,15 +89,20 @@ if __name__ == "__main__":
 
             filenames = allfiles[:max]
             if filenames:
-                logger.info(f"{win_start} for {ndays.days} days, {selection}: "
+                logger.info(f"{win_start} for {ndays.days} days, "
+                            f"{selection}: "
                             f"{len(filenames)} - {filenames[0]}...")
-
                 if fp:
-                    fp.write(f"# {win_start} for {ndays.days} days, "
-                             f"{selection}: {len(filenames)} files\n")
-                    fp.write(' '.join(filenames))
-                    fp.write('\n\n')
-
+                    if rlconfig.group():
+                        fp.write(f"# {win_start} grouped for {ndays.days} days, "
+                                 f"{selection}: {len(filenames)} files\n")
+                        fp.write(' '.join(filenames))
+                        fp.write('\n\n')
+                    else:
+                        fp.write(f"# {win_start} individually for {ndays.days} "
+                                 f"days, {selection}: {len(filenames)} files\n")
+                        fp.write('\n'.join(filenames))
+                        fp.write('\n')
         win_start += stepdays
 
     if fp:
