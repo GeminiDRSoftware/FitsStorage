@@ -5,6 +5,7 @@ import datetime
 import configparser
 import itertools
 import os.path
+import sys
 from ast import literal_eval
 import requests
 
@@ -34,7 +35,12 @@ class ReduceListConfig():
             exit(1)
 
         self.config = configparser.ConfigParser()
-        self.config.read(os.path.join(configpath, configfile))
+        fpfn = os.path.join(configpath, configfile)
+        self.l.debug(f"Reading config file {fpfn}")
+        if not os.path.exists(fpfn):
+            self.l.error(f"Config file {fpfn} does not exist. Exiting")
+            sys.exit(1)
+        self.config.read(fpfn)
 
         self.configsects = []
         for sectname in self.config.sections():
