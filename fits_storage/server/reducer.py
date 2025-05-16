@@ -548,9 +548,9 @@ class Reducer(object):
         customize_logger(self.l)
 
         # Configure the cal manager to only fetch things from the archive.
-        configstring = """
+        configstring = f"""
         [calibs]
-        databases = https://archive.gemini.edu get
+        databases = {self.fsc.reduce_calibs_url} get
         """
 
         # If we're using a reduce calibration cache, set it here
