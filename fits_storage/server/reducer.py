@@ -503,7 +503,7 @@ class Reducer(object):
                 fpfn = os.path.join(self.workingdir, filename)
                 ad = astrodata.open(fpfn)
                 # This simplistic approach won't be viable in the long term.
-                if filename.endswith("_bias.fits"):
+                if filename.endswith("_biasCorrected_snr.fits"):
                     # Capture bias values
                     for slice in ad:
                         for keyword in ('OVERSCAN', 'OVERRMS', 'PIXMEAN',
