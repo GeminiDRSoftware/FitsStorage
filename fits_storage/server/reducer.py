@@ -505,7 +505,8 @@ class Reducer(object):
                 if filename.endswith("_bias.fits"):
                     # Capture bias values
                     for slice in ad:
-                        for keyword in ('OVERSCAN', 'OVERRMS'):
+                        for keyword in ('OVERSCAN', 'OVERRMS', 'PIXMEAN',
+                                        'PIXSTDEV', 'SNRMEAN', 'FSNRGT3'):
                             mon = Monitoring(slice)
                             mon.keyword = keyword
                             mon.label = slice.amp_read_area()
