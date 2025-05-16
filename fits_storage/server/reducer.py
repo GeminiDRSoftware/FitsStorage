@@ -378,7 +378,12 @@ class Reducer(object):
         # Metadata should be already set.
         # Set self.rqe.failed via logrqeerror if fails.
 
-        if self.upload_url is None:
+        if self.upload_url:
+            # Compress and Post the uploaded files to self.upload_url
+            for filename in self.reduced_files:
+                if self.export_reduced_file(filename):
+                    return
+        else:
             # We ingest the files locally  - ie copy the files to upload_staging
             # and add a fileops queue entry to upload_ingest them. This doesn't
             # work for an archive / distriubuted environment as the fileops
@@ -410,11 +415,7 @@ class Reducer(object):
                                               "fileuploadlog_id": None})
 
                 foq.add(fo_req, filename=filename, response_required=False)
-        else:
-            # Compress and Post the uploaded files to self.upload_url
-            for filename in self.reduced_files:
-                if self.export_reduced_file(filename):
-                    return
+
 
     def export_reduced_file(self, filename):
         # Compress and export a file to a remote server.
