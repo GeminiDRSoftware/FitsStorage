@@ -46,7 +46,7 @@ parser.add_argument('--force', action="store_true", dest='force', default=False,
 parser.add_argument('--update', action='store_true', dest='update',
                     help='Update the badness scores and deny attributes in '
                          'the ipprefix table. See --date')
-parser.add_argument('--update-reset', action='store', dest='update_reset',
+parser.add_argument('--update-reset', action='store_true', dest='update_reset',
                     help='Reset the ippprefix attributes before updating them. '
                          'Without this, updates are cumulative.')
 args = parser.parse_args()
@@ -148,6 +148,7 @@ if args.update:
     # (ipprefix_id, sum(total_score)) pairs from the UsageLogAnalysis entries.
     # We can do this with a single select prefix_id, sum(...) ... group by query
 
+    logger.info("Finding prefixes to update...")
     query = session.query(UsageLogAnalysis.prefix_id,
                           func.sum(UsageLogAnalysis.total_score))\
         .select_from(UsageLog).join(UsageLogAnalysis) \
@@ -183,4 +184,10 @@ if args.update:
                             ipp.prefix, ipp.badness,
                             fsc.robot_badness_threshold)
                 ipp.deny = True
+        else:
+            if ipp.deny:
+                logger.info("Updating badness and UNdenying prefix %s: %d",
+                            ipp.prefix, ipp.badness)
+                ipp.deny = False
+
         session.commit()
