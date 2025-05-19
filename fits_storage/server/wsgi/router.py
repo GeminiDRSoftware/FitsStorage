@@ -11,6 +11,7 @@ from .debug import debugmessage
 
 from fits_storage.web.statistics import stats, content
 from fits_storage.web.curationreport import curation_report
+from fits_storage.web.monitoring import monitoring
 
 from fits_storage.web.logreports import \
     usagereport, usagedetails, downloadlog, usagestats
@@ -89,6 +90,7 @@ url_map = Map([
     Rule('/usagestats', usagestats),
     Rule('/usagedetails/<int:ulid>', usagedetails),
     Rule('/downloadlog/<seq_of:patterns>', downloadlog),
+    Rule('/monitoring/<thing>', monitoring),
 
     # User accounts
     Rule('/whoami/<seq_of:things>', whoami),

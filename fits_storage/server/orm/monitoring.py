@@ -77,3 +77,13 @@ class Monitoring(Base):
             self.value_float = value
         else:
             self.value_text = str(value)
+
+    def get_value(self):
+        # Only one of the values should be not null
+        if self.value_int is not None:
+            return self.value_int
+        if self.value_float is not None:
+            return self.value_float
+        if self.value_text is not None:
+            return self.value_text
+        return None
