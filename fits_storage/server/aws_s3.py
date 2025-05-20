@@ -247,6 +247,7 @@ class Boto3Helper(object):
     @contextmanager
     def fetch_temporary(self, keyname, decompress=False, **kwarg):
         _, fullpath = mkstemp(dir=self.s3_staging_dir)
+        f = None
         try:
             if not self.fetch_to_storageroot(keyname, fullpath, **kwarg):
                 raise DownloadError("Could not download the file")
@@ -255,8 +256,9 @@ class Boto3Helper(object):
             else:
                 f = open(fullpath, mode='rb')
             yield f
-            f.close()
         finally:
+            if f:
+                f.close()
             if os.path.exists(fullpath):
                 os.unlink(fullpath)
 
