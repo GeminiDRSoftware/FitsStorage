@@ -515,6 +515,8 @@ class Reducer(object):
                             mon.set_value(slice.hdr.get(keyword))
                             self.s.add(mon)
                             self.s.commit()
+                # Quote-unquote close the astrodata instance
+                ad = None
             except Exception:
                 self.l.warning("Exception capturing BIAS monitoring data",
                                exc_info=True)
