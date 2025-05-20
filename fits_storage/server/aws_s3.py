@@ -15,7 +15,7 @@ import boto3
 from boto3.s3.transfer import S3UploadFailedError, RetriesExceededError
 from botocore.exceptions import ClientError
 import logging
-from tempfile import mkstemp
+import tempfile
 
 
 class DownloadError(Exception):
@@ -246,7 +246,10 @@ class Boto3Helper(object):
 
     @contextmanager
     def fetch_temporary(self, keyname, decompress=False, **kwarg):
-        _, fullpath = mkstemp(dir=self.s3_staging_dir)
+        fp = tempfile.NamedTemporaryFile(mode='wb', dir=self.s3_staging_dir,
+                                         delete=False)
+        fp.close()
+        fullpath = fp.name
         f = None
         try:
             if not self.fetch_to_storageroot(keyname, fullpath, **kwarg):
