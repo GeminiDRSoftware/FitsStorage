@@ -15,7 +15,8 @@ def monitoring(thing):
         .order_by(Monitoring.label)
 
     # Get the keywords that we would like in the report
-    keywords = ['OVERSCAN', 'OVERRMS']
+    keywords = ['OVERSCAN', 'OVERRMS', 'PIXMEAN', 'PIXSTDEV', 'PIXMED',
+                'SNRMEAN', 'FSNRGT3']
 
     # We get one row (Monitoring instance) per keyword per label per filename.
     # We need to combine all the keyword/values into one output row per
@@ -46,11 +47,11 @@ def monitoring(thing):
 
     # Transmit the results
     items = ['filename', 'label', *keywords]
-    ctx.resp.append('# ' +  ', '.join(items) + '\n')
+    ctx.resp.append('# ' +  '\t'.join(items) + '\n')
     for result in results:
         line = ""
         resultitems = [str(result[item]) for item in items]
-        line = ', '.join(resultitems)
+        line = '\t'.join(resultitems)
         line += '\n'
         ctx.resp.append(line)
 
