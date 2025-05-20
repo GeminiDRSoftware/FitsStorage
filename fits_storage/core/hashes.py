@@ -32,7 +32,7 @@ def md5sum(filename):
                 break
             hashobj.update(data)
 
-        return hashobj.hexdigest()
+    return hashobj.hexdigest()
 
 
 def md5sum_size_fp(fp):
