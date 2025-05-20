@@ -251,9 +251,11 @@ class Boto3Helper(object):
             if not self.fetch_to_storageroot(keyname, fullpath, **kwarg):
                 raise DownloadError("Could not download the file")
             if decompress:
-                yield bz2.open(fullpath, mode='rb')
+                f = bz2.open(fullpath, mode='rb')
             else:
-                yield open(fullpath, mode='rb')
+                f = open(fullpath, mode='rb')
+            yield f
+            f.close()
         finally:
             if os.path.exists(fullpath):
                 os.unlink(fullpath)
