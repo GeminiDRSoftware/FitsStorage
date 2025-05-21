@@ -222,6 +222,6 @@ class Boto3Helper(object):
             if os.path.exists(fullpath):
                 os.unlink(fullpath)
 
-
-def get_helper(*args, **kwargs):
-    return Boto3Helper(*args, **kwargs)
+    def get_flo(self, keyname):
+        response = self.s3_client.get_object(Bucket=self.b_name, Key=keyname)
+        return response['Body']
