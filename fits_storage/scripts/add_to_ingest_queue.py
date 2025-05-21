@@ -17,8 +17,8 @@ from fits_storage.db.selection.get_selection import from_url_things
 from fits_storage.db.list_headers import list_headers
 
 if fsc.using_s3:
-    from fits_storage.server.aws_s3 import get_helper
-    s3 = get_helper()
+    from fits_storage.server.aws_s3 import Boto3Helper
+    s3 = Boto3Helper()
 
 
 def _dayoptions(string):

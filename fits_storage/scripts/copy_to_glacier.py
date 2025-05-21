@@ -9,7 +9,7 @@ from fits_storage.db import sessionfactory
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.server.pidfile import PidFile, PidFileError
 
-from fits_storage.server.aws_s3 import get_helper
+from fits_storage.server.aws_s3 import Boto3Helper
 
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.server.orm.glacier import Glacier
@@ -50,7 +50,7 @@ setdemon(args.demon)
 logger.info("***   copy_to_glacier.py - starting up at %s",
             datetime.datetime.now())
 
-s3 = get_helper(logger=logger)
+s3 = Boto3Helper(logger=logger)
 
 if fsc.s3_glacier_bucket_name:
     logger.info("Will copy to bucket: %s", fsc.s3_glacier_bucket_name)

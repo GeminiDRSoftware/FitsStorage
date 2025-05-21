@@ -27,7 +27,7 @@ from fits_storage.server.fitseditor import FitsEditor
 from fits_storage.config import get_config
 
 if get_config().using_s3:
-    from fits_storage.server.aws_s3 import get_helper
+    from fits_storage.server.aws_s3 import Boto3Helper
 
 
 class FileOpsError(Exception):
@@ -87,7 +87,7 @@ def ingest_upload(args, session, logger):
     if fsc.using_s3:
         logger.debug("Copying to S3")
         try:
-            s3 = get_helper()
+            s3 = Boto3Helper()
             extra_meta = misc_meta if it_is_misc else {}
             fileuploadlog.s3_ut_start = datetime.datetime.utcnow()
             fileuploadlog.s3_ok = s3.upload_file(dst, src, extra_meta) \

@@ -36,8 +36,8 @@ else:
     from fits_storage.cal.associate_calibrations import associate_cals
 
 if fsc.using_s3:
-    from fits_storage.server.aws_s3 import get_helper
-    s3 = get_helper()
+    from fits_storage.server.aws_s3 import Boto3Helper
+    s3 = Boto3Helper()
 
 filename_elements = (
     'program_id',
