@@ -114,9 +114,6 @@ class Boto3Helper(object):
     def get_size(self, key):
         return key.content_length
 
-    def get_name(self, obj):
-        return obj.key
-
     def set_metadata(self, keyname, **kw):
         obj = self.get_key(keyname)
         md = obj.metadata
