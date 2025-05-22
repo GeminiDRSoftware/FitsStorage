@@ -13,7 +13,7 @@ class DownloadLog(Base):
     """
     __tablename__ = 'downloadlog'
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(Integer, primary_key=True)
     usagelog_id = Column(BigInteger, ForeignKey(UsageLog.id), nullable=False,
                          index=True)
     usagelog = relationship(UsageLog, order_by=id)

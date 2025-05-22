@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import BigInteger, Text, DateTime, Boolean
+from sqlalchemy import BigInteger, Integer, Text, DateTime, Boolean
 from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
@@ -13,7 +13,7 @@ class FileUploadLog(Base):
     """
     __tablename__ = 'fileuploadlog'
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(Integer, primary_key=True)
     usagelog_id = Column(BigInteger, ForeignKey(UsageLog.id),
                          nullable=False, index=True)
     usagelog = relationship(UsageLog, order_by=id)

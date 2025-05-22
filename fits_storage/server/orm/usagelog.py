@@ -10,11 +10,13 @@ from .user import User
 # ------------------------------------------------------------------------------
 class UsageLog(Base):
     """
-    This is the ORM class for the usage log table
+    This is the ORM class for the usage log table.
+    The id column is a BigInteger except on sqlite where it's an Integer because
+    sqlite doesn't handle autoincrement on BigInteger
     """
     __tablename__ = 'usagelog'
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True)
     utdatetime = Column(DateTime(timezone=False), index=True)
     user_id = Column(Integer, ForeignKey(User.id), nullable=True, index=True)
     ip_address = Column(Text, index=True)
