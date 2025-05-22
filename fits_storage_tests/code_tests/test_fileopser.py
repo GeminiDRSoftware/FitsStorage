@@ -102,7 +102,6 @@ def test_ingest_upload(tmp_path):
     filename = 'N20200127S0023.fits.bz2'
 
     ul = UsageLog(None)
-    ul.id = 1
     session.add(ul)
     session.commit()
     ful = FileUploadLog(ul)
@@ -111,6 +110,7 @@ def test_ingest_upload(tmp_path):
 
     fetch_file(filename, fsc.upload_staging_dir)
     args = {'filename': filename,
+            'path': '',
             'fileuploadlog_id': ful.id,
             'processed_cal': False}
 
