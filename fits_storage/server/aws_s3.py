@@ -158,10 +158,20 @@ class Boto3Helper(object):
 
         return obj
 
+    def fetch_key_to_file(self, keyname, fullpath):
+        """
+        Fetch an object from S3 to a local file
+        """
+        try:
+            self.s3_client.download_file(self.bucket.name, keyname, fullpath)
+        except RetriesExceededError:
+            self.l.error("Retries Exceeded", exc_info=True)
+            return False
+        return True
+
     def fetch_to_storageroot(self, keyname, fullpath=None, skip_tests=False):
         """
         Fetch the file from s3 and put it in the storage_root directory.
-        Do some validation, and re-try as appropriate
         Return True if succeeded, False otherwise
         """
         if not fullpath:
@@ -178,10 +188,7 @@ class Boto3Helper(object):
                              "S3 download", fullpath)
                 return False
 
-        try:
-            self.s3_client.download_file(self.bucket.name, keyname, fullpath)
-        except RetriesExceededError:
-            self.l.error("Retries Exceeded", exc_info=True)
+        if self.fetch_key_to_file(keyname, fullpath) is False:
             return False
 
         if skip_tests:
