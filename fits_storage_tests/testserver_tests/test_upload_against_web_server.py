@@ -20,6 +20,7 @@ def test_upload_download(tmp_path):
     assert resp.status_code == http.HTTPStatus.OK
     assert resp.headers['content-type'] == 'application/json'
     assert resp.text == '[{"filename": "N20180329S0134.fits.bz2", ' \
+                        '"path": "", ' \
                         '"size": 1059693, ' \
                         '"md5": "1c1c2eb66af5a49218ea95a53b2b9f78"}]'
 
