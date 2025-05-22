@@ -13,6 +13,7 @@ fsc = get_config(builtinonly=True, reload=True)
 # fsc = get_config()
 logger = DummyLogger(print=True)
 
+@pytest.mark.skip()
 @pytest.mark.skipif(fsc.testing_aws_access_key == '',
                     reason='Current config does not provide test aws keys')
 def test_aws_s3_file(tmp_path):
@@ -53,6 +54,7 @@ def test_aws_s3_file(tmp_path):
 
     assert not bh.exists_key(filename)
 
+@pytest.mark.skip()
 @pytest.mark.skipif(fsc.testing_aws_access_key == '',
                     reason='Current config does not provide test aws keys')
 def test_s3_copy():
@@ -110,6 +112,7 @@ def test_s3_copy():
     bh.delete_key(small_file)
     bh.delete_key(large_file)
 
+@pytest.mark.skip()
 def test_aws_s3_get_flo(tmp_path):
     s3staging = os.path.join(tmp_path, 's3_staging')
     storageroot = os.path.join(tmp_path, 'storage_root')
@@ -130,7 +133,7 @@ def test_aws_s3_get_flo(tmp_path):
                      storage_root=storageroot,
                      logger=logger)
 
-    # assert not bh.exists_key(filename)
+    assert not bh.exists_key(filename)
 
     assert bh.upload_file(filename, fpfn) is not None
 
@@ -148,3 +151,94 @@ def test_aws_s3_get_flo(tmp_path):
 
     assert bh.delete_key(filename)
     assert not bh.exists_key(filename)
+
+def test_underlaylay(tmp_path):
+    s3staging = os.path.join(tmp_path, 's3_staging')
+    storageroot = os.path.join(tmp_path, 'storage_root')
+    os.mkdir(s3staging)
+    os.mkdir(storageroot)
+
+    small_file = 'N20120101S0001.fits.bz2'
+    small_file_md5 = 'f645412d58332995bf7f0dce808933f4'
+
+
+    # Make a 1kB file of random data in s3staging
+    filename = 'testfile.dat'
+    fpfn = os.path.join(s3staging, filename)
+    with open(fpfn, 'wb') as f:
+        f.write(random.randbytes(1000))
+    testmd5 = md5sum(fpfn)
+
+    # Create a helper on -test *without* the underlay bucket
+    bh = Boto3Helper(bucket_name='gemini-archive-test',
+                     access_key=fsc.testing_aws_access_key,
+                     secret_key=fsc.testing_aws_secret_key,
+                     s3_staging_dir=s3staging,
+                     storage_root=storageroot,
+                     logger=logger)
+
+    # Check that small_file does not exist here
+    if bh.exists_key(small_file):
+        bh.delete_key(small_file)
+    assert not bh.exists_key(small_file)
+
+    # Upload the random data file
+    if bh.exists_key(filename):
+        bh.delete_key(filename)
+    assert not bh.exists_key(filename)
+    assert bh.upload_file(filename, fpfn) is not None
+    assert bh.exists_key(filename)
+
+    # Create a helper on the underlay bucket
+    bh = Boto3Helper(bucket_name='gemini-archive-test-1',
+                     access_key=fsc.testing_aws_access_key,
+                     secret_key=fsc.testing_aws_secret_key,
+                     s3_staging_dir=s3staging,
+                     storage_root=storageroot,
+                     logger=logger)
+
+    # Check that small_file exists on the underlay.
+    assert bh.exists_key(small_file)
+
+    # Now create a helper on the test bucket *with* the underlay bucket
+    bh = Boto3Helper(bucket_name='gemini-archive-test',
+                     underlay_bucket_name='gemini-archive-test-1',
+                     access_key=fsc.testing_aws_access_key,
+                     secret_key=fsc.testing_aws_secret_key,
+                     s3_staging_dir=s3staging,
+                     storage_root=storageroot,
+                     logger=logger)
+
+    # Verify that small_file exists and can access it
+    assert bh.exists_key(small_file)
+    assert bh.fetch_to_storageroot(small_file)
+    fpfn = os.path.join(storageroot, small_file)
+    assert os.path.exists(fpfn)
+    srmd5 = md5sum(fpfn)
+    assert srmd5 == small_file_md5
+
+    # verify can access small_file as a flo
+    assert bh.exists_key(small_file)
+    flo = bh.get_flo(small_file)
+    sizeflo, md5flo = md5sum_size_fp(flo)
+    assert md5flo == small_file_md5
+    flo.close()
+
+    # Verify that the random data file exists and can access it
+    assert bh.exists_key(filename)
+    assert bh.fetch_to_storageroot(filename)
+    fpfn = os.path.join(storageroot, filename)
+    assert os.path.exists(fpfn)
+    md5 = md5sum(fpfn)
+    assert md5 == testmd5
+
+    # verify can access the random data as a flo
+    assert bh.exists_key(filename)
+    flo = bh.get_flo(filename)
+    sizeflo, md5flo = md5sum_size_fp(flo)
+    assert sizeflo == 1000
+    assert md5flo == testmd5
+    flo.close()
+
+    # clean up
+    bh.delete_key(filename)

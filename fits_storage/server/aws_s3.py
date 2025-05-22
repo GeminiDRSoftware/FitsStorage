@@ -14,7 +14,6 @@ import boto3
 from boto3.s3.transfer import S3UploadFailedError, RetriesExceededError
 from botocore.exceptions import ClientError
 import logging
-from tempfile import mkstemp
 
 
 class DownloadError(Exception):
@@ -30,13 +29,16 @@ logging.getLogger('futures').setLevel(logging.CRITICAL)
 
 
 class Boto3Helper(object):
-    def __init__(self, bucket_name=None, logger=None, access_key=None,
-                 secret_key=None, s3_staging_dir=None, storage_root=None):
+    def __init__(self, bucket_name=None, underlay_bucket_name=None,
+                 logger=None, access_key=None, secret_key=None,
+                 s3_staging_dir=None, storage_root=None):
         fsc = get_config()
         self.l = logger if logger is not None else DummyLogger()
         self.b = None
+        self.ulb = None
         self.b_name = bucket_name if bucket_name is not None else \
             fsc.s3_bucket_name
+        self.underlay_b_name = underlay_bucket_name
         self.access_key = access_key if access_key is not None else \
             fsc.aws_access_key
         self.secret_key = secret_key if secret_key is not None else \
@@ -67,6 +69,12 @@ class Boto3Helper(object):
             self.b = self.s3.Bucket(self.b_name)
         return self.b
 
+    @property
+    def underlay_bucket(self):
+        if self.ulb is None and self.underlay_b_name is not None:
+            self.ulb = self.s3.Bucket(self.underlay_b_name)
+        return self.ulb
+
     def list_keys(self):
         return self.bucket.objects.all()
 
@@ -74,24 +82,54 @@ class Boto3Helper(object):
         return self.bucket.objects.filter(Prefix=prefix)
 
     def key_names(self):
-        return [obj.key for obj in self.list_keys()]
+        l = [obj.key for obj in self.list_keys()]
+        if self.underlay_bucket is not None:
+            l.extend([obj.key for obj in self.underlay_bucket.objects.all()])
+        return l
 
     def key_names_with_prefix(self, prefix):
-        return [obj.key for obj in self.list_keys_with_prefix(prefix)]
+        l = [obj.key for obj in self.list_keys_with_prefix(prefix)]
+        if self.underlay_bucket is not None:
+            l.extend([obj.key for obj in
+                      self.underlay_bucket.objects.filter(Prefix=prefix)])
+        return l
 
     def exists_key(self, key):
         try:
             if isinstance(key, str):
-                key = self.bucket.Object(key)
-            key.expires
+                mykey = self.bucket.Object(key)
+            mykey.expires
             return True
         except ClientError:
-            return False
+            if self.underlay_bucket is None:
+                return False
+            try:
+                if isinstance(key, str):
+                    mykey = self.underlay_bucket.Object(key)
+                mykey.expires
+                return True
+            except ClientError:
+                return False
 
     def get_key(self, keyname):
-        return self.bucket.Object(keyname)
+        key = self.bucket.Object(keyname)
+        try:
+            key.expires
+            return key
+        except ClientError:
+            if self.underlay_bucket:
+                key = self.underlay_bucket.Object(keyname)
+                try:
+                    key.expires
+                    return key
+                except ClientError:
+                    return None
+            else:
+                return None
 
     def delete_key(self, key):
+        # This is only used in the tests and does not fall back to the underlay
+        # bucket
         try:
             self.s3_client.delete_object(Bucket=self.b_name, Key=key)
             return True
@@ -164,6 +202,16 @@ class Boto3Helper(object):
         except RetriesExceededError:
             self.l.error("Retries Exceeded", exc_info=True)
             return False
+        except ClientError:
+            if self.underlay_bucket:
+                try:
+                    self.s3_client.download_file(self.underlay_bucket.name,
+                                                 keyname, fullpath)
+                except RetriesExceededError:
+                    self.l.error("Retries Exceeded", exc_info=True)
+                    return False
+                except ClientError:
+                    return False
         return True
 
     def fetch_to_storageroot(self, keyname, fullpath=None, skip_tests=False):
@@ -216,5 +264,18 @@ class Boto3Helper(object):
             return False
 
     def get_flo(self, keyname):
-        response = self.s3_client.get_object(Bucket=self.b_name, Key=keyname)
-        return response['Body']
+        try:
+            response = self.s3_client.get_object(Bucket=self.b_name,
+                                                 Key=keyname)
+            return response['Body']
+        except ClientError as clienterror:
+            if self.underlay_bucket:
+                try:
+                    response = self.s3_client.get_object(
+                        Bucket=self.underlay_b_name,
+                        Key=keyname)
+                    return response['Body']
+                except ClientError:
+                    raise clienterror
+            else:
+                raise clienterror
