@@ -10,8 +10,7 @@ from html import escape
 from fits_storage.web import templating
 
 from fits_storage.server.wsgi.returnobj import Return
-from fits_storage.server.wsgi.helperobjects import \
-    StreamingObject, JsonArrayStreamingObject, BufferedFileObjectIterator
+from fits_storage.server.wsgi.helperobjects import StreamingObject
 
 
 def only_if_not_started_response(fn):
@@ -128,19 +127,39 @@ class Response(object):
     def __iter__(self):
         f = self._filter
 
-        for element in self._content:
-            if type(element) in {bytes, str}:
-                r = f(element)
-                if isinstance(r, str):
-                    yield r.encode('utf8')
-                else:
-                    yield r
-                self._bytes_sent += len(r)
-            else:
-                for subelement in element:
-                    r = f(subelement)
-                    yield r
+        if self._contentflo is not None:
+            # Send from file-like-object, not content list.
+            # Do not pass through filter.
+            # If the flo has a .close() method, call it when done
+            try:
+                for element in self._contentflo:
+                    yield element
+                    self._bytes_sent += len(element)
+            finally:
+                if hasattr(self._contentflo, "close") and \
+                        callable(self._contentflo.close):
+                    self._contentflo.close()
+        else:
+            for element in self._content:
+                if type(element) in {bytes, str}:
+                    r = f(element)
+                    if isinstance(r, str):
+                        yield r.encode('utf8')
+                    else:
+                        yield r
                     self._bytes_sent += len(r)
+                else:
+                    for subelement in element:
+                        r = f(subelement)
+                        yield r
+                        self._bytes_sent += len(r)
+
+    def make_empty(self):
+        self._content = []
+        self._contentflo = None
+        self._content_type = 'text/plain'
+        self._headers = []
+        self.status = Return.HTTP_OK
 
     @property
     def bytes_sent(self):
@@ -280,21 +299,21 @@ class Response(object):
 
         json.dump(obj, StreamingObject(self._write_callback), **kw)
 
-
-
     def sendfile(self, path):
         """
-        Takes the path to an existing file and adds its contents to the
-        response payload.
+        Takes the path to an existing file and adds it to the
+        response payload. Does not close the file, __iter__ does that
+        once all the content has been consumed
         """
-        # TODO - use with so that it closes the darn thing.
         self.sendfile_obj(open(path, 'rb'))
 
     def sendfile_obj(self, fp):
         """
-        Takes a file-like object and adds its contents to the response payload.
+        Takes an open file-like object and adds it to the response payload.
+        Does not close the file, __iter__ does that once all the content has
+        been consumed
         """
-        self.append_iterable(BufferedFileObjectIterator(fp))
+        self.append_iterable(fp)
 
     @only_if_not_started_response
     @contextmanager
@@ -322,12 +341,6 @@ class Response(object):
         finally:
             sobj.close()
             tar.close()
-
-    def make_empty(self):
-        self._content = []
-        self._content_type = 'text/plain'
-        self._headers = []
-        self.status = Return.HTTP_OK
 
     @only_if_not_started_response
     def redirect_to(self, url, **kw):
