@@ -140,7 +140,7 @@ def ingest_upload(args, session, logger):
     # know that the file is complete and ready to go, there's a race condition
     # where we cannot evaluate iqe.id to log it if it's already been ingested
     # and cleared from the queue by the time we ask for that.
-    logger.info(f"Queueing {path}/{filename} for Ingest", filename)
+    logger.info(f"Queueing {path}/{filename} for Ingest")
     iq = IngestQueue(session, logger)
     iqe = iq.add(filename, path, no_defer=False)
 
