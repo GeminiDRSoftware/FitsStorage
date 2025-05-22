@@ -17,8 +17,8 @@ from fits_storage.config import get_config
 fsc = get_config()
 
 if fsc.using_s3:
-    from fits_storage.server.aws_s3 import get_helper
-    s3 = get_helper()
+    from fits_storage.server.aws_s3 import Boto3Helper
+    s3 = Boto3Helper()
 
 from fits_storage.server.access_control_utils import icanhave
 
@@ -101,8 +101,8 @@ def sendpreview(filename):
     # Send them the data
     if fsc.using_s3:
         # S3 file server
-        with s3.fetch_temporary(filename, skip_tests=True) as temp:
-            resp.append_iterable(temp)
+        flo = s3.get_flo(filename)
+        resp.append_iterable(flo)
     else:
         # Serve from regular file
         fullpath = os.path.join(fsc.storage_root, fsc.preview_path, filename)

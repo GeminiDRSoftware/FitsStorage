@@ -46,23 +46,6 @@ class ItemizedFieldStorage(FieldStorage):
         return list(self.items())
 
 
-BUFFSIZE = 262144
-
-
-class BufferedFileObjectIterator(object):
-    def __init__(self, fobj, chunksize=BUFFSIZE):
-        self.fobj = fobj
-        self.chksz = chunksize
-
-    def __iter__(self):
-        sz = self.chksz
-        while True:
-            n = self.fobj.read(sz)
-            if not n:
-                break
-            yield n
-
-
 class StreamingObject(object):
     """
     Helper file-like object that implements a buffered output. Useful as a
@@ -115,25 +98,3 @@ class StreamingObject(object):
         """
         self.flush()
 
-
-class JsonArrayStreamingObject(object):
-    """
-    Helper file-like object that implements an unbuffered output, streaming
-    JSON objects as they're written.
-    """
-    def __init__(self, callback):
-        self._callback = callback
-        self._callback(b'[\n')
-        self._first = True
-
-    def write(self, data):
-        if not self._first:
-            self._callback(b',\n')
-        self._first = False
-        self._callback((json.dumps(data) + '\n').encode('utf-8'))
-
-    def flush(self):
-        pass
-
-    def close(self):
-        self._callback(b']\n')

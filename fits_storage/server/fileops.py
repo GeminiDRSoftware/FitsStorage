@@ -27,7 +27,7 @@ from fits_storage.server.fitseditor import FitsEditor
 from fits_storage.config import get_config
 
 if get_config().using_s3:
-    from fits_storage.server.aws_s3 import get_helper
+    from fits_storage.server.aws_s3 import Boto3Helper
 
 
 class FileOpsError(Exception):
@@ -95,7 +95,7 @@ def ingest_upload(args, session, logger):
     if fsc.using_s3:
         logger.debug("Copying to S3")
         try:
-            s3 = get_helper()
+            s3 = Boto3Helper()
             extra_meta = misc_meta if it_is_misc else {}
             fileuploadlog.s3_ut_start = datetime.datetime.utcnow()
             fileuploadlog.s3_ok = s3.upload_file(dst, src, extra_meta) \
@@ -136,11 +136,13 @@ def ingest_upload(args, session, logger):
             logger.error("Error copying file to storage_root.", exc_info=True)
             return False
 
-    # Queue it for ingest. We can pass no_defer=True here as we know that
-    # the file is complete and ready to go.
-    logger.info(f"Queueing {path}/{filename} for Ingest")
+    # Queue it for ingest. We can pass no_defer=False here as even though we
+    # know that the file is complete and ready to go, there's a race condition
+    # where we cannot evaluate iqe.id to log it if it's already been ingested
+    # and cleared from the queue by the time we ask for that.
+    logger.info(f"Queueing {path}/{filename} for Ingest", filename)
     iq = IngestQueue(session, logger)
-    iqe = iq.add(filename, path, no_defer=True)
+    iqe = iq.add(filename, path, no_defer=False)
 
     # iq.add returns None if the file is already on the queue
     if iqe is not None:
@@ -228,8 +230,7 @@ def update_headers(args, session, logger):
     iq = IngestQueue(session, logger)
     iqe=iq.add(filename, path, no_defer=True)
     if iqe:
-        logger.info("Queued %s for Ingest - ingestqueue id %s",
-                    filename, iqe.id)
+        logger.info("Queued %s for Ingest", filename)
     else:
         logger.info("Queued %s for Ingest and got None - already on queue",
                     filename)

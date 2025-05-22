@@ -36,8 +36,8 @@ else:
     from fits_storage.cal.associate_calibrations import associate_cals
 
 if fsc.using_s3:
-    from fits_storage.server.aws_s3 import get_helper
-    s3 = get_helper()
+    from fits_storage.server.aws_s3 import Boto3Helper
+    s3 = Boto3Helper()
 
 filename_elements = (
     'program_id',
@@ -234,30 +234,28 @@ def download(selection, associated_calibrations):
                 filename = header.diskfile.filename
                 if fsc.using_s3:
                     keyname = f"{path}/{filename}" if path else filename
-                    with s3.fetch_temporary(keyname) as buffer:
-                        # Write buffer into tarfile
-                        # - create a tarinfo object
-                        tarinfo = make_tarinfo(
-                            # We use the keyname in the tarfile to avoid clashes
-                            # if they have results from multiple paths
-                            keyname,
-                            size = header.diskfile.file_size,
-                            uid = 0, gid = 0,
-                            uname = 'gemini', gname = 'gemini',
-                            mtime = time.mktime(header.diskfile.lastmod.timetuple()),
-                            mode = 0o644
-                        )
-                        # - and add it to the tar file
-                        try:
-                            tar.addfile(tarinfo, buffer)
-                        except IOError:
-                            downloadlog.add_note("IOError while adding %s to tarfile" % header.diskfile.filename)
-                            downloadlog.add_note("buffer filename: %s tell: %s closed: %s" % (buffer.name, buffer.tell(), buffer.closed))
-                            downloadlog.add_note("ti size: %s, df size: %s" % (tarinfo.size, header.diskfile.file_size))
-                            st = os.stat(buffer.name)
-                            downloadlog.add_note("st_size: %s" % st.st_size)
-                            session.commit()
-                            raise
+                    flo = s3.get_flo(keyname)
+                    # Write buffer into tarfile
+                    # - create a tarinfo object
+                    tarinfo = make_tarinfo(
+                        keyname,
+                        size = header.diskfile.file_size,
+                        uid = 0, gid = 0,
+                        uname = 'gemini', gname = 'gemini',
+                        mtime = time.mktime(header.diskfile.lastmod.timetuple()),
+                        mode = 0o644
+                    )
+                    # - and add it to the tar file
+                    try:
+                        tar.addfile(tarinfo, flo)
+                    except IOError:
+                        downloadlog.add_note(f"IOError while adding {keyname} "
+                                             f"to tarfile")
+                        downloadlog.add_note(f"{flo.tell()=}, {flo.closed()=}, "
+                                             f"{tarinfo.size=}, "
+                                             f"{header.diskfile.file_size=}")
+                        session.commit()
+                        raise
 
                 else:
                     tar.add(header.diskfile.fullpath,
@@ -522,22 +520,22 @@ def sendonefile(diskfile, content_type=None, filenamegiven=None):
 
     if fsc.using_s3:
         # S3 file server
-        # resp.content_length = diskfile.data_size
-        keyname = f"{path}/{fname}" if path else fname
-        with s3.fetch_temporary(keyname) as buffer:
-            if diskfile.compressed:
-                if filenamegiven.lower().endswith('.bz2'):
-                    resp.content_length = diskfile.file_size
-                    resp.sendfile_obj(buffer)
-                else:
-                    resp.content_length = diskfile.data_size
-                    resp.sendfile_obj(BZ2OnTheFlyDecompressor(buffer))
+        keyname = f"{diskfile.path}/{diskfile.filename}" if diskfile.path else \
+            diskfile.filename
+        flo = s3.get_flo(keyname)
+        if diskfile.compressed:
+            if filenamegiven.lower().endswith('.bz2'):
+                resp.content_length = diskfile.file_size
+                resp.sendfile_obj(flo)
             else:
-                if filenamegiven.lower().endswith('.bz2'):
-                    resp.sendfile_obj(BZ2OnTheFlyCompressor(buffer))
-                else:
-                    resp.content_length = diskfile.file_size
-                    resp.sendfile_obj(buffer)
+                resp.content_length = diskfile.data_size
+                resp.sendfile_obj(BZ2OnTheFlyDecompressor(flo))
+        else:
+            if filenamegiven.lower().endswith('.bz2'):
+                resp.sendfile_obj(BZ2OnTheFlyCompressor(flo))
+            else:
+                resp.content_length = diskfile.file_size
+                resp.sendfile_obj(flo)
     else:
         # Serve from regular file
         try:

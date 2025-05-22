@@ -11,7 +11,7 @@ from fits_storage.config import get_config
 fsc = get_config()
 
 if fsc.using_s3:
-    from fits_storage.server.aws_s3 import get_helper
+    from fits_storage.server.aws_s3 import Boto3Helper
 
 """
 Utility for validating `~DiskFile`s as being present.
@@ -65,7 +65,7 @@ with session_scope() as session:
 
     if fsc.using_s3:
         logger.debug("Connecting to s3")
-        s3 = get_helper()
+        s3 = Boto3Helper()
 
     i = 0
     missingfiles = []

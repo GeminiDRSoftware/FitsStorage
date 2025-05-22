@@ -1,0 +1,6 @@
+[
+{"action": "UPDATE", "keyword": "GAIN", "hdu": 2,
+"old_value": 1.8,
+"new_value": 2.5,
+"comment": "Updated GAIN value from H.Suh 20250226"}
+]

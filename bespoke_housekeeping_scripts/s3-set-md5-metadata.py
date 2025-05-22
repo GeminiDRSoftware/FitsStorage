@@ -41,7 +41,7 @@ if __name__ == "__main__":
     s3 = get_helper()
 
     def fetch_and_compute(keyname):
-        with s3.fetch_temporary(keyname, skip_tests=True) as fileobj:
+        with s3.get_flo(keyname) as fileobj:
             return md5sum_size_fp(fileobj)[0]
 
     def process_it(name):

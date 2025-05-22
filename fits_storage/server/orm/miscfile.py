@@ -9,8 +9,8 @@ from fits_storage.config import get_config
 fsc = get_config()
 
 if fsc.using_s3:
-    from ..aws_s3 import get_helper, ClientError
-    s3 = get_helper()
+    from ..aws_s3 import Boto3Helper, ClientError
+    s3 = Boto3Helper()
 
 import json
 import os

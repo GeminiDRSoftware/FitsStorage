@@ -43,7 +43,7 @@ if __name__ == "__main__":
     logger.info("Getting file list from S3")
     logger.info("Bucket is %s", str(s3.bucket))
     for key in s3.list_keys():
-        logger.info("Deleting %s" % s3.get_name(key))
+        logger.info("Deleting %s" % key.key)
         key.delete()
 
     logger.info("** s3_nuke.py exiting normally")
