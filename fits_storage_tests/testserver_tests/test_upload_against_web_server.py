@@ -4,12 +4,16 @@
 # service_queue tasks running for ingest and fileops.
 
 import http
+import requests
+import hashlib
+import tarfile
+import io
 
 from fits_storage_tests.testserver_tests.helpers import _uploadfile,\
-    _waitforingest
+    _waitforingest, getserver
 
 
-def test_upload(tmp_path):
+def test_upload_download(tmp_path):
     filename = 'N20180329S0134.fits.bz2'
     resp = _uploadfile(tmp_path, filename)
 
@@ -33,3 +37,48 @@ def test_upload(tmp_path):
     assert jsf['raw_bg'] == 100
     assert jsf['object'] == 'J105553'
     assert jsf['qa_state'] == 'Pass'
+
+    # Now check we can download it via '/file'
+    url = getserver() + f"/file/{filename}"
+    r = requests.get(url)
+    assert r.status_code == http.HTTPStatus.OK
+    assert len(r.content) == 1059693
+    m = hashlib.md5()
+    m.update(r.content)
+    assert m.hexdigest() == "1c1c2eb66af5a49218ea95a53b2b9f78"
+
+    # Now check we can download it via '/download'
+    url = getserver() + f"/download/{filename}"
+    r = requests.get(url)
+    assert r.status_code == http.HTTPStatus.OK
+    assert len(r.content) > 1059693
+
+    flo = io.BytesIO(r.content)
+    assert tarfile.is_tarfile(flo)
+    flo.seek(0)
+
+    tf = tarfile.open(fileobj=flo)
+    # Check for README.txt. Will raise KeyError if not present
+    ti = tf.getmember('README.txt')
+    assert ti.name == 'README.txt'
+    # Check for md5sums file. Will raise KeyError if not present
+    ti = tf.getmember('md5sums.txt')
+    assert ti.name == 'md5sums.txt'
+    # Check for dat file. Will raise KeyError if not present
+    ti = tf.getmember(filename)
+    assert ti.name == filename
+
+    # Check the md5sums.txt is correct
+    md5_flo = tf.extractfile('md5sums.txt')
+    md5_data = md5_flo.read()
+    assert md5_data == b'1c1c2eb66af5a49218ea95a53b2b9f78  N20180329S0134.fits.bz2\n'
+    md5_flo.close()
+
+    # Check the data is correct
+    data_flo = tf.extractfile(filename)
+    data = data_flo.read()
+    assert len(data) == 1059693
+    m = hashlib.md5()
+    m.update(data)
+    assert m.hexdigest() == "1c1c2eb66af5a49218ea95a53b2b9f78"
+    data_flo.close()
