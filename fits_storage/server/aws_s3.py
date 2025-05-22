@@ -8,7 +8,6 @@ from fits_storage.config import get_config
 from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.core.hashes import md5sum
-from contextlib import contextmanager
 
 import boto3
 from boto3.s3.transfer import S3UploadFailedError, RetriesExceededError
@@ -98,7 +97,7 @@ class Boto3Helper(object):
         try:
             if isinstance(key, str):
                 mykey = self.bucket.Object(key)
-            mykey.expires
+                mykey.expires
             return True
         except ClientError:
             if self.underlay_bucket is None:
@@ -106,7 +105,7 @@ class Boto3Helper(object):
             try:
                 if isinstance(key, str):
                     mykey = self.underlay_bucket.Object(key)
-                mykey.expires
+                    mykey.expires
                 return True
             except ClientError:
                 return False
