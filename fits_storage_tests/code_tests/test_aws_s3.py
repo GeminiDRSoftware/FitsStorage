@@ -4,7 +4,7 @@ import random
 
 from fits_storage.server.aws_s3 import Boto3Helper
 from fits_storage.config import get_config
-from fits_storage.core.hashes import md5sum
+from fits_storage.core.hashes import md5sum, md5sum_size_fp
 
 from fits_storage.logger_dummy import DummyLogger
 
@@ -13,10 +13,9 @@ fsc = get_config(builtinonly=True, reload=True)
 # fsc = get_config()
 logger = DummyLogger(print=True)
 
-
 @pytest.mark.skipif(fsc.testing_aws_access_key == '',
                     reason='Current config does not provide test aws keys')
-def test_aws_s3(tmp_path):
+def test_aws_s3_file(tmp_path):
     s3staging = os.path.join(tmp_path, 's3_staging')
     storageroot = os.path.join(tmp_path, 'storage_root')
     os.mkdir(s3staging)
@@ -53,7 +52,6 @@ def test_aws_s3(tmp_path):
     assert bh.delete_key(filename)
 
     assert not bh.exists_key(filename)
-
 
 @pytest.mark.skipif(fsc.testing_aws_access_key == '',
                     reason='Current config does not provide test aws keys')
@@ -111,3 +109,42 @@ def test_s3_copy():
     # Tidy up
     bh.delete_key(small_file)
     bh.delete_key(large_file)
+
+def test_aws_s3_get_flo(tmp_path):
+    s3staging = os.path.join(tmp_path, 's3_staging')
+    storageroot = os.path.join(tmp_path, 'storage_root')
+    os.mkdir(s3staging)
+    os.mkdir(storageroot)
+
+    # Make a 1MB file of random data in s3staging
+    filename = 'testfile.dat'
+    fpfn = os.path.join(s3staging, filename)
+    with open(fpfn, 'wb') as f:
+        f.write(random.randbytes(1000000))
+    md5 = md5sum(fpfn)
+
+    bh = Boto3Helper(bucket_name='gemini-archive-test',
+                     access_key=fsc.testing_aws_access_key,
+                     secret_key=fsc.testing_aws_secret_key,
+                     s3_staging_dir=s3staging,
+                     storage_root=storageroot,
+                     logger=logger)
+
+    # assert not bh.exists_key(filename)
+
+    assert bh.upload_file(filename, fpfn) is not None
+
+    assert bh.exists_key(filename)
+    assert bh.get_md5(filename) == md5
+
+    flo = bh.get_flo('testfile.dat')
+
+    sizeflo, md5flo = md5sum_size_fp(flo)
+
+    assert sizeflo == 1000000
+    assert md5flo == md5
+
+    flo.close()
+
+    assert bh.delete_key(filename)
+    assert not bh.exists_key(filename)
