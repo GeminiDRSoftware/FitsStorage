@@ -215,17 +215,6 @@ class Boto3Helper(object):
                          "file: %s; key: %s", keyname, filesize, s3size)
             return False
 
-    @contextmanager
-    def fetch_temporary(self, keyname, **kwarg):
-        _, fullpath = mkstemp(dir=self.s3_staging_dir)
-        try:
-            if not self.fetch_to_storageroot(keyname, fullpath, **kwarg):
-                raise DownloadError("Could not download the file")
-            yield open(fullpath, mode='rb')
-        finally:
-            if os.path.exists(fullpath):
-                os.unlink(fullpath)
-
     def get_flo(self, keyname):
         response = self.s3_client.get_object(Bucket=self.b_name, Key=keyname)
         return response['Body']

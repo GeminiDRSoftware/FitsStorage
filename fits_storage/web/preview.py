@@ -83,8 +83,8 @@ def sendpreview(filename):
     # Send them the data
     if fsc.using_s3:
         # S3 file server
-        with s3.fetch_temporary(filename, skip_tests=True) as temp:
-            resp.append_iterable(temp)
+        flo = s3.get_flo(filename)
+        resp.append_iterable(flo)
     else:
         # Serve from regular file
         fullpath = os.path.join(fsc.storage_root, fsc.preview_path, filename)

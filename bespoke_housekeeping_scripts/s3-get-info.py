@@ -34,7 +34,7 @@ if __name__ == "__main__":
     logger.info("Querying files from S3 bucket: %s" % s3.bucket.name)
 
     name = options.filename
-    with s3.fetch_temporary(name, skip_tests=True) as fileobj:
+    with s3.get_flo(name) as fileobj:
         md5, size = md5sum_size_fp(fileobj)
 
     logger.info("%s fetched and computed size: %d", name, size)
