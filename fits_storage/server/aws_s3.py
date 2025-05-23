@@ -117,14 +117,14 @@ class Boto3Helper(object):
             return key
         except ClientError:
             if self.underlay_bucket:
-                key = self.underlay_bucket.Object(keyname)
+                ulkey = self.underlay_bucket.Object(keyname)
                 try:
-                    key.expires
-                    return key
+                    ulkey.expires
+                    return ulkey
                 except ClientError:
-                    return None
+                    return key
             else:
-                return None
+                return key
 
     def delete_key(self, key):
         # This is only used in the tests and does not fall back to the underlay
