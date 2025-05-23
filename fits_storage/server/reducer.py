@@ -37,7 +37,7 @@ from recipe_system import cal_service
 
 from fits_storage.config import get_config
 if get_config().using_s3:
-    from fits_storage.server.aws_s3 import get_helper
+    from fits_storage.server.aws_s3 import Boto3Helper
 
 class Reducer(object):
     """
@@ -252,7 +252,7 @@ class Reducer(object):
 
             # At this point, df should be a valid DiskFile object
             if self.using_s3:
-                s3helper = get_helper()
+                s3helper = Boto3Helper()
                 # Fetch from S3 into the working dir
                 keyname = f"{df.path}/{df.filename}" if df.path else df.filename
                 self.l.info(f"Fetching {keyname} from S3 to decompress")

@@ -71,8 +71,8 @@ if __name__ == "__main__":
             logger.info(f"Filename: {df.filename} at path: {df.path}")
 
     if fsc.using_s3:
-        from fits_storage.server.aws_s3 import get_helper
-        s3 = get_helper()
+        from fits_storage.server.aws_s3 import Boto3Helper
+        s3 = Boto3Helper()
     else:
         logger.error("Not an S3 configuration")
         exit()
