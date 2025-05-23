@@ -258,24 +258,26 @@ class Reducer(object):
                 self.l.info(f"Fetching {keyname} from S3 to decompress")
                 working_filename = df.filename.removesuffix('.bz2')
                 outfile = os.path.join(self.workingdir, working_filename)
-                chunksize = 1000000  # 1MB
                 self.l.info(f"Fetching from S3 into {outfile}")
-                # We could verify the data md5 too while we do this. Size is
-                # a good quick sanity check for now though.
-                numbytes = 0
-                with s3helper.fetch_temporary(
-                        keyname, decompress=df.compressed) as infile:
-                    with open(outfile, "wb") as outfile:
-                        while True:
-                            chunk = infile.read(chunksize)
-                            if not chunk:
-                                break
-                            numbytes += len(chunk)
-                            outfile.write(chunk)
+                if df.compressed:
+                    s3flo = s3helper.get_flo(keyname)
+                    with bz2.BZ2File(s3flo) as infile:
+                        chunksize = 1000000  # 1MB
+                        numbytes = 0
+                        with open(outfile, "wb") as fp:
+                            while True:
+                                chunk = infile.read(chunksize)
+                                if not chunk:
+                                    break
+                                numbytes += len(chunk)
+                                fp.write(chunk)
                     if numbytes != df.data_size:
                         self.l.warning("Did not get correct number of bytes "
                                        "when decompressing %s", df.fullpath)
-
+                    s3flo.close()
+                else:
+                    # Uncompressed file on S3
+                    s3helper.fetch_to_storageroot(keyname, outfile)
             else:
                 # Copy the file into the working directory, decompressing it if
                 # appropriate to ensure that AstroData doesn't end up doing that
