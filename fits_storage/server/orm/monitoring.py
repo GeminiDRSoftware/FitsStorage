@@ -21,8 +21,10 @@ class Monitoring(Base):
 
     We also record various parameter of the processing (software, version, tag)
 
-    The payload here is: label, ext, value, notes.
-    The label should be a short label of what the data represent, ext is
+    The payload here is: label[], ext, value, notes.
+    The labels should be short label of what the data represent, these are
+    "anonymous" so that the different data types can use them appropriately.
+    ad_id is
     the ad[n] index where it came from. value actually has several columns to
     facilitate different data types: value_int, value_float, value_text. There
     is also a text notes column.
@@ -42,7 +44,17 @@ class Monitoring(Base):
     processing_tag = Column(Text, index=True)
 
     keyword = Column(Text, index=True)
-    label = Column(Text, index=True)
+
+    label0 = Column(Text)
+    label1 = Column(Text)
+    label2 = Column(Text)
+    label3 = Column(Text)
+    label4 = Column(Text)
+    label5 = Column(Text)
+    label6 = Column(Text)
+    label7 = Column(Text)
+
+
     adid = Column(Integer)
     value_int = Column(Integer)
     value_float = Column(Float)
