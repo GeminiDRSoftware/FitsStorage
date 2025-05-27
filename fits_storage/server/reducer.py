@@ -516,7 +516,7 @@ class Reducer(object):
                             mon.label0 = slice.amp_read_area()
                             mon.label1 = (f"{slice.detector_x_bin()}x"
                                           f"{slice.detector_y_bin()}")
-                            mon.label2 = slice.readspeed_setting()
+                            mon.label2 = slice.read_speed_setting()
                             mon.label3 = slice.gain_setting()
                             mon.label4 = slice.detector_roi_setting()
                             mon.set_value(slice.hdr.get(keyword))
