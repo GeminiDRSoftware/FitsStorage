@@ -56,6 +56,7 @@ def monitoring(thing):
 
     # Transmit the results
     items = ['filename', 'adid', 'data_label', 'ut_datetime', 'label',
+             'read_speed','gain', 'binning', 'roi', 'qastate',
              *keywords]
     ctx.resp.append('# ' +  '\t'.join(items) + '\n')
     for result in results:

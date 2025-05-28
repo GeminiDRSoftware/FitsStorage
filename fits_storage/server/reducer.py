@@ -532,6 +532,7 @@ class Reducer(object):
                             mon.keyword = keyword
                             mon.label = slice.amp_read_area()
                             mon.header_id = self.header_id
+                            mon.set_value(slice.hdr.get(keyword))
                             self.s.add(mon)
                             self.s.commit()
                 # Quote-unquote close the astrodata instance
