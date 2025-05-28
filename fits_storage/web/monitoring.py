@@ -12,35 +12,39 @@ def monitoring(thing):
     stmt = select(Monitoring)\
         .where(Monitoring.processing_tag == thing)\
         .order_by(Monitoring.filename)\
-        .order_by(Monitoring.label)
+        .order_by(Monitoring.adid)
 
     # Get the keywords that we would like in the report
     keywords = ['OVERSCAN', 'OVERRMS', 'PIXMEAN', 'PIXSTDEV', 'PIXMED',
                 'SNRMEAN', 'FSNRGT3']
 
-    # We get one row (Monitoring instance) per keyword per label per filename.
+    # We get one row (Monitoring instance) per keyword per ad_id per filename.
     # We need to combine all the keyword/values into one output row per
     # filename-label
     # We can do this in one pass through the query as we are ordering the
-    # results by filename and label, so we can watch for these changing to know
+    # results by filename and ad_id, so we can watch for these changing to know
     # when to start a new result.
     # For now, we just build a results list in memory. We could (with care)
     # yield results as we build them.
 
     filename = None
-    label = None
+    adid = None
     results = []
     result = {}
     for row in ctx.session.scalars(stmt):
-        if row.filename != filename or row.label != label:
+        if row.filename != filename or row.adid != adid:
             if result:
                 results.append(result)
             filename = row.filename
-            label = row.label
-            result = {'filename': filename, 'label': label,
+            adid = row.adid
+            result = {'filename': filename, 'adid': adid,
                       'data_label': row.data_label,
                       'ut_datetime': row.ut_datetime,
-                      'ad_id': row.adid}
+                      'label0': row.label0, 'label1': row.label1,
+                      'label2': row.label2, 'label3': row.label3,
+                      'label4': row.label4, 'label5': row.label5,
+                      'label6': row.label6, 'label7': row.label7,
+                      }
         # If we want this rows keyword, grab it now
         if row.keyword in keywords:
             result[row.keyword] = row.get_value()
@@ -49,8 +53,9 @@ def monitoring(thing):
         results.append(result)
 
     # Transmit the results
-    items = ['filename', 'label', 'data_label', 'ut_datetime', 'ad_id',
-             *keywords]
+    items = ['filename', 'adid', 'data_label', 'ut_datetime',
+             'label0', 'label1', 'label2', 'label3', 'label4', 'label5',
+             'label6', 'label7', *keywords]
     ctx.resp.append('# ' +  '\t'.join(items) + '\n')
     for result in results:
         resultitems = [str(result[item]) for item in items]
