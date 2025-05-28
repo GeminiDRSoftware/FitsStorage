@@ -15,8 +15,9 @@ def monitoring(thing):
         .order_by(Monitoring.adid)
 
     # Get the keywords that we would like in the report
-    keywords = ['OVERSCAN', 'OVERRMS', 'PIXMEAN', 'PIXSTDEV', 'PIXMED',
-                'SNRMEAN', 'FSNRGT3']
+    keywords = ['OVERSCAN', 'OVERRMS',
+                'OSCOMEAN', 'OSCOSTDV', 'OSCOMED',
+                'BICOMEAN', 'BICOSTDV', 'BICOMED']
 
     # We get one row (Monitoring instance) per keyword per ad_id per filename.
     # We need to combine all the keyword/values into one output row per

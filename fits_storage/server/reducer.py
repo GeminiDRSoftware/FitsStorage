@@ -522,12 +522,12 @@ class Reducer(object):
                 fpfn = os.path.join(self.workingdir, filename)
                 ad = astrodata.open(fpfn)
                 # This simplistic approach won't be viable in the long term.
-                if filename.endswith("_biasCorrected_snr.fits"):
+                if filename.endswith("_checkBias.fits"):
                     # Capture bias values
                     for slice in ad:
-                        for keyword in ('OVERSCAN', 'OVERRMS', 'PIXMEAN',
-                                        'PIXSTDEV', 'SNRMEAN', 'FSNRGT3',
-                                        'PIXMED'):
+                        for keyword in ('OVERSCAN', 'OVERRMS',
+                                        'OSCOMEAN', 'OSCOSTDV', 'OSCOMED',
+                                        'BICOMEAN', 'BICOSTDV', 'BICOMED'):
                             mon = Monitoring(slice)
                             mon.keyword = keyword
                             mon.label = slice.amp_read_area()
