@@ -37,13 +37,15 @@ def monitoring(thing):
                 results.append(result)
             filename = row.filename
             adid = row.adid
-            result = {'filename': filename, 'adid': adid,
+            result = {'filename': filename, 'adid': adid, 'label': row.label,
                       'data_label': row.data_label,
                       'ut_datetime': row.ut_datetime,
-                      'label0': row.label0, 'label1': row.label1,
-                      'label2': row.label2, 'label3': row.label3,
-                      'label4': row.label4, 'label5': row.label5,
-                      'label6': row.label6, 'label7': row.label7,
+                      # And the items we pull from header
+                      'read_speed': row.header.detector_readspeed_setting,
+                      'gain': row.header.detector_gain_setting,
+                      'binning': row.header.detector_binning,
+                      'roi': row.header.detector_roi_setting,
+                      'qastate': row.header.qa_state
                       }
         # If we want this rows keyword, grab it now
         if row.keyword in keywords:

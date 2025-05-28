@@ -19,6 +19,7 @@ import gemini_instruments
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
 from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.header import Header
 from fits_storage.gemini_metadata_utils import gemini_processing_modes
 
 from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsRequest
@@ -71,6 +72,12 @@ class Reducer(object):
         self.l = logger
         self.nocleanup = nocleanup
         self.reduced_files = []
+
+        # Initialize this to None here. We *may* be able to populate this later,
+        # but generally only rigorously for single file reductions. For groups,
+        # we could set it to the first file, which should be somewhat
+        # representative, but that could be misleading in some cases.
+        self.header_id = None
 
         # We pull these configuration values into the local namespace for
         # convenience and to allow poking them for testing
@@ -249,6 +256,15 @@ class Reducer(object):
                 self.logrqeerror('Multiple results for diskfile with filename'
                                  '%s' % filename)
                 return False
+
+            # Grab the (or a representative, ie first) header_id at this point.
+            # This is used in capture_monitoring()
+            if self.header_id is None:
+                try:
+                    self.header_id = self.s.query(Header)\
+                        .filter(Header.diskfile_id == df.id).one()
+                except (NoResultFound, MultipleResultsFound):
+                    pass
 
             # At this point, df should be a valid DiskFile object
             if self.using_s3:
@@ -513,13 +529,8 @@ class Reducer(object):
                                         'PIXMED'):
                             mon = Monitoring(slice)
                             mon.keyword = keyword
-                            mon.label0 = slice.amp_read_area()
-                            mon.label1 = (f"{slice.detector_x_bin()}x"
-                                          f"{slice.detector_y_bin()}")
-                            mon.label2 = slice.read_speed_setting()
-                            mon.label3 = slice.gain_setting()
-                            mon.label4 = slice.detector_roi_setting()
-                            mon.set_value(slice.hdr.get(keyword))
+                            mon.label = slice.amp_read_area()
+                            mon.header_id = self.header_id
                             self.s.add(mon)
                             self.s.commit()
                 # Quote-unquote close the astrodata instance

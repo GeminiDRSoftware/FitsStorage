@@ -1,9 +1,11 @@
 import numpy as np
+from sqlalchemy.orm import relationship
 
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, BigInteger, Text, DateTime, Float
+from sqlalchemy import Integer, Text, DateTime, Float
 
 from fits_storage.core.orm import Base
+from fits_storage.core.orm.header import Header
 
 class Monitoring(Base):
     """
@@ -37,7 +39,8 @@ class Monitoring(Base):
     filename = Column(Text, index=True)
     data_label = Column(Text, index=True)
     ut_datetime = Column(DateTime(timezone=False), index=True)
-    header_id = Column(BigInteger, ForeignKey('header.id'), index=True)
+    header_id = Column(Integer, ForeignKey('header.id'), index=True)
+    header = relationship(Header, order_by=id)
 
     software_used = Column(Text)
     software_version = Column(Text)
@@ -45,15 +48,7 @@ class Monitoring(Base):
 
     keyword = Column(Text, index=True)
 
-    label0 = Column(Text)
-    label1 = Column(Text)
-    label2 = Column(Text)
-    label3 = Column(Text)
-    label4 = Column(Text)
-    label5 = Column(Text)
-    label6 = Column(Text)
-    label7 = Column(Text)
-
+    label = Column(Text)
 
     adid = Column(Integer)
     value_int = Column(Integer)
