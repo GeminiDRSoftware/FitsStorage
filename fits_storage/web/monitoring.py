@@ -55,9 +55,8 @@ def monitoring(thing):
         results.append(result)
 
     # Transmit the results
-    items = ['filename', 'adid', 'data_label', 'ut_datetime',
-             'label0', 'label1', 'label2', 'label3', 'label4', 'label5',
-             'label6', 'label7', *keywords]
+    items = ['filename', 'adid', 'data_label', 'ut_datetime', 'label',
+             *keywords]
     ctx.resp.append('# ' +  '\t'.join(items) + '\n')
     for result in results:
         resultitems = [str(result[item]) for item in items]
