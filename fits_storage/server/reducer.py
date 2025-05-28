@@ -261,8 +261,9 @@ class Reducer(object):
             # This is used in capture_monitoring()
             if self.header_id is None:
                 try:
-                    self.header_id = self.s.query(Header)\
+                    header = self.s.query(Header)\
                         .filter(Header.diskfile_id == df.id).one()
+                    self.header_id = header.id
                 except (NoResultFound, MultipleResultsFound):
                     pass
 
