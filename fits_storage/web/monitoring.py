@@ -73,7 +73,7 @@ def monitoring(things):
              *keywords]
     ctx.resp.append('# ' +  '\t'.join(items) + '\n')
     for result in results:
-        resultitems = [str(result[item]) for item in items]
+        resultitems = [str(result.get(item)) for item in items]
         line = '\t'.join(resultitems)
         line += '\n'
         ctx.resp.append(line)
