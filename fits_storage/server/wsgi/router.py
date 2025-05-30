@@ -90,7 +90,7 @@ url_map = Map([
     Rule('/usagestats', usagestats),
     Rule('/usagedetails/<int:ulid>', usagedetails),
     Rule('/downloadlog/<seq_of:patterns>', downloadlog),
-    Rule('/monitoring/<thing>', monitoring),
+    Rule('/monitoring/<seq_of:things>', monitoring),
 
     # User accounts
     Rule('/whoami/<seq_of:things>', whoami),

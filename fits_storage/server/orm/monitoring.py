@@ -45,6 +45,7 @@ class Monitoring(Base):
     software_used = Column(Text)
     software_version = Column(Text)
     processing_tag = Column(Text, index=True)
+    recipe = Column(Text)
 
     keyword = Column(Text, index=True)
 

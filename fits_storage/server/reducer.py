@@ -27,6 +27,7 @@ from fits_storage.queues.orm.reducequeentry import ReduceQueueEntry
 
 from fits_storage.server.orm.monitoring import Monitoring
 from fits_storage.server.orm.processinglog import ProcessingLog
+from fits_storage.server.monitoring import recipe_keywords
 
 from fits_storage.core.hashes import md5sum
 from fits_storage.server.bz2stream import StreamBz2Compressor
@@ -521,28 +522,24 @@ class Reducer(object):
             try:
                 fpfn = os.path.join(self.workingdir, filename)
                 ad = astrodata.open(fpfn)
-                # This simplistic approach won't be viable in the long term.
-                if filename.endswith("_checkBias.fits"):
-                    # Capture bias values
-                    for slice in ad:
-                        for keyword in ('OVERSCAN', 'OVERRMS',
-                                        'OSCOMEAN', 'OSCOSTDV', 'OSCOMED',
-                                        'BICOMEAN', 'BICOSTDV', 'BICOMED'):
-                            mon = Monitoring(slice)
-                            mon.keyword = keyword
-                            mon.label = slice.amp_read_area()
-                            mon.header_id = self.header_id
-                            mon.set_value(slice.hdr.get(keyword))
-                            self.s.add(mon)
-                            self.s.commit()
+                keywords = recipe_keywords[self.rqe.recipe]
+                if len(keywords) == 0:
+                    self.l.warning(f"No keywords to capture for {filename}")
+                for slice in ad:
+                    for keyword in keywords:
+                        mon = Monitoring(slice)
+                        mon.recipe = self.rqe.recipe
+                        mon.keyword = keyword
+                        mon.label = slice.amp_read_area()
+                        mon.header_id = self.header_id
+                        mon.set_value(slice.hdr.get(keyword))
+                        self.s.add(mon)
+                        self.s.commit()
                 # Quote-unquote close the astrodata instance
                 ad = None
             except Exception:
-                self.l.warning("Exception capturing BIAS monitoring data",
+                self.l.warning("Exception capturing monitoring data",
                                exc_info=True)
-
-
-
 
     def cleanup(self):
         """

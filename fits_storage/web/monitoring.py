@@ -5,19 +5,29 @@ This module generates the instrument monitoring data exports
 from fits_storage.server.wsgi.context import get_context
 from sqlalchemy import select
 from fits_storage.server.orm.monitoring import Monitoring
+from fits_storage.server.monitoring import report_keywords
 
-def monitoring(thing):
+
+def monitoring(things):
     ctx = get_context()
 
+    report_type = None
+    processing_tag = None
+    for thing in things:
+        if thing in report_keywords.keys():
+            report_type = thing
+        else:
+            processing_tag = thing
+
+    if report_type is None:
+        ctx.resp.client_error(404, message="Could not determine report type")
+
     stmt = select(Monitoring)\
-        .where(Monitoring.processing_tag == thing)\
         .order_by(Monitoring.filename)\
         .order_by(Monitoring.adid)
 
-    # Get the keywords that we would like in the report
-    keywords = ['OVERSCAN', 'OVERRMS',
-                'OSCOMEAN', 'OSCOSTDV', 'OSCOMED',
-                'BICOMEAN', 'BICOSTDV', 'BICOMED']
+    if processing_tag is not None:
+        stmt = stmt.where(Monitoring.processing_tag == processing_tag)
 
     # We get one row (Monitoring instance) per keyword per ad_id per filename.
     # We need to combine all the keyword/values into one output row per
@@ -28,6 +38,7 @@ def monitoring(thing):
     # For now, we just build a results list in memory. We could (with care)
     # yield results as we build them.
 
+    keywords = report_keywords[report_type]
     filename = None
     adid = None
     results = []
@@ -41,6 +52,7 @@ def monitoring(thing):
             result = {'filename': filename, 'adid': adid, 'label': row.label,
                       'data_label': row.data_label,
                       'ut_datetime': row.ut_datetime,
+                      'recipe': row.recipe,
                       # And the items we pull from header
                       'read_speed': row.header.detector_readspeed_setting,
                       'gain': row.header.detector_gain_setting,
