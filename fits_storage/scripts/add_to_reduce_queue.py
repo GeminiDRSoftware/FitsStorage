@@ -11,6 +11,9 @@ from fits_storage.db import session_scope
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.queues.queue.reducequeue import ReduceQueue
 
+from fits_storage.db.list_headers import list_headers
+from fits_storage.db.selection.get_selection import from_url_things
+
 from fits_storage.server.reduce_list import parse_listfile
 
 if __name__ == "__main__":
@@ -35,6 +38,10 @@ if __name__ == "__main__":
                              "of files to add to the queue, each list as a "
                              "single entry. One list per line in the file.")
 
+    parser.add_argument("--selection", action="store", type=str, default=None,
+                        help="URL-style selection criteria. Add files matching"
+                             "this selection in the database, as individual"
+                             "file entries to the reduce queue.")
     parser.add_argument("--initiatedby", action="store", type=str, default=None,
                         help="Processing Initiated By record for reduced data."
                              "Cannot be defaulted in production environments")
@@ -115,11 +122,34 @@ if __name__ == "__main__":
         with open(options.listfile) as fp:
             lists = parse_listfile(fp)
 
+    elif options.selection:
+        # Get list from database
+        things = options.selection.split('/')
+        selection = from_url_things(things)
+        logger.info("Selection: %s" % selection)
+        if selection.openquery:
+            logger.warning("Selection is open - this may not be what you want")
+
     else:
         logger.info("No list(s) of filenames was provided.")
-        files = []
+        lists = []
 
     with session_scope() as session:
+
+        if options.selection:
+            logger.info("Getting header object list")
+            headers = list_headers(selection, [], session=session,
+                                   unlimit=True)
+
+            # Looping through the header list directly for the add
+            # is really slow if the list is big.
+            logger.info("Building filename lists")
+            lists = []
+            for header in headers:
+                lists.append([header.diskfile.filename])
+            headers = None
+            logger.info(f"Selection found {len(lists)} files to add")
+
         for filelist in lists:
             # Check that all the filenames given are valid and ensure they end
             # in .fits
