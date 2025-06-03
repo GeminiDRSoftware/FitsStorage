@@ -56,7 +56,9 @@ s = p.scatter('row_number', 'BICOMED', source=df,
           )
 
 # Add line plots for each data label...
-for dl in df['data_label'].unique():
+dls = df['data_label'].unique()
+print(f"There are {len(dls)} unique data labels")
+for dl in dls:
     p.line('row_number', 'BICOMED', source=df[df['data_label']==dl])
 
 p.xaxis.major_label_overrides = dict(df['data_label'])
