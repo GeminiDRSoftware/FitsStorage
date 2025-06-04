@@ -10,11 +10,13 @@ name as the outpur suffix - ie checkBias1 writes _checkBias1.fits files.
 recipe_keywords = {
     'checkBias1': ['OVERSCAN', 'OVERRMS', 'OSCOMEAN', 'OSCOSTDV', 'OSCOMED'],
     'checkBias2': ['BICOMEAN', 'BICOSTDV', 'BICOMED'],
+    'checkFlat1': ['FLATMEAN', 'FLATSTDV', 'FLATMED'],
 }
 
 # These tell us the keywords to include (if they are present) in each report
 # type
 report_keywords = {
     'checkBias': ['OVERSCAN', 'OVERRMS', 'OSCOMEAN', 'OSCOSTDV', 'OSCOMED',
-                  'BICOMEAN', 'BICOSTDV', 'BICOMED']
+                  'BICOMEAN', 'BICOSTDV', 'BICOMED'],
+    'checkFlat': ['FLATMEAN', 'FLATSTDV', 'FLATMED'],
 }
