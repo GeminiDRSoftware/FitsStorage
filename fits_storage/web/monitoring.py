@@ -29,6 +29,10 @@ def monitoring(things):
     if processing_tag is not None:
         stmt = stmt.where(Monitoring.processing_tag == processing_tag)
 
+    # This may need more thought, but for now, only return rows where the
+    # filename contains the report_type (eg checkBias1 contains checkBias)
+    stmt = stmt.where(Monitoring.filename.contains(report_type))
+
     # We get one row (Monitoring instance) per keyword per ad_id per filename.
     # We need to combine all the keyword/values into one output row per
     # filename-label
