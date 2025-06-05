@@ -6,32 +6,34 @@ from fits_storage.server.wsgi.context import get_context
 from sqlalchemy import select
 from fits_storage.server.orm.monitoring import Monitoring
 from fits_storage.server.monitoring import report_keywords
-
+from fits_storage.db.list_headers import list_headers
+from fits_storage.db.selection.get_selection import from_url_things
 
 def monitoring(things):
     ctx = get_context()
 
-    report_type = None
-    processing_tag = None
-    for thing in things:
-        if thing in report_keywords.keys():
-            report_type = thing
-        else:
-            processing_tag = thing
+    if len(things) < 2:
+        ctx.resp.client_error(404, message="Need at least 2 arguments")
 
-    if report_type is None:
+    if things[0] in report_keywords.keys():
+        report_type = things[0]
+    else:
         ctx.resp.client_error(404, message="Could not determine report type")
+
+    # This is a little crude for now. Better to do a direct join.
+    selection = from_url_things(things[1:])
+    headers = list_headers(selection, [])
+    header_ids = [h.id for h in headers]
+
 
     stmt = select(Monitoring)\
         .order_by(Monitoring.filename)\
-        .order_by(Monitoring.adid)
+        .order_by(Monitoring.adid)\
+        .where(Monitoring.header_id in header_ids)
 
+    processing_tag = selection.get('processing_tag')
     if processing_tag is not None:
         stmt = stmt.where(Monitoring.processing_tag == processing_tag)
-
-    # This may need more thought, but for now, only return rows where the
-    # filename contains the report_type (eg checkBias1 contains checkBias)
-    stmt = stmt.where(Monitoring.filename.contains(report_type))
 
     # We get one row (Monitoring instance) per keyword per ad_id per filename.
     # We need to combine all the keyword/values into one output row per
