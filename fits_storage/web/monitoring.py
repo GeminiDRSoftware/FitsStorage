@@ -25,11 +25,10 @@ def monitoring(things):
     headers = list_headers(selection, [])
     header_ids = [h.id for h in headers]
 
-
     stmt = select(Monitoring)\
         .order_by(Monitoring.filename)\
         .order_by(Monitoring.adid)\
-        .where(Monitoring.header_id in header_ids)
+        .where(Monitoring.header_id.in_(header_ids))
 
     processing_tag = selection.get('processing_tag')
     if processing_tag is not None:
