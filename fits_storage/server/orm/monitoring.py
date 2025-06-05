@@ -83,6 +83,8 @@ class Monitoring(Base):
             self.value_int = value
         elif isinstance(value, (float, np.floating)):
             self.value_float = value
+        elif value is None:
+            pass
         else:
             self.value_text = str(value)
 
