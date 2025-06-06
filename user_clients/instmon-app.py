@@ -4,7 +4,8 @@ from datetime import date
 
 from bokeh.layouts import column, row
 from bokeh.models import Button, TextInput, Select, HoverTool, \
-    ColumnDataSource, CategoricalColorMapper, DatePicker, Div
+    ColumnDataSource, CategoricalColorMapper, DatePicker, Div, \
+    BasicTickFormatter
 from bokeh.plotting import figure, curdoc
 
 # create a plot with a title and axis labels
@@ -14,6 +15,8 @@ p = figure(title="Instrument monitoring",
            height=512,
            width=1024,
            )
+p.yaxis.formatter = BasicTickFormatter(use_scientific=False)
+p.xaxis.ticker.desired_num_ticks=10
 
 # Color mapper for qastate
 mapper = CategoricalColorMapper(palette=["red", "orange", "blue", "green"],
@@ -34,8 +37,7 @@ fdf = []
 plots = []
 
 # Add the widgets
-datatext = TextInput(prefix="Data Source: ", sizing_mode="stretch_width",
-                     value="/Users/phirst/newnewdev/bias-analysis/TEST.tsv")
+datatext = TextInput(prefix="Data Source: ", sizing_mode="stretch_width")
 statustext = TextInput(prefix="Status:", sizing_mode="stretch_width")
 url_prefix_text = TextInput(prefix="URL builder:", sizing_mode="fixed",
                             width=340,
@@ -50,6 +52,8 @@ url_build_button = Button(label="Build URL")
 load_button = Button(label="Load")
 group_select = Select(title="Group by", options=['None', 'max'], value='None')
 plot_select = Select(title="Plot", options=plots, value='Any')
+plot_default_button = Button(label="Default", align='end')
+
 
 # Define callback functions
 
@@ -125,11 +129,25 @@ def select_callback(attr, old, new):
 def plot_callback(attr, old, new):
     s.glyph.x = 'row_number'
     s.glyph.y = new
+    p.yaxis.axis_label = new
 
     statustext.value = f"Plotted {s.glyph.y}"
 
+def plot_default_callback():
+    global plot_select
+    global group_select
+    global url_report_select
+    if url_report_select.value == 'checkBias':
+        group_select.value = 'max'
+        plot_select.value = 'OSCOMED'
+    elif url_report_select.value == 'checkFlat':
+        group_select.value = 'max'
+        plot_select.value = 'FLATMED'
+
+
 load_button.on_event('button_click', load_data)
 url_build_button.on_event('button_click', build_url)
+plot_default_button.on_event('button_click', plot_default_callback)
 
 group_select.on_change('value', select_callback)
 plot_select.on_change('value', plot_callback)
@@ -141,6 +159,6 @@ url_row = row(url_prefix_text, url_report_select, url_inst_select,
               url_startdate_picker, Div(text='-'), url_enddate_picker,
               url_build_button,)
 loadblock = column(statustext, url_row, loadrow, sizing_mode="stretch_width")
-selectrow = row(group_select, plot_select)
+selectrow = row(group_select, plot_select, plot_default_button)
 
 curdoc().add_root(column(loadblock, selectrow, p))
