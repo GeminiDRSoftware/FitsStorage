@@ -86,6 +86,7 @@ if __name__ == "__main__":
             if len(allfiles) < min:
                 logger.warning("Failed to find sufficient files for "
                                f"instrument config {selection}")
+                continue
 
             filenames = allfiles[:max]
             if filenames:
