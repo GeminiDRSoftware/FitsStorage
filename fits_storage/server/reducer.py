@@ -628,6 +628,10 @@ class Reducer(object):
         processinglog = ProcessingLog(self.rqe)
         self.s.add(processinglog)
         self.s.commit()
+        #self.l.info(f"pre runr() {psutil.virtual_memory()=}")
+        p = psutil.Process()
+        #self.l.info(f"pre runr() {p.num_fds()=}")
+        self.l.info(f"pre runr() {p.memory_full_info()=}")
         try:
             reduce.runr()
         except Exception as e:
@@ -635,9 +639,9 @@ class Reducer(object):
                              exc_info=True)
             return
         finally:
-            self.l.info(f"post runr() {psutil.virtual_memory()=}")
+            #self.l.info(f"post runr() {psutil.virtual_memory()=}")
             p = psutil.Process()
-            self.l.info(f"post runr() {p.num_fds()=}")
+            #self.l.info(f"post runr() {p.num_fds()=}")
             self.l.info(f"post runr() {p.memory_full_info()=}")
 
             os.chdir(pwd)
