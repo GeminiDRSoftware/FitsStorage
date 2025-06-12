@@ -630,12 +630,12 @@ class Reducer(object):
         self.s.commit()
         try:
             reduce.runr()
-            self.l.info(f"post runr() memory info: {psutil.virtual_memory()}")
         except Exception as e:
             self.logrqeerror(f"Exception from DRAGONS Reduce.runr(): {e}",
                              exc_info=True)
             return
         finally:
+            self.l.info(f"post runr() memory info: {psutil.virtual_memory()}")
             os.chdir(pwd)
 
         self.reduced_files = reduce.output_filenames
