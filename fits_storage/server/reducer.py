@@ -635,7 +635,11 @@ class Reducer(object):
                              exc_info=True)
             return
         finally:
-            self.l.info(f"post runr() memory info: {psutil.virtual_memory()}")
+            self.l.info(f"post runr() {psutil.virtual_memory()=}")
+            p = psutil.Process()
+            self.l.info(f"post runr() {p.num_fds()=}")
+            self.l.info(f"post runr() {p.memory_full_info()=}")
+
             os.chdir(pwd)
 
         self.reduced_files = reduce.output_filenames
