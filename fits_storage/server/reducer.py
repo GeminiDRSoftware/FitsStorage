@@ -11,6 +11,9 @@ import json
 import http
 import requests
 
+# For memory debugging, hopefully temporary
+import psutil
+
 from astropy.io import fits
 
 import astrodata
@@ -596,8 +599,9 @@ class Reducer(object):
         # Call Reduce()
         try:
             reduce = Reduce()
-        except Exception:
-            self.logrqeerror("Exception instantiating Reduce()", exc_info=True)
+        except Exception as e:
+            self.logrqeerror(f"Exception instantiating Reduce(): {e}",
+                             exc_info=True)
             return
 
         # Tell Reduce() what files to reduce
@@ -626,8 +630,9 @@ class Reducer(object):
         self.s.commit()
         try:
             reduce.runr()
-        except Exception:
-            self.logrqeerror("Exception from DRAGONS Reduce.runr()",
+            self.l.info(f"post runr() memory info: {psutil.virtual_memory()}")
+        except Exception as e:
+            self.logrqeerror(f"Exception from DRAGONS Reduce.runr(): {e}",
                              exc_info=True)
             return
         finally:
