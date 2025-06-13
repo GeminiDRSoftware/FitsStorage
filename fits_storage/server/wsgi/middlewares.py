@@ -29,13 +29,19 @@ if fsc.is_archive:
 
 
 blocked_msg = """
+Login Required. Please visit https://archive.gemini.edu/login
+
+Unfortunately, and like many on line data repositories, the Gemini Observatory
+Archive has been subject to a massive increase in excessive and/or malicious
+requests, often associated with AI training robots and associated malware. 
 Your IP address range or ISP has been the source of excessive or malicious 
 requests to this server and anonymous access has been denied. If you are a 
-genuine Gemini Observatory Archive user, we apologize and would appreciate a 
-helpdesk ticket to let us know this has occurred. You may regain access to the 
-archive by logging in at https://archive.gemini.edu/login. If you do not 
-already have an account, you will need to set one up using a different 
-internet connection. Sorry.
+genuine Gemini Observatory Archive user, we apologize for the inconvenience. 
+
+To get access to the archive, simply log in at https://archive.gemini.edu/login.
+If you do not already have an account, we recommend using the login via ORCID 
+option. If you do not already have an ORCID ID, register for free at 
+https://orcid.org/register
 """
 
 
