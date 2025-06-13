@@ -473,9 +473,13 @@ class CalibrationGNIRS(Calibration):
         if processed:
             query = query.filter(Header.types.contains('TELLURIC'))
         else:
-            query = query.raw().filter(Header.observation_class == 'partnerCal')
+            query = query.raw().filter(
+                or_(Header.observation_class == 'partnerCal',
+                    Header.observation_class == 'progCal'))
+
             # Usable is not OK for these - may be partly saturated for example
-            query = query.add_filters(or_(Header.qa_state == 'Pass', Header.qa_state == 'Undefined'))
+            query = query.add_filters(
+                or_(Header.qa_state == 'Pass', Header.qa_state == 'Undefined'))
 
         # Absolute time separation must be within 1 day
         query = query.max_interval(days=1)
@@ -522,7 +526,10 @@ class CalibrationGNIRS(Calibration):
         if processed:
             query = query.filter(Header.types.contains('STANDARD'))
         else:
-            query = query.raw().filter(Header.observation_class == 'partnerCal')
+            query = query.raw().filter(
+                or_(Header.observation_class == 'partnerCal',
+                    Header.observation_class == 'progCal'))
+
             # Usable is not OK for these - may be partly saturated for example
             query = query.add_filters(
                 or_(Header.qa_state == 'Pass', Header.qa_state == 'Undefined'))
