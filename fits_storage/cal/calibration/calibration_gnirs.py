@@ -196,7 +196,7 @@ class CalibrationGNIRS(Calibration):
         if 'PINHOLE' in self.types:
             # This just matches the decker. The Decker is one of the substrings
             # in the focal_plane_mask, so this avoids having to add a decker
-            # to the GNIRS table jist for this
+            # to the GNIRS table just for this
             query = query.filter(Gnirs.focal_plane_mask.contains(
                 self.descriptors['focal_plane_mask'].split("&")[1]))
         else:
@@ -212,9 +212,9 @@ class CalibrationGNIRS(Calibration):
         This will find GNIRS flats with a matching disperser, focal plane mask, camera, filter name,
         and well depth setting.  It also matches the central wavelength within 0.001 microns.
 
-        Finally, it matches gcal_lamp of IRhigh or QH* and within 90 days.
+        For Raw flats, it matches gcal_lamp of IRhigh or QH* and within 90 days.
 
-        For XD flat queries, we interleave the IRhigh and QH flats to ensure that some of each
+        For Raw XD flat queries, we interleave the IRhigh and QH flats to ensure that some of each
         are returned.
 
         Parameters
@@ -279,6 +279,14 @@ class CalibrationGNIRS(Calibration):
         if self.descriptors['focal_plane_mask'] and \
                 'HR-IFU' in self.descriptors['focal_plane_mask']:
             base_query.add_filters(Header.observation_class != 'acqCal')
+
+        # If a processed flat was requested, we're done and return now. If raw
+        # flats were requested, we continue with the gcal lamp logic. That is
+        # not applicable to processed flats as all the raw flats with the
+        # appropriate and various lamps get combined into one processed flat.
+        if processed:
+            return base_query.all(howmany,
+                                  extra_order_terms=[desc(Header.observation_id == self.descriptors['observation_id'])])
 
         if self.descriptors['disperser'] and 'XD' in self.descriptors['disperser']:
             # need QH interleaved with IRHigh
