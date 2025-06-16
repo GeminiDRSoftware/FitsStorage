@@ -105,6 +105,11 @@ class Reducer(object):
                 self.rs.cookies,
                 {'gemini_fits_upload_auth': self.fsc.export_auth_cookie})
 
+        # Memory logging hack
+        memlogname = "memlog"
+        memlogfn = f"/data/logs/reducemem/{memlogname}-{os.getpid}-memlog.txt"
+        self.mlf = open(memlogfn, "w")
+
     def logrqeerror(self, message, exc_info=False):
         """
         Convenience function to log an error message,
@@ -633,10 +638,8 @@ class Reducer(object):
         processinglog = ProcessingLog(self.rqe)
         self.s.add(processinglog)
         self.s.commit()
-        #self.l.info(f"pre runr() {psutil.virtual_memory()=}")
         p = psutil.Process()
-        #self.l.info(f"pre runr() {p.num_fds()=}")
-        self.l.info(f"pre runr() {p.memory_full_info()=}")
+        mempre=f"pre runr() {p.memory_full_info()=}"
         try:
             reduce.runr()
         except Exception as e:
@@ -662,7 +665,7 @@ class Reducer(object):
 
         self.s.commit()
 
-        #self.l.info(f"post runr() {psutil.virtual_memory()=}")
         p = psutil.Process()
-        #self.l.info(f"post runr() {p.num_fds()=}")
-        self.l.info(f"post runr() {p.memory_full_info()=}")
+        mempost=f"post runr() {p.memory_full_info()=}"
+        self.mlf.write(f"{self.rqe.filename} {mempre} {mempost}")
+        self.mlf.flush()
