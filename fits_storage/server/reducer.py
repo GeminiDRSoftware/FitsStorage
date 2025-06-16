@@ -11,9 +11,6 @@ import json
 import http
 import requests
 
-# For memory debugging, hopefully temporary
-import psutil
-
 from astropy.io import fits
 
 import astrodata
@@ -105,10 +102,6 @@ class Reducer(object):
                 self.rs.cookies,
                 {'gemini_fits_upload_auth': self.fsc.export_auth_cookie})
 
-        # Memory logging hack
-        memlogname = "memlog"
-        memlogfn = f"/data/logs/reducemem/{memlogname}-{os.getpid}-memlog.txt"
-        self.mlf = open(memlogfn, "w")
 
     def logrqeerror(self, message, exc_info=False):
         """
@@ -638,8 +631,7 @@ class Reducer(object):
         processinglog = ProcessingLog(self.rqe)
         self.s.add(processinglog)
         self.s.commit()
-        p = psutil.Process()
-        mempre=f"pre runr() {p.memory_full_info()=}"
+
         try:
             reduce.runr()
         except Exception as e:
@@ -664,8 +656,3 @@ class Reducer(object):
         logcapture.close()
 
         self.s.commit()
-
-        p = psutil.Process()
-        mempost=f"post runr() {p.memory_full_info()=}"
-        self.mlf.write(f"{self.rqe.filename} {mempre} {mempost}")
-        self.mlf.flush()
