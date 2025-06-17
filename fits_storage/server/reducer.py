@@ -607,7 +607,8 @@ class Reducer(object):
         # Set mode. It defaults to sq, but we need to over-ride to qa for the
         # instrument monitoring recipes. By convention, these start with
         # check - eg checkBias1
-        reduce.mode = 'qa' if self.rqe.recipe.startswith('check') else 'sq'
+        reduce.mode = 'qa' if (self.rqe.recipe is not None and
+                               self.rqe.recipe.startswith('check')) else 'sq'
 
         # Tell Reduce() what files to reduce
         reduce.files.extend(self.rqe.filenames)
