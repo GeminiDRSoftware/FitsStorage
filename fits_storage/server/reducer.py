@@ -10,6 +10,8 @@ import bz2
 import json
 import http
 import requests
+import gc
+import psutil
 
 from astropy.io import fits
 
@@ -642,6 +644,22 @@ class Reducer(object):
             os.chdir(pwd)
 
         self.reduced_files = reduce.output_filenames
+
+        # As of 2025-06-17 DRAGONS Reduce() appears to create cyclic object
+        # references, or otherwise causes the effects of a memory leak.
+        # Calling gc.collect() seems to mitigate this.
+        # We also check our memory footprint after calling for garbage
+        # collection, and issue a warning if it seems high.
+        gc.collect()
+        rss = psutil.Process().memory_info().rss
+        # 400000000 (400MB) seems typical on linux, python 3.12, once things
+        # are underway.
+        if rss > 600000000:
+            self.l.warning(f'Reducer memory footprint excessive: {rss} bytes')
+        # If this becomes a problem, we could call exit() here or raise an
+        # unhandled exception to cause service_reduce_queue to quit before
+        # we end up summoning the oom_killer. In production environments, it
+        # would normlly get restarted by systemd.
 
         processinglog.end(len(self.reduced_files), self.rqe.failed)
 

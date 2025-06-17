@@ -4,8 +4,6 @@ import datetime
 import signal
 import time
 
-import psutil
-
 from argparse import ArgumentParser
 
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
@@ -49,8 +47,6 @@ if __name__ == "__main__":
 
     if options.name is not None:
         setlogfilesuffix(options.name)
-
-    memlogfn = f"memlog-{options.name}.txt"
 
     # Need to set up the global loop variable before we define the signal handlers
     loop = True
@@ -126,17 +122,9 @@ if __name__ == "__main__":
                     # setting the status and error messages in rqe and
                     # outputting appropriate log messages if there's a failure.
 
-                    p = psutil.Process()
-                    mempre = f"{p.memory_full_info()}"
-
                     reducer = Reducer(session, logger, rqe,
                                       nocleanup=options.nocleanup)
                     reducer.do_reduction()
-                    p = psutil.Process()
-                    mempost = f"{p.memory_full_info()}"
-
-                    with open(memlogfn, "a") as memlogf:
-                        memlogf.write(f"{rqe.filename} {mempre} {mempost}\n")
 
                 except KeyboardInterrupt:
                     logger.error("KeyboardInterrupt - exiting ungracefully!")
