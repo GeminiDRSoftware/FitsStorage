@@ -28,7 +28,8 @@ pid_caleng_another = r'G[NS]-(?P<sem1>20\d\d[AB])-(?P<ec3>CAL|ENG)-\d+'
 
 # And the "New" 2024 GPP format is: G-YYYYS-TYP-<inst>-NN
 # Where TYP can be [CAL|ENG|COM|MON] - COMmissinong and instrument MONitoring.
-pid_caleng_new = r'G-(?P<sem2>20\d\d[AB])-(?P<ec4>CAL|ENG|COM|MON)-[\w+-]+-\d+'
+# Note <inst> may not contain '-'s
+pid_caleng_new = r'G-(?P<sem2>20\d\d[AB])-(?P<ec4>CAL|ENG|COM|MON)-\w+-\d+'
 
 pid_caleng = r'%s|%s|%s|%s' % (pid_caleng_new, pid_caleng_orig,
                               pid_caleng_another, pid_caleng_archaic)
@@ -58,7 +59,7 @@ obsid_cre = re.compile(obsid)
 # ie program_id-obsnum-dlnum[-ext], with groups progid, obsid, dlid, extn.
 # Note the extn has to start with a letter to avoid confusion with the various
 # program ID and thus datalabel formats.
-dl = r'(?P<progid>%s)-(?P<obsid>\d+)-(?P<dlid>\d+)' \
+dl = r'(?P<progid>%s)-(?P<obsid>\d+)-(?P<dlid>\d+(-\d+)?)' \
      r'(?:-(?P<extn>[A-Za-z]\w*))?' % pid
 dl_cre = re.compile(dl)
 

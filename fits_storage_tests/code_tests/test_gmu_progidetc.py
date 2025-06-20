@@ -25,9 +25,10 @@ def test_pid_caleng_regexes():
         assert re.fullmatch(pid_caleng_another, i) is None
 
     new_valid = ['G-2001A-CAL-GMOS_N-20', 'G-2001B-ENG-GMOS_N-20',
-                 'G-2001A-COM-IGRINS-2-20', 'G-2001A-MON-F_2-20',
+                 'G-2001A-COM-IGRINS2-20', 'G-2001A-MON-F_2-20',
                  'G-2001B-CAL-GMOS_N-100']
-    new_invalid = ['GN-2001A-CAL-GMOS_N-20', 'G-2001B-FOO-GMOS_N-20']
+    new_invalid = ['GN-2001A-CAL-GMOS_N-20', 'G-2001B-FOO-GMOS_N-20',
+                   'G-2001A-COM-IGRINS-2-20']
     for i in new_valid:
         assert re.fullmatch(pid_caleng_new, i) is not None
     for i in new_invalid:
@@ -74,8 +75,7 @@ pid_valid = ['GN-CAL20120123', 'CAL20031122', 'GN-2011A-ENG-191',
              'G-2001A-MON-F_2-20', 'GN-2000A-DD-3', 'GN-2011A-Q-12',
              'G-2099B-COM-SCORPIO-1', 'G-2099A-0005-Q', 'G-2012B-1234-P']
 pid_invalid = ['GX-CAL20000131', 'Eng20221101', 'GN-2020A-foo-191',
-               'GN-2001A-CAL-GMOS_N-20', 'G-2011A-Q-12', 'GN-2020A-1234-Q',
-               'GS-2024A-Q-410-36']
+               'GN-2001A-CAL-GMOS_N-20', 'G-2011A-Q-12', 'GN-2020A-1234-Q']
 
 
 def test_pid_regex():
@@ -153,3 +153,12 @@ def test_gp():
         assert gp.program_id is None
         assert gp.is_sv is None
         assert gp.is_com is None
+
+def test_gpp_datalabel():
+    # GPP calls for two numeric components to the datalabel to handle
+    # instruments that generate multiple files eg from multiple arms
+    thing = 'G-2026B-ENG-SCORPIO-02-0023-0011-0002'
+    gdl = GeminiDataLabel(thing)
+    assert gdl.program_id == 'G-2026B-ENG-SCORPIO-02'
+    assert gdl.obsnum == "0023"
+    assert gdl.dlnum == "0011-0002"
