@@ -49,8 +49,10 @@ do activate
 # may need to source .bashrc if conda is not on path
 conda config --add channels conda-forge
 conda config --add channels http://astroconda.gemini.edu/public
-#conda create -p /opt/miniforge3/envs/dragons python=3.10 "numpy<2" dragons
-conda create -p /opt/miniforge3/envs/fitsdata python=3.10 # Going to need 3.12
+conda create -p /opt/miniforge3/envs/fitsdata python=3.12
+conda activate /opt/miniforge3/envs/fitsdata
+#conda install dragons
+conda install --only-deps dragons # To install only dependencies
 conda install fitsverify
 
 # In bash profile, add:
@@ -87,8 +89,8 @@ git switch release/3.2.x  # or main, depending what you want...
 cd /opt/FitsStorageConfigurations
 git clone git@github.com:/phirstgemini/FitsStorageConfigurations .
 
-pip3 install astrodata
-pip3 uninstall astrodata  # We just wanted the dependencies really...
+#pip3 install astrodata
+#pip3 uninstall astrodata  # We just wanted the dependencies really...
 pip3 install -r /opt/FitsStorage/requirements.txt
 pip3 install -r /opt/FitsStorage/requirements_server.txt # For servers
 pip3 install -r /opt/FitsStorage/requirements_dev.txt   # For development systems
