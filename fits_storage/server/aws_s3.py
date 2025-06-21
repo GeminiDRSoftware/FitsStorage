@@ -38,6 +38,8 @@ class Boto3Helper(object):
             fsc.s3_bucket_name
         self.underlay_b_name = underlay_bucket_name \
             if underlay_bucket_name is not None else fsc.s3_underlay_bucket_name
+        if self.underlay_b_name == '':
+            self.underlay_b_name = None
         self.access_key = access_key if access_key is not None else \
             fsc.aws_access_key
         self.secret_key = secret_key if secret_key is not None else \
