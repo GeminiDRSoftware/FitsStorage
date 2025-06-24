@@ -942,7 +942,7 @@ class GRACESFileParser(AstroDataFileParser):
         return reduction
 
     def processing(self) -> str:
-        procmode = None
+        procmode = 'Raw'
         try:
             if self.ad.phu.get('REDUCTIO') is not None:
                 procmode = 'Quick-Look'
