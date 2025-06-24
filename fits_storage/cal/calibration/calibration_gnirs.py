@@ -63,20 +63,23 @@ class CalibrationGNIRS(Calibration):
                 self.applicable.append('pinhole')
             else:
                 # non-XD, Long Camera ranges
-                if 'Short' in self.descriptors['camera']:
+                if self.descriptors['camera'] and 'Short' in self.descriptors['camera']:
                     if self.descriptors['central_wavelength'] < 2.7:
                         self.applicable.append('flat')
                     else:
                         self.applicable.append('lampoff_flat')
 
-                elif 'Long' in self.descriptors['camera'] and '32/mm' in self.descriptors['disperser']:
+                elif self.descriptors['camera'] \
+                        and self.descriptors['disperser'] \
+                        and 'Long' in self.descriptors['camera'] \
+                        and '32/mm' in self.descriptors['disperser']:
                     # non-XD, long Camera, 32/mm grating
                     if self.descriptors['central_wavelength'] < 4.25:
                         self.applicable.append('flat')
                     else:
                         self.applicable.append('lampoff_flat')
 
-                elif 'Long' in self.descriptors['camera']:
+                elif self.descriptors['camera'] and 'Long' in self.descriptors['camera']:
                     # non-XD, long camera, 10/mm and 111/mm grating
                     if self.descriptors['central_wavelength'] < 4.3:
                         self.applicable.append('flat')

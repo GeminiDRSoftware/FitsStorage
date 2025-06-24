@@ -345,7 +345,7 @@ def gmos_gratingname(string):
     """
     if string is None:
         return None
-    
+
     gmos_gratings = ('MIRROR', 'B480', 'B600', 'R600', 'R400', 'R831',
                      'R150', 'B1200')
 
