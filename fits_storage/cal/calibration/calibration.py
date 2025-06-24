@@ -118,7 +118,7 @@ class CalQuery(object):
 
         if fsc.is_server:
             # Join against processing tag and sort by descending tag priority order
-            query = query.join(ProcessingTag,
+            query = query.outerjoin(ProcessingTag,
                                Header.processing_tag == ProcessingTag.tag)
             query = query.filter(or_(Header.processing == 'Raw',
                                      ProcessingTag.published == True))
