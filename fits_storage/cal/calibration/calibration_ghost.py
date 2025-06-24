@@ -517,9 +517,7 @@ class CalibrationGHOST(Calibration):
         if processed:
             query = query.standard(processed)
         else:
-            query = query.add_filters([
-                Header.observation_class.in_(['partnerCal', 'progCal'])
-            ])
+            query = query.add_filters(Header.observation_class.in_(['partnerCal', 'progCal']))
             query = query.raw().OBJECT()
 
         return query.all(howmany)
