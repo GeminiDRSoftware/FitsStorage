@@ -57,9 +57,9 @@ class CalibrationF2(Calibration):
             self.applicable.append('flat')
             self.applicable.append('processed_flat')
             self.applicable.append('arc')
-            # And if they're science frames, they require a telluric_standard
+            # And if they're science frames, they require a telluric
             if self.descriptors['observation_class'] == 'science':
-                self.applicable.append('telluric_standard')
+                self.applicable.append('telluric')
 
         # FLAT frames require DARKs
         if self.descriptors['observation_type'] == 'FLAT':
@@ -289,7 +289,7 @@ class CalibrationF2(Calibration):
         return query.all(howmany)
 
     @not_processed
-    def telluric_standard(self, processed=False, howmany=None):
+    def telluric(self, processed=False, howmany=None):
         """
         Get matching telluric standards for an F2 observation.
 
@@ -315,7 +315,7 @@ class CalibrationF2(Calibration):
         query = (
             self.get_query()
                 # Telluric standards are OBJECT spectroscopy partnerCal frames
-                .telluric_standard(OBJECT=True, partnerCal=True)
+                .telluric(OBJECT=True, partnerCal=True)
                 .match_descriptors(*CalibrationF2.common_descriptors())
                 .tolerance(central_wavelength=0.001)
                 # Absolute time separation must be within 24 hours of the science

@@ -12,7 +12,7 @@ cals_2022_nifs = {
                               'flat': 'GN-2022A-Q-315-15-001',
                               'arc': 'GN-2022A-Q-315-12-010',
                               'ronchi_mask': 'GN-2022A-Q-315-15-013',
-                              'telluric_standard': 'GN-2022A-Q-315-10-006',
+                              'telluric': 'GN-2022A-Q-315-10-006',
                               },
 }
 

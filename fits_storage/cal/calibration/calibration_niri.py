@@ -71,7 +71,7 @@ class CalibrationNIRI(Calibration):
             self.applicable.append('arc')
             # science Spectroscopy OBJECTs require a telluric
             if self.descriptors['observation_class'] == 'science':
-                self.applicable.append('telluric_standard')
+                self.applicable.append('telluric')
                 self.applicable.append('processed_flat')
 
         self.applicable.append('processed_bpm')
@@ -307,7 +307,7 @@ class CalibrationNIRI(Calibration):
         return query.all(howmany)
 
     @not_processed
-    def telluric_standard(self, processed=False, howmany=None):
+    def telluric(self, processed=False, howmany=None):
         """
          Method to find the telluric standards
 
@@ -334,7 +334,7 @@ class CalibrationNIRI(Calibration):
         query = (
             self.get_query()
                 # Telluric standards are OBJECT spectroscopy partnerCal frames
-                .telluric_standard(OBJECT=True, partnerCal=True)
+                .telluric(OBJECT=True, partnerCal=True)
                 .match_descriptors(Niri.filter_name,
                                    Niri.camera,
                                    Niri.focal_plane_mask,

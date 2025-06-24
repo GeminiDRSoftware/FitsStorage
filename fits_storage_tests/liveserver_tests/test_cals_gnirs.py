@@ -20,7 +20,7 @@ cals_2022_gnirs = {
                                'dark': None,
                                'flat': 'GN-2021B-Q-212-180-009',
                                'arc': 'GN-2021B-Q-212-180-014',
-                               'telluric_standard': 'GN-2021B-Q-212-266-012',
+                               'telluric': 'GN-2021B-Q-212-266-012',
                                'processed_bpm': 'GN-CAL20121205-10-001-BPM',
                                },
     # GNIRS XD 32l/mm H

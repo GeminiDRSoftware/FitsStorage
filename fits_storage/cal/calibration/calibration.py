@@ -499,7 +499,7 @@ class CalQuery(object):
                 ret = getattr(self, key)()
             return ret
 
-    def telluric_standard(self, processed=False, **kw):
+    def telluric(self, processed=False, **kw):
         """
         Filter: when `processed` is ``True`` this works as a shorthand for
         ``reduction('PROCESSED_TELLURIC')``.
@@ -509,7 +509,7 @@ class CalQuery(object):
         filters, and chaining them, like in this example:
         ::
 
-               telluric_standard(OBJECT=True, science=True)
+               telluric(OBJECT=True, science=True)
 
         is a shorthand for:
         ::

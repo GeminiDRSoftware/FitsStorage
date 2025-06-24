@@ -32,17 +32,17 @@ class CalibrationGPI(Calibration):
         if self.descriptors['observation_type'] == 'BPM':
             return
 
-        # Science OBJECTs require: dark, telluric_standard, astrometric_standard
+        # Science OBJECTs require: dark, telluric, astrometric_standard
         if ((self.descriptors['observation_type'] == 'OBJECT') and
                 (self.descriptors['spectroscopy'] == True) and
                 (self.descriptors['observation_class'] not in ['acq', 'acqCal'])):
             self.applicable.append('dark')
             self.applicable.append('astrometric_standard')
-            # If spectroscopy require arc and telluric_standard
+            # If spectroscopy require arc and telluric
             # Otherwise polarimetry requres polarization_flat and polarization_standard
             if self.descriptors['spectroscopy'] == True:
                 self.applicable.append('arc')
-                self.applicable.append('telluric_standard')
+                self.applicable.append('telluric')
             else:
                 self.applicable.append('polarization_standard')
                 self.applicable.append('polarization_flat')
@@ -144,7 +144,7 @@ class CalibrationGPI(Calibration):
             )
         return query.all(howmany)
 
-    def telluric_standard(self, processed=False, howmany=None):
+    def telluric(self, processed=False, howmany=None):
         """
         Find the optimal GPI telluric standard for this target frame
 
@@ -171,7 +171,7 @@ class CalibrationGPI(Calibration):
 
         query = (
             self.get_query()
-                .telluric_standard(OBJECT=True, science=True)
+                .telluric(OBJECT=True, science=True)
                 .add_filters(*filters)
                 .match_descriptors(*CalibrationGPI.common_descriptors())
                 # Absolute time separation must be within 1 year

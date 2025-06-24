@@ -35,7 +35,7 @@ class CalibrationNIFS(Calibration):
                 self.descriptors['observation_class'] == 'science'):
             self.applicable.append('dark')
 
-        # Science spectroscopy that is not a progcal or partnercal requires a flat, arc, ronchi_mask and telluric_standard
+        # Science spectroscopy that is not a progcal or partnercal requires a flat, arc, ronchi_mask and telluric
         if (self.descriptors['observation_type'] == 'OBJECT' and
                 self.descriptors['observation_class'] not in ['partnerCal', 'progCal', 'acqCal', 'acq'] and
                 self.descriptors['spectroscopy'] == True):
@@ -43,7 +43,7 @@ class CalibrationNIFS(Calibration):
             self.applicable.append('processed_flat')
             self.applicable.append('arc')
             self.applicable.append('ronchi_mask')
-            self.applicable.append('telluric_standard')
+            self.applicable.append('telluric')
 
         # Flats require lampoff_flats
         if self.descriptors['observation_type'] == 'FLAT' and self.descriptors['gcal_lamp'] != 'Off':
@@ -235,7 +235,7 @@ class CalibrationNIFS(Calibration):
                                    Nifs.disperser)
         return query.all(howmany)
 
-    def telluric_standard(self, processed=False, howmany=None):
+    def telluric(self, processed=False, howmany=None):
         """
         Find the optimal NIFS Telluric Standards for this target frame
 
@@ -259,7 +259,7 @@ class CalibrationNIFS(Calibration):
 
         # Telluric standards are OBJECT spectroscopy partnerCal frames
         query = self.get_query() \
-                .telluric_standard(OBJECT=True, partnerCal=True) \
+                .telluric(OBJECT=True, partnerCal=True) \
                 .match_descriptors(*CalibrationNIFS.common_descriptors()) \
             .tolerance(central_wavelength=0.001) \
             .max_interval(days=1)

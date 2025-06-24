@@ -25,14 +25,14 @@ cals_2022_f2 = {
                               'dark': 'GS-CAL20211226-3-119',
                               'flat': 'GS-2021B-Q-233-61-005',
                               'arc': 'GS-2021B-Q-233-59-012',
-                              'telluric_standard': 'GS-2021B-Q-233-62-001',
+                              'telluric': 'GS-2021B-Q-233-62-001',
                               },
     # JH Spectroscopy
     'GS-2022A-Q-235-26-001': {'bias': None,
                               'dark': 'GS-CAL20220205-1-162',
                               'flat': 'GS-2022A-Q-235-26-005',
                               'arc': 'GS-2022A-Q-235-26-006',
-                              'telluric_standard': 'GS-2022A-Q-235-28-001',
+                              'telluric': 'GS-2022A-Q-235-28-001',
                               },
     }
 
