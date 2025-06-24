@@ -116,7 +116,7 @@ try:
                     session.rollback()
                     message = "Exception while associating calibrations " \
                               "for CalCache"
-                    logger.info(message, exc_info=True)
+                    logger.error(message, exc_info=True)
                     ccqe.inprogress = False
                     ccqe.failed = True
                     ccqe.error = message
