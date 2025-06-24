@@ -611,7 +611,7 @@ class GHOSTCalQuery(object):
             self.calqueries.append(CalQuery(session, instrClass,
                                             self.pdescriptors[arm], procmode))
         # Set up the "call through methods" here
-        calmethods = ['bias', 'arc', 'flat', 'bpm']
+        calmethods = ['bias', 'arc', 'flat', 'bpm', 'standard']
         argsmethods = ['add_filters', 'match_descriptors', 'raw', 'OBJECT',
                        'spectroscopy', 'object']
         kwmethods = ['max_interval']
