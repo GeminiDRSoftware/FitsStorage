@@ -44,7 +44,7 @@ url_prefix_text = TextInput(prefix="URL builder:", sizing_mode="fixed",
                             value="http://arctest.gemini.edu/monitoring")
 url_report_select = Select(options=["checkBias", "checkFlat"])
 url_inst_select = Select(options=["GMOS-N", "GMOS-S"])
-url_binning_select = Select(options=[None, "1x1", "2x2"])
+url_binning_select = Select(options=[None, "1x1", "1x2", "1x4", "2x1", "2x2", "2x4", "4x1", "4x2", "4x4"])
 url_roi_select = Select(options=[None, "fullframe", "centralspectrum"])
 url_startdate_picker = DatePicker()
 url_enddate_picker = DatePicker()
