@@ -173,13 +173,42 @@ under the form is has three tabs - if you click on the "Load Associated Calibrat
 search results and find the best match calibration files for all relevant baseline calibration types for each file. This
 can take a few seconds, but once it's loaded you can flip back and forth between the tabs quickly.</p>
 
-<h2 id="data-quality">Processed Data Reduction Status</h2>
+<h2 id="data-quality">Processed Data Reduction Classification</h2>
 
-<p>Processed (ie reduced) data files in the archive generally have processing status specified as "Quick Look" or "Science
-Quality". "Quick Look" data is intended for doing a quick evaluation of those observation(s).  "Science Quality" data has been processed
-more accurately and is intended for conducting science.  You may use the "Processing" field in the search
-form as well to narrow down your search for these files.
+<p>Processed (ie reduced) data files in the archive generally have a processing classification specified as "Quick-Look" or
+"Science-Quality". Quick-Look data are intended for doing a quick evaluation of those observation(s). Science-Quality data have
+been processed more accurately and are intended for conducting science.  You may use the "Processing" field in the search
+form as well to narrow down your search for these files. Our criteria for classifying processed data as either
+Science-Quality or Quick-Look are given below:
 </p>
+
+<h3>Science-Quality</h3>
+
+<ul>
+<li>The Data have been reduced by data reduction software which is not known to contain any bugs or deficiencies which
+would significantly affect the quality of the reduced data products.</li>
+<li>The best available calibrations have been applied, and the calibrations are also considered Science-Quality.</li>
+</ul>
+
+<p>Science Quality data are intended to be suitable for science use, however in
+most cases they have been generated automatically and have not been reviewed
+by an expert. There will likely be cases where the automatic reduction does
+not provide good results and the onus is on the end user to verify that the
+data and reduction meets their requirements. They are reduced in a general
+manner which we believe is applicable to most science cases, however some
+science cases will require that the data be re-reduced with reduction
+techniques specific to the particular scientific use case.</p>
+
+<h3>Quick-Look</h3>
+
+<ul>
+<li>One or more of the criteria for designating the data as Science-Quality have not been met.</li>
+</ul>
+
+<p>Quick-Look reduced data are intended to be used to assess simply whether the
+data are of interest to the user, in which case re-reduction or manual
+processing may be appropriate.</p>
+
 
 <h2 id="processing-tags">Processed data Tags</h2>
 
