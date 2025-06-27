@@ -1,11 +1,11 @@
 import pandas as pd
 import copy
-from datetime import date
+from math import pi
 
 from bokeh.layouts import column, row
 from bokeh.models import Button, TextInput, Select, HoverTool, \
     ColumnDataSource, CategoricalColorMapper, DatePicker, Div, \
-    BasicTickFormatter
+    BasicTickFormatter, BoxSelectTool
 from bokeh.plotting import figure, curdoc
 
 # create a plot with a title and axis labels
@@ -24,12 +24,19 @@ mapper = CategoricalColorMapper(palette=["red", "orange", "blue", "green"],
 
 # Add the scatter plot, with dummy data but configure the color mapper
 source = ColumnDataSource(data=dict(x=[], y=[], qastate=[]))
-s = p.scatter(x='x', y='y', source=source, # size=6,
+s = p.scatter(x='x', y='y', source=source, legend_field='qastate',
               fill_color={"field": "qastate", "transform": mapper},
               line_color={"field": "qastate", "transform": mapper})
 
 # Add the Hover tool, we configure it in filter_data
 p.add_tools(HoverTool())
+
+# Add the selection tools
+p.add_tools(BoxSelectTool())
+
+# Configure selected and unselected points highlights
+s.selection_glyph = s.glyph.clone(fill_color="yellow", line_color=None)
+#s.nonselection_glyph = s.glyph.clone(fill_alpha=0.2, fill_color="blue", line_color="firebrick")
 
 # Initialize empty data values
 df = []
@@ -53,7 +60,7 @@ load_button = Button(label="Load")
 group_select = Select(title="Group by", options=['None', 'max'], value='None')
 plot_select = Select(title="Plot", options=plots, value='Any')
 plot_default_button = Button(label="Default", align='end')
-
+show_select_button = Button(label="Show Selected")
 
 # Define callback functions
 
@@ -111,12 +118,13 @@ def filter_data():
     labels = dict(df['data_label'])
     for i in labels.keys():
         dlsplit = labels[i].split('-')
+        labels[i]=''
         if len(dlsplit) == 4:
             labels[i] = dlsplit[1]
     p.xaxis.major_label_overrides = labels
-    p.xaxis.major_label_orientation = "vertical"
+    p.xaxis.major_label_orientation = pi/4
 
-    # This slightly bizzare idiom seems to be necessary to get the hovertool to
+    # This slightly bizarre idiom seems to be necessary to get the hovertool to
     # notice that the data_source changed...
     p.hover.tooltips = []
     p.hover.tooltips=[("DL", "@data_label"), ("ext", "@adid"),
@@ -144,7 +152,12 @@ def plot_default_callback():
         group_select.value = 'max'
         plot_select.value = 'FLATMED'
 
+def show_selected_callback():
+    print(f"{s.data_source.selected.indices=}")
+    for i in s.data_source.selected.indices:
+        print(f"{s.data_source.data['data_label'][i]}")
 
+show_select_button.on_event('button_click', show_selected_callback)
 load_button.on_event('button_click', load_data)
 url_build_button.on_event('button_click', build_url)
 plot_default_button.on_event('button_click', plot_default_callback)
@@ -159,6 +172,6 @@ url_row = row(url_prefix_text, url_report_select, url_inst_select,
               url_startdate_picker, Div(text='-'), url_enddate_picker,
               url_build_button,)
 loadblock = column(statustext, url_row, loadrow, sizing_mode="stretch_width")
-selectrow = row(group_select, plot_select, plot_default_button)
+selectrow = row(group_select, plot_select, plot_default_button, show_select_button)
 
 curdoc().add_root(column(loadblock, selectrow, p))
