@@ -101,7 +101,8 @@ def sendpreview(filename):
     # Send them the data
     if fsc.using_s3:
         # S3 file server
-        flo = s3.get_flo(filename)
+        keyname = f"{fsc.preview_path}/{filename}"
+        flo = s3.get_flo(keyname)
         resp.append_iterable(flo)
     else:
         # Serve from regular file
