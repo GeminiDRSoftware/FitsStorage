@@ -51,6 +51,7 @@ class Previewer(object):
         self.using_s3 = using_s3 if using_s3 is not None else fsc.using_s3
         self.previewpath = previewpath if previewpath is not None else fsc.preview_path
         self.previewpath = fsc.s3_staging_dir if self.using_s3 else self.previewpath
+        self.s3_preview_path = fsc.preview_path
 
         # Push our logger instance into the diskfile if it doesn't have one.
         # diskfiles from a database session do not get __init__()ed.
@@ -166,7 +167,7 @@ class Previewer(object):
 
         if self.using_s3 and upload:
             # Upload preview file to S3 and delete local copy
-            keyname = f"{self.previewpath}/{self.filename}"
+            keyname = f"{self.s3_preview_path}/{self.filename}"
             self.logger.info("Uploading preview %s to S3", keyname)
             if self.s3.upload_file(keyname, self.fpfn) is None:
                 self.logger.error("Error uploading %s to S3 as %s",
