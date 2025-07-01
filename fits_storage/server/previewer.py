@@ -166,8 +166,9 @@ class Previewer(object):
 
         if self.using_s3 and upload:
             # Upload preview file to S3 and delete local copy
-            self.logger.info("Uploading preview %s to S3", self.filename)
-            if self.s3.upload_file(self.filename, self.fpfn) is None:
+            keyname = f"{self.previewpath}/{self.filename}"
+            self.logger.info("Uploading preview %s to S3", keyname)
+            if self.s3.upload_file(keyname, self.fpfn) is None:
                 self.logger.error("Error uploading %s to S3 as %s",
                                   self.fpfn, self.filename)
 
