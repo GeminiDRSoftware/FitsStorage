@@ -434,6 +434,15 @@ class BZ2OnTheFlyDecompressor(object):
         self.decomp = bz2.BZ2Decompressor()
         self.unused_bytes = b''
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        data = self.read(4096)
+        if data is None or len(data) == 0:
+            raise StopIteration
+        return data
+
     def _buffer(self, limit):
         while len(self.unused_bytes) < limit:
             chunk = self.buff.read(CHUNKSIZE)
@@ -453,6 +462,7 @@ class BZ2OnTheFlyDecompressor(object):
         ret = self.unused_bytes[:k]
         self.unused_bytes = self.unused_bytes[k:]
 
+        print(f"read returning type {type(ret)}")
         return ret
 
 
@@ -463,6 +473,15 @@ class BZ2OnTheFlyCompressor(object):
         self.unused_bytes = b''
         self.done = False
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        data = self.read(4096)
+        if data is None or len(data) == 0:
+            raise StopIteration
+        return data
+    
     def _buffer(self, limit):
         while not self.done and len(self.unused_bytes) < limit:
             chunk = self.buff.read(CHUNKSIZE)
