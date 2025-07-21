@@ -462,7 +462,6 @@ class BZ2OnTheFlyDecompressor(object):
         ret = self.unused_bytes[:k]
         self.unused_bytes = self.unused_bytes[k:]
 
-        print(f"read returning type {type(ret)}")
         return ret
 
 
