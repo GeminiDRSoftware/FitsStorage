@@ -102,7 +102,7 @@ def cals_info(cal_obj, caltype, procmode=None, qtype='UNKNOWN', log=no_func, add
                 cal_res.append(
                     dict(label = cal.data_label,
                          name  = cal.diskfile.file.name,
-                         md5   = cal.diskfile.data_md5,
+                         md5   = cal.diskfile.file_md5,
                          url   = url
                     ))
 
