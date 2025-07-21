@@ -108,7 +108,7 @@
 {%- if has_reduction %}<a rel="nofollow" href="/reduction/{{ col.header_id }}" target="_blank">[R] </a>{% endif -%}
 
 <a rel="nofollow" href="/file/{{ col.filepath }}">[D]</a>
-{%- if col.down_sel %} <input type='checkbox' class='mark mark_{{ sumtype }}' name='files' value='{{ col.name }}'>{% endif -%}
+{%- if col.down_sel %} <input type='checkbox' class='mark mark_{{ sumtype }}' name='files' value='{{ col.filepath }}'>{% endif -%}
 </div>
 {%- endmacro -%}
 

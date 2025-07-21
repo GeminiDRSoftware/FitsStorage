@@ -73,7 +73,7 @@ def filter(self, query, ignore_processing_tag=False):
     # slow, and postgres eats CPU for a while doing it.
     if 'filelist' in self:
         if self['filelist']:
-            query = query.filter(File.name.in_(self['filelist']))
+            query = query.filter(DiskFile.filename.in_(self['filelist']))
         else:
             query = query.filter(False)
 
