@@ -30,6 +30,24 @@ def test_file():
     assert len(fits_data) == fileinfo['data_size']
     assert hashlib.md5(fits_data).hexdigest() == fileinfo['data_md5']
 
+def test_file_decompress():
+    filename = 'N20180329S0134.fits'
+    server = getserver()
+
+    # Get the metadata for what we expect
+    fileinfo = get_fileinfo(filename+'.bz2')
+
+    # Download the file
+    url = f"{server}/file/{filename}"
+    req = requests.get(url, timeout=10)
+
+    assert req.status_code == http.HTTPStatus.OK
+    assert req.headers['content-type'] == 'application/fits'
+
+    file_downloaded = req.content
+    assert len(file_downloaded) == fileinfo['data_size']
+    assert hashlib.md5(file_downloaded).hexdigest() == fileinfo['data_md5']
+
 
 def test_download_get():
     filename = 'N20180329S0134.fits.bz2'
@@ -80,10 +98,14 @@ def test_download_post():
 
     # Download the tar file
     url = f"{server}/download"
-    payload = {'files': filename[:-4]}  # strip the .bz2
+    payload = {'files': filename}
     req = requests.post(url, data=payload, timeout=10)
 
     assert req.status_code == http.HTTPStatus.OK
+
+    if req.headers['content-type'] == 'text/plain':
+        print(req.content)
+
     assert req.headers['content-type'] == 'application/tar'
 
     f = io.BytesIO(req.content)
@@ -95,7 +117,7 @@ def test_download_post():
     assert len(tarmembers) == 3
 
     readme_ti = tf.getmember('README.txt')
-    assert readme_ti.size == 455
+    assert readme_ti.size == 459
 
     md5sums_ti = tf.getmember('md5sums.txt')
     assert md5sums_ti.size == 58
