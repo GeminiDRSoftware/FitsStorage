@@ -48,6 +48,15 @@ def test_upload_download(tmp_path):
     m.update(r.content)
     assert m.hexdigest() == "1c1c2eb66af5a49218ea95a53b2b9f78"
 
+    # Now check we can download it as a .fits file (ie on the fly decompression) via /file
+    fitsfilename = filename.removesuffix(".bz2")
+    r = requests.get(url)
+    assert r.status_code == http.HTTPStatus.OK
+    assert len(r.content) == 4213440
+    m = hashlib.md5()
+    m.update(r.content)
+    assert m.hexdigest() == "6a9688a89307afa7776bd23ea4ccae3f"
+
     # Now check we can download it via '/download'
     url = getserver() + f"/download/{filename}"
     r = requests.get(url)
