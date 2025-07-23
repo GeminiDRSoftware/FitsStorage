@@ -14,7 +14,7 @@ if __name__ == "__main__":
     # Option Parsing
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    parser.add_argument("--filepre", action="store", type="string", dest="filepre", help="File prefix to operate on, eg N20090130, N200812 etc")
+    parser.add_argument("--filepre", action="store", dest="filepre", help="File prefix to operate on, eg N20090130, N200812 etc")
     parser.add_argument("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
     parser.add_argument("--debug", action="store_true", dest="debug", help="Increase log level to debug")
     parser.add_argument("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
@@ -40,11 +40,11 @@ if __name__ == "__main__":
         logger.info("Querying files for ingest from S3 bucket")
         fulllist = s3.key_names()
 
-    logger.info(f"Got total of {len(fulllist)} files to consider")
+    logger.info(f"Got total of {len(fulllist)} files to consider. Selecting previews...")
 
     previews = []
     for f in fulllist:
-        if f.endswith("_preview.jpg"):
+        if f.endswith("fits.bz2_preview.jpg"):
             previews.append(f)
             logger.debug(f"{f} is a preview file")
         else:
@@ -53,6 +53,6 @@ if __name__ == "__main__":
     if options.delete:
         logger.info("Delete not implemented yet")
     else:
-        logger.info("Found %d preview files", len(fulllist))
+        logger.info("Found %d preview files", len(previews))
 
     logger.info("** s3_delete_previews.py exiting normally")
