@@ -127,9 +127,10 @@ class ArchiveContextMiddleware(object):
             finally:
                 self.close()
 
-        # If we're the archive, block requests we don't like here.
+        # If we're the archive, and not logged in, and not an allowed user agent prefix, check if we should block
+        # this request. Note, the allow_user_agent_strings are *prefixes* to allow trailing version numbers.
         if self.is_archive and not self.ctx.usagelog.user_id and \
-                self.ctx.req.env.user_agent not in fsc.allow_user_agent_strings:
+                True not in [self.ctx.req.env.user_agent.startswith(a) for a in fsc.allow_user_agent_strings]:
             # User agent check
             for badword in fsc.block_user_agent_substrings:
                 if self.ctx.req.env.user_agent and \
@@ -164,6 +165,8 @@ class ArchiveContextMiddleware(object):
                 usagelog.status = self.ctx.resp.status
                 session.commit()
                 return self.ctx.resp.append(blocked_msg).respond()
+
+        # If we got here, we did not block the request
         try:
             result = self.application(environ, start_response)
             return ContextResponseIterator(result, self.close)
