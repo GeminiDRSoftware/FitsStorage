@@ -1,7 +1,7 @@
 import re
 import math
 
-from sqlalchemy import or_, and_, func
+from sqlalchemy import or_, and_, func, case
 
 import fits_storage.gemini_metadata_utils as gmu
 
@@ -71,9 +71,14 @@ def filter(self, query, ignore_processing_tag=False):
 
     # For some bizarre reason, doing a .in_([]) with an empty list is really
     # slow, and postgres eats CPU for a while doing it.
+    # The format of the filelist entries is either "filename" if path == '' or "path.filename" otherwise.
     if 'filelist' in self:
         if self['filelist']:
-            query = query.filter(DiskFile.filename.in_(self['filelist']))
+            query = query.filter(
+                case(
+                    (DiskFile.path=='', DiskFile.filename),
+                    else_=DiskFile.path.concat('/').concat(DiskFile.filename))
+                .in_(self['filelist']))
         else:
             query = query.filter(False)
 
