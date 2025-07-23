@@ -177,7 +177,7 @@ if __name__ == "__main__":
     tmpcre = re.compile("(tmp)|(tiled)")
     fitscre = re.compile(".fits")
     obslogcre = re.compile("_obslog.txt")
-    previewcre = re.compile("_preview.jpg")
+    previewcre = re.compile(".jpg")
     miscfilecre = re.compile("miscfile_")
     logger.info("Checking for tmp files")
 
