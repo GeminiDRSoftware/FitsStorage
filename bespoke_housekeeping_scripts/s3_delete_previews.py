@@ -51,7 +51,15 @@ if __name__ == "__main__":
             logger.debug(f"{f} is not a preview file")
 
     if options.delete:
-        logger.info("Delete not implemented yet")
+        for key in previews:
+            if options.dryrun:
+                logger.info(f"Dryrun - not actually deleting {key}")
+            else:
+                result = s3.delete_key(key)
+                if result:
+                    logger.info(f"Deleted {key}")
+                else:
+                    logger.error(f"Failed to delete {key}")
     else:
         logger.info("Found %d preview files", len(previews))
 
