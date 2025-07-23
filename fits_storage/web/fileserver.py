@@ -226,12 +226,13 @@ def download(selection, associated_calibrations):
             filedownloadlog.diskfile_file_md5 = header.diskfile.file_md5
             filedownloadlog.diskfile_file_size = header.diskfile.file_size
             session.add(filedownloadlog)
+            path = header.diskfile.path
+            filename = header.diskfile.filename
+            md5 = header.diskfile.file_md5
             if icanhave(ctx, header, filedownloadlog):
                 filedownloadlog.canhaveit = True
-                md5file += "%s  %s\n" % (header.diskfile.file_md5,
-                                         header.diskfile.filename)
-                path = header.diskfile.path
-                filename = header.diskfile.filename
+
+                md5file += f"{md5}  {path}/{filename}\n" if path else f"{md5}  {filename}\n"
                 if fsc.using_s3:
                     keyname = f"{path}/{filename}" if path else filename
                     flo = s3.get_flo(keyname)
@@ -263,7 +264,7 @@ def download(selection, associated_calibrations):
             else:
                 # Permission denied, add to the denied list
                 filedownloadlog.canhaveit = False
-                denied.append(header.diskfile.filename)
+                denied.append(f"{path}/{filename}" if path else filename)
         downloadlog.numdenied = len(denied)
         # OK, that's all the fits files. Add the md5sum file
         # - create a tarinfo object
