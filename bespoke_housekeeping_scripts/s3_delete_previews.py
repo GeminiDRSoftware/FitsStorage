@@ -2,7 +2,7 @@ import datetime
 import sys
 
 from fits_storage.config import get_config
-from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 
 fsc = get_config()
 if fsc.using_s3:
@@ -26,6 +26,9 @@ if __name__ == "__main__":
     setdebug(options.debug)
     setdemon(options.demon)
 
+    if options.filepre:
+        setlogfilesuffix(options.filepre)
+        
     # Announce startup
     logger.info("*********    s3_delete_previews.py - starting up at %s" % datetime.datetime.now())
 
