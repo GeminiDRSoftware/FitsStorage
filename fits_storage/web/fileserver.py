@@ -252,7 +252,7 @@ def download(selection, associated_calibrations):
                     except IOError:
                         downloadlog.add_note(f"IOError while adding {keyname} "
                                              f"to tarfile")
-                        downloadlog.add_note(f"{flo.tell()=}, {flo.closed()=}, "
+                        downloadlog.add_note(f"{flo.tell()=}, {flo.closed=}, "
                                              f"{tarinfo.size=}, "
                                              f"{header.diskfile.file_size=}")
                         session.commit()
