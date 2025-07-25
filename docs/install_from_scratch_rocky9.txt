@@ -31,6 +31,7 @@ sudo systemctl enable postgresql
 sudo -i -u postgres
   /usr/bin/createuser --no-superuser --no-createrole --createdb fitsdata
   /usr/bin/createuser --no-superuser --no-createrole --no-createdb fitsweb
+  /usr/bin/createuser --no-superuser --no-createrole --no-createdb dragons
 sudo -i -u fitsdata
   createdb fitsdata
 

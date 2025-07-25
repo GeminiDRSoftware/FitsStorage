@@ -184,6 +184,40 @@ def get_fitsweb_granthelper():
 
     return grant
 
+def get_dragons_granthelper():
+    # Define server database permissions here for clarity. Using helper class
+    grant = GrantHelper()
+
+    # Reducequeue.
+    grant.select('reducequeue')
+    grant.update('reducequeue')
+    grant.delete('reducequeue')
+    grant.insert('reducequeue')
+    grant.select('reducequeue_id_seq')
+    grant.update('reducequeue_id_seq')
+
+    # To find files
+    grant.select('diskfile')
+
+    # For Monitoring
+    grant.select('header')
+    grant.insert('monitoring')
+    grant.update('monitoring')
+    grant.select('monitoring')
+    grant.select('monitoring_id_seq')
+    grant.update('monitoring_id_seq')
+
+    # For logging
+    grant.select('processinglog')
+    grant.insert('processinglog')
+    grant.update('processinglog')
+    grant.select('processinglog_id_seq')
+    grant.update('processinglog_id_seq')
+
+
+    return grant
+
+
 
 def create_tables(session: Session):
     """
@@ -222,6 +256,12 @@ def create_tables(session: Session):
 
             if fsc.is_archive:
                 session.execute(text("GRANT SELECT ON calcache TO fitsweb;"))
+
+                grant = get_dragons_granthelper()
+                session.execute(text(f"GRANT SELECT ON {grant.select_string} TO dragons;"))
+                session.execute(text(f"GRANT INSERT ON {grant.insert_string} TO dragons;"))
+                session.execute(text(f"GRANT UPDATE ON {grant.update_string} TO dragons;"))
+                session.execute(text(f"GRANT DELETE ON {grant.delete_string} TO fitdragonssweb;"))
 
             session.commit()
 
