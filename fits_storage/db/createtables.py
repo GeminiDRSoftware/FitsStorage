@@ -192,6 +192,9 @@ def get_dragons_granthelper():
     grant.select('reducequeue')
     grant.update('reducequeue')
     grant.delete('reducequeue')
+    grant.insert('reducequeue')
+    grant.select('reducequeue_id_seq')
+    grant.update('reducequeue_id_seq')
 
     # To find files
     grant.select('diskfile')
@@ -201,10 +204,16 @@ def get_dragons_granthelper():
     grant.insert('monitoring')
     grant.update('monitoring')
     grant.select('monitoring')
+    grant.select('monitoring_id_seq')
+    grant.update('monitoring_id_seq')
 
     # For logging
+    grant.select('processinglog')
     grant.insert('processinglog')
     grant.update('processinglog')
+    grant.select('processinglog_id_seq')
+    grant.update('processinglog_id_seq')
+
 
     return grant
 
