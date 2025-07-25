@@ -1,0 +1,14 @@
+[Unit]
+Description=Fits Service Reduce Queue 1
+After=syslog.target network.target postgresql.service
+
+[Service]
+EnvironmentFile=/etc/systemd/system/fits-environment.txt
+User=dragons
+ExecStart=/opt/FitsStorage/fits_storage/scripts/service_fileops_queue.py --demon --lockfile --name=1
+Restart=always
+# This will force the system to wait 10 seconds before respawning
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
