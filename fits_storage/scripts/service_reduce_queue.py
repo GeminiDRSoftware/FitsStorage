@@ -12,7 +12,7 @@ from fits_storage.server.pidfile import PidFile, PidFileError
 from fits_storage.db import sessionfactory
 from fits_storage.queues.queue.reducequeue import ReduceQueue
 
-from fits_storage.server.reducer import Reducer
+from fits_storage.server.reducer import Reducer, ReducerMemoryLeak
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -125,6 +125,10 @@ if __name__ == "__main__":
                     reducer = Reducer(session, logger, rqe,
                                       nocleanup=options.nocleanup)
                     reducer.do_reduction()
+
+                except ReducerMemoryLeak:
+                    logger.error("ReducerMemoryLeak detected - exiting gracefully")
+                    loop = False
 
                 except KeyboardInterrupt:
                     logger.error("KeyboardInterrupt - exiting ungracefully!")
