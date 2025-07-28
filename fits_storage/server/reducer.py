@@ -43,6 +43,9 @@ from fits_storage.config import get_config
 if get_config().using_s3:
     from fits_storage.server.aws_s3 import Boto3Helper
 
+class ReducerMemoryLeak(Exception):
+    pass
+
 class Reducer(object):
     """
     This class provides functionality for reducing data using DRAGONS.
@@ -174,6 +177,24 @@ class Reducer(object):
                         failed_rqe.id)
             self.s.delete(failed_rqe)
         self.s.commit()
+
+        # As of 2025-06-17 DRAGONS Reduce() appears to create cyclic object
+        # references, or otherwise causes the effects of a memory leak.
+        # Calling gc.collect() seems to mitigate this.
+        # We check our memory footprint after calling for garbage
+        # collection, and raise ReducerMemoryLeak if so, which is picked up by
+        # service_reduce_queue to cause an exit. This needs to happen right at
+        # the end of do_reduction(), not in call_dragons() so that we clean-up
+        # properly from the reduction we just did.
+
+        gc.collect()
+        rss = psutil.Process().memory_info().rss
+        # 400000000 (400MB) seems typical on linux, python 3.12, once things
+        # are underway.
+        if rss > 600000000:
+            self.l.error(f'Reducer memory footprint excessive: {rss} bytes.')
+            self.l.error('Raising ReducerMemoryLeak to trigger restart')
+            raise ReducerMemoryLeak
 
     def validate(self):
         """
@@ -657,10 +678,11 @@ class Reducer(object):
         # are underway.
         if rss > 600000000:
             self.l.warning(f'Reducer memory footprint excessive: {rss} bytes')
-        # If this becomes a problem, we could call exit() here or raise an
-        # unhandled exception to cause service_reduce_queue to quit before
-        # we end up summoning the oom_killer. In production environments, it
-        # would normlly get restarted by systemd.
+
+        # In some situations, the memory footprint just keeps growing, so we need
+        # to trigger a restart at this point. We still have work to do on the
+        # current reduction though, so we check this (again) at the end of do_reduce()
+        # and raise an exception there to trigger service_reduce_queue to bail out.
 
         processinglog.end(len(self.reduced_files), self.rqe.failed)
 
