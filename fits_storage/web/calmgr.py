@@ -15,6 +15,7 @@ import os
 import datetime
 import sys
 import traceback
+import copy
 
 from ast import literal_eval
 
@@ -182,18 +183,18 @@ def parse_post_calmgr_inputs(ctx):
 
     # Handle "old style" data
     try:
-        clientdata = clientdata.decode('utf-8', errors='ignore')
-        clientdata = urllib.parse.unquote_plus(clientdata)
+        sequencedata = clientdata.decode('utf-8', errors='ignore')
+        sequencedata = urllib.parse.unquote_plus(sequencedata)
     except:
-        clientdata = None
-    match = re.match("descriptors=(.*)&types=(.*)", clientdata)
+        sequencedata = None
+    match = re.match("descriptors=(.*)&types=(.*)", sequencedata)
     if match:
         try:
             desc_str = match.group(1)
             type_str = match.group(2)
         except ValueError:
             raise SkipTemplateError(
-                message=f"Invalid post data format: {clientdata}",
+                message=f"Invalid post data format: {sequencedata}",
                 content_type='text/plain', status = Return.HTTP_BAD_REQUEST)
         usagelog.add_note("CalMGR request desc_str: %s" % desc_str)
         usagelog.add_note("CalMGR request type_str: %s" % type_str)
