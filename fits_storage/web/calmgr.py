@@ -15,6 +15,7 @@ import os
 import datetime
 import sys
 import traceback
+import copy
 
 from ast import literal_eval
 
@@ -160,30 +161,111 @@ def _cal_eval(str):
     retval.update(datetimes_dict)
     return retval
 
+def parse_post_calmgr_inputs(ctx):
+    """
+    Parse data posted to the calmgr.
+
+    Pass the context rather than the clientdata directly, so that we can also
+    access the usagelog, for example.
+
+    Returns descriptor and types dictionaries.
+    This function automatically handles the various (ie old style and json)
+    data formats, and safely processes them as untrusted input
+    """
+    clientdata = ctx.raw_data
+    usagelog = ctx.usagelog
+
+    if clientdata is None:
+        usagelog.add_note("Missing POST data")
+        raise SkipTemplateError(
+                message="Missing POST data",
+                content_type='text/plain', status = Return.HTTP_BAD_REQUEST)
+
+    # Handle "old style" data
+    try:
+        sequencedata = clientdata.decode('utf-8', errors='ignore')
+        sequencedata = urllib.parse.unquote_plus(sequencedata)
+    except:
+        sequencedata = None
+    match = re.match("descriptors=(.*)&types=(.*)", sequencedata)
+    if match:
+        try:
+            desc_str = match.group(1)
+            type_str = match.group(2)
+        except ValueError:
+            raise SkipTemplateError(
+                message=f"Invalid post data format: {sequencedata}",
+                content_type='text/plain', status = Return.HTTP_BAD_REQUEST)
+        usagelog.add_note("CalMGR request desc_str: %s" % desc_str)
+        usagelog.add_note("CalMGR request type_str: %s" % type_str)
+
+        try:
+            descriptors = _cal_eval(desc_str)
+        except SyntaxError as sxe:
+            raise SkipTemplateError(
+                message=f"Invalid descriptors field in request: {desc_str}",
+                content_type='text/plain', status=Return.HTTP_BAD_REQUEST)
+
+        try:
+            types = literal_eval(type_str)
+        except SyntaxError as sxe:
+            raise SkipTemplateError(
+                message=f"Invalid types field in request: {type_str}",
+                content_type='text/plain', status=Return.HTTP_BAD_REQUEST)
+
+        usagelog.add_note("CalMGR request Descriptor Dictionary: %s" % descriptors)
+        usagelog.add_note("CalMGR request Types List: %s" % types)
+
+        return (descriptors, types)
+
+    # If it wasn't old style, it must be JSON
+    try:
+        payload = json.loads(clientdata)
+    except json.JSONDecodeError:
+        usagelog.add_note(f"JSONDecode Error: {clientdata}")
+        raise SkipTemplateError(
+            message=f"Unable to parse JSON POST data.",
+            content_type='text/plain', status=Return.HTTP_BAD_REQUEST)
+
+    if not isinstance(payload, dict):
+        usagelog.add_note(f"Malformed JSON POST data - value is not a dict")
+        raise SkipTemplateError(
+            message=f"Malformed JSON POST data - value is not a dict.",
+            content_type='text/plain', status=Return.HTTP_BAD_REQUEST)
+
+    types = payload.get("tags")
+    if not isinstance(types, list):
+        usagelog.add_note(f"Malformed JSON POST data - "
+                          f"missing or malformed tags item")
+        raise SkipTemplateError(
+            message=f"Malformed JSON POST data - missing or malformed tags item",
+            content_type='text/plain', status=Return.HTTP_BAD_REQUEST)
+
+    descriptors = payload.get("descriptors")
+    if not isinstance(descriptors, dict):
+        usagelog.add_note(f"Malformed JSON POST data - "
+                          f"missing or malformed descriptors item")
+        raise SkipTemplateError(
+            message=f"Malformed JSON POST data - missing or malformed descriptors item",
+            content_type='text/plain', status=Return.HTTP_BAD_REQUEST)
+
+    # Do type conversions for datetimes
+    datetimes = ['ut_datetime']
+    for dt in datetimes:
+        if dt in descriptors:
+            descriptors[dt] = datetime.datetime.fromisoformat(descriptors[dt])
+
+    return descriptors, types
+
 
 def generate_post_calmgr(selection, caltype, procmode=None):
     fsc = get_config()
-    # OK, get the details from the POST data
     ctx = get_context()
-    clientdata = ctx.raw_data
-    if clientdata:
-        clientdata = clientdata.decode('utf-8', errors='ignore')
-    clientstr = urllib.parse.unquote_plus(clientdata)
-
-    match = re.match("descriptors=(.*)&types=(.*)", clientstr)
-    desc_str = match.group(1)
-    type_str = match.group(2)
-
     usagelog = ctx.usagelog
-    usagelog.add_note("CalMGR request desc_str: %s" % desc_str)
-    usagelog.add_note("CalMGR request type_str: %s" % type_str)
-    try:
-        desc_str = re.sub(r'\'dispersion_axis\': <map object at 0x.+>', '\'dispersion_axis\': None', desc_str)
-        descriptors = eval(desc_str)
-    except SyntaxError as sxe:
-        raise SkipTemplateError(message="Invalid descriptors field in request: {}".format(desc_str),
-                                content_type='text/plain', status = Return.HTTP_BAD_REQUEST)
-    types = eval(type_str)
+
+    # Get the details from the POST data
+    descriptors, types = parse_post_calmgr_inputs(ctx)
+
     usagelog.add_note("CalMGR request CalType: %s" % caltype)
     usagelog.add_note("CalMGR request Descriptor Dictionary: %s" % descriptors)
     usagelog.add_note("CalMGR request Types List: %s" % types)
