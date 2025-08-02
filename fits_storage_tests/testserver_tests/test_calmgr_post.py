@@ -25,15 +25,6 @@ def test_jsoncalmgr_post(tmp_path):
     tags = list(ad.tags)
     descriptors = get_descriptors_dict(ad)
 
-    for d in descriptors:
-        if isinstance(descriptors[d], (datetime.datetime, datetime.date, datetime.time)):
-            descriptors[d] = descriptors[d].isoformat()
-        if isinstance(descriptors[d], set):
-            descriptors[d] = list(descriptors[d])
-        if isinstance(descriptors[d], numpy.float32):
-            descriptors[d] = float(descriptors[d])
-
-
     payload = {'tags': tags, 'descriptors': descriptors}
     jsontext = json.dumps(payload)
 
