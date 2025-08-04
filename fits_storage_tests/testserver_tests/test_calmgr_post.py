@@ -1,8 +1,6 @@
 import requests
 import os
 import json
-import datetime
-import numpy
 
 from fits_storage_tests.testserver_tests.helpers import getserver
 from fits_storage_tests.testserver_tests.helpers import _ensureuploaded
@@ -10,6 +8,7 @@ from fits_storage_tests.testserver_tests.helpers import _ensureuploaded
 from fits_storage_tests.code_tests.helpers import fetch_file
 
 from recipe_system.cal_service.calrequestlib import get_descriptors_dict
+from recipe_system.cal_service.remotedb import make_dict_json_encodable
 
 import astrodata
 import gemini_instruments
@@ -23,7 +22,7 @@ def test_jsoncalmgr_post(tmp_path):
     ad = astrodata.open(fpfn)
 
     tags = list(ad.tags)
-    descriptors = get_descriptors_dict(ad)
+    descriptors = make_dict_json_encodable(get_descriptors_dict(ad))
 
     payload = {'tags': tags, 'descriptors': descriptors}
     jsontext = json.dumps(payload)
