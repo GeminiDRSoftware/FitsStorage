@@ -23,10 +23,15 @@ mapper = CategoricalColorMapper(palette=["red", "orange", "blue", "green"],
                                 factors=["Fail", "Usable", "Undefined", "Pass"])
 
 # Add the scatter plot, with dummy data but configure the color mapper
-source = ColumnDataSource(data=dict(x=[], y=[], qastate=[]))
-s = p.scatter(x='x', y='y', source=source, legend_field='qastate',
+source = ColumnDataSource(data=dict(x=[0, 1], y=[0, 1], qastate=['Undefined', 'Undefined']))
+s = p.scatter(x='x', y='y', source=source,
+              legend_field='qastate',
               fill_color={"field": "qastate", "transform": mapper},
-              line_color={"field": "qastate", "transform": mapper})
+              size=8, line_color=None)
+# Due to some bokeh bug(?) we need to explicitly create and update the
+# selection and nonselection glyphs if we want them to display properly
+s.selection_glyph = s.glyph.clone(fill_alpha=1.0)
+s.nonselection_glyph = s.glyph.clone(fill_alpha=0.1)
 
 # Add the Hover tool, we configure it in filter_data
 p.add_tools(HoverTool())
@@ -34,9 +39,6 @@ p.add_tools(HoverTool())
 # Add the selection tools
 p.add_tools(BoxSelectTool())
 
-# Configure selected and unselected points highlights
-s.selection_glyph = s.glyph.clone(fill_color="yellow", line_color=None)
-#s.nonselection_glyph = s.glyph.clone(fill_alpha=0.2, fill_color="blue", line_color="firebrick")
 
 # Initialize empty data values
 df = []
@@ -100,11 +102,6 @@ def load_data():
     filter_data()
 
 def filter_data():
-    global df
-    global s
-    global cds
-    global h
-
     df = copy.copy(fdf)
     print(f"Starting filter_data, {len(df)=}")
 
@@ -117,7 +114,8 @@ def filter_data():
     print(f"Filtered down to {len(df)} rows.")
     statustext.value = f"Filtered down to {len(df)} rows."
 
-    s.data_source = ColumnDataSource(df)
+    source.data = df
+
     labels = dict(df['data_label'])
     for i in labels.keys():
         dlsplit = labels[i].split('-')
@@ -127,27 +125,26 @@ def filter_data():
     p.xaxis.major_label_overrides = labels
     p.xaxis.major_label_orientation = pi/4
 
-    # This slightly bizarre idiom seems to be necessary to get the hovertool to
-    # notice that the data_source changed...
-    p.hover.tooltips = []
     p.hover.tooltips=[("DL", "@data_label"), ("ext", "@adid"),
-                ("qastate", "@qastate")]
+               ("qastate", "@qastate")]
 
 
 def select_callback(attr, old, new):
     filter_data()
 
 def plot_callback(attr, old, new):
-    s.glyph.x = 'row_number'
-    s.glyph.y = new
+    s.glyph.update(x = 'row_number', y = new)
+    s.selection_glyph.update(x = 'row_number', y = new)
+    s.nonselection_glyph.update(x = 'row_number', y = new)
+
     p.yaxis.axis_label = new
 
     statustext.value = f"Plotted {s.glyph.y}"
+    print(f"{s.selection_glyph=}")
+    print(f"{s.nonselection_glyph=}")
+
 
 def plot_default_callback():
-    global plot_select
-    global group_select
-    global url_report_select
     if url_report_select.value == 'checkBias':
         group_select.value = 'max'
         plot_select.value = 'OSCOMED'
