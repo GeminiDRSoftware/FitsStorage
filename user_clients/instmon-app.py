@@ -48,11 +48,13 @@ datatext = TextInput(prefix="Data Source: ", sizing_mode="stretch_width")
 statustext = TextInput(prefix="Status:", sizing_mode="stretch_width")
 url_prefix_text = TextInput(prefix="URL builder:", sizing_mode="fixed",
                             width=340,
-                            value="http://arctest.gemini.edu/monitoring")
+                            value="https://archive.gemini.edu/monitoring")
 url_report_select = Select(options=["checkBias", "checkFlat"])
 url_inst_select = Select(options=["GMOS-N", "GMOS-S"])
 url_binning_select = Select(options=[None, "1x1", "1x2", "1x4", "2x1", "2x2", "2x4", "4x1", "4x2", "4x4"])
 url_roi_select = Select(options=[None, "fullframe", "centralspectrum"])
+url_speed_select = Select(options=[None, "slow", "fast"])
+url_gain_select = Select(options=[None, "low", "high"])
 url_startdate_picker = DatePicker()
 url_enddate_picker = DatePicker()
 url_build_button = Button(label="Build URL")
@@ -72,7 +74,8 @@ def build_url():
         select_assist = 'OBJECT/DayCal/Raw/object=Twilight'
     all_items = [url_prefix_text.value, url_report_select.value, select_assist,
                  url_inst_select.value, url_binning_select.value,
-                 url_roi_select.value]
+                 url_roi_select.value, url_speed_select.value,
+                 url_gain_select.value]
     if url_startdate_picker.value and url_enddate_picker.value:
         all_items.append(f"{url_startdate_picker.value.replace('-', '')}-"
                          f"{url_enddate_picker.value.replace('-', '')}")
@@ -168,7 +171,8 @@ plot_select.on_change('value', plot_callback)
 # put the button and plot in a layout and add to the document
 loadrow = row(datatext, load_button, sizing_mode="stretch_width")
 url_row = row(url_prefix_text, url_report_select, url_inst_select,
-              url_binning_select, url_roi_select,
+              url_binning_select, url_roi_select, url_speed_select,
+              url_gain_select,
               url_startdate_picker, Div(text='-'), url_enddate_picker,
               url_build_button,)
 loadblock = column(statustext, url_row, loadrow, sizing_mode="stretch_width")
