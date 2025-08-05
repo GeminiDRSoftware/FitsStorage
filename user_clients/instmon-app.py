@@ -5,7 +5,7 @@ from math import pi
 from bokeh.layouts import column, row
 from bokeh.models import Button, TextInput, Select, HoverTool, \
     ColumnDataSource, CategoricalColorMapper, DatePicker, Div, \
-    BasicTickFormatter, BoxSelectTool
+    BasicTickFormatter, BoxSelectTool, Legend
 from bokeh.plotting import figure, curdoc
 
 # create a plot with a title and axis labels
@@ -17,19 +17,22 @@ p = figure(title="Instrument monitoring",
            )
 p.yaxis.formatter = BasicTickFormatter(use_scientific=False)
 p.xaxis.ticker.desired_num_ticks=10
+# Add a legend, *outside* of the plot area, as otherwise it can hide points
+p.add_layout(Legend(), 'right')
 
 # Color mapper for qastate
 mapper = CategoricalColorMapper(palette=["red", "orange", "blue", "green"],
                                 factors=["Fail", "Usable", "Undefined", "Pass"])
 
 # Add the scatter plot, with dummy data but configure the color mapper
-source = ColumnDataSource(data=dict(x=[0, 1], y=[0, 1], qastate=['Undefined', 'Undefined']))
+source = ColumnDataSource(data=dict(x=[], y=[], qastate=[]))
 s = p.scatter(x='x', y='y', source=source,
               legend_field='qastate',
               fill_color={"field": "qastate", "transform": mapper},
               size=8, line_color=None)
 # Due to some bokeh bug(?) we need to explicitly create and update the
 # selection and nonselection glyphs if we want them to display properly
+# - because we use column names other than 'x' and 'y'.
 s.selection_glyph = s.glyph.clone(fill_alpha=1.0)
 s.nonselection_glyph = s.glyph.clone(fill_alpha=0.1)
 
@@ -140,8 +143,6 @@ def plot_callback(attr, old, new):
     p.yaxis.axis_label = new
 
     statustext.value = f"Plotted {s.glyph.y}"
-    print(f"{s.selection_glyph=}")
-    print(f"{s.nonselection_glyph=}")
 
 
 def plot_default_callback():
