@@ -15,15 +15,12 @@ import os
 import datetime
 import sys
 import traceback
-import copy
 
 from ast import literal_eval
 
 from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
-
-from fits_storage.db.selection import Selection
 
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
@@ -58,6 +55,7 @@ args_for_cals = {
 
 
 def cals_info(cal_obj, caltype, procmode=None, qtype='UNKNOWN', log=no_func, add_note=no_func, http=True, hostname=None, storage_root=''):
+    fsc = get_config()
     resp = []
 
     # Figure out which caltype(s) we want
@@ -89,9 +87,10 @@ def cals_info(cal_obj, caltype, procmode=None, qtype='UNKNOWN', log=no_func, add
             for cal in cals:
                 if cal.diskfile.present:
                     if http:
+                        scheme = 'https' if fsc.is_archive else 'http'
                         urlpath = f"{cal.diskfile.path}/{cal.diskfile.filename}"\
                             if cal.diskfile.path else f"{cal.diskfile.filename}"
-                        url = f"http://{hostname}/file/{urlpath}"
+                        url = f"{scheme}://{hostname}/file/{urlpath}"
                     else:
                         path = os.path.join(storage_root, cal.diskfile.path, cal.diskfile.filename)
                         url = f"file://{path}"
