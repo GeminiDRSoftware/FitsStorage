@@ -2,10 +2,12 @@ import pandas as pd
 import copy
 from math import pi
 
+from fits_storage.gemini_metadata_utils.progid_obsid_dl import GeminiDataLabel, GeminiObservation
+
 from bokeh.layouts import column, row
 from bokeh.models import Button, TextInput, Select, HoverTool, \
     ColumnDataSource, CategoricalColorMapper, DatePicker, Div, \
-    BasicTickFormatter, BoxSelectTool, Legend
+    BasicTickFormatter, BoxSelectTool, Legend, TextAreaInput
 from bokeh.plotting import figure, curdoc
 
 # create a plot with a title and axis labels
@@ -47,6 +49,7 @@ p.add_tools(BoxSelectTool())
 df = []
 fdf = []
 plots = []
+scratch = set()
 
 # Add the widgets
 datatext = TextInput(prefix="Data Source: ", sizing_mode="stretch_width")
@@ -67,8 +70,11 @@ load_button = Button(label="Load")
 group_select = Select(title="Group by", options=['None', 'max'], value='None')
 plot_select = Select(title="Plot", options=plots, value='Any')
 plot_default_button = Button(label="Default", align='end')
-show_select_button = Button(label="Show Selected")
+copy_select_button = Button(label="Copy Selected Data-Labels")
+get_obsids_button = Button(label="Convert to Obs-IDs")
 
+
+text_area = TextAreaInput(cols=30, rows=20, title='ScratchPad')
 # Define callback functions
 
 def build_url():
@@ -153,18 +159,40 @@ def plot_default_callback():
         group_select.value = 'max'
         plot_select.value = 'FLATMED'
 
-def show_selected_callback():
-    print(f"{s.data_source.selected.indices=}")
+def copy_selected_callback():
     for i in s.data_source.selected.indices:
-        print(f"{s.data_source.data['data_label'][i]}")
+        scratch.add(s.data_source.data['data_label'][i])
+    text_area.value = ''
+    for i in scratch:
+        text_area.value += f"{i}\n"
 
-show_select_button.on_event('button_click', show_selected_callback)
+def get_obsids_callback():
+    global scratch
+    obsids = set()
+    for i in scratch:
+        dl = GeminiDataLabel(i)
+        if dl.valid:
+            obsids.add(dl.observation_id)
+            continue
+        oid = GeminiObservation(i)
+        if oid.valid:
+            obsids.add(oid.observation_id)
+            continue
+        obsids.add(f"# INVALID: {i}")
+    scratch = obsids
+    text_area.value = ''
+    for i in scratch:
+        text_area.value += f"{i}\n"
+
 load_button.on_event('button_click', load_data)
 url_build_button.on_event('button_click', build_url)
 plot_default_button.on_event('button_click', plot_default_callback)
 
 group_select.on_change('value', select_callback)
 plot_select.on_change('value', plot_callback)
+
+copy_select_button.on_event('button_click', copy_selected_callback)
+get_obsids_button.on_event('button_click', get_obsids_callback)
 
 # put the button and plot in a layout and add to the document
 loadrow = row(datatext, load_button, sizing_mode="stretch_width")
@@ -174,6 +202,7 @@ url_row = row(url_prefix_text, url_report_select, url_inst_select,
               url_startdate_picker, Div(text='-'), url_enddate_picker,
               url_build_button,)
 loadblock = column(statustext, url_row, loadrow, sizing_mode="stretch_width")
-selectrow = row(group_select, plot_select, plot_default_button, show_select_button)
-
-curdoc().add_root(column(loadblock, selectrow, p))
+selectrow = row(group_select, plot_select, plot_default_button)
+markcol = column(copy_select_button, get_obsids_button)
+markrow = row(text_area, markcol)
+curdoc().add_root(column(loadblock, selectrow, p, markrow))
