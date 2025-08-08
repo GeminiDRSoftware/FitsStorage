@@ -1,32 +1,44 @@
 from bokeh.layouts import column, row
-from bokeh.models import Button, TextAreaInput, Div, Selection
+from bokeh.models import Button, TextAreaInput, Div, Select
 
 from fits_storage.gemini_metadata_utils.progid_obsid_dl import GeminiDataLabel, GeminiObservation
 
+import requests
+
 class InstMonQA(object):
-    def __init__(self, scatter):
+    def __init__(self, scatter, status_text):
         self.scatter = scatter
+        self.status_text = status_text
 
         self.scratch = set()
+        self.files = []
 
         self.create_widgets()
 
     def create_widgets(self):
-        self.scratch_textarea = TextAreaInput(cols=30, rows=20, title='ScratchPad')
+        self.scratch_textarea = TextAreaInput(cols=24, rows=20, title='ScratchPad')
         self.copy_select_button = Button(label="Get Data Labels")
         self.get_obsids_button = Button(label="Convert to Obs-IDs")
         self.show_scratch_button = Button(label="Show on Plot")
+        self.get_files_button = Button(label="Get Filenames")
+        self.server_select = Select(options=['mkofits-lv1', 'cpofits-lv1', 'hbffitstape-lp2', 'archive'])
 
-        markcol = column(Div(), self.copy_select_button,
-                         self.get_obsids_button, self.show_scratch_button)
-        markrow = row(self.scratch_textarea, markcol)
+        self.files_textarea = TextAreaInput(cols=40, rows=20, title='Files')
 
-        self.element = markrow
+        scratch_col = column(Div(), self.copy_select_button,
+                         self.get_obsids_button, self.show_scratch_button,
+                             Div(), self.server_select, self.get_files_button)
+        files_col = column(Div())
+        qarow = row(self.scratch_textarea, scratch_col,
+                    self.files_textarea, files_col)
+
+        self.element = qarow
 
         # Set callback functions
         self.copy_select_button.on_event('button_click', self.copy_selected_callback)
         self.get_obsids_button.on_event('button_click', self.get_obsids_callback)
         self.show_scratch_button.on_event('button_click', self.show_scratch_callback)
+        self.get_files_button.on_event('button_click', self.get_files_callback)
 
     # Define callback functions
     def copy_selected_callback(self):
@@ -63,3 +75,26 @@ class InstMonQA(object):
         for obsid in self.scratch:
             new_indices.extend([i for i, dl in enumerate(self.scatter.data_source.data["data_label"]) if dl.startswith(obsid)])
         self.scatter.data_source.selected.indices = new_indices
+
+    def get_files_callback(self):
+        server = self.server_select.value
+        scheme = 'http://'
+        if server == 'archive':
+            server = 'archive.gemini.edu'
+            scheme = 'https://'
+        for item in self.scratch:
+            url = f"{scheme}{server}//jsonqastate/present/RAW/Raw/{item}"
+            r = requests.get(url)
+            if r.status_code != 200:
+                self.status_text.value = f"Bad http status {r.status_code} for {url}."
+            jqas = r.json()
+
+            if len(jqas) == 0:
+                self.status_text.value = f"Got no files for {item}"
+
+            for jf in jqas:
+                self.files.append(jf['filename'])
+
+        self.files_textarea.value = ''
+        for f in self.files:
+            self.files_textarea.value += f"{str(f)}\n"

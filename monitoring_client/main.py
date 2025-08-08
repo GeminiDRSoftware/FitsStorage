@@ -8,6 +8,6 @@ imp = InstMonPlot()
 page = imp.element
 
 if True:
-    imqa = InstMonQA(imp.scatter)
+    imqa = InstMonQA(imp.scatter, imp.status_text)
     page = column(imp.element, imqa.element)
 curdoc().add_root(page)
