@@ -23,14 +23,15 @@ class InstMonQA(object):
         self.get_files_button = Button(label="Get Filenames")
         self.server_select = Select(options=['mkofits-lv1', 'cpofits-lv1', 'hbffitstape-lp2', 'archive'])
 
-        self.files_textarea = TextAreaInput(cols=40, rows=20, title='Files')
+        self.filenames_textarea = TextAreaInput(cols=24, rows=20, title='File Names')
+        self.fileinfo_textarea = TextAreaInput(cols=80, rows=20, title='File Info')
+
 
         scratch_col = column(Div(), self.copy_select_button,
                          self.get_obsids_button, self.show_scratch_button,
                              Div(), self.server_select, self.get_files_button)
-        files_col = column(Div())
         qarow = row(self.scratch_textarea, scratch_col,
-                    self.files_textarea, files_col)
+                    self.filenames_textarea, self.fileinfo_textarea)
 
         self.element = qarow
 
@@ -82,6 +83,7 @@ class InstMonQA(object):
         if server == 'archive':
             server = 'archive.gemini.edu'
             scheme = 'https://'
+        alljqas = []
         for item in self.scratch:
             url = f"{scheme}{server}//jsonqastate/present/RAW/Raw/{item}"
             r = requests.get(url)
@@ -92,9 +94,17 @@ class InstMonQA(object):
             if len(jqas) == 0:
                 self.status_text.value = f"Got no files for {item}"
 
-            for jf in jqas:
-                self.files.append(jf['filename'])
+            alljqas.extend(jqas)
+        # Make a self.files a dictionary keyed by filename of dictionaries of data_label and qa_state
+        self.files = {}
+        for jqa in alljqas:
+            self.files[jqa['filename']] = {'data_label': jqa['data_label'], 'qa_state': jqa['qa_state']}
 
-        self.files_textarea.value = ''
-        for f in self.files:
-            self.files_textarea.value += f"{str(f)}\n"
+        self.filenames_textarea.value = ''
+        self.fileinfo_textarea.value=''
+
+        for fn in sorted(self.files.keys()):
+            self.filenames_textarea.value += f"{fn}\n"
+            self.fileinfo_textarea.value +=  (f"{fn}\t"
+                                              f"{self.files[fn]['data_label']}\t"
+                                              f"{self.files[fn]['qa_state']}\n")

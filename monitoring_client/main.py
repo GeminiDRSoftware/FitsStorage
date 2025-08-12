@@ -1,5 +1,5 @@
 from bokeh.plotting import curdoc
-from bokeh.layouts import column
+from bokeh.layouts import column, row
 
 from .plotter import InstMonPlot
 from .qaset import InstMonQA
