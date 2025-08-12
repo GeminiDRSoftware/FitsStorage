@@ -22,7 +22,7 @@ def monitoring(things):
 
     # This is a little crude for now. Better to do a direct join.
     selection = from_url_things(things[1:])
-    headers = list_headers(selection, [])
+    headers = list_headers(selection, [], unlimit=True)
     header_ids = [h.id for h in headers]
 
     stmt = select(Monitoring)\
