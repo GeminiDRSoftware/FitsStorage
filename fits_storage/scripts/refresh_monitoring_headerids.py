@@ -71,7 +71,7 @@ for mon in session.scalars(statement):
         .where(DiskFile.path == path).where(DiskFile.present)
 
     try:
-        new_header = session.execute(find_header_statement).one()
+        new_header = session.scalars(find_header_statement).one()
     except NoResultFound:
         logger.warning(f"No present diskfile found for {path}/{filename}")
         continue
