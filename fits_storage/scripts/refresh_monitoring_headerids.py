@@ -93,9 +93,9 @@ for mon in session.scalars(statement):
         hid_updates[mon.header_id] = new_header_id
 
     if new_header_id is not None:
-        logger.info(f"Replacing header id {mon.header_id} with {new_header.id} "
+        logger.info(f"Replacing header id {mon.header_id} with {new_header_id} "
                     f"for {mon.id} - {path}/{filename}")
-        mon.header_id = new_header.id
+        mon.header_id = new_header_id
         num += 1
 
 logger.info(f"Updated {num} header IDs.")
