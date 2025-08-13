@@ -21,6 +21,8 @@ def monitoring(things):
         ctx.resp.client_error(404, message="Could not determine report type")
 
     # This is a little crude for now. Better to do a direct join.
+    # Also, this won't quite work as expected as headers get updated as the
+    # monitoring will point at headers rows for not present diskfiles...
     selection = from_url_things(things[1:])
     headers = list_headers(selection, [], unlimit=True)
     header_ids = [h.id for h in headers]

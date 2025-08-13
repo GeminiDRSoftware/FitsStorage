@@ -181,9 +181,9 @@ class InstMonPlot(object):
 
     def plot_default_callback(self):
         if self.url_report_select.value == 'checkBias':
-            self.group_select.value = 'max'
+            self.group_select.value = ''
             self.plot_select.value = 'OSCOMED'
         elif self.url_report_select.value == 'checkFlat':
-            self.group_select.value = 'max'
+            self.group_select.value = ''
             self.plot_select.value = 'FLATMED'
 
