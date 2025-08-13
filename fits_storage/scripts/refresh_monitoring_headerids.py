@@ -57,32 +57,46 @@ if options.dlpre:
 if options.ptag:
     statement = statement.where(Monitoring.processing_tag == options.ptag)
 
+# Because we have many monitoring entries for the same header, we keep a cache
+# of the old to new header id mapping so we don't have to query the database
+# each time
+hid_updates = {}
+
 num = 0
 for mon in session.scalars(statement):
     if mon.header.diskfile.present:
         logger.debug(f"Monitoring id {mon.id} diskfile is present")
         continue
-    # Find new header id to replace old header id, by diskfile filename and path
-    filename = mon.header.diskfile.filename
-    path = mon.header.diskfile.path
 
-    find_header_statement = select(Header).join(Header.diskfile) \
-        .where(DiskFile.filename == filename) \
-        .where(DiskFile.path == path).where(DiskFile.present)
+    if mon.header_id in hid_updates.keys():
+        new_header_id = hid_updates[mon.header_id]
+    else:
+        # Find new header id to replace old header id, by diskfile filename and path
+        filename = mon.header.diskfile.filename
+        path = mon.header.diskfile.path
 
-    try:
-        new_header = session.scalars(find_header_statement).one()
-    except NoResultFound:
-        logger.warning(f"No present diskfile found for {path}/{filename}")
-        continue
-    except MultipleResultsFound:
-        logger.warning(f"Multiple present diskfiles found for {path}/{filename}")
-        continue
+        find_header_statement = select(Header).join(Header.diskfile) \
+            .where(DiskFile.filename == filename) \
+            .where(DiskFile.path == path).where(DiskFile.present)
 
-    logger.info(f"Replacing header id {mon.header_id} with {new_header.id} "
-                f"for {mon.id} - {path}/{filename}")
-    mon.header_id = new_header.id
-    num += 1
+        try:
+            new_header = session.scalars(find_header_statement).one()
+            new_header_id = new_header.id
+        except NoResultFound:
+            logger.warning(f"No present diskfile found for {path}/{filename}")
+            new_header_id = None
+        except MultipleResultsFound:
+            logger.warning(f"Multiple present diskfiles found for {path}/{filename}")
+            new_header_id = None
+
+        # Store this value in the cache
+        hid_updates[mon.header_id] = new_header_id
+
+    if new_header_id is not None:
+        logger.info(f"Replacing header id {mon.header_id} with {new_header.id} "
+                    f"for {mon.id} - {path}/{filename}")
+        mon.header_id = new_header.id
+        num += 1
 
 logger.info(f"Updated {num} header IDs.")
 if num:
