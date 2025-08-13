@@ -98,7 +98,7 @@ for mon in session.scalars(statement):
         mon.header_id = new_header_id
         num += 1
 
-logger.info(f"Updated {num} header IDs.")
+logger.info(f"Updated {num} monitoring IDs.")
 if num:
     logger.info("Commiting session...")
     session.commit()
