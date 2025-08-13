@@ -80,6 +80,13 @@ class InstMonPlot(object):
         self.plot_select = Select(title="Plot", options=self.plots, value='Any')
         self.plot_default_button = Button(label="Default", align='end')
 
+        self.selectnone_button = Button(label="Select None")
+        self.selectpass_button = Button(label="Select Pass")
+        self.selectfail_button = Button(label="Select Fail")
+        self.selectundef_button = Button(label="Select Undefined")
+        self.selectusable_button = Button(label="Select Usable")
+
+
         load_row = row(self.datasource_text, self.load_button, sizing_mode="stretch_width")
         url_row = row(self.url_prefix_text, self.url_report_select,
                       self.url_inst_select, self.url_binning_select,
@@ -90,8 +97,13 @@ class InstMonPlot(object):
         load_col = column(self.status_text, url_row, load_row, sizing_mode="stretch_width")
         select_row = row(self.group_select, self.plot_select,
                          self.plot_default_button)
-
-        self.element = column(load_col, select_row, self.fig)
+        fig_buttons_col = column(Div(), self.selectnone_button,
+                                 self.selectpass_button,
+                                 self.selectfail_button,
+                                 self.selectundef_button,
+                                 self.selectusable_button)
+        fig_row = row(self.fig, fig_buttons_col)
+        self.element = column(load_col, select_row, fig_row)
 
         # Set callback functions
         self.load_button.on_event('button_click', self.load_data)
@@ -102,6 +114,12 @@ class InstMonPlot(object):
 
         self.group_select.on_change('value', self.select_callback)
         self.plot_select.on_change('value', self.plot_callback)
+
+        self.selectnone_button.on_event('button_click', self.select_none_callback)
+        self.selectpass_button.on_event('button_click', self.select_pass_callback)
+        self.selectfail_button.on_event('button_click', self.select_fail_callback)
+        self.selectundef_button.on_event('button_click', self.select_undef_callback)
+        self.selectusable_button.on_event('button_click', self.select_usable_callback)
 
     # Define Callback functions
     def build_url(self):
@@ -165,7 +183,6 @@ class InstMonPlot(object):
         self.fig.hover.tooltips=[("DL", "@data_label"), ("ext", "@adid"),
                    ("qastate", "@qastate")]
 
-
     def select_callback(self, attr, old, new):
         self.filter_data()
 
@@ -178,7 +195,6 @@ class InstMonPlot(object):
 
         self.status_text.value = f"Plotted {self.scatter.glyph.y}"
 
-
     def plot_default_callback(self):
         if self.url_report_select.value == 'checkBias':
             self.group_select.value = ''
@@ -187,3 +203,22 @@ class InstMonPlot(object):
             self.group_select.value = ''
             self.plot_select.value = 'FLATMED'
 
+    def select_none_callback(self):
+        self.scatter.data_source.selected.indices = []
+
+    def select_pass_callback(self):
+        return self.select_by_qastate('Pass')
+
+    def select_fail_callback(self):
+        return self.select_by_qastate('Fail')
+
+    def select_undef_callback(self):
+        return self.select_by_qastate('Undefined')
+
+    def select_usable_callback(self):
+        return self.select_by_qastate('Usable')
+
+    def select_by_qastate(self, qastate):
+        self.scatter.data_source.selected.indices = []
+        new_indices = [i for i, qa in enumerate(self.scatter.data_source.data["qastate"]) if qa == qastate]
+        self.scatter.data_source.selected.indices = new_indices
