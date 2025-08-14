@@ -78,9 +78,9 @@ else:
 
 # Build the update request
 request = []
+values = {'generic': [('IMQASET', qastate)], 'qa_state': qastate}
 
 for fn in filenames:
-    values = {'qastate': qastate, 'generic': [('IMQASET', qastate)]}
     requestdict = {'filename': fn, 'values': values, 'reject_new': False}
     request.append(requestdict)
 
