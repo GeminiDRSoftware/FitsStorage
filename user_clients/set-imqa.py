@@ -48,10 +48,16 @@ else:
     logger.error(f"Got no files for {options.selection}. Exiting")
     exit(2)
 
+# Make a sorted list of filenames for display at least
 filenames = []
+fileinfo = {}
 for jqa in jqas:
     filenames.append(jqa['filename'])
-    logger.info(f"{jqa['filename']} {jqa['data_label']} {jqa['qa_state']}")
+    fileinfo[jqa['filename']] = {'data_label': jqa['data_label'], 'qa_state': jqa['qa_state']}
+
+filenames.sort()
+for fn in filenames:
+    logger.info(f"{fn}: {fileinfo[fn]['data_label']} - {fileinfo[fn]['qa_state']}")
 
 if options.dryrun:
     logger.info("Dryrun - stopping now")
