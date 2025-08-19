@@ -3,7 +3,7 @@
 import sys
 import datetime
 import tarfile
-from sqlalchemy import func
+from sqlalchemy import func, delete
 from optparse import OptionParser
 
 from fits_storage.db import sessionfactory
@@ -154,23 +154,30 @@ try:
 
         logger.debug("filenames: %s", filenames)
 
-        # A function to yeild all tarinfo objects and 'delete' all the read
-        # files from the taperead table
+        # Keep a list of completed files to delete from taperead. Doing this
+        # on the fly slows things down too much with the faster tapedrives
+        completed = []
+
+        # A function to yeild all tarinfo objects and keep a list of completed
+        # filenames
         def fits_files(members):
             for tarinfo in members:
                 logger.debug("In fits_files, name %s" % tarinfo.name)
                 if tarinfo.name in filenames:
-                    session.query(TapeRead)\
-                        .filter(TapeRead.filename == tarinfo.name).delete()
-                    session.commit()
+                    completed.append(tarinfo.name)
                     logger.info("Reading file %s", tarinfo.name)
                     yield tarinfo
 
         # Open the tarfile on the tape and extract the tarinfo object
         blksize = 64*1024
         tar = tarfile.open(name=options.tapedrive, mode='r|', bufsize=blksize)
-        tar.extractall(members=fits_files(tar))
+        tar.extractall(members=fits_files(tar), filter='tar')
         tar.close()
+
+        # Delete the completed files from taperead
+        stmt = delete(TapeRead).where(TapeRead.filename.in_(completed))
+        session.execute(stmt)
+        session.commit()
 
         # Are there any more files in TapeRead?
         query = session.query(TapeRead)
