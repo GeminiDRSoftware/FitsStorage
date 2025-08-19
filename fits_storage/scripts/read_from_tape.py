@@ -3,7 +3,7 @@
 import sys
 import datetime
 import tarfile
-from sqlalchemy import func
+from sqlalchemy import func, delete
 from optparse import OptionParser
 
 from fits_storage.db import sessionfactory
@@ -175,9 +175,8 @@ try:
         tar.close()
 
         # Delete the completed files from taperead
-        for filename in completed:
-            session.query(TapeRead) \
-                    .filter(TapeRead.filename == filename).delete()
+        stmt = delete(TapeRead).where(TapeRead.filename.in_(completed))
+        session.execute(stmt)
         session.commit()
 
         # Are there any more files in TapeRead?
