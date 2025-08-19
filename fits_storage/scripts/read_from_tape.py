@@ -171,7 +171,7 @@ try:
         # Open the tarfile on the tape and extract the tarinfo object
         blksize = 64*1024
         tar = tarfile.open(name=options.tapedrive, mode='r|', bufsize=blksize)
-        tar.extractall(members=fits_files(tar))
+        tar.extractall(members=fits_files(tar), filter='tar')
         tar.close()
 
         # Delete the completed files from taperead
