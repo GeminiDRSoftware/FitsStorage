@@ -10,6 +10,7 @@ from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.db import session_scope
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.queues.queue.reducequeue import ReduceQueue
+from fits_storage.queues.orm.reducequeentry import debundle_options
 
 from fits_storage.db.list_headers import list_headers
 from fits_storage.db.selection.get_selection import from_url_things
@@ -59,6 +60,9 @@ if __name__ == "__main__":
                         help="DRAGONS recipe name to use. Omit to use"
                              "DRAGONS default")
 
+    parser.add_argument("--debundle", action="store", type=str, default=None,
+                        help="Debundle strategy, omit for None - ie no debundling")
+
     parser.add_argument("--capture_files", action="store_true",
                         help="Capture reduced files output from this processing"
                              " run? Default is False")
@@ -85,6 +89,10 @@ if __name__ == "__main__":
     logger.info("*** add_to_reduce_queue.py - starting up at {}"
                 .format(datetime.datetime.now()))
     logger.debug("Config files used: %s", ', '.join(fsc.configfiles_used))
+
+    if options.debundle and options.debundle not in debundle_options:
+        logger.error("Invalid debundle option: %s", options.debundle)
+        exit(1)
 
     initiatedby = options.initiatedby
     intent = options.intent
@@ -183,7 +191,8 @@ if __name__ == "__main__":
                 rq.add(validfiles, intent=intent, initiatedby=initiatedby,
                        tag=tag, recipe=options.recipe,
                        capture_files=options.capture_files,
-                       capture_monitoring=options.capture_monitoring)
+                       capture_monitoring=options.capture_monitoring,
+                       debundle=options.debundle)
             else:
                 logger.error("No valid files to add")
 

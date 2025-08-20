@@ -4,13 +4,17 @@ This module contains the ReduceQueueEntry ORM class.
 """
 import datetime
 
-from sqlalchemy import Column, UniqueConstraint
+from sqlalchemy import Column, UniqueConstraint, Enum
 from sqlalchemy import Integer, Boolean, DateTime, Text, ARRAY
 
 from fits_storage.core.orm import Base
 from .ormqueuemixin import OrmQueueMixin
 
+
 from fits_storage.config import get_config
+
+debundle_options = ['INDIVIDUAL', 'ALL', 'GHOST', 'IGRINS-2']
+DEBUNDLE_ENUM = Enum(*debundle_options, name='debundle_options')
 
 class ReduceQueueEntry(OrmQueueMixin, Base):
     """
@@ -38,6 +42,7 @@ class ReduceQueueEntry(OrmQueueMixin, Base):
     added = Column(DateTime)
     sortkey = Column(Text, index=True)
     filename = Column(Text)
+    debundle = Column(DEBUNDLE_ENUM)
     intent = Column(Text)  # Goes into PROCITNT header
     initiatedby = Column(Text)  # Goes into PROCINBY header
     tag = Column(Text)  # Goes into PROCTAG header

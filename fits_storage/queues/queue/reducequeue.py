@@ -14,7 +14,8 @@ class ReduceQueue(Queue):
         super().__init__(session, ormclass=ReduceQueueEntry, logger=logger)
 
     def add(self, filenames, intent=None, initiatedby=None, tag=None,
-            recipe=None, capture_files=True, capture_monitoring=True):
+            recipe=None, capture_files=True, capture_monitoring=True,
+            debundle=None):
         """
         Add an entry to the reduce queue. This instantiates a ReduceQueueEntry
         object using the arguments passed, and adds it to the database.
@@ -36,6 +37,7 @@ class ReduceQueue(Queue):
         rqe.recipe = recipe
         rqe.capture_files = capture_files
         rqe.capture_monitoring = capture_monitoring
+        rqe.debundle = debundle
 
         self.session.add(rqe)
         try:

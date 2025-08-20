@@ -582,7 +582,32 @@ class Reducer(object):
     def call_reduce(self):
         """
         Invoke the DRAGONS Reduce() class.
-        Add an entry to ProcessingLog
+        Add an entry to ProcessingLog.
+
+        This method also takes care of calling reduce to debundle files
+        if necessary. The strategy for this is as follows:
+
+        recipe = rqe.recipe if debundle is None else 'debundle'
+        reduce input files with recipe
+        self.reduced_files = reduce.output_files
+        if debundle == 'ALL':
+            input_files = reduce.output_files # from debundle step
+            reduce input_files with rqe.recipe
+            self.reduced_files = reduce.output_files
+        elif debundle == 'INDIVIDUAL':
+            self.reduced_files = []
+            input_files = reduce.output_files # from debundle step
+            for input_file in input_files:
+                reduce input_file with rqe.recipe
+                self.reduced_files += reduce.output_files
+        elif debundle == 'GHOST':
+            # TBD
+        elif ...
+        # There is no else clause here
+        capture self.reduced_files as normal
+
+        We do this all with one instance of Reduce(), setting data values as
+        needed and calling Reduce.runr() multiple times.
 
         Set self.rqe.failed via logrqeerror if fails.
         """
@@ -637,8 +662,11 @@ class Reducer(object):
         # Tell Reduce() not to upload calibrations. We do that ourselves here.
         reduce.upload = None
 
-        # Are we specifying a recipe name?
-        if self.rqe.recipe:
+        # Are we debundling or specifying a recipe name?
+        if self.rqe.debundle:
+            reduce.recipename = 'processBundle'
+            self.l.info(f"Specifying recipe name processBundle for Reduce()")
+        elif self.rqe.recipe:
             self.l.info(f"Specifying recipe name {self.rqe.recipe} for "
                         f"Reduce()")
             reduce.recipename = self.rqe.recipe
@@ -646,9 +674,6 @@ class Reducer(object):
         # chdir into the working directory for DRAGONS. Store the current
         # working dir so we can go back after
         pwd = os.getcwd()
-
-        self.l.info("Calling DRAGONS Reduce.runr() in directory %s",
-                    self.workingdir)
         os.chdir(self.workingdir)
 
         # Instantiate the ProcessingLog record with initial values from the rqe
@@ -657,15 +682,49 @@ class Reducer(object):
         self.s.commit()
 
         try:
+            self.l.info("Calling DRAGONS Reduce.runr() in directory "
+                        f"{self.workingdir} with recipe {reduce.recipename}")
             reduce.runr()
-        except Exception as e:
-            self.logrqeerror(f"Exception from DRAGONS Reduce.runr(): {e}",
-                             exc_info=True)
-            return
-        finally:
-            os.chdir(pwd)
+            self.reduced_files = reduce.output_filenames
+            # If we're debundling, need to handle further calls to reduce here
+            if self.rqe.debundle == 'ALL':
+                self.reduced_files = []
+                reduce.files = reduce.output_filenames
+                reduce._output_filenames = []
+                reduce.recipename = self.rqe.recipe if self.rqe.recipe \
+                    else "_default"
+                self.l.info("Debundle ALL - Calling DRAGONS Reduce.runr() in "
+                            f"directory {self.workingdir} "
+                            f"with recipe {reduce.recipename} "
+                            f"on: {reduce.files}")
+                reduce.runr()
+                self.reduced_files = reduce.output_filenames
+            elif self.rqe.debundle == 'INDIVIDUAL':
+                self.reduced_files = []
+                input_files = reduce.output_filenames
+                reduce.recipename = self.rqe.recipe if self.rqe.recipe \
+                    else "_default"
+                for input_file in input_files:
+                    reduce.files = [input_file]
+                    reduce._output_filenames = []
+                    self.l.info("Debundle INDIVIDUAL - Calling DRAGONS "
+                                f"Reduce.runr() in directory {self.workingdir} "
+                                f"with recipe {reduce.recipename} "
+                                f"on {reduce.files}")
+                    reduce.runr()
+                    self.reduced_files.extend(reduce.output_filenames)
+            elif self.rqe.debundle:
+                self.l.error(f"Debundle strategy {self.rqe.debundle} "
+                             "not implemented in Reducer.call_reduce()")
 
-        self.reduced_files = reduce.output_filenames
+
+        except Exception as e:
+            self.logrqeerror(f"Exception in do_reduce, likely from "
+                             f"DRAGONS Reduce.runr(): {e}", exc_info=True)
+            os.chdir(pwd)
+            return
+
+        os.chdir(pwd)
 
         # As of 2025-06-17 DRAGONS Reduce() appears to create cyclic object
         # references, or otherwise causes the effects of a memory leak.
@@ -688,6 +747,7 @@ class Reducer(object):
 
         self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
         self.l.info("Output files are: %s", reduce.output_filenames)
+        self.l.info("Reduced files are: %s", self.reduced_files)
 
         # Terminate log capture
         self.l.removeHandler(handler)
