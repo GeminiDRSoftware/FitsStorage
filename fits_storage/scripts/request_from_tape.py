@@ -125,7 +125,7 @@ else:
         logger.info("Adding %s, %s to taperead", filename[0], md5[0])
 
         session.add(tr)
-        session.commit()
+    session.commit()
 
 session.close()
 
