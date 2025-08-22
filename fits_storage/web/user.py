@@ -11,6 +11,7 @@ from email.mime.text import MIMEText
 import functools
 import json
 import requests
+import urllib3
 
 from sqlalchemy import desc, and_, or_
 from sqlalchemy.exc import NoResultFound
@@ -1242,10 +1243,12 @@ def oauth_login(service, code):
                 user.email = oauth.email
                 ctx.session.commit()
 
-        except requests.exceptions.SSLError:
+        except (requests.exceptions.SSLError,
+                urllib3.exceptions.MaxRetryError) as e:
             msg = ("SSL error communicating with OAuth SSO server. This is "
                    "likely a certificate problem with the authentication "
-                   "server.")
+                   "server. ")
+            msg += str(e)
             return dict(notification_message="", reason_bad=msg)
 
         except Exception as e:
