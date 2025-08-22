@@ -261,7 +261,7 @@ def create_tables(session: Session):
                 session.execute(text(f"GRANT SELECT ON {grant.select_string} TO dragons;"))
                 session.execute(text(f"GRANT INSERT ON {grant.insert_string} TO dragons;"))
                 session.execute(text(f"GRANT UPDATE ON {grant.update_string} TO dragons;"))
-                session.execute(text(f"GRANT DELETE ON {grant.delete_string} TO fitdragonssweb;"))
+                session.execute(text(f"GRANT DELETE ON {grant.delete_string} TO dragons;"))
 
             session.commit()
 

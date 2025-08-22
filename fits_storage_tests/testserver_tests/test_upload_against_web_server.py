@@ -50,7 +50,8 @@ def test_upload_download(tmp_path):
 
     # Now check we can download it as a .fits file (ie on the fly decompression) via /file
     fitsfilename = filename.removesuffix(".bz2")
-    r = requests.get(url)
+    fitsurl = getserver() + f"/file/{fitsfilename}"
+    r = requests.get(fitsurl)
     assert r.status_code == http.HTTPStatus.OK
     assert len(r.content) == 4213440
     m = hashlib.md5()
