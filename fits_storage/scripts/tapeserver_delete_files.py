@@ -13,8 +13,10 @@ from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.server.orm.tapestuff import Tape, TapeWrite, TapeFile
 
 parser = OptionParser()
-parser.add_option("--file-pre", action="store", type="string", dest="filepre",
+parser.add_option("--filepre", action="store", type="string", dest="filepre",
                   help="File prefix to operate on, eg N20090130, N200812 etc")
+parser.add_option("--filere", action="store", type="string", dest="filere",
+                  help="File regex to operate on, ie filename contains")
 parser.add_option("--tapeset", action="append", type="int", dest="tapeset",
                   help="Tape set number to check file is on. "
                        "Can be given multiple times")
@@ -45,8 +47,10 @@ if options.tapeset is None:
 with session_scope() as session:
     query = session.query(DiskFile).filter(DiskFile.present==True)\
         .order_by(DiskFile.filename)
+    if options.filere:
+        query = query.filter(DiskFile.filename.contains(options.filere))
     if options.filepre:
-        query = query.filter(DiskFile.filename.contains(options.filepre))
+        query = query.filter(DiskFile.filename.startswith(options.filepre))
     if options.maxnum:
         query = query.limit(options.maxnum)
     cnt = query.count()
