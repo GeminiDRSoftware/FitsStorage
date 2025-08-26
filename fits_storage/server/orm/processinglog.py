@@ -15,6 +15,8 @@ class ProcessingLog(Base):
     __tablename__ = 'processinglog'
 
     id = Column(BigInteger, primary_key=True)
+    filenames = Column(Text)
+    recipe = Column(Text)
     processing_tag = Column(Text)
     num_raw_files = Column(Integer)
     num_reduced_files = Column(Integer)
@@ -29,6 +31,8 @@ class ProcessingLog(Base):
         Instantiate a processing log instance. Get values from rqe passed
         """
         self.processing_tag = rqe.tag
+        self.filenames = ', '.join(rqe.filenames)
+        self.recipe = rqe.recipe
         self.num_raw_files = len(rqe.filenames)
 
         self.processing_started = datetime.datetime.utcnow()
