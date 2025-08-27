@@ -17,8 +17,10 @@ from fits_storage.config import get_config
 parser = OptionParser()
 parser.add_option("--tapedrive", action="store", type="string",
                   dest="tapedrive", help="tapedrive to use.")
-parser.add_option("--file-re", action="store", type="string", dest="filere",
-                  help="Regular expression used to select files to extract")
+parser.add_option("--filepre", action="store", type="string", dest="filepre",
+                  help="Select only filenames with this prefix")
+parser.add_option("--filecon", action="store", type="string", dest="filecon",
+                  help="Select only filenames containing this string")
 parser.add_option("--list-tapes", action="store_true", dest="list_tapes",
                   help="lists the tapes that meet the read request")
 parser.add_option("--maxtars", action="store", type="int", dest="maxtars",
@@ -63,6 +65,11 @@ if options.list_tapes:
         .filter(TapeFile.filename == TapeRead.filename)\
         .filter(TapeFile.md5 == TapeRead.md5)
 
+    if options.filepre:
+        query = query.filter(TapeFile.filename.startswith(options.filepre))
+    if options.filecon:
+        query = query.filter(TapeFile.filename.contains(options.filecon))
+
     tapes = query.all()
 
     if len(tapes) == 0:
@@ -73,20 +80,27 @@ if options.list_tapes:
     for tape in tapes:
         labels.append(tape.label)
         labels.sort()
-        logger.info("The following tapes contain requested files: %s", labels)
-        for l in labels:
-            query = session.query(func.sum(TapeFile.size))\
-                .select_from(Tape, TapeWrite, TapeFile, TapeRead)\
-                .filter(Tape.id == TapeWrite.tape_id)\
-                .filter(TapeWrite.id == TapeFile.tapewrite_id)\
-                .filter(Tape.active == True)\
-                .filter(TapeWrite.succeeded == True)\
-                .filter(TapeFile.filename == TapeRead.filename)\
-                .filter(TapeFile.md5 == TapeRead.md5)\
-                .filter(Tape.label == l)
-            sumsize = query.one()[0]
-            gbs = float(sumsize) / 1E9
-            logger.info("There are %.1f GB to read on tape %s", gbs, l)
+    logger.info("The following tapes contain requested files: %s", labels)
+
+    for l in labels:
+        query = session.query(func.sum(TapeFile.size))\
+            .select_from(Tape, TapeWrite, TapeFile, TapeRead)\
+            .filter(Tape.id == TapeWrite.tape_id)\
+            .filter(TapeWrite.id == TapeFile.tapewrite_id)\
+            .filter(Tape.active == True)\
+            .filter(TapeWrite.succeeded == True)\
+            .filter(TapeFile.filename == TapeRead.filename)\
+            .filter(TapeFile.md5 == TapeRead.md5)\
+            .filter(Tape.label == l)
+
+        if options.filepre:
+            query = query.filter(TapeFile.filename.startswith(options.filepre))
+        if options.filecon:
+            query = query.filter(TapeFile.filename.contains(options.filecon))
+
+        sumsize = query.one()[0]
+        gbs = float(sumsize) / 1E9
+        logger.info("There are %.1f GB to read on tape %s", gbs, l)
 
     # If all we're doing is listing tapes, stop here.
     sys.exit(0)
@@ -107,6 +121,12 @@ try:
         .filter(TapeFile.md5 == TapeRead.md5)\
         .filter(Tape.label == label)\
         .distinct().order_by(TapeWrite.filenum)
+
+    if options.filepre:
+        query = query.filter(TapeFile.filename.startswith(options.filepre))
+    if options.filecon:
+        query = query.filter(TapeFile.filename.contains(options.filecon))
+
     tws = query.all()
 
     # Make a working directory and prepare the tapedrive
@@ -143,6 +163,11 @@ try:
             .filter(TapeFile.md5 == TapeRead.md5)\
             .filter(Tape.label == label)\
             .filter(TapeWrite.filenum == filenum)
+
+        if options.filepre:
+            query = query.filter(TapeFile.filename.startswith(options.filepre))
+        if options.filecon:
+            query = query.filter(TapeFile.filename.contains(options.filecon))
 
         fileresults = query.all()
         logger.info("Going to extract %d files from this tar archive",
