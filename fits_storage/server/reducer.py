@@ -721,6 +721,7 @@ class Reducer(object):
         except Exception as e:
             self.logrqeerror(f"Exception in do_reduce, likely from "
                              f"DRAGONS Reduce.runr(): {e}", exc_info=True)
+            processinglog.end(len(self.reduced_files), self.rqe.failed)
             os.chdir(pwd)
             return
 
