@@ -941,15 +941,6 @@ class GRACESFileParser(AstroDataFileParser):
             pass
         return reduction
 
-    def processing(self) -> str:
-        procmode = 'Raw'
-        try:
-            if self.ad.phu.get('REDUCTIO') is not None:
-                procmode = 'Quick-Look'
-        except:
-            pass
-        return procmode
-
 
 def build_parser(ad, log) -> FileParser:
     if hasattr(ad, 'tags') and 'GMOS' in ad.tags:
