@@ -200,9 +200,11 @@ try:
         tar.close()
 
         # Delete the completed files from taperead
+        logger.debug("deleting completed taperead entries...")
         stmt = delete(TapeRead).where(TapeRead.filename.in_(completed))
         session.execute(stmt)
         session.commit()
+        logger.debug("deleted completed taperead entries...")
 
         # Are there any more files in TapeRead?
         query = session.query(TapeRead)
