@@ -201,8 +201,12 @@ try:
 
         # Delete the completed files from taperead
         logger.debug("deleting completed taperead entries...")
-        stmt = delete(TapeRead).where(TapeRead.filename.in_(completed))
-        session.execute(stmt)
+        # Very slow on the python side to do a ._in(list) when list is long
+        #stmt = delete(TapeRead).where(TapeRead.filename.in_(completed))
+        #session.execute(stmt)
+        for c in completed:
+            stmt = delete(TapeRead).where(TapeRead.filename == c)
+            session.execute(stmt)
         session.commit()
         logger.debug("deleted completed taperead entries...")
 
