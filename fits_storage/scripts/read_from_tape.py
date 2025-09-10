@@ -211,13 +211,15 @@ try:
         logger.debug("deleted completed taperead entries...")
 
         # Are there any more files in TapeRead?
-        query = session.query(TapeRead)
-        taperead = query.all()
+        #query = session.query(TapeRead)
+        #taperead = query.all()
 
-        if len(taperead):
-            logger.info("There are more files to be read on different tapes")
-        else:
-            logger.info("All requested files have been read")
+        #if len(taperead):
+        #    logger.info("There are more files to be read on different tapes")
+        #else:
+        #    logger.info("All requested files have been read")
 finally:
     td.cdback()
     session.close()
+    logger.info("***   read_from_tape.py - exiting normally at %s",
+                datetime.datetime.now())
