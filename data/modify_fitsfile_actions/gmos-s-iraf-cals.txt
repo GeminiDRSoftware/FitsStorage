@@ -1,0 +1,5 @@
+[{"action": "ADD", "keyword": "PROCITNT", "new_value": "Science-Quality", "comment": "Processing Intent"},
+{"action": "ADD", "keyword": "PROCMODE", "new_value": "Science-Quality", "comment": "Software Processing Mode"},
+{"action": "ADD", "keyword": "PROCSOFT", "new_value": "GEMINI-IRAF", "comment": "Processing Software Used"},
+{"action": "ADD", "keyword": "PROCINBY", "new_value": "Gemini SciOps", "comment": "Processing Initiated By"},
+{"action": "ADD", "keyword": "PROCTAG", "new_value": "GMOS-S-IRAF-CALS", "comment": "Gemini Processing Tag"}]
