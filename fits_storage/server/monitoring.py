@@ -10,7 +10,7 @@ name as the outpur suffix - ie checkBias1 writes _checkBias1.fits files.
 recipe_keywords = {
     'checkBiasOSCO': ['OVERSCAN', 'OVERRMS', 'OSCOMEAN', 'OSCOSTDV', 'OSCOMED'],
     'checkBiasBICO': ['BICOMEAN', 'BICOSTDV', 'BICOMED'],
-    'checkBiasSTCO': ['STCOMEAN', 'STCOMEDV', 'STCOMED'],
+    'checkBiasSTCO': ['STCOMEAN', 'STCOSTDV', 'STCOMED'],
     'checkFlatCounts': ['FLATMEAN', 'FLATSTDV', 'FLATMED'],
 }
 
