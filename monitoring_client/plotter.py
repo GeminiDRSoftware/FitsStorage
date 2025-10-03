@@ -75,6 +75,7 @@ class InstMonPlot(object):
         self.url_enddate_picker = DatePicker()
         self.url_build_button = Button(label="Build URL")
         self.url_example_button = Button(label="Example URL")
+        self.url_buildload_button = Button(label="Build & Load")
         self.load_button = Button(label="Load")
         self.group_select = Select(title="Group by", options=['None', 'max'], value='None')
         self.plot_select = Select(title="Plot", options=self.plots, value='Any')
@@ -87,7 +88,8 @@ class InstMonPlot(object):
         self.selectusable_button = Button(label="Select Usable")
 
 
-        load_row = row(self.datasource_text, self.load_button, sizing_mode="stretch_width")
+        load_row = row(self.datasource_text, self.url_buildload_button,
+                       self.load_button, sizing_mode="stretch_width")
         url_row = row(self.url_prefix_text, self.url_report_select,
                       self.url_inst_select, self.url_binning_select,
                       self.url_roi_select, self.url_speed_select,
@@ -108,6 +110,7 @@ class InstMonPlot(object):
         # Set callback functions
         self.load_button.on_event('button_click', self.load_data)
         self.url_build_button.on_event('button_click', self.build_url)
+        self.url_buildload_button.on_event('button_click', self.buildload)
         self.url_example_button.on_event('button_click', self.example_url)
 
         self.plot_default_button.on_event('button_click', self.plot_default_callback)
@@ -156,6 +159,10 @@ class InstMonPlot(object):
 
         self.filter_data()
 
+    def buildload(self):
+        self.build_url()
+        self.load_data()
+        
     def filter_data(self):
         self.df = copy.copy(self.fdf)
         print(f"Starting filter_data, {len(self.df)=}")
