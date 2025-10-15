@@ -31,6 +31,10 @@ if __name__ == "__main__":
                         default=None, help="Select files by (case sensitive) "
                                            "filename prefix. Note - filename, "
                                            "not S3 keyname")
+
+    parser.add_argument("--by-tag", action="store", dest="tag", default=None,
+                        help="Select files by processing tag")
+
     parser.add_argument("--iraf-bias", action="store_true", dest="irafbias",
                         default=False, help="IRAF processed BIAS selection")
 
@@ -58,6 +62,9 @@ if __name__ == "__main__":
         if move:
             if dest is None:
                 raise ValueError("Refusing to move to destination=None")
+            if df.path == dest:
+                logger.warning(f"{df.filename} path already set to destination")
+                return
             oldkey = df.keyname
             newkey = f"{options.dest}/{df.filename}"
             logger.info(f"Rename S3 key: {oldkey} to {newkey}")
@@ -79,7 +86,25 @@ if __name__ == "__main__":
 
     session = sessionfactory()
 
-    if options.filepre == 'by-filepre':
+    if options.tag:
+        query = session.query(Header).join(DiskFile) \
+            .filter(DiskFile.present==True) \
+            .filter(Header.processing_tag==options.tag)
+
+        if options.currentpath is None:
+            query = query.filter(DiskFile.path=="")
+        else:
+            query = query.filter(DiskFile.path==options.currentpath)
+
+        for header in query:
+            try:
+                moveorlist(header.diskfile, move=True, dest=options.dest)
+            except Exception:
+                break
+        session.commit()
+
+
+    if options.filepre:
         query = session.query(DiskFile).filter(DiskFile.present==True) \
             .filter(DiskFile.filename.startswith(options.filepre))
 
