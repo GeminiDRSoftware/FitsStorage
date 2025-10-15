@@ -98,9 +98,9 @@ if __name__ == "__main__":
 
         for header in query:
             try:
-                moveorlist(header.diskfile, move=True, dest=options.dest)
+                moveorlist(header.diskfile, move=options.move, dest=options.dest)
             except Exception:
-                break
+                raise
         session.commit()
 
 
