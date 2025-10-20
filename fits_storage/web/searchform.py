@@ -434,9 +434,9 @@ def nameresolver(resolver, target):
     resp.content_type = 'application/json'
 
     urls = {
-        'simbad': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/S?',
-        'ned': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/N?',
-        'vizier': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/V?'
+        'simbad': 'http://cds.unistra.fr//cgi-bin/nph-sesame/-ox/S?',
+        'ned': 'http://cds.unistra.fr//cgi-bin/nph-sesame/-ox/N?',
+        'vizier': 'http://cds.unistra.fr//cgi-bin/nph-sesame/-ox/V?'
     }
 
     try:
