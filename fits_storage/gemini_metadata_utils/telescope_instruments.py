@@ -289,7 +289,7 @@ cal_types = (
     'mask', 'slitillum', 'processed_slitillum',
     'standard', 'processed_standard', 'telluric', 'processed_telluric',
     'polarization_standard', 'astrometric_standard', 'polarization_flat',
-    'specphot', 'photometric_standard',
+    'specphot', 'photometric_standard', 'processed_slitflat', 'processed_slit',
 )
 # photometric_standard and specphot should be deprecated in favor of standard
 

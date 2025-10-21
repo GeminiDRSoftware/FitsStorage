@@ -49,7 +49,7 @@ keywords:
   - since 2007-6-28:
     - IAA
     - OBSCLASS:
-      - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
+      - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal, nightCal ]
 
 tests:
   - valid-observation-info

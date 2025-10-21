@@ -6,7 +6,7 @@ from bokeh.plotting import figure
 from bokeh.layouts import column, row
 from bokeh.models import Button, TextInput, Select, HoverTool, \
     ColumnDataSource, CategoricalColorMapper, DatePicker, Div, \
-    BasicTickFormatter, BoxSelectTool, Legend
+    BasicTickFormatter, DatetimeTickFormatter, BoxSelectTool, Legend
 
 class InstMonPlot(object):
     def __init__(self):
@@ -16,6 +16,7 @@ class InstMonPlot(object):
                           y_axis_label='Statistic',
                           height=512,
                           width=1024,
+                          x_axis_type='datetime'
                           )
         self.fig.yaxis.formatter = BasicTickFormatter(use_scientific=False)
         self.fig.xaxis.ticker.desired_num_ticks=10
@@ -55,6 +56,9 @@ class InstMonPlot(object):
         self.plots = []
         self.scratch = set()
 
+        self.xaxis = "row_number"
+        self.yaxis = None
+
         self.create_widgets()
 
     def create_widgets(self):
@@ -75,7 +79,13 @@ class InstMonPlot(object):
         self.url_enddate_picker = DatePicker()
         self.url_build_button = Button(label="Build URL")
         self.url_example_button = Button(label="Example URL")
+        self.url_buildload_button = Button(label="Build & Load")
         self.load_button = Button(label="Load")
+
+        self.xaxis_select = Select(title="X axis", options=[
+            ("row_number", "Data Label"),
+            ("ut_datetime", "UT datetime")],
+            value="row_number")
         self.group_select = Select(title="Group by", options=['None', 'max'], value='None')
         self.plot_select = Select(title="Plot", options=self.plots, value='Any')
         self.plot_default_button = Button(label="Default", align='end')
@@ -87,7 +97,8 @@ class InstMonPlot(object):
         self.selectusable_button = Button(label="Select Usable")
 
 
-        load_row = row(self.datasource_text, self.load_button, sizing_mode="stretch_width")
+        load_row = row(self.datasource_text, self.url_buildload_button,
+                       self.load_button, sizing_mode="stretch_width")
         url_row = row(self.url_prefix_text, self.url_report_select,
                       self.url_inst_select, self.url_binning_select,
                       self.url_roi_select, self.url_speed_select,
@@ -95,7 +106,8 @@ class InstMonPlot(object):
                       Div(text='-'), self.url_enddate_picker,
                       self.url_build_button, self.url_example_button)
         load_col = column(self.status_text, url_row, load_row, sizing_mode="stretch_width")
-        select_row = row(self.group_select, self.plot_select,
+        select_row = row(self.xaxis_select, Div(width=100),
+                         self.group_select, self.plot_select,
                          self.plot_default_button)
         fig_buttons_col = column(Div(), self.selectnone_button,
                                  self.selectpass_button,
@@ -108,11 +120,13 @@ class InstMonPlot(object):
         # Set callback functions
         self.load_button.on_event('button_click', self.load_data)
         self.url_build_button.on_event('button_click', self.build_url)
+        self.url_buildload_button.on_event('button_click', self.buildload)
         self.url_example_button.on_event('button_click', self.example_url)
 
         self.plot_default_button.on_event('button_click', self.plot_default_callback)
 
-        self.group_select.on_change('value', self.select_callback)
+        self.xaxis_select.on_change('value', self.xaxis_callback)
+        self.group_select.on_change('value', self.group_callback)
         self.plot_select.on_change('value', self.plot_callback)
 
         self.selectnone_button.on_event('button_click', self.select_none_callback)
@@ -156,6 +170,10 @@ class InstMonPlot(object):
 
         self.filter_data()
 
+    def buildload(self):
+        self.build_url()
+        self.load_data()
+        
     def filter_data(self):
         self.df = copy.copy(self.fdf)
         print(f"Starting filter_data, {len(self.df)=}")
@@ -171,37 +189,53 @@ class InstMonPlot(object):
 
         self.cds.data = self.df
 
-        labels = dict(self.df['data_label'])
-        for i in labels.keys():
-            dlsplit = labels[i].split('-')
-            labels[i]=''
-            if len(dlsplit) == 4:
-                labels[i] = dlsplit[1]
-        self.fig.xaxis.major_label_overrides = labels
-        self.fig.xaxis.major_label_orientation = pi/4
+        if self.xaxis == 'utdatetime':
+            print("Setting xaxis to 'utdatetime'")
+            self.fig.x_axis_type = 'datetime'
+            self.fig.xaxis.major_label_overrides = {}
+            self.fig.xaxis.formatter = DatetimeTickFormatter()
+        else:
+            labels = dict(self.df['data_label'])
+            for i in labels.keys():
+                dlsplit = labels[i].split('-')
+                labels[i]=''
+                if len(dlsplit) == 4:
+                    labels[i] = dlsplit[1]
+            self.fig.xaxis.major_label_overrides = labels
+            self.fig.xaxis.major_label_orientation = pi/4
 
         self.fig.hover.tooltips=[("DL", "@data_label"), ("ext", "@adid"),
                    ("qastate", "@qastate")]
 
-    def select_callback(self, attr, old, new):
+    def group_callback(self, attr, old, new):
         self.filter_data()
 
-    def plot_callback(self, attr, old, new):
-        self.scatter.glyph.update(x = 'row_number', y = new)
-        self.scatter.selection_glyph.update(x = 'row_number', y = new)
-        self.scatter.nonselection_glyph.update(x = 'row_number', y = new)
+    def xaxis_callback(self, attr, old, new):
+        self.xaxis = new
+        self.update_plot()
 
-        self.fig.yaxis.axis_label = new
+    def plot_callback(self, attr, old, new):
+        self.yaxis = new
+        self.update_plot()
+
+    def update_plot(self):
+        self.scatter.glyph.update(x = self.xaxis, y = self.yaxis)
+        self.scatter.selection_glyph.update(x = self.xaxis, y = self.yaxis)
+        self.scatter.nonselection_glyph.update(x = self.xaxis, y = self.yaxis)
+
+        self.fig.yaxis.axis_label = self.yaxis
 
         self.status_text.value = f"Plotted {self.scatter.glyph.y}"
 
     def plot_default_callback(self):
         if self.url_report_select.value == 'checkBias':
             self.group_select.value = ''
-            self.plot_select.value = 'OSCOMED'
+            self.yaxis = 'OSCOMED'
+            self.plot_select.value = self.yaxis
         elif self.url_report_select.value == 'checkFlat':
             self.group_select.value = ''
-            self.plot_select.value = 'FLATMED'
+            self.yaxis = 'FLATMED'
+            self.plot_select.value = self.yaxis
 
     def select_none_callback(self):
         self.scatter.data_source.selected.indices = []

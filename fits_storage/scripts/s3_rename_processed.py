@@ -2,6 +2,7 @@
 
 import datetime
 
+from fits_storage.cal.orm import Gmos
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.config import get_config
 
@@ -27,12 +28,13 @@ if __name__ == "__main__":
     parser.add_argument("--dest", action="store", dest="dest", default=None,
                         help="Destination folder (prefix) to use")
 
-    parser.add_argument("--by-filepre", action="store", dest="filepre",
+    parser.add_argument("--filepre", action="store", dest="filepre",
                         default=None, help="Select files by (case sensitive) "
                                            "filename prefix. Note - filename, "
                                            "not S3 keyname")
-    parser.add_argument("--iraf-bias", action="store_true", dest="irafbias",
-                        default=False, help="IRAF processed BIAS selection")
+
+    parser.add_argument("--tag", action="store", dest="tag", default=None,
+                        help="Select files by processing tag")
 
     parser.add_argument("--current-path", action="store", dest="currentpath",
                         default=None, help="Select files on current path."
@@ -58,6 +60,9 @@ if __name__ == "__main__":
         if move:
             if dest is None:
                 raise ValueError("Refusing to move to destination=None")
+            if df.path == dest:
+                logger.warning(f"{df.filename} path already set to destination")
+                return
             oldkey = df.keyname
             newkey = f"{options.dest}/{df.filename}"
             logger.info(f"Rename S3 key: {oldkey} to {newkey}")
@@ -77,60 +82,30 @@ if __name__ == "__main__":
         logger.error("Not an S3 configuration")
         exit()
 
+    if not (options.tag or options.filepre):
+        logger.error("Must specify at least one of --tag or --filepre")
+        exit()
+
     session = sessionfactory()
+    query = session.query(Header).join(DiskFile).filter(DiskFile.present==True)
 
-    if options.filepre == 'by-filepre':
-        query = session.query(DiskFile).filter(DiskFile.present==True) \
-            .filter(DiskFile.filename.startswith(options.filepre))
+    if options.tag:
+        query = query.filter(Header.processing_tag==options.tag)
 
-        if options.currentpath is None:
-            query = query.filter(DiskFile.path=="")
-        else:
-            query = query.filter(DiskFile.path==options.currentpath)
+    if options.currentpath is None:
+        query = query.filter(DiskFile.path=="")
+    else:
+        query = query.filter(DiskFile.path==options.currentpath)
 
-        for df in query:
-            try:
-                moveorlist(df, move=options.move, dest=options.dest)
-            except:
-                break
-        session.commit()
+    if options.filepre:
+        query = query.filter(DiskFile.filename.startswith(options.filepre))
 
-    if options.irafbias:
-        # This is messy as we have to grep the fulltextheader to tell the
-        # difference between DRAGONS and IRAF.
-        query = session.query(Header).join(DiskFile) \
-            .filter(DiskFile.present==True) \
-            .filter(Header.observation_type=='BIAS') \
-            .filter(Header.types.contains('PROCESSED'))
+    for header in query:
+        try:
+            moveorlist(header.diskfile, move=options.move, dest=options.dest)
+            session.commit()
+        except Exception:
+            raise
 
-        if options.currentpath is None:
-            query = query.filter(DiskFile.path=="")
-        else:
-            query = query.filter(DiskFile.path==options.currentpath)
-
-        headers = query.all()
-        logger.info(f"Found {len(headers)} candidates to check")
-        dstring = "GBIAS   = 'Compatibility'      / For IRAF compatibility"
-        istring = "GBIAS   = '20"
-
-        for h in headers:
-            df = h.diskfile
-            try:
-                fth = session.query(FullTextHeader) \
-                    .filter(FullTextHeader.diskfile_id==df.id).one()
-            except Exception:
-                logger.info("Exception finding fulltextheader", exc_info=True)
-                break
-            if dstring in fth.fulltext:
-                logger.debug(f"{df.filename} is DRAGONS - skipping")
-                continue
-            if istring not in fth.fulltext:
-                logger.warning(f"{df.filename} not DRAGONS or IRAF - skipping")
-                continue
-            try:
-                moveorlist(df, move=options.move, dest=options.dest)
-                df.path=options.dest
-            except:
-                break
-        session.commit()
-
+    logger.info("*** s3_rename_processed.py - exiting normally up at "
+                f"{datetime.datetime.now()}")

@@ -671,6 +671,10 @@ class Reducer(object):
                         f"Reduce()")
             reduce.recipename = self.rqe.recipe
 
+        # If we are setting any primitive parameters, so do now
+        if self.fsc.reduce_memory:
+            reduce.uparms = dict([('stackFrames:memory', self.fsc.reduce_memory)])
+
         # chdir into the working directory for DRAGONS. Store the current
         # working dir so we can go back after
         pwd = os.getcwd()

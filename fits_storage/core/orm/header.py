@@ -284,3 +284,19 @@ class Header(Base):
         log.debug("Set all header orm values")
 
         return
+
+    # These would be deprecated if we were to add an actual numpix or
+    # similar column to the header table
+    @property
+    def rawbytepix(self):
+        if self.instrument in ('GMOS-N', 'GMOS-S', 'GHOST'):
+            return 2
+        else:
+            return 4
+
+    @property
+    def numpix(self):
+        if self.diskfile:
+            return self.diskfile.data_size // self.rawbytepix
+        else:
+            return None

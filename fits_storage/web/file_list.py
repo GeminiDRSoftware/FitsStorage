@@ -22,7 +22,7 @@ from . import templating
 
 diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
                    'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready',
-                   'entrytime')
+                   'entrytime', 'present', 'canonical')
 
 @templating.templated("filelist/filelist.xml", content_type='text/xml',
                       with_generator=True)
