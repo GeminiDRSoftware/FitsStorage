@@ -3,3 +3,4 @@ pyjwt
 requests
 jinja2
 simplejson
+psutil
