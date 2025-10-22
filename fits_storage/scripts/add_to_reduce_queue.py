@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import datetime
+from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -9,6 +10,7 @@ from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 
 from fits_storage.db import session_scope
 from fits_storage.core.orm.diskfile import DiskFile
+from fits_storage.core.orm.header import Header
 from fits_storage.queues.queue.reducequeue import ReduceQueue
 from fits_storage.queues.orm.reducequeentry import debundle_options
 
@@ -16,6 +18,14 @@ from fits_storage.db.list_headers import list_headers
 from fits_storage.db.selection.get_selection import from_url_things
 
 from fits_storage.server.reduce_list import parse_listfile
+
+# Helper function for memory estimate from number of pixels
+def memory_estimate(numpixlist):
+    # Assume raw data becomes 12 bytes per pix: 4 data, 4 var, 2 dq, 2 objmask
+    # Add one file for the reduced product. Assume 20% overhead / safety margin
+    numpix = sum(numpixlist) + numpixlist[0] # For the reduced product
+    gb = 1.2 * 12 * numpix / 1E9
+    return gb
 
 if __name__ == "__main__":
     # Option Parsing
@@ -31,7 +41,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--filenames", action="extend", type=str,
                         dest="filenames", default=[], nargs='+',
-                        help="Add this comma separated list of filenames as a "
+                        help="Add this space separated list of filenames as a "
                              "single entry to the queue")
 
     parser.add_argument("--listfile", action="store", type=str, default=None,
@@ -43,6 +53,7 @@ if __name__ == "__main__":
                         help="URL-style selection criteria. Add files matching"
                              "this selection in the database, as individual"
                              "file entries to the reduce queue.")
+
     parser.add_argument("--initiatedby", action="store", type=str, default=None,
                         help="Processing Initiated By record for reduced data."
                              "Cannot be defaulted in production environments")
@@ -162,6 +173,7 @@ if __name__ == "__main__":
             # Check that all the filenames given are valid and ensure they end
             # in .fits
             validfiles = []
+            numpix = []
             for filename in filelist:
                 if filename.endswith('.fits.bz2'):
                     filename = filename.removesuffix('.bz2')
@@ -172,17 +184,23 @@ if __name__ == "__main__":
 
                 possible_filenames = [filename, filename+'.bz2']
 
-                query = session.query(DiskFile) \
+                query = session.query(Header).join(DiskFile) \
                     .filter(DiskFile.present == True)\
                     .filter(DiskFile.filename.in_(possible_filenames))
 
-                if query.count() == 0:
+                try:
+                    header = query.one()
+                except NoResultFound:
                     logger.error("Filename %s not found in database, not adding "
-                                 "this list to the queue", filename)
+                                 "this file to the list", filename)
+                except MultipleResultsFound:
+                    logger.error("Filename %s has multiple results, not adding "
+                                 "this file to the list", filename)
                 else:
                     validfiles.append(filename)
+                    numpix.append(header.numpix)
 
-            logger.debug("List of validated files: %s", validfiles)
+            logger.debug(f"List of validated files: {validfiles}, {numpix=}")
 
             if len(validfiles):
                 rq = ReduceQueue(session, logger=logger)
@@ -192,7 +210,7 @@ if __name__ == "__main__":
                        tag=tag, recipe=options.recipe,
                        capture_files=options.capture_files,
                        capture_monitoring=options.capture_monitoring,
-                       debundle=options.debundle)
+                       debundle=options.debundle, mem_gb=memory_estimate(numpix))
             else:
                 logger.error("No valid files to add")
 

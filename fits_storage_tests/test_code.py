@@ -46,3 +46,4 @@ from fits_storage_tests.code_tests.test_robot_defense import *
 from fits_storage_tests.code_tests.test_usagelog_analysis import *
 from fits_storage_tests.code_tests.test_modify_fitsheader import *
 from fits_storage_tests.code_tests.test_parse_post_calmgr_inputs import *
+from fits_storage_tests.code_tests.test_reducequeue import *

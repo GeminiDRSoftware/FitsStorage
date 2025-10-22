@@ -7,7 +7,6 @@ as instances of those represent entries in the queue, not the queue itself.
 """
 import datetime
 from sqlalchemy import desc
-from sqlalchemy.orm import make_transient
 
 
 class Queue(object):
@@ -98,9 +97,6 @@ class Queue(object):
                 # Set to inprogress and flush to the DB.
                 qentry.inprogress = True
                 session.flush()
-
-                # Make the qentry transient (see comment above)
-                # make_transient(qentry)
             else:
                 # Got None from .first()
                 self.logger.debug(f"No item to pop on {ormclass.__tablename__}")

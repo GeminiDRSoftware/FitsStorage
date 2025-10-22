@@ -5,7 +5,7 @@ This module contains the ReduceQueueEntry ORM class.
 import datetime
 
 from sqlalchemy import Column, UniqueConstraint, Enum
-from sqlalchemy import Integer, Boolean, DateTime, Text, ARRAY
+from sqlalchemy import Integer, Boolean, DateTime, Text, ARRAY, Float
 
 from fits_storage.core.orm import Base
 from .ormqueuemixin import OrmQueueMixin
@@ -43,13 +43,20 @@ class ReduceQueueEntry(OrmQueueMixin, Base):
     sortkey = Column(Text, index=True)
     filename = Column(Text)
     debundle = Column(DEBUNDLE_ENUM)
-    intent = Column(Text)  # Goes into PROCITNT header
-    initiatedby = Column(Text)  # Goes into PROCINBY header
-    tag = Column(Text)  # Goes into PROCTAG header
     recipe = Column(Text)
     capture_files = Column(Boolean)
     capture_monitoring = Column(Boolean)
     error = Column(Text)
+
+    # These are used to ensure each machine servicing the queue does not take
+    # on simultaneous jobs for which it doesn't have enough memory
+    mem_gb = Column(Float) # Estimated Memory Footprint of reduce job
+    host = Column(Text) # IP address or other ID of machine
+
+    # Processing metadata passed into the reduced data
+    intent = Column(Text)  # Goes into PROCITNT header
+    initiatedby = Column(Text)  # Goes into PROCINBY header
+    tag = Column(Text)  # Goes into PROCTAG header
 
     def __init__(self, filenames):
         """
@@ -68,7 +75,11 @@ class ReduceQueueEntry(OrmQueueMixin, Base):
 
         """
         self.filenames = filenames
-        self.filename = filenames[0]
+        if self.fsc.using_sqlite:
+            # Used only in tests.
+            self.filename = self.filenames
+        else:
+            self.filename = filenames[0]
         self.inprogress = False
         self.sortkey = self.sortkey_from_filename()
         self.added = datetime.datetime.utcnow()
