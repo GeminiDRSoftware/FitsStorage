@@ -287,7 +287,6 @@ class Header(Base):
 
         return
 
-    @property
     def estimate_numpix(self):
         # This is used in add_to_reduce_queue when numpix is None. This is
         # a temporary workaround when releasing 3.6 to avoid needing a database
