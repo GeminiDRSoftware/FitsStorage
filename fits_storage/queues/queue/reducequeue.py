@@ -77,7 +77,7 @@ class ReduceQueue(Queue):
         session = self.session
         ormclass = self.ormclass
 
-        with ((session.begin_nested())):
+        with session.begin_nested():
 
             # Total GBs of entries not failed, in progress, and on this host.
             # coalesce is used to return 0 rather than NULL if no results
