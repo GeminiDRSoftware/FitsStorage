@@ -71,13 +71,13 @@ def test_header(tmp_path):
     assert header.phot_standard is None
     assert header.proprietary_coordinates is False
     assert header.pre_image is False
+    assert header.numpix == 1048576
 
-    # numpix is currently an (over) estimate
-    actualpix = 1024*1024
+    # estimate_numpix is an overestimate because of the header bytes
     # patch in the actual test diskfile as there's no DB to reference here
     header.diskfile = diskfile
-    assert header.numpix >= actualpix
-    assert header.numpix < 1.2 * actualpix
+    assert header.estimate_numpix >= header.numpix
+    assert header.estimate_numpix < 1.2 * header.numpix
 
 def test_engdata(tmp_path):
     # This file is a CAL program, but has ENG_DATA = T

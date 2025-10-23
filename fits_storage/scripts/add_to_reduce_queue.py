@@ -198,7 +198,10 @@ if __name__ == "__main__":
                                  "this file to the list", filename)
                 else:
                     validfiles.append(filename)
-                    numpix.append(header.numpix)
+                    # Deprecate header.estimate_numpix() once the header numpix
+                    # column is fully populated after database rebuilds.
+                    tmp_numpix = header.numpix if header.numpix is not None else header.estimate_numpix()
+                    numpix.append(tmp_numpix)
 
             logger.debug(f"List of validated files: {validfiles}, {numpix=}")
 

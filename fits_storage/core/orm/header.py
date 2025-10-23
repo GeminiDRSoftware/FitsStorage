@@ -116,6 +116,7 @@ class Header(Base):
     phot_standard = Column(Boolean)
     proprietary_coordinates = Column(Boolean)
     pre_image = Column(Boolean)
+    numpix = Column(Integer)
 
     if not fsc.using_sqlite:
         __table__args__ = (Index('ix_header_ut_datetime_desc_nullslast',
@@ -275,6 +276,7 @@ class Header(Base):
         self.gcal_lamp = parser.gcal_lamp()
         self.reduction = parser.reduction()
         self.pre_image = parser.pre_image()
+        self.numpix = parser.numpix()
 
         # Get the types list
         self.types = str(diskfile.ad_object.tags) \
@@ -285,18 +287,13 @@ class Header(Base):
 
         return
 
-    # These would be deprecated if we were to add an actual numpix or
-    # similar column to the header table
     @property
-    def rawbytepix(self):
-        if self.instrument in ('GMOS-N', 'GMOS-S', 'GHOST'):
-            return 2
-        else:
-            return 4
-
-    @property
-    def numpix(self):
+    def estimate_numpix(self):
+        # This is used in add_to_reduce_queue when numpix is None. This is
+        # a temporary workaround when releasing 3.6 to avoid needing a database
+        # rebuild. Once the numpix column is fully populated, remove this.
+        bytepix = 2 if self.instrument in ('GMOS-N', 'GMOS-S', 'GHOST') else 4
         if self.diskfile:
-            return self.diskfile.data_size // self.rawbytepix
+            return self.diskfile.data_size // bytepix
         else:
             return None

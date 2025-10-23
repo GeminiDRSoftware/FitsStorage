@@ -238,6 +238,9 @@ class FileParser(ABC):
     def well_depth_setting(self):
         raise NotImplementedError()
 
+    def numpix(self):
+        raise NotImplementedError
+
 
 class AstroDataFileParser(FileParser):
     """
@@ -628,6 +631,15 @@ class AstroDataFileParser(FileParser):
     def well_depth_setting(self):
         return self._try_or_none(lambda: self.ad.well_depth_setting(), "Unable to parse well depth setting from header",
                                  require_in=gemini_welldepth_settings)
+
+    def numpix(self):
+        num = 0
+        for ext in self.ad:
+            n = 1
+            for i in ext.shape:
+                n *= i
+            num += n
+        return num
 
 
 class AlopekeZorroFileParser(AstroDataFileParser):
