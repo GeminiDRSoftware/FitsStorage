@@ -95,6 +95,7 @@ class ReduceQueue(Queue):
                 .where(ReduceQueueEntry.fail_dt == ReduceQueueEntry.fail_dt_false)
                 .where(ReduceQueueEntry.mem_gb < (self.server_gbs - subq))
                 .order_by(desc(ReduceQueueEntry.sortkey))
+                .limit(1)
                 .with_for_update(skip_locked=True)
             )
 
