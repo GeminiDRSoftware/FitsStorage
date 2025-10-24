@@ -390,6 +390,35 @@ def fileserver(things):
             diskfile = None
 
 
+    # If we didn't find the file, retry without the path. This will work for
+    # people guessing a filename for reduced data and omitting the path. If
+    # there are multiple results, fail anyway
+    if diskfile is None:
+        try:
+            query = session.query(DiskFile).filter(DiskFile.present == True)
+            diskfile = query.filter(DiskFile.filename == filename).one()
+        except MultipleResultsFound:
+            downloadlog.add_note("Error! Multiple present files found on pathless query")
+            ctx.resp.status = Return.HTTP_BAD_REQUEST
+            return
+        except NoResultFound:
+            # "Flip" the .bz2 of the filename
+            if filename.endswith('.bz2'):
+                filename = filename[:-4]
+            else:
+                filename += '.bz2'
+            try:
+                diskfile = query.filter(DiskFile.filename == filename).one()
+            except MultipleResultsFound:
+                downloadlog.add_note("Error! Multiple present files found on pathless query!")
+                ctx.resp.status = Return.HTTP_BAD_REQUEST
+                return
+            except NoResultFound:
+                diskfile = None
+                ctx.resp.status = Return.HTTP_NOT_FOUND
+                return
+
+
     item = None
     # And now find the header record...
     for is_file_type in supported_tests:
