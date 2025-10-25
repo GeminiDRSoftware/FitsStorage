@@ -53,7 +53,9 @@ conda config --add channels http://astroconda.gemini.edu/public
 conda create -p /opt/miniforge3/envs/fitsdata python=3.12
 conda activate /opt/miniforge3/envs/fitsdata
 #conda install dragons
-conda install --only-deps dragons # To install only dependencies
+conda install dragons
+conda remove -f dragons # remove the dragons package, we run from a checkout
+conda remove -f fits_storage # we only really wanted the other dragons deps.
 conda install fitsverify
 
 # In bash profile, add:
