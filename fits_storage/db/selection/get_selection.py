@@ -74,6 +74,7 @@ getselection_key_value = {
     'processing_tag': 'processing_tag',
     'readmode': 'readmode',
     'welldepth': 'welldepth',
+    'path': 'path',
     }
 
 # Some elements of the URL entries set themselves as the value for a

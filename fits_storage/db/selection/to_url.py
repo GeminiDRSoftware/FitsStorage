@@ -149,6 +149,8 @@ def to_url(self, with_columns=False):
             self._url += '/mask=' + str(self[key])
         elif key == 'filepre':
             self._url += '/filepre=%s' % self[key]
+        elif key == 'path':
+            self._url += '/path=%s' % self[key]
         elif key == 'site_monitoring':
             if self[key] is True:
                 self._url += '/site_monitoring'

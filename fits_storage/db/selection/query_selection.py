@@ -25,6 +25,7 @@ if fsc.is_server:
 queryselection_filters = (
     ('present',               DiskFile.present),
     ('canonical',             DiskFile.canonical),
+    ('path',                  DiskFile.path),
     ('science_verification',  Header.science_verification),
     ('program_id',            Header.program_id),
     ('observation_id',        Header.observation_id),
