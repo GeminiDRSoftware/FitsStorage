@@ -25,6 +25,8 @@ parser.add_option("--path", action="store", type="string", dest="path",
 parser.add_option("--pathcontains", action="store", type="string",
                   dest="pathcontains", default="",
                   help="Path within the storage root contains string")
+parser.add_option("--noarchive", action="store_true", dest="noarchive",
+                  default=False, help="Do not also check the archive")
 parser.add_option("--file-pre", action="store", type="string", dest="filepre",
                   help="File prefix to operate on, eg N20090130, N200812 etc")
 parser.add_option("--maxnum", type="int", action="store", dest="maxnum",
@@ -71,7 +73,7 @@ setdemon(options.demon)
 logger.info("***   delete_files.py - starting up at %s",
             datetime.datetime.now())
 
-with session_scope() as session:
+with (session_scope() as session):
     query = session.query(DiskFile).filter(DiskFile.canonical == True)
 
     if options.auto:
@@ -139,10 +141,14 @@ with session_scope() as session:
 
     # We use the FileOnTapeHelper class here which provides caching..
     foth = FileOnTapeHelper(tapeserver=options.tapeserver, logger=logger)
+    # The same helper class helps with the archive check
+    foah = FileOnTapeHelper(archive="archive.gemini.edu", logger=logger)
 
     if options.filepre:
         logger.info("Pre-populating tape server results cache from filepre")
         foth.populate_cache(options.filepre)
+        logger.info("Pre-populating archive results cache from filepre")
+        foah.populate_cache(options.filepre)
 
     sumbytes = 0
     numfiles = 0
@@ -192,6 +198,17 @@ with session_scope() as session:
                         diskfile.filename, len(tape_ids), str(tape_ids))
             continue
 
+        if options.noarchive:
+            archive_ids = (True)
+        else:
+            # Check if it's on archive
+            archive_ids = foah.check_file(diskfile.filename, data_md5)
+            if len(archive_ids) < 1:
+                logger.info("File %s is not on archive, not deleting",
+                            diskfile.filename)
+                continue
+
+
         firstfile = diskfile.filename if firstfile is None else firstfile
         lastfile = diskfile.filename
         if options.dryrun:
@@ -199,8 +216,9 @@ with session_scope() as session:
                         diskfile.fullpath)
         else:
             try:
-                logger.info("Deleting file %s [%d tapes: %s]",
-                            diskfile.fullpath, len(tape_ids), str(tape_ids))
+                logger.info(f"Deleting file {diskfile.fullpath} "
+                            f"[{len(tape_ids)} tapes: {str(tape_ids)}] "
+                            f"[archive: {str(archive_ids)}]")
                 os.unlink(diskfile.fullpath)
                 logger.debug("Marking diskfile id %d as not present",
                              diskfile.id)
