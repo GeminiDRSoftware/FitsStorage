@@ -8,6 +8,7 @@ sayselection_defs = {
     'observation_type': 'ObsType',
     'observation_class': 'ObsClass',
     'filename': 'Filename',
+    'path': 'Path',
     'processing': 'Processing',
     'processing_tag': 'Processing Tag',
     'object': 'Object Name',

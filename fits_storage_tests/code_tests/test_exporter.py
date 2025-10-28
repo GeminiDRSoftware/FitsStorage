@@ -37,13 +37,35 @@ def test_get_destination_file_info():
 
     eqe = dummy_qe()
     eqe.filename = 'N20200127S0023.fits.bz2'
+    eqe.path = ''
     eqe.destination = 'https://archive.gemini.edu'
-
-    exp._get_destination_file_info(eqe)
+    exp.eqe = eqe
+    exp._set_eqe_destination_path()
+    exp._get_destination_file_info()
 
     assert exp.destination_md5 == 'e781568aff61e671dce3e4ca38cd1323'
     assert exp.destination_ingest_pending is False
 
+
+def test_export_path_mapping():
+    exp = Exporter(None, DummyLogger())
+    exp.eqe = dummy_qe()
+
+    exp.destination_path_map = {'foo': 'bar',
+                                'asdf': '',
+                                r'\d\d\d\d[01]\d[0123]\d': 'ddd',
+                                r'foobar/\d\d\d\d[01]\d[0123]\d': 'foobar'}
+
+    for (src, dst) in [('foo', 'bar'),
+                       ('asdf', ''),
+                       ('qwert', 'qwert'),
+                       ('20210123', 'ddd'),
+                       ('12345678', '12345678'),
+                       ('foobar/20121212', 'foobar')]:
+        exp.eqe.path = src
+        exp._set_eqe_destination_path()
+        assert exp.eqe.path == src
+        assert exp.eqe.destination_path == dst
 
 class DummyRequestsResponse(object):
     # A dummy object to simulate a response from requests.post
@@ -111,6 +133,7 @@ def test_destination_server_failure_handling(tmpdir):
 
         # Shortcut directly to the exporter file_transfer method
         exp.eqe = eqe1
+        exp._set_eqe_destination_path()
         now = datetime.datetime.utcnow()
         exp.file_transfer()
 

@@ -30,6 +30,7 @@ getselection_data = [
     (['GMOS'], 'inst', 'GMOS'),
     # 'getselection_key_value' items. This just tests getting them, not parsing
     (['filename=asdf'], 'filename', 'asdf'),
+    (['path=aabbcc'], 'path', 'aabbcc'),
     (['filepre=sdfg'], 'filepre', 'sdfg'),
     (['disperser=dfgh'], 'disperser', 'dfgh'),
     (['camera=fghj'], 'camera', 'fghj'),
