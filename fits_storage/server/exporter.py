@@ -113,7 +113,8 @@ class Exporter(object):
         self.eqe = eqe
         self._set_eqe_destination_path()
         self.l.debug(f"Export {self.eqe.path}/{self.eqe.filename} to "
-                     f"{self.eqe.destination}/{self.eqe.destination_path}")
+                     f"{self.eqe.destination}/:{self.eqe.destination_path}"
+                     f"/{self.eqe.filename}")
 
         # First, get info about this file from the destination end, This info
         # is the data_md5 and also the ingest_pending flag
@@ -411,8 +412,8 @@ class Exporter(object):
             return False
 
         if len(thelist) == 0:
-            self.l.debug("Destination server does not have filename %s",
-                         filename)
+            self.l.debug(f"Destination server does not have "
+                         f"{self.eqe.destination_path}/{filename}")
             return True
 
         if len(thelist) > 1:
