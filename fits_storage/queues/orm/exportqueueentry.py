@@ -72,6 +72,9 @@ class ExportQueueEntry(OrmQueueMixin, Base):
         prepend = 'z' if 'archive' in destination else 'a'
         self.sortkey = prepend + self.sortkey
 
+        # This is set by the exporter, it is not an ORM property.
+        self.destination_path = None
+
     def __repr__(self):
         """
         Make a string representation of the queue item.

@@ -8,6 +8,7 @@ import requests.utils
 import json
 import datetime
 import os
+import re
 
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy import update
@@ -62,6 +63,9 @@ class Exporter(object):
         # convenience and to allow poking them for testing
         self.storage_root = fsc.storage_root
 
+        pmc = fsc.get('export_destination_path_map')
+        self.destination_path_map = json.loads(pmc) if pmc else {}
+
         # got_destination_info tells us whether we have got the file info from
         # the destination server. None => Not attempted yet,
         # False => Failure getting the info, True => We got the info.
@@ -107,11 +111,13 @@ class Exporter(object):
         self.reset()
 
         self.eqe = eqe
-        self.l.debug("Export %s to %s" % (eqe.filename, eqe.destination))
+        self._set_eqe_destination_path()
+        self.l.debug(f"Export {self.eqe.path}/{self.eqe.filename} to "
+                     f"{self.eqe.destination}/{self.eqe.destination_path}")
 
         # First, get info about this file from the destination end, This info
         # is the data_md5 and also the ingest_pending flag
-        self.got_destination_info = self._get_destination_file_info(eqe)
+        self.got_destination_info = self._get_destination_file_info()
 
         if self.got_destination_info is False:
             error_text = "Failed to get destination file info for filename " \
@@ -119,7 +125,7 @@ class Exporter(object):
             self.logeqeerror(error_text)
             return
         else:
-            self.l.debug("Sucessfully got destination file info for %s",
+            self.l.debug("Successfully got destination file info for %s",
                          eqe.filename)
 
         # if there is an ingest pending on this at the destination, we simply
@@ -146,9 +152,9 @@ class Exporter(object):
             self.l.debug("get_df() good return")
 
         if self.at_destination():
-            self.l.info("File %s is already at destination %s with correct "
-                        "data_md5, skipping export",
-                        eqe.filename, eqe.destination)
+            self.l.info(f"File {self.eqe.destination_path}/{self.eqe.filename} "
+                        f"is already at destination {self.eqe.destination} "
+                        f"with correct data_md5, skipping export")
             self.s.delete(eqe)
             self.s.commit()
             return
@@ -160,9 +166,9 @@ class Exporter(object):
                 self.l.debug("exporter.at_destination() failed")
                 return
             else:
-                self.l.info("File %s is not present at destination %s with "
-                            "correct data_md5.",
-                            eqe.filename, eqe.destination)
+                self.l.info(f"File {self.eqe.destination_path}/{self.eqe.filename} "
+                            f"is not present at destination {self.eqe.destination} "
+                            f"with correct data_md5.")
 
         # If we get here, everything so far worked, and the file is not at the
         # destination with the correct data_md5. Go ahead and transfer it.
@@ -212,12 +218,14 @@ class Exporter(object):
         filename = self.eqe.filename
         path = self.eqe.path
         destination = self.eqe.destination
+        destination_path = self.eqe.destination_path
 
-        self.l.info("Transferring file %s to destination %s",
-                    filename, destination)
         if fsc.using_s3:
             self.l.error("Export from a server using_s3 is not implemented")
             return False
+
+        self.l.info(f"Transferring file {path}/{filename} to destination "
+                    f"{destination}: {destination_path}/{filename}")
 
         # Get a file-like-object for the data to export
         # Note that we always export bz2 compressed data.
@@ -229,8 +237,10 @@ class Exporter(object):
             else:
                 destination_filename = filename + '.bz2'
                 flo = StreamBz2Compressor(f)
-            # Construct upload URL.
-            url = "%s/upload_file/%s" % (destination, destination_filename)
+
+            # Construct upload URL. Avoid // if destination_path == ''
+            url = os.path.join(destination, 'upload_file', destination_path,
+                               destination_filename)
 
             self.l.debug("POSTing data to %s", url)
             starttime = datetime.datetime.utcnow()
@@ -363,7 +373,7 @@ class Exporter(object):
                          self.df.id, self.df.data_md5, self.destination_md5)
             return False
 
-    def _get_destination_file_info(self, eqe):
+    def _get_destination_file_info(self):
         """
         Queries the jsonfilelist url at the destination to get the data_md5
         and ingest_pending value for the file at the destination. We strip any
@@ -376,9 +386,9 @@ class Exporter(object):
         """
 
         # Construct and retrieve the URL
-        filename = eqe.filename.removesuffix('.bz2')
-        url = "%s/jsonfilelist/present/filename=%s" % \
-              (eqe.destination, filename)
+        filename = self.eqe.filename.removesuffix('.bz2')
+        url = (f"{self.eqe.destination}/jsonfilelist/present"
+               f"/path={self.eqe.destination_path}/filename={filename}")
 
         try:
             r = self.rs.get(url, timeout=self.timeout)
@@ -447,3 +457,11 @@ class Exporter(object):
         )
         self.s.execute(stmt)
         self.s.commit()
+
+    def _set_eqe_destination_path(self):
+        for key in self.destination_path_map:
+            if re.fullmatch(key, self.eqe.path):
+                self.eqe.destination_path = self.destination_path_map[key]
+                break
+        else:
+            self.eqe.destination_path = self.eqe.path
