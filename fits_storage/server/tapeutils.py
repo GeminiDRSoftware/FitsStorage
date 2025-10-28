@@ -326,16 +326,21 @@ class FileOnTapeHelper(object):
     You should instantiate this class once before looping through files, then
     call the methods on it as appropriate for each file. Be aware if using this
     in long-running processes that the cache can grow huge.
+
+    As well as querying the tapeserver, this class can be used as a similarly
+    caching query of the archive.
     """
     tapeserver = None
+    archive = None
     _cache = None
     _queried = None
     reqses = None
 
-    def __init__(self, tapeserver=None, logger=None):
+    def __init__(self, tapeserver=None, archive=None, logger=None):
         fsc = get_config()
         self.reqses = requests.Session()
-        self.tapeserver = fsc.tapeserver if tapeserver is None else tapeserver
+        self.tapeserver = fsc.tape_server if tapeserver is None else tapeserver
+        self.archive = archive
         self._cache = []
         self._queried = []
         self.logger = DummyLogger() if logger is None else logger
@@ -349,13 +354,16 @@ class FileOnTapeHelper(object):
         'data_md5': abc123, 'tape_id': 123, 'tape_set': 321}, ...]
         """
         results = []
-        self.logger.debug("Querying API for %s", filepre)
+        server = self.archive if self.archive else self.tapeserver
+        self.logger.debug(f"Querying {server} for {filepre}")
         self._queried.append(filepre)
-        url = f"http://{self.tapeserver}/jsontapefile/{filepre}"
+        thing = "jsonfilelist/filepre=" if self.archive else "jsontapefile/"
+        url = f"http://{server}/{thing}{filepre}"
+
         req = self.reqses.get(url)
         if req.status_code != http.HTTPStatus.OK:
-            self.logger.warning("Got HTTP status %d from tapeserver",
-                                req.status_code)
+            self.logger.warning(f"Got HTTP status {req.status_code} from "
+                                f"{server}",)
             return None
         for i in req.json():
             # We add a trimmed_filename to each entry now for efficiency
@@ -407,9 +415,11 @@ class FileOnTapeHelper(object):
 
         for item in api_results:
             if item['trimmed_filename'] == tfilename:
-                if (data_md5 is None)\
-                        or (data_md5 == item['data_md5']):
-                    tape_ids.add(item['tape_id'])
+                if (data_md5 is None) or (data_md5 == item['data_md5']):
+                    if self.archive:
+                        tape_ids.add(True)
+                    else:
+                        tape_ids.add(item['tape_id'])
         return tape_ids
 
     def check_file(self, filename, data_md5=None):
