@@ -218,8 +218,11 @@ with session_scope() as session:
                         # Add to ingest queue?
                         if not options.noqueue:
                             filename = filename.removesuffix(".bz2")
-                            path = f"{vihelper.instrument_dirname}/" \
-                                   f"{vihelper.subdir}"
+                            if vihelper.subdir in ('', '.'):
+                                path = vihelper.instrument_dirname
+                            else:
+                                path = f"{vihelper.instrument_dirname}/" \
+                                       f"{vihelper.subdir}"
                             logger.info("Adding %s in %s to ingest queue",
                                         filename, path)
                             iq.add(filename, path)
