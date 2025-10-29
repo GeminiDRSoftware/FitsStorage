@@ -67,7 +67,7 @@ class Exporter(object):
         pmd = json.loads(pmc) if pmc else {}
         self.destination_path_map = {}
         for key in pmd:
-            newkey = key.replace('<DATE>', '20\d\d[01]\d[0123]\d')
+            newkey = key.replace('<DATE>', r'20\d\d[01]\d[0123]\d')
             self.destination_path_map[newkey] = pmd[key]
 
         # got_destination_info tells us whether we have got the file info from
