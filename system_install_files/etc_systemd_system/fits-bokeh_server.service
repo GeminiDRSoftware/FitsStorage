@@ -5,7 +5,7 @@ After=syslog.target network.target
 [Service]
 EnvironmentFile=/etc/systemd/system/fits-environment.txt
 User=fitsdata
-ExecStart=bokeh serve /opt/FitsStorage/monitoring_client --port 5100 --prefix bokeh --allow-websocket-origin=fits.hi.gemini.edu
+ExecStart=/opt/miniforge3/envs/fitsdata/bin/bokeh serve /opt/FitsStorage/monitoring_client --port 5100 --prefix bokeh --allow-websocket-origin=fits.hi.gemini.edu
 Restart=always
 # This will force the system to wait 10 seconds before respawning
 RestartSec=10
