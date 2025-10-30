@@ -112,14 +112,14 @@ try:
                             diskfile.filename)
                 continue
             logger.info("Copying %s to Glacier", diskfile.filename)
-            s3.copy(diskfile.filename, to_bucket=fsc.s3_glacier_bucket_name)
+            s3.copy(diskfile.keyname, to_bucket=fsc.s3_glacier_bucket_name)
             glacier = Glacier()
             glacier.filename = diskfile.filename
             glacier.path = diskfile.path
             glacier.md5 = diskfile.file_md5
             glacier.when_uploaded = datetime.datetime.utcnow()
             session.add(glacier)
-            session.commit()
+        session.commit()
 except Exception:
     logger.error("Exception in main loop.", exc_info=True)
 
