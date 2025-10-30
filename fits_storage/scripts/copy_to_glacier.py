@@ -7,7 +7,7 @@ from sqlalchemy import and_
 
 from fits_storage.db import sessionfactory
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.server.pidfile import PidFile, PidFileError
+from fits_storage.server.pidfile import PidFile
 
 from fits_storage.server.aws_s3 import Boto3Helper
 
@@ -26,6 +26,8 @@ FETCH_SIZE = 1000
 parser = argparse.ArgumentParser(description='Copy data to Glacier')
 parser.add_argument('--filepre', dest='filepre', action='store',
                     help="Select files with given filename prefix")
+parser.add_argument("--path", dest='path', action='store',
+                    help="Select file with given path (ie S3 prefix)")
 parser.add_argument('--daysold', dest='daysold', action='store', type=int,
                     default=14, help="Select files with a lastmod time more "
                                      "than N days ago. Note, defaults to 14."
@@ -67,12 +69,16 @@ try:
         # Find present diskfile versions that are simply not in glacier
         query = session.query(DiskFile).\
             outerjoin(Glacier, (and_(DiskFile.filename == Glacier.filename,
+                                     DiskFile.path == Glacier.path,
                                      DiskFile.file_md5 == Glacier.md5)))\
             .filter(DiskFile.present == True)\
             .filter(Glacier.id.is_(None))
 
         if args.filepre:
             query = query.filter(DiskFile.filename.startswith(args.filepre))
+
+        if args.path:
+            query = query.filter(DiskFile.path == args.path)
 
         if args.daysold:
             # Select files that are at least this many days old.
@@ -109,11 +115,12 @@ try:
             s3.copy(diskfile.filename, to_bucket=fsc.s3_glacier_bucket_name)
             glacier = Glacier()
             glacier.filename = diskfile.filename
+            glacier.path = diskfile.path
             glacier.md5 = diskfile.file_md5
             glacier.when_uploaded = datetime.datetime.utcnow()
             session.add(glacier)
-        session.commit()
-except PidFileError as e:
-    logger.error(str(e))
+            session.commit()
+except Exception:
+    logger.error("Exception in main loop.", exc_info=True)
 
 logger.info("***   copy_to_glacier.py - exiting at %s", datetime.datetime.now())

@@ -231,8 +231,8 @@ class CalibrationNIFS(Calibration):
 
         query = self.get_query() \
                 .observation_type('RONCHI') \
-                .match_descriptors(Header.central_wavelength,
-                                   Nifs.disperser)
+                .tolerance(central_wavelength=0.001) \
+                .match_descriptors(Nifs.disperser)
         return query.all(howmany)
 
     def telluric(self, processed=False, howmany=None):

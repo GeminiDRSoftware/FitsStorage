@@ -10,6 +10,7 @@ from fits_storage.db import sessionfactory
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.fulltextheader import FullTextHeader
 from fits_storage.core.orm.header import Header
+from fits_storage.server.orm.glacier import Glacier
 
 fsc = get_config()
 
@@ -33,6 +34,9 @@ if __name__ == "__main__":
                                            "filename prefix. Note - filename, "
                                            "not S3 keyname")
 
+    parser.add_argument("--filelike", action="store", dest="filelike",
+                        default=None, help="select filenames using this SQL like string")
+
     parser.add_argument("--tag", action="store", dest="tag", default=None,
                         help="Select files by processing tag")
 
@@ -40,6 +44,10 @@ if __name__ == "__main__":
                         default=None, help="Select files on current path."
                                            "Leave blank to specify files in"
                                            "root folder only")
+
+    parser.add_argument("--glacier", action="store_true", dest="glacier",
+                        help="Operate on glacier bucket")
+
 
     parser.add_argument("--move", action="store_true", dest="move",
                         default=False, help="move files and update database")
@@ -77,35 +85,68 @@ if __name__ == "__main__":
 
     if fsc.using_s3:
         from fits_storage.server.aws_s3 import Boto3Helper
-        s3 = Boto3Helper()
+        if options.glacier:
+            s3 = Boto3Helper(bucket_name=fsc.s3_glacier_bucket_name)
+        else:
+            s3 = Boto3Helper()
     else:
         logger.error("Not an S3 configuration")
         exit()
 
-    if not (options.tag or options.filepre):
-        logger.error("Must specify at least one of --tag or --filepre")
+    if not (options.tag or options.filepre or options.filelike):
+        logger.error("Must specify at least one of --tag or --filepre or --filelike")
+        exit()
+
+    if options.glacier and options.tag:
+        logger.error("Cannot search by tag on glacier.")
         exit()
 
     session = sessionfactory()
-    query = session.query(Header).join(DiskFile).filter(DiskFile.present==True)
 
-    if options.tag:
-        query = query.filter(Header.processing_tag==options.tag)
+    # Ugh. Have to do a completely different query for glacier
+    if options.glacier:
+        query = session.query(Glacier)
 
-    if options.currentpath is None:
-        query = query.filter(DiskFile.path=="")
+        if options.currentpath is None:
+            query = query.filter(Glacier.path=="")
+        else:
+            query = query.filter(Glacier.path==options.currentpath)
+
+        if options.filepre:
+            query = query.filter(Glacier.filename.startswith(options.filepre))
+
+        if options.filelike:
+            query = query.filter(Glacier.filename.like(options.filelike))
+
+        for glacier in query:
+            try:
+                moveorlist(glacier, move=options.move, dest=options.dest)
+                session.commit()
+            except Exception:
+                raise
     else:
-        query = query.filter(DiskFile.path==options.currentpath)
+        query = session.query(Header).join(DiskFile).filter(DiskFile.present==True)
 
-    if options.filepre:
-        query = query.filter(DiskFile.filename.startswith(options.filepre))
+        if options.tag:
+            query = query.filter(Header.processing_tag==options.tag)
 
-    for header in query:
-        try:
-            moveorlist(header.diskfile, move=options.move, dest=options.dest)
-            session.commit()
-        except Exception:
-            raise
+        if options.currentpath is None:
+            query = query.filter(DiskFile.path=="")
+        else:
+            query = query.filter(DiskFile.path==options.currentpath)
+
+        if options.filepre:
+            query = query.filter(DiskFile.filename.startswith(options.filepre))
+
+        if options.filelike:
+            query = query.filter(DiskFile.filename.like(options.filelike))
+
+        for header in query:
+            try:
+                moveorlist(header.diskfile, move=options.move, dest=options.dest)
+                session.commit()
+            except Exception:
+                raise
 
     logger.info("*** s3_rename_processed.py - exiting normally up at "
                 f"{datetime.datetime.now()}")
