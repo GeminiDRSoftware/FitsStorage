@@ -48,6 +48,8 @@ if __name__ == "__main__":
     parser.add_argument("--glacier", action="store_true", dest="glacier",
                         help="Operate on glacier bucket")
 
+    parser.add_argument("--autoglacier", action="store_true", dest="autoglacier",
+                        help="Attempt to automatically fix glacier files based on diskfile")
 
     parser.add_argument("--move", action="store_true", dest="move",
                         default=False, help="move files and update database")
@@ -85,7 +87,7 @@ if __name__ == "__main__":
 
     if fsc.using_s3:
         from fits_storage.server.aws_s3 import Boto3Helper
-        if options.glacier:
+        if options.glacier or options.autoglacier:
             s3 = Boto3Helper(bucket_name=fsc.s3_glacier_bucket_name)
         else:
             s3 = Boto3Helper()
@@ -93,18 +95,52 @@ if __name__ == "__main__":
         logger.error("Not an S3 configuration")
         exit()
 
-    if not (options.tag or options.filepre or options.filelike):
+    if not (options.tag or options.filepre or options.filelike or options.autoglacier):
         logger.error("Must specify at least one of --tag or --filepre or --filelike")
         exit()
 
-    if options.glacier and options.tag:
+    if (options.glacier or options.autoglacier) and options.tag:
         logger.error("Cannot search by tag on glacier.")
         exit()
 
     session = sessionfactory()
 
+    if options.autoglacier:
+        query = session.query(Glacier, DiskFile).select_from(Glacier, DiskFile)
+
+        # Match between Diskfile and Glacier on filename and (file) md5
+        query = query.filter(DiskFile.filename == Glacier.filename)
+        query = query.filter(DiskFile.file_md5 == Glacier.md5)
+
+        # Select only files in Glacier root
+        query = query.filter(Glacier.path == "")
+
+        # And Diskfiles not in root
+        query = query.filter(~DiskFile.path == "")
+
+        # Apply command line selection options.
+        # Currentpath is interpreted slightly different here
+        if options.currentpath:
+            query = query.filter(DiskFile.path==options.currentpath)
+
+        if options.filepre:
+            query = query.filter(Glacier.filename.startswith(options.filepre))
+
+        if options.filelike:
+            query = query.filter(Glacier.filename.like(options.filelike))
+
+        # Now loop through the results
+        for row in query:
+            gl = row.Glacier
+            df = row.DiskFile
+            try:
+                moveorlist(gl, move=options.move, dest=df.path)
+                session.commit()
+            except Exception:
+                raise
+
     # Ugh. Have to do a completely different query for glacier
-    if options.glacier:
+    elif options.glacier:
         query = session.query(Glacier)
 
         if options.currentpath is None:
