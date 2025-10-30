@@ -395,12 +395,12 @@ class CalibrationGNIRS(Calibration):
         query = (
             self.get_query()
                 .pinhole(processed)
-                # Must totally match: disperser, central_wavelength, camera, (only for cross dispersed mode?)
-                .match_descriptors(Header.central_wavelength,
-                                   Gnirs.disperser,
+                # Must match: disperser, central_wavelength, camera, (only for cross dispersed mode?)
+                .match_descriptors(Gnirs.disperser,
                                    Gnirs.camera,
                                    Gnirs.array_name)
-                # Absolute time separation must be within 1 year
+                .tolerance(central_wavelength=0.001)
+            # Absolute time separation must be within 1 year
                 .max_interval(days=365)
             )
         return query.all(howmany)
@@ -465,9 +465,9 @@ class CalibrationGNIRS(Calibration):
             howmany = 1 if processed else 8
 
         query = self.get_query().spectroscopy(True).OBJECT()
-        # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name
-        query = query.match_descriptors(Header.central_wavelength,
-                                        Header.spectroscopy,
+        # Must match: disperser, central_wavelength, focal_plane_mask, camera, filter_name
+        query = query.tolerance(central_wavelength=0.001)
+        query = query.match_descriptors(Header.spectroscopy,
                                         Gnirs.disperser,
                                         Gnirs.focal_plane_mask,
                                         Gnirs.camera,
@@ -518,9 +518,9 @@ class CalibrationGNIRS(Calibration):
             howmany = 1 if processed else 8
 
         query = self.get_query().spectroscopy(True).OBJECT()
-        # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name
-        query = query.match_descriptors(Header.central_wavelength,
-                                        Header.spectroscopy,
+        # Must match: disperser, central_wavelength, focal_plane_mask, camera, filter_name
+        query = query.tolerance(central_wavelength=0.001)
+        query = query.match_descriptors(Header.spectroscopy,
                                         Gnirs.disperser,
                                         Gnirs.focal_plane_mask,
                                         Gnirs.camera,
