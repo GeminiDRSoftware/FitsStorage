@@ -129,8 +129,7 @@ class Boto3Helper(object):
                 return key
 
     def delete_key(self, key):
-        # This is only used in the tests and does not fall back to the underlay
-        # bucket
+        # This does not fall back to the underlay bucket
         try:
             self.s3_client.delete_object(Bucket=self.b_name, Key=key)
             return True
