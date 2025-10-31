@@ -35,7 +35,7 @@ if __name__ == "__main__":
     parser.add_argument("--path", action="store", dest="path", default=None,
                         help="Look for duplicates with files in path")
 
-    parser.add_argument("--delete", action="store_true", dest="move",
+    parser.add_argument("--delete", action="store_true", dest="delete",
                         default=False, help="delete keys and update database")
 
     options = parser.parse_args()
@@ -97,8 +97,9 @@ if __name__ == "__main__":
     for gl in session.execute(stmt).scalars():
         try:
             deleteorlist(gl, delete=options.delete)
-            session.delete(gl)
-            session.commit()
+            if options.delete:
+                session.delete(gl)
+                session.commit()
         except Exception:
             raise
 
