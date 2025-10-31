@@ -109,9 +109,9 @@ try:
         for diskfile in query.yield_per(FETCH_SIZE):
             if args.dryrun:
                 logger.info("Dryrun - not actually copying %s to Glacier",
-                            diskfile.filename)
+                            diskfile.keyname)
                 continue
-            logger.info("Copying %s to Glacier", diskfile.filename)
+            logger.info("Copying %s to Glacier", diskfile.keyname)
             s3.copy(diskfile.keyname, to_bucket=fsc.s3_glacier_bucket_name)
             glacier = Glacier()
             glacier.filename = diskfile.filename
