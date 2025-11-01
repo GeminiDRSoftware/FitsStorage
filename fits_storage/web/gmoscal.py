@@ -244,7 +244,7 @@ def gmoscal(selection):
             select_from(join(join(Header, DiskFile), Gmos))
 
         # Fudge and add the selection criteria
-        selection = {}
+        selection = Selection()
         selection['canonical'] = True
         selection['observation_class'] = 'science'
         selection['observation_type'] = 'OBJECT'
