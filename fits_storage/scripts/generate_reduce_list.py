@@ -27,8 +27,9 @@ if __name__ == "__main__":
     parser.add_argument("--configfile", action="store", type=str,
                         help="Config file to use")
 
-    parser.add_argument("--daterange", action="store", type=str,
-                        help="Date Range, yyyymmdd-YYYYMMDD")
+    parser.add_argument("--section", action="store", type=str,
+                        help="Config file section to run, usually "
+                             "yyyymmdd-YYYYMMDD")
 
     parser.add_argument("--outfile", action="store", type=str,
                         help="File to append output to")
@@ -50,20 +51,6 @@ if __name__ == "__main__":
 
     rlconfig = ReduceListConfig(options.configfile, logger=logger)
 
-    # Parse the start and end dates
-    if options.daterange:
-        try:
-            start_string, end_string = options.daterange.split('-')
-            start = datetime.date.fromisoformat(start_string)
-            end = datetime.date.fromisoformat(end_string)
-        except Exception:
-            logger.error(f"Failed to parse daterange option: "
-                         f"{options.daterange}, Exiting", exc_info=True)
-            exit(3)
-    else:
-        start, end = rlconfig.startend()
-    logger.info(f"Start-End dates: {start} - {end}")
-
     fp = None
     if options.outfile:
         logger.info(f"Writing output lists to {options.outfile}")
@@ -74,37 +61,61 @@ if __name__ == "__main__":
                          exc_info=True)
             exit(5)
 
-    win_start = start
-    while win_start <= end:
+    if options.section:
+        sections = [options.section]
+    else:
+        sections = rlconfig.config.keys()
+    logger.debug(f"{sections=}")
 
+    for section in sections:
         # Load values from the appropriate config section
-        selections = rlconfig.instconfs(win_start)
-        ndays, stepdays, min, max = rlconfig.values(win_start)
+        config = rlconfig.config[section]
+        selections = rlconfig.instconfs(section)
+
+        # Make the configed values ints
+        ndays = int(config['ndays'])
+        stepdays = int(config['stepdays']) if config['stepdays'] else ndays
+        minnum = int(config['min'])
+        maxnum = int(config['max'])
+
+        # Make ndays and stepdays timedeltas.
+        # Correct for the fact that the ranges are inclusive here
+        ndays = datetime.timedelta(days=ndays-1)
+        stepdays = datetime.timedelta(days=stepdays)
+
+        logger.info(f"{section=} ndays={ndays.days} stepdays={stepdays.days}")
 
         for selection in selections:
-            allfiles = findfiles(selection, win_start, ndays, logger=logger)
-            if len(allfiles) < min:
-                logger.warning("Failed to find sufficient files for "
-                               f"instrument config {selection}")
-                continue
+            start = config['startdate']
+            while start < config['enddate']:
+                end =  min(start + ndays, config['enddate'])
+                actual_ndays = (end-start).days + 1
+                logger.debug(f"{selection=}, {start=}, {end=}")
 
-            filenames = allfiles[:max]
-            if filenames:
-                logger.info(f"{win_start} for {ndays.days} days, "
-                            f"{selection}: "
-                            f"{len(filenames)} - {filenames[0]}...")
-                if fp:
-                    if rlconfig.group():
-                        fp.write(f"# {win_start} grouped for {ndays.days} days, "
-                                 f"{selection}: {len(filenames)} files\n")
-                        fp.write(' '.join(filenames))
-                        fp.write('\n\n')
-                    else:
-                        fp.write(f"# {win_start} individually for {ndays.days} "
-                                 f"days, {selection}: {len(filenames)} files\n")
-                        fp.write('\n'.join(filenames))
-                        fp.write('\n')
-        win_start += stepdays
+                filenames = findfiles(selection, start, end, logger=logger)
+                if len(filenames) < minnum:
+                    logger.warning("Failed to find sufficient files for "
+                                   f"instrument config {selection}")
+
+                if len(filenames) > maxnum:
+                    logger.warning("Got more files than maxnum, truncating list")
+                    filenames = filenames[:maxnum]
+                if filenames:
+                    logger.info(f"{start} - {end} [{actual_ndays} days], "
+                                f"{selection}: "
+                                f"{len(filenames)} - {filenames[0]}...")
+                    if fp:
+                        if config.group:
+                            fp.write(f"# {start} - {end} [{actual_ndays} days] grouped, "
+                                     f"{selection}: {len(filenames)} files\n")
+                            fp.write(' '.join(filenames))
+                            fp.write('\n\n')
+                        else:
+                            fp.write(f"# {start} - {end} [{actual_ndays} days] "
+                                     f"{selection}: {len(filenames)} files\n")
+                            fp.write('\n'.join(filenames))
+                            fp.write('\n')
+                start += stepdays
 
     if fp:
         fp.close()
