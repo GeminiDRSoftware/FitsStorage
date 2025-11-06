@@ -140,9 +140,9 @@ with (session_scope() as session):
         sys.exit(1)
 
     # We use the FileOnTapeHelper class here which provides caching..
-    foth = FileOnTapeHelper(tapeserver=options.tapeserver, logger=logger)
+    foth = FileOnTapeHelper(tapeserver="http://"+options.tapeserver, logger=logger)
     # The same helper class helps with the archive check
-    foah = FileOnTapeHelper(archive="archive.gemini.edu", logger=logger)
+    foah = FileOnTapeHelper(archive="https://archive.gemini.edu", logger=logger)
 
     if options.filepre:
         logger.info("Pre-populating tape server results cache from filepre")

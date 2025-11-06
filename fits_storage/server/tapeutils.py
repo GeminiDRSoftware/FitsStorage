@@ -358,7 +358,7 @@ class FileOnTapeHelper(object):
         self.logger.debug(f"Querying {server} for {filepre}")
         self._queried.append(filepre)
         thing = "jsonfilelist/filepre=" if self.archive else "jsontapefile/"
-        url = f"http://{server}/{thing}{filepre}"
+        url = f"{server}/{thing}{filepre}"
 
         req = self.reqses.get(url)
         if req.status_code != http.HTTPStatus.OK:
