@@ -105,7 +105,7 @@ if __name__ == "__main__":
                                 f"{selection}: "
                                 f"{len(filenames)} - {filenames[0]}...")
                     if fp:
-                        if config.group:
+                        if bool(config['group']):
                             fp.write(f"# {start} - {end} [{actual_ndays} days] grouped, "
                                      f"{selection}: {len(filenames)} files\n")
                             fp.write(' '.join(filenames))
