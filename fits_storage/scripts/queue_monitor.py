@@ -26,7 +26,7 @@ parser.add_argument("--demon", action="store_true", dest="demon",
                     default=False,
                     help="Run as background demon, do not generate stdout")
 parser.add_argument("--minutes", action="store", dest="minutes", type=int,
-                    default=30, help="Number of minutes between queue samples")
+                    default=60, help="Number of minutes between queue samples")
 
 args = parser.parse_args()
 
