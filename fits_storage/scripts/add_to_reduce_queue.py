@@ -24,7 +24,7 @@ def memory_estimate(numpixlist):
     # Assume raw data becomes 12 bytes per pix: 4 data, 4 var, 2 dq, 2 objmask
     # Add one file for the reduced product. Assume 10% overhead / safety margin
     numpix = sum(numpixlist) + numpixlist[0] # For the reduced product
-    gb = 1.1 * 12 * numpix / 1E9
+    gb = 1.2 * 12 * numpix / 1E9
     return gb
 
 if __name__ == "__main__":
