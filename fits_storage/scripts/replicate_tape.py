@@ -66,12 +66,11 @@ if __name__ == "__main__":
 
     # Get a list of tapewrites on from tape, in order of filenum.
     # Do not require the tape to be active.
-    stmt = (select(TapeWrite).select_from(TapeWrite, Tape)
-            .where(TapeWrite.tape_id == Tape.id)
-            .where(TapeWrite.succeeded is True)
+    stmt = (select(TapeWrite).join(Tape)
+            .where(TapeWrite.succeeded == True)
             .where(Tape.id == fromtape.id)
             .order_by(TapeWrite.filenum))
-    tapewrites = session.execute(stmt).scalars()
+    tapewrites = session.execute(stmt).scalars().all()
     logger.info(f"Found {len(tapewrites)} tapewrites to copy")
 
     for tw in tapewrites:
@@ -83,17 +82,7 @@ if __name__ == "__main__":
         # Open the tarfile on the read tape
         fromtar = tarfile.open(name=fromtd.dev, mode='r|', bufsize=blksize)
 
-        # Create the tarfile on the write tape
-        logger.info(f"Creating tar archive on {totape.label} on {totd.dev}")
-        try:
-            totar = tarfile.open(name=totd.dev, mode='w|',
-                                 bufsize=blksize)
-        except:
-            logger.error("Exception opening tar destination archive, aborting",
-                         exc_info=True)
-            exit(1)
-
-        # Create tapewrite record
+        # Create tapewrite record.
         logger.debug(f"Creating TapeWrite record for tape {totape.label}...")
         ntw = TapeWrite()
         ntw.tape_id = totape.id
@@ -109,6 +98,16 @@ if __name__ == "__main__":
         session.commit()
         logger.debug("... TapeWrite id=%d, filenum=%d", (ntw.id, ntw.filenum))
 
+        # Create the tarfile on the write tape
+        logger.info(f"Creating tar archive on {totape.label} on {totd.dev}")
+        try:
+            totar = tarfile.open(name=totd.dev, mode='w|',
+                                 bufsize=blksize)
+        except:
+            logger.error("Exception opening tar destination archive, aborting",
+                         exc_info=True)
+            exit(1)
+            
         # Update totape record first/lastwrite
         logger.debug(f"Updating tape record for tape label {totape.label}")
         if totape.firstwrite is None:
