@@ -111,7 +111,7 @@ if __name__ == "__main__":
             .filter(TapeFile.md5 == TapeRead.md5)\
             .filter(Tape.label == tape.label)\
             .group_by(Tape).one()[0]
-        logger.info("Tape %s contains %.2f GB to read", (tape.label, s / 1.0E9))
+        logger.info(f"Tape %s contains %.2f GB to read", tape.label, float(s) / 1.0E9)
 
     if options.list_tapes:
         sys.exit(0)
@@ -243,7 +243,7 @@ if __name__ == "__main__":
 
             # Create the tarfile on the write tape
             logger.info("Creating tar archive on tape %s on drive %s",
-                        (totape.label, totd.dev))
+                        totape.label, totd.dev)
             try:
                 totar = tarfile.open(name=totd.dev, mode='w|',
                                      bufsize=blksize)
