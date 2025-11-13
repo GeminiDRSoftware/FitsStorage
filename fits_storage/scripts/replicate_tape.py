@@ -96,7 +96,7 @@ if __name__ == "__main__":
         ntw.tapedrive = totd.dev
         ntw.succeeded = False
         session.commit()
-        logger.debug("... TapeWrite id=%d, filenum=%d", (ntw.id, ntw.filenum))
+        logger.debug(f"... TapeWrite id={ntw.id}, filenum={ntw.filenum}")
 
         # Create the tarfile on the write tape
         logger.info(f"Creating tar archive on {totape.label} on {totd.dev}")
@@ -107,7 +107,7 @@ if __name__ == "__main__":
             logger.error("Exception opening tar destination archive, aborting",
                          exc_info=True)
             exit(1)
-            
+
         # Update totape record first/lastwrite
         logger.debug(f"Updating tape record for tape label {totape.label}")
         if totape.firstwrite is None:
@@ -120,6 +120,7 @@ if __name__ == "__main__":
 
         # Loop through the tar file
         for tarinfo in fromtar:
+            logger.info(f"Processing file {tarinfo.name}")
             # Get a file like object on the actual data
             flo = fromtar.extractfile(tarinfo)
 
