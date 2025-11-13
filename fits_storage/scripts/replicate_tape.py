@@ -57,9 +57,9 @@ if __name__ == "__main__":
     # Get the tape ORM instances
     try:
         stmt = select(Tape).where(Tape.label == fromlabel)
-        fromtape = session.execute(stmt).one()
+        fromtape = session.execute(stmt).scalars().one()
         stmt = select(Tape).where(Tape.label == tolabel)
-        totape = session.execute(stmt).one()
+        totape = session.execute(stmt).scalars().one()
     except NoResultFound:
         logger.error("Could not find one of the tapes in the database. Exiting")
         exit(1)
@@ -157,7 +157,7 @@ if __name__ == "__main__":
             stmt = (select(TapeFile)
                     .where(TapeFile.tapewrite_id == tw.id)
                     .where(TapeFile.filename == tarinfo.name))
-            tf = session.execute(stmt).one()
+            tf = session.execute(stmt).scalars().one()
 
             # Create a new tapefile record for the new copy in the new tapewrite
             # and add to DB
