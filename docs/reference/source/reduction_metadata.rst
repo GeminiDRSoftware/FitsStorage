@@ -349,14 +349,25 @@ value, we first search the database with no processing tag search constraints,
 to generate a list of processing tags relevant to the other search criteria
 given. This is the available tags list and is used to populate the processing
 tags pulldown in the search form with the search results. This allows the user
-to subsequently re-run the search with any applicable processing tag. We then
-look at the metadata of the available tags and generate a list of tags
-containing the highest priority tag for each domain, and exluding tags that are
-marked as "not published". This is the default tags list, and if the search is
-for the "default" processing tag, we include results from all the tags on this
-list.
+to subsequently re-run the search with any applicable processing tag.
 
-This means that by leaving the setting at "Default", users will see the highest
+We then look at the metadata of the available tags and generate a list of tags
+containing the highest priority tag(s) for each domain, and exluding tags that
+are marked as "not published". This is the default tags list, and if the search
+is for the "default" processing tag, we include results from all the tags on
+this list.
+
+Note that if there are several tags with the same domain and the same
+priority value, and that priority value is the maximum for that domain, they
+will all get included in the default tags list. This allows us to keep tags
+specific to a given set or batch of reduced data, but to include several of
+those tags in the default tag list. For example with a GMOS-N_IMAGING domain, we
+can have separate tags for twilight flats and science data, and if we regenerate
+a new version of the science data and want to keep the flats with it, we can
+simply adjust the priority of the flats to the same value as the new science
+reduction.
+
+In summary - by leaving the setting at "Default", users will see the highest
 priority, "published", reduced data applicable, and they'll get a list of all
 available tags in the pulldown if they want to search for a specific one.
 

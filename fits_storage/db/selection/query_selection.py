@@ -532,18 +532,15 @@ def filter(self, query, ignore_processing_tag=False):
                 # Generate the list of processing_tags to include. This involves
                 # a lookup on the processing_tags table
                 tags = default_processing_tags(self)
-                # If the processing tags list is empty, ignore it. This happens
-                # when the results include legacy processed data that is has no
-                # tag, or when the results only include raw data
-                if len(tags):
-                    # Search for data that is Raw, or has this tag. If there's
-                    # also a selection on processing, that will apply too.
-                    query = query.filter(or_(
-                        Header.processing=='Raw', Header.processing_tag.in_(tags)))
-                else:
-                    # Simply disregard. If there's a selection on processing,
-                    # that will apply regardless, no need to search on Raw here.
-                    pass
+                # Search for data that is Raw, or has one of the default tags.
+                # We can't just search on the tag or that will exclude raw data
+                # that doesn't have a tag. If there's also a selection on
+                # processing, that will apply too.
+                # If there are no default tags, no processed data will show up,
+                # which is correct behavior. If there is processed data with
+                # unpublished tags, the tags will be in the pulldown.
+                query = query.filter(or_(
+                    Header.processing=='Raw', Header.processing_tag.in_(tags)))
             else:
                 # Search for a specific processing tag
                 # Search for data that is Raw, or has this tag.

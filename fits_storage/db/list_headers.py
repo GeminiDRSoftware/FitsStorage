@@ -144,7 +144,7 @@ def default_processing_tags(selection, session=None):
     if session is None:
         session = get_context().session
 
-    # Get the available processing_tags. It may be stashed in the selction
+    # Get the available processing_tags. It may be stashed in the selection
     # object from a previous call
     if hasattr(selection, 'available_processing_tags'):
         available_tags = selection.available_processing_tags
@@ -160,7 +160,7 @@ def default_processing_tags(selection, session=None):
     # sure this is the long term solution. There will be a very small number of
     # records here, so there's no significant performance issue
 
-    # Only "published" tags should ever be the default, so don't include
+    # Only "published" tags should ever be in the default list, so don't include
     # priorities for unpublished tags in the maximum available priority
     # Get domain, max_priority pairs
     dmpquery = session.query(ProcessingTag.domain,
@@ -173,7 +173,7 @@ def default_processing_tags(selection, session=None):
     for (domain, maxpri) in dmpquery.all():
         # Bear in mind there could be multiple tags for this domain with the
         # same priority - include them all.
-        # Only "published" tags should ever be the default
+        # Only "published" tags should ever be in the default list
         dptags = session.query(ProcessingTag) \
             .filter(ProcessingTag.domain == domain) \
             .filter(ProcessingTag.priority == maxpri) \
