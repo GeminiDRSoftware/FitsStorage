@@ -629,6 +629,11 @@ class Reducer(object):
         dragons_config = cal_service.globalConf
         dragons_config.read_string(configstring)
 
+        # Instantiate the ProcessingLog record with initial values from the rqe
+        processinglog = ProcessingLog(self.rqe)
+        self.s.add(processinglog)
+        self.s.commit()
+
         # Start the log capture for the processing log at this point
         logcapture = io.StringIO()
         handler = logging.StreamHandler(stream=logcapture)
@@ -648,6 +653,13 @@ class Reducer(object):
         except Exception as e:
             self.logrqeerror(f"Exception instantiating Reduce(): {e}",
                              exc_info=True)
+            # Capture log and close down log capture
+            self.l.removeHandler(handler)
+            processinglog.end(len(self.reduced_files), self.rqe.failed)
+            # Add the captured log output and close the logcapture StringIO
+            processinglog.log = logcapture.getvalue()
+            logcapture.close()
+            self.s.commit()
             return
 
         # Set mode. It defaults to sq, but we need to over-ride to qa for the
@@ -680,11 +692,6 @@ class Reducer(object):
         # working dir so we can go back after
         pwd = os.getcwd()
         os.chdir(self.workingdir)
-
-        # Instantiate the ProcessingLog record with initial values from the rqe
-        processinglog = ProcessingLog(self.rqe)
-        self.s.add(processinglog)
-        self.s.commit()
 
         try:
             self.l.info("Calling DRAGONS Reduce.runr() in directory "
@@ -726,7 +733,13 @@ class Reducer(object):
         except Exception as e:
             self.logrqeerror(f"Exception in do_reduce, likely from "
                              f"DRAGONS Reduce.runr(): {e}", exc_info=True)
+            # Capture log and close down log capture
+            self.l.removeHandler(handler)
             processinglog.end(len(self.reduced_files), self.rqe.failed)
+            # Add the captured log output and close the logcapture StringIO
+            processinglog.log = logcapture.getvalue()
+            logcapture.close()
+            self.s.commit()
             os.chdir(pwd)
             return
 
