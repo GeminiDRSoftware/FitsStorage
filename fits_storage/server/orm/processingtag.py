@@ -29,4 +29,4 @@ class ProcessingTag(Base):
     def __repr__(self):
         return (f"Processing tag id: {self.id:3} - tag: {self.tag:20}, "
                 f"domain: {self.domain:16}, priority: {self.priority:4}, "
-                f"published: {self.published:1}")
+                f"published: {bool(self.published):5}")
