@@ -27,6 +27,6 @@ class ProcessingTag(Base):
         self.published = published
 
     def __repr__(self):
-        return (f"Processing tag id: {self.id} - tag: {self.tag}, "
-                f"domain: {self.domain}, priority: {self.priority}, "
-                f"published: {self.published}")
+        return (f"Processing tag id: {self.id:3} - tag: {self.tag:20}, "
+                f"domain: {self.domain:16}, priority: {self.priority:4}, "
+                f"published: {self.published:1}")
