@@ -80,6 +80,8 @@ if __name__ == "__main__":
         if options.published is not None:
             query = query.filter(ProcessingTag.published==options.published)
 
+        query = query.order_by(ProcessingTag.domain).order_by(ProcessingTag.priority)
+
         ptags = query.all()
         for ptag in ptags:
             logger.info(str(ptag))
