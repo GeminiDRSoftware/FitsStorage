@@ -3,7 +3,7 @@ which is  called ReduceQueueEntry as it represents an entry on the queue
 as opposed to the queue itself."""
 
 import socket
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.sql import func, desc
 from sqlalchemy.exc import IntegrityError
 
@@ -76,16 +76,14 @@ class ReduceQueue(Queue):
         There's a subtle but important difference between the reducequeue and
         the other queues - with the other queues we only need to lock the rows
         we are going to update, with reducequeue we need to lock everything,
-        because we need to prevent simultaneous pop queries over shooting the
-        memory constraint by being unaware that the otherone is about to set
-        a row to inprogress that wasn't in progres when it checked memory use.
-        That's a poor explanation, but basically there's a race condition.
-
-        We get around this by deliberately not putting a .limit(1) in the
-        select for update. This can and will lead to queues stalling when there
-        are many entries in the queue, but avoids overcomitting memory, which is
-        more important.
+        because we need to prevent simultaneous pop queries collectively
+        over-shooting the memory constraint. Without a global lock, simultaneous
+        'pop's can each pop and entry that by itself is within the memory
+        constraint, but collectively exceed it because each is unaware that the
+        otherone is about to set a row to inprogress that wasn't in progres when
+        it checked memory use.
         """
+
         # for brevity:
         session = self.session
         ormclass = self.ormclass
@@ -93,7 +91,7 @@ class ReduceQueue(Queue):
         with session.begin_nested():
 
             # Total GBs of entries not failed, in progress, and on this host.
-            # coalesce is used to return 0 rather than NULL if no results
+            # coalesce is used to return 0 rather than NULL if no results.
             subq = (
                 select(func.coalesce(func.sum(ReduceQueueEntry.mem_gb), 0.0))
                 .where(ReduceQueueEntry.fail_dt == ReduceQueueEntry.fail_dt_false)
@@ -108,10 +106,10 @@ class ReduceQueue(Queue):
                 .where(ReduceQueueEntry.fail_dt == ReduceQueueEntry.fail_dt_false)
                 .where(ReduceQueueEntry.mem_gb < (self.server_gbs - subq))
                 .order_by(desc(ReduceQueueEntry.sortkey))
-                #.limit(1)
-                .with_for_update(skip_locked=True)
+                .limit(1)
             )
 
+            session.execute(text("LOCK TABLE reducequeue IN ACCESS EXCLUSIVE MODE"))
             qentry = session.scalars(stmt).first()
 
             if qentry is not None:
@@ -126,5 +124,6 @@ class ReduceQueue(Queue):
                 # Got None from .first()
                 self.logger.debug(f"No item to pop on {ormclass.__tablename__}")
 
+        # This commit releases the ACCESS EXCLUSIVE lock.
         session.commit()
         return qentry
