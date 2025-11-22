@@ -63,6 +63,7 @@ from fits_storage.web.program import program_info, program_info_json
 from fits_storage.web.logcomments import log_comments
 from fits_storage.web.programs import programs
 from fits_storage.web.ingest_programs import ingest_programs
+from fits_storage.web.processingtags import processingtags
 
 from fits_storage.web.miscfiles import miscfiles
 
@@ -156,6 +157,7 @@ url_map = Map([
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     Rule('/jsonqastate/<selection:selection>', jsonqastate),
     Rule('/programsobserved/<selection:selection>', progsobserved),
+    Rule('/processingtags', processingtags),
     Rule('/sitemap.xml', sitemap),
 
     # File server and downloads
