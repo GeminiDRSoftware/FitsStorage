@@ -46,6 +46,9 @@ if __name__ == "__main__":
                         type=str2bool, default=None,
                         help="published [bool], for add, update, or list")
 
+    parser.add_argument("--description", action="store", dest="description",
+                        help="Description of this processing tag")
+
     parser.add_argument("--addtag", action="store", dest="addtag", type=str,
                         default=None, help="Add new tag. Must specify domain"
                                            "and priority")
@@ -108,16 +111,17 @@ if __name__ == "__main__":
         
         tag = ProcessingTag(tag=options.addtag, domain=options.domain,
                             priority=options.priority,
-                            published=options.published)
+                            published=options.published,
+                            description=options.description)
         session.add(tag)
         session.commit()
         logger.info(f"Added tag: {str(tag)}")
 
     if options.updatetag:
         if options.domain is None and options.priority is None \
-                and options.published is None:
+                and options.published is None and options.description is None:
             logger.error("Must specify at least one of domain, priority and/or"
-                         "published to update tag")
+                         "published and/or description to update tag")
             exit(1)
         query = session.query(ProcessingTag) \
             .filter(ProcessingTag.tag==options.updatetag)
@@ -145,6 +149,10 @@ if __name__ == "__main__":
         if options.published is not None:
             logger.info(f"Setting published to {options.published}")
             tag.published = options.published
+
+        if options.description is not None:
+            logger.info(f"Setting description to: {options.description}")
+            tag.description = options.description
 
         session.commit()
 
