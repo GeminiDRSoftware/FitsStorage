@@ -288,7 +288,6 @@ class CalibrationF2(Calibration):
             )
         return query.all(howmany)
 
-    @not_processed
     def telluric(self, processed=False, howmany=None):
         """
         Get matching telluric standards for an F2 observation.
@@ -310,12 +309,13 @@ class CalibrationF2(Calibration):
             list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
+
         howmany = howmany if howmany else 10
 
         query = (
             self.get_query()
                 # Telluric standards are OBJECT spectroscopy partnerCal frames
-                .telluric(OBJECT=True, partnerCal=True)
+                .telluric(OBJECT=True, partnerCal=True, processed=processed)
                 .match_descriptors(*CalibrationF2.common_descriptors())
                 .tolerance(central_wavelength=0.001)
                 # Absolute time separation must be within 24 hours of the science
