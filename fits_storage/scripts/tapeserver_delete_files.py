@@ -19,6 +19,8 @@ parser.add_option("--filecon", action="store", type="string", dest="filecon",
                   help="Filename contains to operate on")
 parser.add_option("--filelike", action="store", type="string", dest="filelike",
                   help="Filename like operator to operate on")
+parser.add_option("--path", action="store", type="string", dest="path",
+                  help="Operate on files at this path in the storage root")
 parser.add_option("--tapeset", action="append", type="int", dest="tapeset",
                   help="Tape set number to check file is on. "
                        "Can be given multiple times")
@@ -55,6 +57,8 @@ with session_scope() as session:
         query = query.filter(DiskFile.filename.startswith(options.filepre))
     if options.filelike:
         query = query.filter(DiskFile.filename.like(options.filelike))
+    if options.path is not None:
+        query = query.filter(DiskFile.path==options.path)
     if options.maxnum:
         query = query.limit(options.maxnum)
     cnt = query.count()
