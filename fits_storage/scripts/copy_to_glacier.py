@@ -101,6 +101,9 @@ try:
             query = query.filter(DiskFile.lastmod < maxdate)
             query = query.filter(DiskFile.lastmod > mindate)
 
+        # Order by lastmod (oldest first)
+        query = query.order_by(DiskFile.lastmod)
+
         if args.limit:
             query = query.limit(args.limit)
 
