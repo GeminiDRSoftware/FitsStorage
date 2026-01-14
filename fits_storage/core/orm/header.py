@@ -2,7 +2,7 @@ from sqlalchemy import Column, ForeignKey, Enum, Index, desc, nullslast
 from sqlalchemy import Integer, BigInteger, Text, DateTime, Date, Time, \
     Boolean, Numeric
 
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, synonym
 
 from . import Base
 
@@ -113,6 +113,8 @@ class Header(Base):
     reduction = Column(REDUCTION_STATE_ENUM, index=True)
     site_monitoring = Column(Boolean)
     types = Column(Text)
+    # Deprecate types in favor of tags at some point
+    tags = synonym(types)
     phot_standard = Column(Boolean)
     proprietary_coordinates = Column(Boolean)
     pre_image = Column(Boolean)
