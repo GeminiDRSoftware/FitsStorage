@@ -6,6 +6,7 @@ from fits_storage.core.orm.header import Header
 from fits_storage.cal.orm.f2 import F2
 from .calibration import Calibration, not_processed
 
+from sqlalchemy import or_
 
 class CalibrationF2(Calibration):
     """
@@ -58,8 +59,11 @@ class CalibrationF2(Calibration):
             self.applicable.append('processed_flat')
             self.applicable.append('arc')
             # And if they're science frames, they require a telluric
+            # and a standard
             if self.descriptors['observation_class'] == 'science':
                 self.applicable.append('telluric')
+                self.applicable.append('standard')
+
 
         # FLAT frames require DARKs
         if self.descriptors['observation_type'] == 'FLAT':
@@ -288,20 +292,18 @@ class CalibrationF2(Calibration):
             )
         return query.all(howmany)
 
-    @not_processed
     def telluric(self, processed=False, howmany=None):
         """
         Get matching telluric standards for an F2 observation.
 
-        This searches for telluric standards that are `OBJECT` s and `partnerCal`, matching the
-        F2 :meth:`fits_storage.cal.calibration_f2.CalibrationF2.common_descriptors` within 0.001
-        `central_wavelength` and within a day
+        Search for telluric standards for F2.
+        Processed telluric standards must have the TELLURIC astrodata tag
 
         Parameters
         ----------
 
         processed : bool
-            Query for telluric standards, or not
+            Query for processed telluric standards, as opposed to Raw data
         howmany : int, defaults to 10
             How many results to return, or 10 if `None`
 
@@ -309,17 +311,71 @@ class CalibrationF2(Calibration):
         -------
             list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
+
         # Default number to associate
         howmany = howmany if howmany else 10
 
-        query = (
-            self.get_query()
-                # Telluric standards are OBJECT spectroscopy partnerCal frames
-                .telluric(OBJECT=True, partnerCal=True)
-                .match_descriptors(*CalibrationF2.common_descriptors())
-                .tolerance(central_wavelength=0.001)
-                # Absolute time separation must be within 24 hours of the science
-                .max_interval(days=1)
-            )
+        # Telluric standards are OBJECT spectroscopy frames.
+        query = self.get_query().OBJECT().spectroscopy(True)\
+        .match_descriptors(*CalibrationF2.common_descriptors())\
+        .tolerance(central_wavelength=0.001)
+
+        # Processed tellurics must have the TELLURIC tag. Raw must be
+        # partnerCal or progCal.
+        if processed:
+            query = query.filter(Header.types.contains('TELLURIC'))
+        else:
+            query = query.raw().filter(
+                or_(Header.observation_class == 'partnerCal',
+                    Header.observation_class == 'progCal'))
+
+
+        # Absolute time separation must be within 24 hours of the science
+        query = query.max_interval(days=1)
+
+        return query.all(howmany)
+
+    def standard(self, processed=False, howmany=None):
+        """
+        Search for spectroscopic standards for an F2 observation.
+
+        Processed standards must have the astrodata STANDARD tag
+
+        The time limit is deliberately larger than for a telluric, as this is
+        calibrating flux (ie throughput) rather than the immediate atmospheric
+        characteristics.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Query for processed standards, as opposed to Raw data
+        howmany : int, defaults to 10
+            How many results to return, or 10 if `None`
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
+
+        # Default number to associate
+        howmany = howmany if howmany else 10
+
+        # Standards are OBJECT spectroscopy frames.
+        query = self.get_query().OBJECT().spectroscopy(True) \
+            .match_descriptors(*CalibrationF2.common_descriptors()) \
+            .tolerance(central_wavelength=0.001)
+
+        # Processed standards must have the STANDARD tag. Raw must be
+        # partnerCal or progCal.
+        if processed:
+            query = query.filter(Header.types.contains('STANDARD'))
+        else:
+            query = query.raw().filter(
+                or_(Header.observation_class == 'partnerCal',
+                    Header.observation_class == 'progCal'))
+
+        # Absolute time separation must be within 90 days of the science
+        query = query.max_interval(days=90)
 
         return query.all(howmany)
