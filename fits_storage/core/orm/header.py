@@ -118,13 +118,16 @@ class Header(Base):
     phot_standard = Column(Boolean)
     proprietary_coordinates = Column(Boolean)
     pre_image = Column(Boolean)
-    numpix = Column(Integer)
 
     if not fsc.using_sqlite:
         __table__args__ = (Index('ix_header_ut_datetime_desc_nullslast',
                                  nullslast(desc(ut_datetime))))
 
     if fsc.is_server:
+        # Numpix column is only relevant to servers. For 3.6 at least, we don't
+        # add it in the general case to preserve db compatability for dragons.
+        numpix = Column(Integer)
+
         # Note, we don't define ObslogComment.data_label to be a foreign key to
         # Header.data_label as that would prevent us ingesting and storing
         # obslog comments for which a header entry does not exist (yet), which
@@ -278,7 +281,9 @@ class Header(Base):
         self.gcal_lamp = parser.gcal_lamp()
         self.reduction = parser.reduction()
         self.pre_image = parser.pre_image()
-        self.numpix = parser.numpix()
+
+        if fsc.is_server:
+            self.numpix = parser.numpix()
 
         # Get the types list
         self.types = str(diskfile.ad_object.tags) \
