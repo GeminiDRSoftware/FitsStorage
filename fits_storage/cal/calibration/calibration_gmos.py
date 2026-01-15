@@ -794,7 +794,7 @@ class CalibrationGMOS(Calibration):
         return (
             self.get_query()
                 # They are OBJECT imaging partnerCal frames taken from CAL program IDs
-                .photometric_standard(OBJECT=True, partnerCal=True)
+                .OBJECT().partnerCal()
                 .add_filters(Header.program_id.like('G_-CAL%'))
                 .match_descriptors(Header.instrument,
                                    Gmos.filter_name)
