@@ -283,7 +283,7 @@ class CalibrationF2(Calibration):
         query = (
             self.get_query()
                 # Photometric standards are OBJECT imaging partnerCal frames
-                .photometric_standard(OBJECT=True, partnerCal=True)
+                .OBJECT().partnerCal()
                 .match_descriptors(F2.filter_name,
                                    F2.lyot_stop)
                 # Absolute time separation must be within 24 hours of the

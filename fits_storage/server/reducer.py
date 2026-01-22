@@ -694,6 +694,8 @@ class Reducer(object):
         os.chdir(self.workingdir)
 
         try:
+            # If we're not debundling, this is *the* Reduce call. If we are
+            # debundling, this is the debundle and the main Reduce call follows.
             self.l.info("Calling DRAGONS Reduce.runr() in directory "
                         f"{self.workingdir} with recipe {reduce.recipename}")
             reduce.runr()
@@ -720,6 +722,27 @@ class Reducer(object):
                     reduce.files = [input_file]
                     reduce._output_filenames = []
                     self.l.info("Debundle INDIVIDUAL - Calling DRAGONS "
+                                f"Reduce.runr() in directory {self.workingdir} "
+                                f"with recipe {reduce.recipename} "
+                                f"on {reduce.files}")
+                    reduce.runr()
+                    self.reduced_files.extend(reduce.output_filenames)
+            elif self.rqe.debundle == 'GHOST':
+                self.reduced_files = []
+                reduce.recipename = self.rqe.recipe if self.rqe.recipe \
+                    else "_default"
+                # Sort the output filenames into red, blue and slit lists
+                dict_of_lists = {'red': [], 'blue': [], 'slit': []}
+                for filename in reduce.output_filenames:
+                    for camera in ('red', 'blue', 'slit'):
+                        thing = '_' + camera
+                        if thing in filename:
+                            dict_of_lists[camera].append(filename)
+                # Call reduce on each of the lists
+                for camera in ('red', 'blue', 'slit'):
+                    reduce.files = dict_of_lists[camera]
+                    reduce._output_filenames = []
+                    self.l.info("Debundle GHOST - Calling DRAGONS "
                                 f"Reduce.runr() in directory {self.workingdir} "
                                 f"with recipe {reduce.recipename} "
                                 f"on {reduce.files}")

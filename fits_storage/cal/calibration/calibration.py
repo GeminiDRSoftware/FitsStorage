@@ -468,37 +468,6 @@ class CalQuery(object):
         """
         return self.raw_or_processed('PINHOLE', processed)
 
-    def photometric_standard(self, processed=False, **kw):
-        """
-        Filter: when `processed` is ``True`` this works as a shorthand for
-        ``reduction('PROCESSED_PHOTSTANDARD')``.
-
-        When not `processed`, it is equivalent to taking all the keyword
-        arguments' names, using them to obtain custom property-name-based
-        filters, and chaining them, like in this example:
-        ::
-
-               photometric_standard(OBJECT=True, partnerCal=True)
-
-        is a shorthand for:
-        ::
-
-               OBJECT().partnerCal()
-
-        Note that the values for the arguments are discarded, but we still
-        need to provide something to be able to pass keyword arguments
-
-        """
-        # NOTE: PROCESSED_PHOTSTANDARDs are not used anywhere; this is an
-        # advance...
-        if processed:
-            return self.reduction('PROCESSED_PHOTSTANDARD')
-        else:
-            ret = self.raw().spectroscopy(False)
-            for key in kw:
-                ret = getattr(self, key)()
-            return ret
-
     def telluric(self, processed=False, **kw):
         """
         Filter: when `processed` is ``True`` this works as a shorthand for
