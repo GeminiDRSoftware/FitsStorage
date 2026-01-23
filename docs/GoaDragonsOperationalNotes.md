@@ -15,3 +15,17 @@ https://archive.gemini.edu/monitoring/checkBias/BIAS/DayCal/Raw/GHOST/1x1/202512
 
 ## Set IMQA example
 `set-imqa.py --server cpofits-lv1 --selection=RAW/Raw/GMOS-S/low/slow/centralspectrum/dayCal/BIAS/filepre=S2024/UndefinedQA --pass`
+
+# GHOST processing:
+
+Use debundle = 'GHOST' for all 3 arms, 'GHOST-SLIT' to only process the slit arm and 'GHOST-REDBLUE' to only process the red and blue arm files.
+This is needed because with the FLATs, the slit is reduced to make a slitflat, which is used in the reduction of the red/blue arm flats, so the slitflat
+has to have been ingested so that it will associate when the redblue are processed. This isn't ideal as when automatically queueing files for reduction, there's
+currently no automatic way to know whether the slitflat has processed, transferred and ingested before queueing the redblue etc.
+
+## GHOST BIAS processing
+`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST --tag GHOST-1 --selection /canonical/GHOST/dayCal/BIAS/Raw/RAW/notengineering/Pass/filepre=S202512`
+
+## GHOST FLAT processing
+`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-1 --selection /canonical/GHOST/dayCal/BIAS/Raw/RAW/notengineering/Pass/filepre=S202512`
+`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-REDBLUE --tag GHOST-1 --selection /canonical/GHOST/dayCal/BIAS/Raw/RAW/notengineering/Pass/filepre=S202512`

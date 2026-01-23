@@ -727,19 +727,26 @@ class Reducer(object):
                                 f"on {reduce.files}")
                     reduce.runr()
                     self.reduced_files.extend(reduce.output_filenames)
-            elif self.rqe.debundle == 'GHOST':
+            elif self.rqe.debundle.startswith('GHOST'):
                 self.reduced_files = []
                 reduce.recipename = self.rqe.recipe if self.rqe.recipe \
                     else "_default"
-                # Sort the output filenames into red, blue and slit lists
+                # Which arms do we want?
+                if self.rqe.debundle == 'GHOST-SLIT':
+                    cameras = ['slit']
+                elif self.rqe.debundle == 'GHOST-REDBLUE':
+                    cameras = ['red', 'blue']
+                else:
+                    cameras = ['slit', 'red', 'blue']
+                # Sort the output filenames into desired lists
                 dict_of_lists = {'red': [], 'blue': [], 'slit': []}
                 for filename in reduce.output_filenames:
-                    for camera in ('red', 'blue', 'slit'):
+                    for camera in cameras:
                         thing = '_' + camera
                         if thing in filename:
                             dict_of_lists[camera].append(filename)
                 # Call reduce on each of the lists
-                for camera in ('red', 'blue', 'slit'):
+                for camera in cameras:
                     reduce.files = dict_of_lists[camera]
                     reduce._output_filenames = []
                     self.l.info("Debundle GHOST - Calling DRAGONS "
