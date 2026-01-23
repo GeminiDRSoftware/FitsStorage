@@ -93,7 +93,7 @@ if __name__ == "__main__":
                 try:
                     # Request a queue entry. The returned entry is marked
                     # as inprogress and committed to the session.
-                    rqe = reduce_queue.pop()
+                    rqe = reduce_queue.pop(logger=logger)
 
                     if rqe is None:
                         if options.empty:
