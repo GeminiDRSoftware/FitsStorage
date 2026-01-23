@@ -3,6 +3,7 @@ which is  called ReduceQueueEntry as it represents an entry on the queue
 as opposed to the queue itself."""
 
 import socket
+import time
 from sqlalchemy import select, text
 from sqlalchemy.sql import func, desc
 from sqlalchemy.exc import IntegrityError
@@ -66,7 +67,7 @@ class ReduceQueue(Queue):
             self.session.rollback()
             return None
 
-    def pop(self):
+    def pop(self, logger=None):
         """
         Pop an entry from the queue. See the superclass version for more info
 
@@ -109,7 +110,9 @@ class ReduceQueue(Queue):
                 .limit(1)
             )
 
+            requested_ns = time.monotonic_ns()
             session.execute(text("LOCK TABLE reducequeue IN ACCESS EXCLUSIVE MODE"))
+            got_ns = time.monotonic_ns()
             qentry = session.scalars(stmt).first()
 
             if qentry is not None:
@@ -126,4 +129,9 @@ class ReduceQueue(Queue):
 
         # This commit releases the ACCESS EXCLUSIVE lock.
         session.commit()
+        released_ns = time.monotonic_ns()
+        if logger:
+            waiting_ms = (got_ns - requested_ns) * 1E6
+            held_ms = (released_ns - got_ns) * 1E6
+            logger.info(f"PopRQ: ms waiting for lock: {waiting_ms}, ms held lock: {held_ms}")
         return qentry
