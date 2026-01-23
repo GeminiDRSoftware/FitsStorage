@@ -13,7 +13,8 @@ from .ormqueuemixin import OrmQueueMixin
 
 from fits_storage.config import get_config
 
-debundle_options = ['INDIVIDUAL', 'ALL', 'GHOST', 'IGRINS-2']
+debundle_options = ['INDIVIDUAL', 'ALL', 'GHOST', 'GHOST-SLIT', 'GHOST-REDBLUE',
+                    'IGRINS-2']
 DEBUNDLE_ENUM = Enum(*debundle_options, name='debundle_options')
 
 class ReduceQueueEntry(OrmQueueMixin, Base):
