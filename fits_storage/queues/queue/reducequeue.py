@@ -131,7 +131,7 @@ class ReduceQueue(Queue):
         session.commit()
         released_ns = time.monotonic_ns()
         if logger:
-            waiting_ms = (got_ns - requested_ns) * 1E6
-            held_ms = (released_ns - got_ns) * 1E6
+            waiting_ms = (got_ns - requested_ns) / 1E6
+            held_ms = (released_ns - got_ns) / 1E6
             logger.info(f"PopRQ: ms waiting for lock: {waiting_ms}, ms held lock: {held_ms}")
         return qentry
