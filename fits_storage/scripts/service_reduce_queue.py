@@ -95,6 +95,15 @@ if __name__ == "__main__":
                     # as inprogress and committed to the session.
                     rqe = reduce_queue.pop(logger=logger)
 
+                    # There's a subtle gotcha in that with sqlalchemy, almost
+                    # any access to the data values of an ORM instance will
+                    # start a transaction and until that transaction ends
+                    # (ie COMMIT;s) we cannot get an ACCESS EXCLUSIVE lock to
+                    # pop another queue entruy (in any process). So in all the
+                    # reducequeue and reducer code, we need to be diligent about
+                    # doing a session.commit() after we are done accessing
+                    # the reducequeue instance, even if we didn't modify it.
+
                     if rqe is None:
                         if options.empty:
                             logger.info("Nothing on queue and "
@@ -108,12 +117,11 @@ if __name__ == "__main__":
                     if options.oneshot:
                         loop = False
 
-
                     logger.info("Reducing rqe id %s - %s... [%d] - (%d on "
                                 "queue)" % (rqe.id, rqe.filenames[0],
                                             len(rqe.filenames),
                                             reduce_queue.length()))
-
+                    session.commit()  # See note above
 
                     # Go ahead and initiate reduction. At this point, rqe is
                     # marked as inprogress and is committed to the database.

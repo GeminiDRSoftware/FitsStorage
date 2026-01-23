@@ -83,6 +83,14 @@ class ReduceQueue(Queue):
         constraint, but collectively exceed it because each is unaware that the
         otherone is about to set a row to inprogress that wasn't in progres when
         it checked memory use.
+
+        There's a subtle gotcha with this in that with sqlalchemy, almost any
+        access to the data values of an ORM instance will start a transaction -
+        ie "BEGIN; SELECT blah.* from blah where id=..." and until that
+        transaction ends (ie COMMIT;s) we cannot get an ACCESS EXCLUSIVE lock
+        on the table. So in all the reducequeue and reducer code, we need to
+        be diligent about doing a session.commit() after we are done accessing
+        elements of the reducequeue instance, even if we didn't modify them.
         """
 
         # for brevity:
@@ -133,5 +141,5 @@ class ReduceQueue(Queue):
         if logger:
             waiting_ms = (got_ns - requested_ns) / 1E6
             held_ms = (released_ns - got_ns) / 1E6
-            logger.info(f"PopRQ: ms waiting for lock: {waiting_ms}, ms held lock: {held_ms}")
+            logger.debug(f"PopRQ: waiting for lock: {waiting_ms} ms, held lock: {held_ms} ms")
         return qentry

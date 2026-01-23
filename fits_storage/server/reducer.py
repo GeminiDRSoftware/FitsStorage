@@ -123,27 +123,45 @@ class Reducer(object):
         """
         self.validate()
 
+        # There's a subtle gotcha in that with sqlalchemy, almost
+        # any access to the data values of an ORM instance will
+        # start a transaction and until that transaction ends
+        # (ie COMMIT;s) we cannot get an ACCESS EXCLUSIVE lock to
+        # pop another queue entruy (in any process). So in all the
+        # reducequeue and reducer code, we need to be diligent about
+        # doing a session.commit() after we are done accessing
+        # the reducequeue instance, even if we didn't modify it.
+
+
         if not self.rqe.failed:
+            self.s.commit()  # Ensure transaction on rqe is closed
             self.makeworkingdir()
 
         if not self.rqe.failed:
+            self.s.commit()  # Ensure transaction on rqe is closed
             self.getrawfiles()
 
         if not self.rqe.failed:
+            self.s.commit()  # Ensure transaction on rqe is closed
             self.call_reduce()
 
         if not self.rqe.failed:
+            self.s.commit()  # Ensure transaction on rqe is closed
             self.set_reduction_metadata()
 
         if not self.rqe.failed:
+            self.s.commit()  # Ensure transaction on rqe is closed
             if self.rqe.capture_files:
+                self.s.commit()  # Ensure transaction on rqe is closed
                 self.capture_reduced_files()
             else:
                 self.l.info("Not capturing Output files from this processing "
                             "run")
 
         if not self.rqe.failed:
+            self.s.commit()  # Ensure transaction on rqe is closed
             if self.rqe.capture_monitoring:
+                self.s.commit()  # Ensure transaction on rqe is closed
                 self.capture_monitoring()
             else:
                 self.l.info("Not capturing monitoring values from this "
@@ -151,16 +169,19 @@ class Reducer(object):
 
         if self.nocleanup or (self.fsc.fits_system_status == 'development'
                               and self.rqe.failed):
+            self.s.commit()  # Ensure transaction on rqe is closed
             self.l.warning("Not cleaning up working directory")
         else:
             self.cleanup()
 
         if self.rqe.failed:
+            self.s.commit()  # Ensure transaction on rqe is closed
             return False
 
         # Yay. If we got here, we successfully reduced the data.
         self.l.debug("Deleting competed rqe id %d", self.rqe.id)
         self.s.delete(self.rqe)
+        self.s.commit()
 
         # Delete any equivlent rqe entries that are marked as failed
         failed_rqes = self.s.query(ReduceQueueEntry) \
@@ -189,10 +210,11 @@ class Reducer(object):
 
         gc.collect()
         rss = psutil.Process().memory_info().rss
-        # 400000000 (400MB) seems typical on linux, python 3.12, once things
+        rss /= 1E6
+        # 400 (MB) seems typical on linux, python 3.12, once things
         # are underway.
-        if rss > 600000000:
-            self.l.error(f'Reducer memory footprint excessive: {rss} bytes.')
+        if rss > 600:
+            self.l.error(f'Reducer memory footprint excessive: {rss} MB.')
             self.l.error('Raising ReducerMemoryLeak to trigger restart')
             raise ReducerMemoryLeak
 
@@ -217,6 +239,8 @@ class Reducer(object):
         if not self.rqe.tag:
             self.logrqeerror("Reducer Validation failed: No Processing Tag "
                              "value")
+
+        self.s.commit()  # Ensure transaction on rqe is closed
 
         # Check upload_staging_dir is configured and exists as we need it to
         # capture the reduced products.
@@ -243,6 +267,7 @@ class Reducer(object):
             return
 
         self.workingdir = os.path.join(self.reduce_dir, str(self.rqe.id))
+        self.s.commit()  # Ensure transaction on rqe is closed
 
         if os.path.exists(self.workingdir):
             self.logrqeerror(f"Reduce Working directory for this reduce queue"
@@ -267,7 +292,10 @@ class Reducer(object):
 
         Set self.rqe.failed via logrqeerror if fails.
         """
-        for filename in self.rqe.filenames:
+        filenames = self.rqe.filenames
+        self.s.commit()  # Ensure transaction on rqe is closed
+
+        for filename in filenames:
             possible_filenames = [filename, filename+'.bz2']
             query = self.s.query(DiskFile).filter(DiskFile.present == True)\
                 .filter(DiskFile.filename.in_(possible_filenames))
@@ -410,6 +438,7 @@ class Reducer(object):
                 hdr['PROCITNT'] = self.rqe.intent
                 hdr['PROCINBY'] = self.rqe.initiatedby
                 hdr['PROCTAG'] = self.rqe.tag
+                self.s.commit()  # Ensure transaction on rqe is closed
 
                 for kw in ['PROCSOFT', 'PROCSVER', 'PROCMODE', 'PROCITNT',
                            'PROCINBY', 'PROCTAG']:
@@ -440,6 +469,7 @@ class Reducer(object):
                 src = os.path.join(self.workingdir, filename)
                 dstpath = os.path.join(self.fsc.upload_staging_dir,
                                        self.rqe.tag)
+                self.s.commit()  # Ensure transaction on rqe is closed
                 dst = os.path.join(dstpath, filename)
                 self.l.info(f"Copying {src} to {dst}")
                 try:
@@ -459,6 +489,8 @@ class Reducer(object):
                                               "fileuploadlog_id": None})
 
                 foq.add(fo_req, filename=filename, response_required=False)
+                self.s.commit()  # Ensure transaction on rqe is closed
+
 
 
     def export_reduced_file(self, filename):
@@ -478,6 +510,8 @@ class Reducer(object):
 
             # Construct upload URL.
             dst = os.path.join(self.rqe.tag, destination_filename)
+            self.s.commit()  # Ensure transaction on rqe is closed
+
             url = f"{self.upload_url}/{dst}"
             self.l.info(f"Transferring file {filename} to {url}")
 
@@ -543,16 +577,19 @@ class Reducer(object):
         for filename in self.reduced_files:
             self.l.debug(f"Capturing Monitoring values from {filename}")
 
+            recipe = self.rqe.recipe
+            self.s.commit()  # Ensure transaction on rqe is closed
+
             try:
                 fpfn = os.path.join(self.workingdir, filename)
                 ad = astrodata.open(fpfn)
-                keywords = recipe_keywords[self.rqe.recipe]
+                keywords = recipe_keywords[recipe]
                 if len(keywords) == 0:
                     self.l.warning(f"No keywords to capture for {filename}")
                 for slice in ad:
                     for keyword in keywords:
                         mon = Monitoring(slice)
-                        mon.recipe = self.rqe.recipe
+                        mon.recipe = recipe
                         mon.keyword = keyword
                         mon.label = slice.amp_read_area()
                         mon.header_id = self.header_id
@@ -656,6 +693,7 @@ class Reducer(object):
             # Capture log and close down log capture
             self.l.removeHandler(handler)
             processinglog.end(len(self.reduced_files), self.rqe.failed)
+            self.s.commit()  # Ensure transaction on rqe is closed
             # Add the captured log output and close the logcapture StringIO
             processinglog.log = logcapture.getvalue()
             logcapture.close()
@@ -693,6 +731,10 @@ class Reducer(object):
         pwd = os.getcwd()
         os.chdir(self.workingdir)
 
+        debundle = self.rqe.debundle
+        recipe = self.rqe.recipe
+        self.s.commit()  # Ensure transaction on rqe is closed
+
         try:
             # If we're not debundling, this is *the* Reduce call. If we are
             # debundling, this is the debundle and the main Reduce call follows.
@@ -701,23 +743,21 @@ class Reducer(object):
             reduce.runr()
             self.reduced_files = reduce.output_filenames
             # If we're debundling, need to handle further calls to reduce here
-            if self.rqe.debundle == 'ALL':
+            if debundle == 'ALL':
                 self.reduced_files = []
                 reduce.files = reduce.output_filenames
                 reduce._output_filenames = []
-                reduce.recipename = self.rqe.recipe if self.rqe.recipe \
-                    else "_default"
+                reduce.recipename = recipe if recipe else "_default"
                 self.l.info("Debundle ALL - Calling DRAGONS Reduce.runr() in "
                             f"directory {self.workingdir} "
                             f"with recipe {reduce.recipename} "
                             f"on: {reduce.files}")
                 reduce.runr()
                 self.reduced_files = reduce.output_filenames
-            elif self.rqe.debundle == 'INDIVIDUAL':
+            elif debundle == 'INDIVIDUAL':
                 self.reduced_files = []
                 input_files = reduce.output_filenames
-                reduce.recipename = self.rqe.recipe if self.rqe.recipe \
-                    else "_default"
+                reduce.recipename = recipe if recipe else "_default"
                 for input_file in input_files:
                     reduce.files = [input_file]
                     reduce._output_filenames = []
@@ -727,14 +767,13 @@ class Reducer(object):
                                 f"on {reduce.files}")
                     reduce.runr()
                     self.reduced_files.extend(reduce.output_filenames)
-            elif self.rqe.debundle.startswith('GHOST'):
+            elif debundle and debundle.startswith('GHOST'):
                 self.reduced_files = []
-                reduce.recipename = self.rqe.recipe if self.rqe.recipe \
-                    else "_default"
+                reduce.recipename = recipe if recipe else "_default"
                 # Which arms do we want?
-                if self.rqe.debundle == 'GHOST-SLIT':
+                if debundle == 'GHOST-SLIT':
                     cameras = ['slit']
-                elif self.rqe.debundle == 'GHOST-REDBLUE':
+                elif debundle == 'GHOST-REDBLUE':
                     cameras = ['red', 'blue']
                 else:
                     cameras = ['slit', 'red', 'blue']
@@ -755,8 +794,8 @@ class Reducer(object):
                                 f"on {reduce.files}")
                     reduce.runr()
                     self.reduced_files.extend(reduce.output_filenames)
-            elif self.rqe.debundle:
-                self.l.error(f"Debundle strategy {self.rqe.debundle} "
+            elif debundle:
+                self.l.error(f"Debundle strategy {debundle} "
                              "not implemented in Reducer.call_reduce()")
 
 
@@ -766,6 +805,7 @@ class Reducer(object):
             # Capture log and close down log capture
             self.l.removeHandler(handler)
             processinglog.end(len(self.reduced_files), self.rqe.failed)
+            self.s.commit()  # Ensure transaction on rqe is closed
             # Add the captured log output and close the logcapture StringIO
             processinglog.log = logcapture.getvalue()
             logcapture.close()
@@ -793,6 +833,7 @@ class Reducer(object):
         # and raise an exception there to trigger service_reduce_queue to bail out.
 
         processinglog.end(len(self.reduced_files), self.rqe.failed)
+        self.s.commit()  # Ensure transaction on rqe is closed
 
         self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
         self.l.info("Output files are: %s", reduce.output_filenames)
