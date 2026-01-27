@@ -37,6 +37,15 @@ def test_int():
 
     assert type(b) is int
 
+# Test float return
+def test_float():
+    get_test_config()
+
+    a = get_config()
+    b = a.reduce_calcache_gbs
+
+    assert type(b) is float
+
 # Test list return
 def test_list():
     get_test_config()

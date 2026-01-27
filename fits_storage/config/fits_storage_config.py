@@ -61,6 +61,7 @@ class FitsStorageConfig(dict):
     _lists = ['blocked_urls', 'export_destinations', 'gemini_fits_upload_auth',
               'gemini_api_authorization', 'block_user_agent_substrings',
               'allow_user_agent_strings', 'gemini_user_transfer']
+    _floats = ['reduce_calcache_gbs']
 
     def __init__(self, configfile=None, configstring=None,
                  builtin=True, builtinonly=False):
@@ -244,6 +245,8 @@ class FitsStorageConfig(dict):
             return self.config.getboolean(key)
         if key in self._ints:
             return self.config.getint(key)
+        if key in self._floats:
+            return self.config.getfloat(key)
         if key in self._lists:
             return self._getlist(key)
         return self.config[key]

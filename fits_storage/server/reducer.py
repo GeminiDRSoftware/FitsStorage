@@ -89,6 +89,7 @@ class Reducer(object):
         # convenience and to allow poking them for testing
         self.reduce_dir = self.fsc.reduce_dir
         self.reduce_calcache_dir = self.fsc.reduce_calcache_dir
+        self.reduce_calcache_gbs = self.fsc.reduce_calcache_gbs
         self.using_s3 = self.fsc.using_s3
         self.upload_url = self.fsc.reducer_upload_url
 
@@ -655,13 +656,14 @@ class Reducer(object):
 
         # Configure the cal manager to only fetch things from the archive.
         configstring = f"""
-        [calibs]
-        databases = {self.fsc.reduce_calibs_url} get
-        """
+[calibs]
+databases = {self.fsc.reduce_calibs_url} get
+"""
 
         # If we're using a reduce calibration cache, set it here
         if self.reduce_calcache_dir:
-            configstring += f"system_calcache_dir = {self.reduce_calcache_dir}"
+            configstring += (f"system_calcache_dir = {self.reduce_calcache_dir}\n"
+                             f"system_calcache_gbs = {self.reduce_calcache_gbs}")
 
         dragons_config = cal_service.globalConf
         dragons_config.read_string(configstring)
