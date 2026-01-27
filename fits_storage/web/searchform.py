@@ -887,7 +887,8 @@ dropdown_options = {
          ("Win", "Pass or Usable"),
          ("Usable", "Usable"),
          ("UndefinedQA", "Undefined"),
-         ("Fail", "Fail")],
+         ("Fail", "Fail"),
+         ("CHECK", "Check")],
     "inst_options":
         [("GMOS", "GMOS-N or GMOS-S"),
          ("GMOS-N", "GMOS-N"),
