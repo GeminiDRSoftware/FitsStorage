@@ -1,6 +1,7 @@
 """
 This module contains code for reducing data with DRAGONS
 """
+import ast
 import io
 import logging
 import os
@@ -723,10 +724,31 @@ databases = {self.fsc.reduce_calibs_url} get
                         f"Reduce()")
             reduce.recipename = self.rqe.recipe
 
-        # If we are setting any primitive parameters, so do now
+
+        # Are we passing any uparms?
+        if self.rqe.uparms:
+            try:
+                reduce.uparms = ast.literal_eval(self.rqe.uparms)
+            except Exception as e:
+                self.logrqeerror(f"Exception in parsing uparms "
+                                 f"{self.rqe.uparms}: {e}", exc_info=True)
+                # Capture log and close down log capture
+                self.l.removeHandler(handler)
+                processinglog.end(len(self.reduced_files), self.rqe.failed)
+                self.s.commit()  # Ensure transaction on rqe is closed
+                # Add the captured log output and close the logcapture StringIO
+                processinglog.log = logcapture.getvalue()
+                logcapture.close()
+                self.s.commit()
+                return
+        else:
+            reduce.uparms = {}
+
+        # If we are setting any primitive parameters from config, so do now
         if self.fsc.reducer_stackframes_memory:
-            reduce.uparms = dict([('stackFrames:memory',
-                                   self.fsc.reducer_stackframes_memory)])
+            reduce.uparms['stackFrames:memory'] = self.fsc.reducer_stackframes_memory
+
+        self.l.info(f"Specifying reduce uparms: {reduce.uparms}")
 
         # chdir into the working directory for DRAGONS. Store the current
         # working dir so we can go back after

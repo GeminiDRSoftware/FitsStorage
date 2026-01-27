@@ -45,6 +45,7 @@ class ReduceQueueEntry(OrmQueueMixin, Base):
     filename = Column(Text)
     debundle = Column(DEBUNDLE_ENUM)
     recipe = Column(Text)
+    uparms = Column(Text)
     capture_files = Column(Boolean)
     capture_monitoring = Column(Boolean)
     error = Column(Text)

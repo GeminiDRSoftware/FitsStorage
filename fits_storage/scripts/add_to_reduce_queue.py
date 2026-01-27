@@ -74,6 +74,10 @@ if __name__ == "__main__":
     parser.add_argument("--debundle", action="store", type=str, default=None,
                         help="Debundle strategy, omit for None - ie no debundling")
 
+    parser.add_argument("--uparms", action="store", type=str, default=None,
+                        help="uparms to pass to Reduce. Format is a string "
+                             "representation of a python dictionary")
+
     parser.add_argument("--capture_files", action="store_true",
                         help="Capture reduced files output from this processing"
                              " run? Default is False")
@@ -210,7 +214,7 @@ if __name__ == "__main__":
                 logger.info(f"Queuing a batch of {len(validfiles)} files for "
                             f"reduce, starting with {validfiles[0]}")
                 rq.add(validfiles, intent=intent, initiatedby=initiatedby,
-                       tag=tag, recipe=options.recipe,
+                       tag=tag, recipe=options.recipe, uparms=options.uparms,
                        capture_files=options.capture_files,
                        capture_monitoring=options.capture_monitoring,
                        debundle=options.debundle, mem_gb=memory_estimate(numpix))
