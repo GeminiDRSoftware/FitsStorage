@@ -656,9 +656,9 @@ class Reducer(object):
 
         # Configure the cal manager to only fetch things from the archive.
         configstring = f"""
-        [calibs]
-        databases = {self.fsc.reduce_calibs_url} get
-        """
+[calibs]
+databases = {self.fsc.reduce_calibs_url} get
+"""
 
         # If we're using a reduce calibration cache, set it here
         if self.reduce_calcache_dir:
