@@ -31,7 +31,7 @@ class ReduceQueue(Queue):
 
     def add(self, filenames, intent=None, initiatedby=None, tag=None,
             recipe=None, capture_files=True, capture_monitoring=True,
-            debundle=None, mem_gb=0):
+            debundle=None, mem_gb=0, uparms=None):
         """
         Add an entry to the reduce queue. This instantiates a ReduceQueueEntry
         object using the arguments passed, and adds it to the database.
@@ -51,6 +51,7 @@ class ReduceQueue(Queue):
         rqe.intent = intent
         rqe.tag = tag
         rqe.recipe = recipe
+        rqe.uparms = uparms
         rqe.capture_files = capture_files
         rqe.capture_monitoring = capture_monitoring
         rqe.debundle = debundle
