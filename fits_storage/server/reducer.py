@@ -760,11 +760,11 @@ databases = {self.fsc.reduce_calibs_url} get
             # If we're not debundling, this is *the* Reduce call. If we are
             # debundling, this is the debundle and the main Reduce call follows.
             # We do not specify uparms on debundle reduce calls as it barfs
-            reduce.uparms = uparms if debundle else {}
+            reduce.uparms = {} if debundle else uparms
             self.l.info("Calling DRAGONS Reduce.runr() "
-                        "in directory {self.workingdir} "
-                        "with recipe {reduce.recipename} "
-                        "and uparms {reduce.uparms}")
+                        f"in directory {self.workingdir} "
+                        f"with recipe {reduce.recipename} "
+                        f"and uparms {reduce.uparms}")
             reduce.runr()
             self.reduced_files = reduce.output_filenames
             # If we're debundling, need to handle further calls to reduce here
