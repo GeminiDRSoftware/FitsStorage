@@ -106,9 +106,8 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('processed_flat')
 
                 # and specphot and if it is not a specphot...
-                # specphot should be replaced with standard now.
                 if 'STANDARD' not in self.types:
-                    self.applicable.append('specphot')
+                    self.applicable.append('standard')
 
                     if self.descriptors['central_wavelength'] is not None:
                         self.applicable.append('processed_standard')
@@ -655,12 +654,8 @@ class CalibrationGMOS(Calibration):
         """
         Method to find the best standard frame for the target dataset.
 
-        This will match on flats for the same instrument, read speed, filter,
-        focal plane mask, disperser, amp read area, and gain with the same
-        x and y binning.
-
-        It will then do the matching using either :meth:`spectroscopy_flat` or
-        :meth:`imaging_flat` as appropriate.
+        This calls specphot for spectroscopy and photometric_standard for
+        imaging
 
         Parameters
         ----------
@@ -674,29 +669,13 @@ class CalibrationGMOS(Calibration):
         -------
             list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
-        # Default number to associate
-        howmany = howmany if howmany else 1
 
-        filters = []
-
-        query = self.get_query() \
-                .standard(processed) \
-                .add_filters(*filters) \
-                .tolerance(central_wavelength=self._wavelength_tolerance())\
-                .match_descriptors(Header.instrument,
-                                   Gmos.disperser,
-                                   Gmos.detector_x_bin,
-                                   Gmos.detector_y_bin,
-                                   Gmos.filter_name) \
-                .max_interval(days=183)
-        results = query.all(howmany)
-
-        return results
+        if self.descriptors['spectroscopy']:
+            return self.specphot(processed=processed, howmany=howmany)
+        else:
+            return self.photometric_standard(processed=processed, howmany=howmany)
 
 
-
-    # We don't handle processed ones (yet)
-    @not_processed
     @not_imaging
     def specphot(self, processed=False, howmany=None):
         """
@@ -745,7 +724,6 @@ class CalibrationGMOS(Calibration):
 
         query = (self.get_query()
                 # They are OBJECT spectroscopy frames
-                # with target not twilight.
                 # As of DRAGONS 3.2, the 'STANDARD' tag is the definitive way
                 # to tell if it is a valid specphot star.
                 .raw().OBJECT().spectroscopy(True)
