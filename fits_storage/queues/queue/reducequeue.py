@@ -119,8 +119,13 @@ class ReduceQueue(Queue):
                 .limit(1)
             )
 
+
             requested_ns = time.monotonic_ns()
-            session.execute(text("LOCK TABLE reducequeue IN ACCESS EXCLUSIVE MODE"))
+            # Don't attempt Locking in sqlite3, it doesn't support it.
+            # This if clause is here for the tests, sqlite3 is not suitable for
+            # production use for the reducequeue in any non-trivial case
+            if not fsc.using_sqlite:
+                session.execute(text("LOCK TABLE reducequeue IN ACCESS EXCLUSIVE MODE"))
             got_ns = time.monotonic_ns()
             qentry = session.scalars(stmt).first()
 
