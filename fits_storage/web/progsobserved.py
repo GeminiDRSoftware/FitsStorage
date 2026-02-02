@@ -13,6 +13,8 @@ from fits_storage.core.orm.file import File
 from fits_storage.server.orm.publication import Publication
 from fits_storage.gemini_metadata_utils import gemini_date
 from fits_storage.server.wsgi.context import get_context
+from fits_storage import utcnow
+
 from . import templating
 
 
@@ -54,7 +56,7 @@ def sitemap():
     We advertise a page for each program that we have data for... :-)
     """
 
-    now = datetime.datetime.utcnow()
+    now = utcnow()
     year = datetime.timedelta(days=365).total_seconds()
 
     session = get_context().session

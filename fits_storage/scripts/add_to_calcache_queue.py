@@ -11,6 +11,7 @@ from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.core.orm.header import Header
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.db import session_scope
+from fits_storage import utcnow
 
 
 # Option Parsing
@@ -79,8 +80,7 @@ with session_scope() as session:
         query = query.filter(DiskFile.filename.like(options.file_pre+'%'))
 
     if options.lastdays:
-        then = datetime.datetime.utcnow() - \
-                datetime.timedelta(days=options.lastdays)
+        then = utcnow() - datetime.timedelta(days=options.lastdays)
         query = query.filter(Header.ut_datetime > then)
 
     if options.instrument:

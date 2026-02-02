@@ -16,6 +16,8 @@ from fits_storage.queues.queue import IngestQueue
 from fits_storage.db.selection.get_selection import from_url_things
 from fits_storage.db.list_headers import list_headers
 
+from fits_storage import utcnow
+
 if fsc.using_s3:
     from fits_storage.server.aws_s3 import Boto3Helper
     s3 = Boto3Helper()
@@ -34,7 +36,7 @@ def _dayoptions(string):
     }
 
     if string in named_intervals:
-        today = datetime.datetime.utcnow().date()
+        today = utcnow().date()
         dates = [today - (oneday * n) for n in range(named_intervals[string])]
         regex = '|'.join(d.strftime("%Y%m%d") for d in dates)
         return re.compile(regex)

@@ -14,6 +14,7 @@ from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
 from fits_storage.server.orm.obslog import Obslog
 from fits_storage.server.orm.miscfile import MiscFile
+from fits_storage import utcnow
 
 
 def canhave_coords(session, user, header, gotmagic=False,
@@ -58,7 +59,7 @@ def is_released(release_date, filedownloadlog):
         release_date = release_date.date()
 
     # Is the release date in the past?
-    today = datetime.datetime.utcnow().date()
+    today = utcnow().date()
     if release_date and today >= release_date:
         if filedownloadlog:
             filedownloadlog.released = True

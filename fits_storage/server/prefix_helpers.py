@@ -12,6 +12,8 @@ from fits_storage.logger_dummy import DummyLogger
 
 from fits_storage.server.orm.ipprefix import IPPrefix
 
+from fits_storage import utcnow
+
 
 def get_ipprefix_from_db(session, ip, logger=DummyLogger()):
     """
@@ -120,7 +122,7 @@ class BgpViewApi(object):
     def __init__(self, broad=True, logger=DummyLogger()):
         self.logger = logger
         self.urlbase = 'https://api.bgpview.io/'
-        self.lastcall = datetime.datetime.utcnow()
+        self.lastcall = utcnow()
         self.ratelimit_secs = 1.0
 
         # The lastcall value is used to rate limit calls to the API
@@ -137,11 +139,11 @@ class BgpViewApi(object):
         return self.get_prefixes_from_ip(ip)
 
     def ratelimit(self):
-        t = datetime.datetime.utcnow() - self.lastcall
+        t = utcnow() - self.lastcall
         if t.total_seconds() < self.ratelimit_secs:
             self.logger.debug("Rate limiting call to BgpView API...")
             time.sleep(self.ratelimit_secs)
-        self.lastcall = datetime.datetime.utcnow()
+        self.lastcall = utcnow()
 
     def getjson(self, url):
         self.ratelimit()
@@ -288,7 +290,7 @@ class BgpViewApi(object):
             ipp = IPPrefix()
             ipp.prefix = str(prefix)
             ipp.api_used = self.urlbase
-            ipp.api_query_utc = datetime.datetime.utcnow()
+            ipp.api_query_utc = utcnow()
             ipp.asn = asn
             ipp.name = ipnets[prefix]['name']
             ipp.description = ipnets[prefix]['description']
@@ -339,7 +341,7 @@ class ArinApi(object):
             ipp = IPPrefix()
             ipp.prefix = cidr
             ipp.api_used = self.urlbase
-            ipp.api_query_utc = datetime.datetime.utcnow()
+            ipp.api_query_utc = utcnow()
             ipp.name = j['name']
             ipp.description = j['handle']
 

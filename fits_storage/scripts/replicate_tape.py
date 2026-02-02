@@ -14,6 +14,7 @@ from fits_storage.server.orm.tapestuff import Tape, TapeWrite, TapeFile
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.server.tapeutils import TapeDrive
 from fits_storage.config import get_config
+from fits_storage import utcnow
 
 if __name__ == "__main__":
     parser = ArgumentParser(prog='replicate_tape.py',
@@ -91,7 +92,7 @@ if __name__ == "__main__":
         # Fill pre-write values
         ntw.beforestatus = totd.status()
         ntw.filenum = totd.fileno()
-        ntw.startdate = datetime.datetime.utcnow()
+        ntw.startdate = utcnow()
         ntw.hostname = os.uname()[1]
         ntw.tapedrive = totd.dev
         ntw.succeeded = False
@@ -111,8 +112,8 @@ if __name__ == "__main__":
         # Update totape record first/lastwrite
         logger.debug(f"Updating tape record for tape label {totape.label}")
         if totape.firstwrite is None:
-            totape.firstwrite = datetime.datetime.utcnow()
-        totape.lastwrite = datetime.datetime.utcnow()
+            totape.firstwrite = utcnow()
+        totape.lastwrite = utcnow()
         session.commit()
 
         # Keep a bytecount running total
@@ -184,7 +185,7 @@ if __name__ == "__main__":
             exit(1)
 
         logger.debug("Updating tapewrite record")
-        ntw.enddate = datetime.datetime.utcnow()
+        ntw.enddate = utcnow()
         ntw.succeeded = True
         ntw.afterstatus = totd.status()
         ntw.size = bytecount

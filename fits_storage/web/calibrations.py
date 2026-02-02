@@ -14,6 +14,8 @@ from fits_storage.core.orm.file import File
 
 from fits_storage.server.wsgi.context import get_context
 
+from fits_storage import utcnow
+
 from . import templating
 
 from fits_storage.config import get_config
@@ -146,7 +148,7 @@ class WrapperObject(object):
                 newinterval = abs(interval_hours(arc, self.header))
                 smallestinterval = newinterval
                 # Is the smallest interval larger than the interval between now and the science?
-                now = datetime.datetime.utcnow()
+                now = utcnow()
                 then = self.header.ut_datetime
                 nowinterval = now - then
                 nowhours = (nowinterval.days * 24.0) + (nowinterval.seconds / 3600.0)

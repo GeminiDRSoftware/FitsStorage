@@ -5,6 +5,8 @@ from sqlalchemy.orm import relationship
 import datetime
 
 from fits_storage.core.orm import Base
+from fits_storage import utcnow
+
 from .usagelog import UsageLog
 
 class FileDownloadLog(Base):
@@ -44,7 +46,7 @@ class FileDownloadLog(Base):
             The corresponding :class:`~usagelog.Usagelog` record
         """
         self.usagelog_id = usagelog.id
-        self.ut_datetime = datetime.datetime.utcnow()
+        self.ut_datetime = utcnow()
 
     def add_note(self, note):
         """

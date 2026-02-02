@@ -12,6 +12,8 @@ from fits_storage.server.wsgi.context import get_context
 
 from fits_storage.server.orm.querylog import QueryLog
 
+from fits_storage import utcnow
+
 from . import templating
 
 from fits_storage.config import get_config
@@ -25,7 +27,7 @@ def add_summary_completed():
     try:
         querylog = ctx.session.query(QueryLog).\
             filter(QueryLog.usagelog_id == ctx.usagelog.id).one()
-        querylog.summary_completed = datetime.datetime.utcnow()
+        querylog.summary_completed = utcnow()
     except NoResultFound:
         # Shouldn't happen, but just in case...
         pass
@@ -47,7 +49,7 @@ def obslogs(selection, sumtype):
     querylog = QueryLog(get_context().usagelog)
     querylog.summarytype = sumtype
     querylog.selection = str(selection)
-    querylog.query_started = datetime.datetime.utcnow()
+    querylog.query_started = utcnow()
 
     # If this is associated_obslogs, we do the association here
     if sumtype == 'associated_obslogs':
@@ -58,7 +60,7 @@ def obslogs(selection, sumtype):
         # Simple obslog search
         obslogs = list_obslogs(selection, None)
 
-    querylog.query_completed = datetime.datetime.utcnow()
+    querylog.query_completed = utcnow()
     num_results = len(obslogs)
     querylog.numresults = num_results
 

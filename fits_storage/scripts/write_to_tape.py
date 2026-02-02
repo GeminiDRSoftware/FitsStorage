@@ -15,6 +15,7 @@ from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.server.tapeutils import TapeDrive
 from fits_storage.db.list_headers import list_headers
 from fits_storage.db.selection.get_selection import from_url_things
+from fits_storage import utcnow
 
 from fits_storage.config import get_config
 
@@ -81,7 +82,7 @@ if len(options.tapedrive) != len(options.tapelabel):
     sys.exit(1)
 
 if options.auto:
-    utcnow = datetime.datetime.utcnow()
+    utcnow = utcnow()
     utcend = utcnow - datetime.timedelta(days=options.skipdays)
     utcstart = utcend - datetime.timedelta(days=options.ndays)
     daterange = "%s-%s" % (utcstart.date().strftime("%Y%m%d"),
@@ -266,8 +267,8 @@ with session_scope() as session:
             # Update tape first/lastwrite
             logger.debug("Updating tape record for tape label %s", tape.label)
             if tape.firstwrite is None:
-                tape.firstwrite = datetime.datetime.utcnow()
-            tape.lastwrite = datetime.datetime.utcnow()
+                tape.firstwrite = utcnow()
+            tape.lastwrite = utcnow()
             session.commit()
 
             # Create tapewrite record
@@ -279,7 +280,7 @@ with session_scope() as session:
             # Update tapewrite values pre-write
             tw.beforestatus = td.status()
             tw.filenum = td.fileno()
-            tw.startdate = datetime.datetime.utcnow()
+            tw.startdate = utcnow()
             tw.hostname = os.uname()[1]
             tw.tapedrive = td.dev
             tw.succeeded = False
@@ -352,7 +353,7 @@ with session_scope() as session:
 
             # update records post-write
             logger.debug("Updating tapewrite record")
-            tw.enddate = datetime.datetime.utcnow()
+            tw.enddate = utcnow()
             logger.debug("Succeeded: %s", tarok)
             tw.succeeded = tarok
             tw.afterstatus = td.status()

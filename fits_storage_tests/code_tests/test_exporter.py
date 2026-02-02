@@ -7,6 +7,7 @@ from fits_storage_tests.code_tests.helpers import make_empty_testing_db_env
 from fits_storage.db import sessionfactory
 from fits_storage.config import get_config
 from fits_storage.logger_dummy import DummyLogger
+from fits_storage import utcnow
 
 from fits_storage.server.exporter import Exporter
 from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
@@ -134,7 +135,7 @@ def test_destination_server_failure_handling(tmpdir):
         # Shortcut directly to the exporter file_transfer method
         exp.eqe = eqe1
         exp._set_eqe_destination_path()
-        now = datetime.datetime.utcnow()
+        now = utcnow()
         exp.file_transfer()
 
         eqe1 = session.get(ExportQueueEntry, eqe1_id)

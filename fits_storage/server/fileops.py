@@ -23,6 +23,7 @@ from fits_storage.server.orm.miscfile import is_miscfile, miscfile_meta, \
 
 
 from fits_storage.server.fitseditor import FitsEditor
+from fits_storage import utcnow
 
 from fits_storage.config import get_config
 
@@ -97,10 +98,10 @@ def ingest_upload(args, session, logger):
         try:
             s3 = Boto3Helper()
             extra_meta = misc_meta if it_is_misc else {}
-            fileuploadlog.s3_ut_start = datetime.datetime.utcnow()
+            fileuploadlog.s3_ut_start = utcnow()
             fileuploadlog.s3_ok = s3.upload_file(dst, src, extra_meta) \
                                   is not None
-            fileuploadlog.s3_ut_end = datetime.datetime.utcnow()
+            fileuploadlog.s3_ut_end = utcnow()
             os.unlink(src)
             if it_is_misc:
                 os.unlink(miscfile_meta_path(src))

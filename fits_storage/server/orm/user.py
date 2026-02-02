@@ -2,6 +2,7 @@ from sqlalchemy import Column
 from sqlalchemy import String, Integer, Text, Boolean, DateTime
 
 from fits_storage.core.orm import Base
+from fits_storage import utcnow
 
 from hashlib import sha256
 from os import urandom
@@ -61,7 +62,7 @@ class User(Base):
         self.superuser = False
         self.reset_token = None
         self.cookie = None
-        self.account_created = datetime.utcnow()
+        self.account_created = utcnow()
 
     def _clear_reset_token(self):
         self.reset_token = None
@@ -101,7 +102,7 @@ class User(Base):
         self.password = hashobj.hexdigest()
         password = None
         hashobj = None
-        self.password_changed = datetime.utcnow()
+        self.password_changed = utcnow()
 
     def validate_password(self, candidate):
         """
@@ -143,7 +144,7 @@ class User(Base):
         str : token to pass back in for a password reset
         """
         self.reset_token = b32encode(urandom(32)).decode('utf-8')
-        self.reset_token_expires = datetime.utcnow() + timedelta(minutes=15)
+        self.reset_token_expires = utcnow() + timedelta(minutes=15)
         return self.reset_token
 
     def validate_reset_token(self, candidate):
@@ -163,7 +164,7 @@ class User(Base):
             return False
 
         if (candidate is not None) and \
-                (datetime.utcnow() < self.reset_token_expires) and \
+                (utcnow() < self.reset_token_expires) and \
                 (candidate == self.reset_token):
             self._clear_reset_token()
             return True
@@ -200,7 +201,7 @@ class User(Base):
             self.generate_cookie()
 
         # Record last_login time and login method
-        self.last_login = datetime.utcnow()
+        self.last_login = utcnow()
         self.last_login_by = by
 
         return self.cookie
@@ -235,7 +236,7 @@ class User(Base):
         -------
         bool : True if a reset has been requested and the token has not expired
         """
-        return self.reset_requested and (self.reset_token_expires > datetime.utcnow())
+        return self.reset_requested and (self.reset_token_expires > utcnow())
 
     @property
     def has_password(self):

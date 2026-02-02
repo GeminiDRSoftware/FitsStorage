@@ -12,6 +12,7 @@ from optparse import OptionParser
 from fits_storage.server.orm.notification import Notification
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.db import session_scope
+from fits_storage import utcnow
 
 from fits_storage.config import get_config
 
@@ -85,7 +86,7 @@ else:
 # Parse out "today" in the date. This works on the website, but if they
 # wait a day before clicking the link, they'll get the wrong day.
 if options.date == "today":
-    options.date = datetime.datetime.utcnow().strftime("%Y%m%d")
+    options.date = utcnow().strftime("%Y%m%d")
 
 # Configure the URL base
 url_base = "https://archive.gemini.edu"

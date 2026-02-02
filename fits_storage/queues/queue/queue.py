@@ -5,7 +5,7 @@ this in order to provide queue specific functionality. Note that these are
 *not* the ORM classes - those are now called e.g. ExportQueueEntry
 as instances of those represent entries in the queue, not the queue itself.
 """
-import datetime
+from fits_storage import utcnow
 from sqlalchemy import desc
 
 
@@ -83,8 +83,7 @@ class Queue(object):
                 filter(~ormclass.filename.in_(inprogress_filenames))
 
             if hasattr(ormclass, 'after'):
-                query = query.filter(ormclass.after <
-                                     datetime.datetime.utcnow())
+                query = query.filter(ormclass.after < utcnow())
 
             query = query.with_for_update(skip_locked=True).\
                 order_by(desc(ormclass.sortkey))

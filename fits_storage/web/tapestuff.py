@@ -12,6 +12,7 @@ from fits_storage.server.wsgi.context import get_context
 from sqlalchemy import join, desc, func
 
 import datetime
+from fits_storage import utcnow
 
 from .file_list import _for_json
 
@@ -60,7 +61,7 @@ def tape(search=None):
             tape = session.get(Tape, tapeid)
             if field == 'moveto':
                 tape.location = value
-                tape.lastmoved = datetime.datetime.utcnow()
+                tape.lastmoved = utcnow()
             elif field == 'active':
                 if value == 'Yes':
                     tape.active = True
@@ -83,7 +84,7 @@ def tape(search=None):
         session.commit()
 
     # datetimes used to colour last verified warnings.
-    now = datetime.datetime.utcnow()
+    now = utcnow()
     year = datetime.timedelta(days=365)
     nine = datetime.timedelta(days=int(365*0.75))
     bad = now - year

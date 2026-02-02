@@ -8,6 +8,7 @@ from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Boolean, Text, DateTime
 
 from fits_storage.core.orm import Base
+from fits_storage import utcnow
 from .ormqueuemixin import OrmQueueMixin
 
 from fits_storage.config import get_config
@@ -78,7 +79,7 @@ class IngestQueueEntry(OrmQueueMixin, Base):
 
         self.filename = filename
         self.path = path
-        self.added = datetime.datetime.utcnow()
+        self.added = utcnow()
         self.inprogress = False
         self.force_md5 = force_md5
         self.force = force
@@ -142,11 +143,11 @@ class IngestQueueEntry(OrmQueueMixin, Base):
             # Defer ingestion of this file for defer_secs. 'after' is in UTC
             message = "Deferring ingestion of recently modified file " \
                       f"{self.filename} for {fsc.defer_delay} seconds"
-            self.after = datetime.datetime.utcnow() + delay
+            self.after = utcnow() + delay
 
         elif self.file_is_locked:
             message = f"Deferring ingestion of locked file {self.filename} " \
                       f"for {fsc.defer_delay} seconds"
-            self.after = datetime.datetime.utcnow() + delay
+            self.after = utcnow() + delay
 
         return message

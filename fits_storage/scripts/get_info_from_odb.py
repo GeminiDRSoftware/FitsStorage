@@ -17,6 +17,7 @@ from fits_storage.server.odb_data_handlers import update_notifications, \
     update_programs
 
 from fits_storage.db import session_scope
+from fits_storage import utcnow
 
 from fits_storage.config import get_config
 
@@ -60,7 +61,7 @@ setdemon(options.demon)
 
 # Parse special semester values
 if options.semester in ('current', 'previous'):
-    semester = gemini_semester(datetime.utcnow())
+    semester = gemini_semester(utcnow())
     if options.semester == 'previous':
         semester = previous_semester(semester)
 elif options.semester:
