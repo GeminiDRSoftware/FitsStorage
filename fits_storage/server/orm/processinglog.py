@@ -5,6 +5,7 @@ from sqlalchemy import Column
 from sqlalchemy import BigInteger, Integer, Text, DateTime, Float, Boolean
 
 from fits_storage.core.orm import Base
+from fits_storage import utcnow
 
 class ProcessingLog(Base):
     """
@@ -35,11 +36,11 @@ class ProcessingLog(Base):
         self.recipe = rqe.recipe
         self.num_raw_files = len(rqe.filenames)
 
-        self.processing_started = datetime.datetime.utcnow()
+        self.processing_started = utcnow()
         self.start_process_time = time.process_time()
 
     def end(self, num_reduced_files, failed):
-        self.processing_completed = datetime.datetime.utcnow()
+        self.processing_completed = utcnow()
         self.cpu_secs = time.process_time() - self.start_process_time
         self.num_reduced_files = num_reduced_files
         self.failed = failed

@@ -17,6 +17,7 @@ from fits_storage.server.orm.tapestuff import Tape, TapeWrite, TapeFile, \
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.server.tapeutils import TapeDrive
 from fits_storage.config import get_config
+from fits_storage import utcnow
 
 
 class DeferredTarEntry:
@@ -215,8 +216,8 @@ if __name__ == "__main__":
             # Update tape first/lastwrite
             logger.debug("Updating tape record for tape label %s", totape.label)
             if totape.firstwrite is None:
-                totape.firstwrite = datetime.datetime.utcnow()
-            totape.lastwrite = datetime.datetime.utcnow()
+                totape.firstwrite = utcnow()
+            totape.lastwrite = utcnow()
             session.commit()
 
             # Create tapewrite record
@@ -229,7 +230,7 @@ if __name__ == "__main__":
             # Update tapewrite values pre-write
             tw.beforestatus = totd.status()
             tw.filenum = totd.fileno()
-            tw.startdate = datetime.datetime.utcnow()
+            tw.startdate = utcnow()
             tw.hostname = os.uname()[1]
             tw.tapedrive = totd.dev
             tw.succeeded = False
@@ -399,7 +400,7 @@ if __name__ == "__main__":
                 totarok = False
 
             logger.debug("Updating tapewrite record")
-            tw.enddate = datetime.datetime.utcnow()
+            tw.enddate = utcnow()
             logger.debug("Succeeded: %s", totarok)
             tw.succeeded = totarok
             tw.afterstatus = totd.status()

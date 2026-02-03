@@ -10,9 +10,10 @@ from fits_storage.queues.orm.calcachequeueentry import CalCacheQueueEntry
 from fits_storage.queues.orm.previewqueueentry import PreviewQueueEntry
 from fits_storage.queues.orm.fileopsqueueentry import FileopsQueueEntry
 
+from fits_storage import utcnow
 
 def test_basiceqe():
-    now = datetime.datetime.utcnow()
+    now = utcnow()
     onesec = datetime.timedelta(seconds=1)
     eqe = ExportQueueEntry('filename', 'path', 'destination')
 
@@ -34,7 +35,7 @@ def test_archivesortkey():
 
 
 def test_basiciqe():
-    now = datetime.datetime.utcnow()
+    now = utcnow()
     onesec = datetime.timedelta(seconds=1)
     iqe = IngestQueueEntry('filename', 'path')
 

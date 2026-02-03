@@ -26,6 +26,8 @@ from .userprogram import get_permissions_list
 
 from fits_storage.server.orm.querylog import QueryLog
 
+from fits_storage import utcnow
+
 
 def summary(sumtype, selection, orderby, links=True, body_only=False):
     """
@@ -100,7 +102,7 @@ def summary_body(sumtype, selection, orderby, links=True,
     querylog = QueryLog(ctx.usagelog)
     querylog.summarytype = sumtype
     querylog.selection = str(selection)
-    querylog.query_started = datetime.datetime.utcnow()
+    querylog.query_started = utcnow()
 
     headers = list_headers(selection, orderby)
     num_headers = len(headers)
@@ -109,7 +111,7 @@ def summary_body(sumtype, selection, orderby, links=True,
     hit_open_limit = num_headers == fsc.fits_open_result_limit
     hit_closed_limit = num_headers == fsc.fits_closed_result_limit
 
-    querylog.query_completed = datetime.datetime.utcnow()
+    querylog.query_completed = utcnow()
     querylog.numresults = num_headers
     # Did we get any selection warnings?
     if 'warning' in selection:
@@ -133,7 +135,7 @@ def summary_body(sumtype, selection, orderby, links=True,
             headers = associate_cals(session, headers)
 
 
-        querylog.cals_completed = datetime.datetime.utcnow()
+        querylog.cals_completed = utcnow()
         querylog.numcalresults = len(headers)
 
         # links are messed up with associated_cals, turn most of them off
@@ -154,7 +156,7 @@ def summary_body(sumtype, selection, orderby, links=True,
     else:
         sumtable_data = {}
 
-    querylog.summary_completed = datetime.datetime.utcnow()
+    querylog.summary_completed = utcnow()
 
     # Add and commit the querylog
     session.add(querylog)

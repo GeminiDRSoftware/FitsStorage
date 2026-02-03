@@ -21,6 +21,8 @@ from fits_storage.db import session_scope
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.hashes import md5sum
 
+from fits_storage import utcnow
+
 from fits_storage.config import get_config
 fsc = get_config()
 
@@ -37,7 +39,7 @@ _yesterday_str = gemini_date('yesterday')
 
 
 def get_fake_ut():
-    ut = datetime.datetime.utcnow()
+    ut = utcnow()
     if 'cpo' in socket.gethostname():
         ut -= CHILE_OFFSET
     return ut.date().strftime('%Y%m%d')

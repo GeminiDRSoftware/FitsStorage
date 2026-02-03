@@ -13,6 +13,7 @@ from fits_storage.server.tapeutils import TapeDrive
 
 from fits_storage.db import session_scope
 from fits_storage.core.hashes import md5sum_size_fp
+from fits_storage import utcnow
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -183,7 +184,7 @@ with session_scope() as session:
         logger.error("There were verify errors - please see logfile for "
                      "details. Not updating lastverified")
     else:
-        now = datetime.datetime.utcnow()
+        now = utcnow()
         logger.info("There were no verify errors - updating lastverified "
                     "to: %s UTC" % now)
         tape.lastverified = now

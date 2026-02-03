@@ -13,6 +13,8 @@ from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsRequest
 
 from fits_storage.logger_dummy import DummyLogger
 
+from fits_storage import utcnow
+
 from fits_storage.config import get_config
 fsc = get_config()
 
@@ -89,7 +91,7 @@ def upload_file(things):
     # https://github.com/python/cpython/issues/66077
     try:
         with open(fullfilename, 'wb') as f:
-            fileuploadlog.ut_transfer_start = datetime.datetime.utcnow()
+            fileuploadlog.ut_transfer_start = utcnow()
             # wsgiref workaround to ensure initial read is not bigger than
             # content_length if content_length is smaller than chunksize
             chunksize = content_length \
@@ -102,7 +104,7 @@ def upload_file(things):
                 bytes_left = content_length - size if content_length else None
                 if content_length and (bytes_left < chunksize):
                     chunksize = bytes_left
-            fileuploadlog.ut_transfer_complete = datetime.datetime.utcnow()
+            fileuploadlog.ut_transfer_complete = utcnow()
     except IOError:
         fileuploadlog.add_note("IO Error writing upload_staging file")
         ctx.resp.client_error(Return.HTTP_INTERNAL_SERVER_ERROR,

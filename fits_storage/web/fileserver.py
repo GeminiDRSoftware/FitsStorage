@@ -26,6 +26,8 @@ from fits_storage.server.access_control_utils import icanhave
 from fits_storage.db.selection import Selection
 from fits_storage.db.list_headers import list_headers
 
+from fits_storage import utcnow
+
 from fits_storage.config import get_config
 fsc = get_config()
 
@@ -140,7 +142,7 @@ def download(selection, associated_calibrations):
     downloadlog = DownloadLog(ctx.usagelog)
     session.add(downloadlog)
     downloadlog.selection = str(selection)
-    downloadlog.query_started = datetime.datetime.utcnow()
+    downloadlog.query_started = utcnow()
 
     # Get our username while we have the database session open
     user = ctx.user
@@ -155,7 +157,7 @@ def download(selection, associated_calibrations):
     if associated_calibrations:
         downloadlog.add_note("associated_calibrations download")
         headers = associate_cals(session, headers)
-    downloadlog.query_completed = datetime.datetime.utcnow()
+    downloadlog.query_completed = utcnow()
     downloadlog.numresults = len(headers)
 
     if not headers:
@@ -281,7 +283,7 @@ def download(selection, associated_calibrations):
 
         # And add the README.TXT file
         readme = readme_body.format(selection_url=selection.to_url(),
-                                    search_time=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+                                    search_time=utcnow().strftime("%Y-%m-%d %H:%M:%S"),
                                     username=username)
         if associated_calibrations:
             readme += readme_associated
@@ -299,7 +301,7 @@ def download(selection, associated_calibrations):
         # - and add it to the tar file
         tar.addfile(tarinfo, BytesIO(readme.encode('utf8')))
 
-    downloadlog.download_completed = datetime.datetime.utcnow()
+    downloadlog.download_completed = utcnow()
 
 def is_regular_file(session, diskfile):
     try:
@@ -352,7 +354,7 @@ def fileserver(things):
     # Instantiate the download log
     downloadlog = DownloadLog(ctx.usagelog)
     session.add(downloadlog)
-    downloadlog.query_started = datetime.datetime.utcnow()
+    downloadlog.query_started = utcnow()
 
     # Form the basic query
     query = session.query(DiskFile).filter(DiskFile.present == True)
@@ -432,7 +434,7 @@ def fileserver(things):
             downloadlog.add_note(str(e))
             break
 
-    downloadlog.query_completed = datetime.datetime.utcnow()
+    downloadlog.query_completed = utcnow()
     downloadlog.numresults = 1
     if item is None:
         downloadlog.numresults = 0
@@ -449,7 +451,7 @@ def fileserver(things):
             downloadlog.sending_files = True
             sendonefile(item.diskfile, content_type=content_type,
                         filenamegiven=filenamerequested)
-            downloadlog.download_completed = datetime.datetime.utcnow()
+            downloadlog.download_completed = utcnow()
         else:
             # Refuse to send data
             downloadlog.numdenied = 1

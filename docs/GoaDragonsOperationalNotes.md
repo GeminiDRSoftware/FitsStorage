@@ -29,3 +29,51 @@ currently no automatic way to know whether the slitflat has processed, transferr
 ## GHOST FLAT processing
 `add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-1 --selection /canonical/GHOST/dayCal/BIAS/Raw/RAW/notengineering/Pass/filepre=S202512`
 `add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-REDBLUE --tag GHOST-1 --selection /canonical/GHOST/dayCal/BIAS/Raw/RAW/notengineering/Pass/filepre=S202512`
+
+## GHOST science processing (Vini style)
+`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-1 --selection /canonical/GHOST/Raw/RAW/notengineering/filepre=S20251231S0031`
+`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-REDBLUE --tag GHOST-1 --uparms='{"fluxCalibrate:do_cal": "skip"}' --selection /canonical/GHOST/Raw/RAW/notengineering/filepre=S20251231S0031`
+
+
+# Documenting what Vini's scripts do:
+
+## calibration_reduce.py:
+For one UT night:
+* Download the BPMs and caldb add them
+
+* Download all the BIAS bundles
+* run reduce on all the BIAS bundles at once. This debundles them, and is equivalent to running reduce on them one at a time
+* 
+* run reduce on each of the resulting _slit.fits file, individually
+* For each bundle file:
+* * run reduce on all the _red.fits files that came from that bundle, ie reduce SYYYYMMDDSNNNN_red???.fits
+* * run reduce on all the _blue.fits files that came from that bundle, ie reduce SYYYYMMDDSNNNN_red???.fits
+
+* Download all the FLAT bundles
+* run reduce on all the FLAT bundles at once, to debundle them.
+* 
+* run reduce on each of the resulting _slit.fits file, individually (NOTE, this is at odds with the tutorial, which reduces them all together)
+* For each bundle file:
+* * run reduce on all the _red.fits files that came from that bundle, ie reduce SYYYYMMDDSNNNN_red???.fits
+* * run reduce on all the _blue.fits files that came from that bundle, ie reduce SYYYYMMDDSNNNN_red???.fits
+
+* Download all the ARC bundles
+* run reduce on all the ARC bundles at once, to debundle them.
+* 
+* run reduce on each of the resulting _slit.fits file, individually
+* For each bundle file:
+* * run reduce on all the _red.fits files that came from that bundle, ie reduce SYYYYMMDDSNNNN_red???.fits
+* * run reduce on all the _blue.fits files that came from that bundle, ie reduce SYYYYMMDDSNNNN_red???.fits
+
+## science_reduce.py:
+For one UT night:
+* Download all the science files
+* run reduce on all the science bundles at once to debundle them.
+* Make a list of all the resulting _slit.fits files
+* run reduce on that list, all at once.
+* DOES THIS MAKE SOME KIND OF NIGHTLY SLIT FILE???? I don't think this makes any difference, as it's not really stacking. Chris says he's not sure if it makes any difference, but they should not be combined.
+* for each science bundle:
+* * call reduce individually on each _blue???.fits file, passing -p fluxCalibrate:do_cal=skip (ie reduce ..._blue001.fits; reduce ..._blue002.fits; ...)
+* * same for the _red???.fits files
+* NOTE - there's no grouping at all here, not even by bundle.
+* 

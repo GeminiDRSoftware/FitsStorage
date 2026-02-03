@@ -52,7 +52,7 @@ def gemini_date(string, as_date=False):
 
     # Handle the 'special values' first
     if string in ('now', 'yesterday', 'today', 'tomorrow'):
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         if string in ('now', 'today'):
             dt = now
         elif string == 'yesterday':

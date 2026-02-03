@@ -16,6 +16,7 @@ from fits_storage.core.orm.header import Header
 
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
+from fits_storage import utcnow
 
 from . import templating
 
@@ -45,8 +46,7 @@ def qareport():
                     submit_time=datetime.datetime.now())
 
 
-def qareport_ingest(thelist, submit_host=None,
-                    submit_time=datetime.datetime.utcnow()):
+def qareport_ingest(thelist, submit_host=None, submit_time=utcnow()):
     """
     This function takes a list of qareport dictionaries and inserts into the 
     database

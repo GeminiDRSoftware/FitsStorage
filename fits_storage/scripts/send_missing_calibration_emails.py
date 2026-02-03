@@ -10,6 +10,8 @@ from optparse import OptionParser
 
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.config import get_config
+from fits_storage import utcnow
+
 fsc = get_config()
 
 parser = OptionParser()
@@ -39,8 +41,7 @@ if not fsc.email_from:
     exit(1)
 
 # Work out the date range to query
-utcnow = datetime.datetime.utcnow()
-utcend = utcnow - datetime.timedelta(days=options.skipdays)
+utcend = utcnow() - datetime.timedelta(days=options.skipdays)
 utcstart = utcend - datetime.timedelta(days=options.ndays)
 daterange = "%s-%s" % (utcstart.date().strftime("%Y%m%d"),
                        utcend.date().strftime("%Y%m%d"))

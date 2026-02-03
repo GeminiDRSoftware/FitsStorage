@@ -8,6 +8,7 @@ from sqlalchemy import Column
 from sqlalchemy import Integer, Boolean, Text, DateTime
 
 from fits_storage.core.orm import Base
+from fits_storage import utcnow
 from .ormqueuemixin import OrmQueueMixin
 
 
@@ -63,7 +64,7 @@ class FileopsQueueEntry(OrmQueueMixin, Base):
         self.request = request
         self.response = None
         self.filename = None
-        self.added = datetime.datetime.utcnow()
+        self.added = utcnow()
         self.inprogress = False
         self.response_required = response_required
         self.after = after if after is not None else self.added

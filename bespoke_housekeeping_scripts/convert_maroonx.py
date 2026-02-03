@@ -1,7 +1,7 @@
 from numpy import genfromtxt
 from astropy.io import fits
 from astropy.time import Time, TimeDelta
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import argparse
 from pathlib import Path
 import glob
@@ -50,7 +50,7 @@ def get_files(pattern, root, first_frame=None, last_frame=None, from_date=None, 
     if last_frame is not None:
         to_date = get_datetime_from_filename(last_frame)
     elif to_date is None:
-        to_date = datetime.utcnow()
+        to_date = datetime.now(UTC).replace(tzinfo=None)
     elif to_date is not None:
         to_date = datetime.strptime(to_date, "%Y%m%d")
 

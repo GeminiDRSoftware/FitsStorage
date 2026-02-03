@@ -17,6 +17,7 @@ from fits_storage.queues.orm.exportqueueentry import ExportQueueEntry
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.server.bz2stream import StreamBz2Compressor
 from fits_storage.core.hashes import md5sum
+from fits_storage import utcnow
 
 from fits_storage.config import get_config
 
@@ -140,7 +141,7 @@ class Exporter(object):
             self.l.info("File %s is ingest pending at destination %s. "
                         "Deferring ingest for %d seconds", eqe.filename,
                         eqe.destination, delay)
-            now = datetime.datetime.utcnow()
+            now = utcnow()
             dt = datetime.timedelta(seconds=delay)
             eqe.after = now + dt
             eqe.inprogress = False
@@ -248,7 +249,7 @@ class Exporter(object):
                                destination_filename)
 
             self.l.debug("POSTing data to %s", url)
-            starttime = datetime.datetime.utcnow()
+            starttime = utcnow()
             try:
                 req = self.rs.post(url, data=flo, timeout=self.timeout)
             except requests.Timeout:
@@ -268,7 +269,7 @@ class Exporter(object):
                 # Delay exports to this destination to give it chance to recover
                 self._delay_destination()
                 return
-            enddtime = datetime.datetime.utcnow()
+            enddtime = utcnow()
 
             secs = (enddtime - starttime).total_seconds()
             bytes_transferred = flo.bytes_output \
@@ -450,7 +451,7 @@ class Exporter(object):
         # increasing delay with more failures here, but we'd need to
         # do this on a per-destination basis and reset back to default
         # on success. Keep it simple for now.
-        after = datetime.datetime.utcnow()
+        after = utcnow()
         delay = datetime.timedelta(seconds=delaysecs)
         after += delay
         self.l.info("Delaying all exports to %s by %d seconds until %s",

@@ -28,6 +28,8 @@ from fits_storage.server.orm.fileuploadlog import FileUploadLog
 
 from fits_storage.logger_dummy import DummyLogger
 
+from fits_storage import utcnow
+
 from fits_storage.config import get_config
 
 SEARCH_LIMIT = 500
@@ -200,7 +202,7 @@ def save_file(formdata):
     chunksize = 1000000  # 1MB
     try:
         with open(fullpath, 'wb') as staging_file:
-            fileuploadlog.ut_transfer_start = datetime.utcnow()
+            fileuploadlog.ut_transfer_start = utcnow()
             read_file = formdata['uploadFile'].file
             read_file.seek(0)
             while chunk := read_file.read(chunksize):
@@ -212,7 +214,7 @@ def save_file(formdata):
                 if content_length and (bytes_left < chunksize):
                     chunksize = bytes_left
 
-        fileuploadlog.ut_transfer_complete = datetime.utcnow()
+        fileuploadlog.ut_transfer_complete = utcnow()
         fileuploadlog.size = size
         fileuploadlog.md5 = m.hexdigest()
         ctx.session.commit()

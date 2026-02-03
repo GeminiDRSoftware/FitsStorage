@@ -29,7 +29,7 @@ if __name__ == "__main__":
     with session_scope() as session, open("/data/logs/data_rates.py", "w") as f:
         ndays = 1000
 
-        today = datetime.datetime.utcnow().date()
+        today = datetime.datetime.now(datetime.UTC).replace(tzinfo=None).date()
         zerohour = datetime.time(0, 0, 0)
         ddelta = datetime.timedelta(days=1)
 

@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from .queue import Queue
 from ..orm.fileopsqueueentry import FileopsQueueEntry
+from fits_storage import utcnow
 
 
 class FileopsQueue(Queue):
@@ -55,7 +56,7 @@ class FileopsQueue(Queue):
         This is called by "clients" which add queue entries with
         response_required = True
         """
-        now = datetime.datetime.utcnow()
+        now = utcnow()
         then = now + datetime.timedelta(seconds=timeout)
 
         query = self.session.query(FileopsQueueEntry).\
@@ -64,7 +65,7 @@ class FileopsQueue(Queue):
             filter(FileopsQueueEntry.response != None)
 
         fqe = None
-        while (datetime.datetime.utcnow() < then) and fqe is None:
+        while (utcnow() < then) and fqe is None:
             self.logger.debug("Polling fqe id %d", id)
             fqe = query.first()
             time.sleep(1)

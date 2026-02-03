@@ -28,6 +28,8 @@ from fits_storage.server.wsgi.context import get_context
 
 from fits_storage.gemini_metadata_utils import ONEDAY_OFFSET
 
+from fits_storage import utcnow
+
 from .user import needs_login
 from . import templating
 
@@ -62,7 +64,7 @@ def usagereport():
     # Process the form data if there is any
     # Default all the pre-fill strings
     # Default to last day
-    today = datetime.datetime.utcnow().date()
+    today = utcnow().date()
     tomorrow = today + ONEDAY_OFFSET
     start = today.isoformat()
     end = tomorrow.isoformat()
@@ -305,7 +307,7 @@ def usagestats():
               ('Per Week', build_query(session, 'week', first)),
               ('Per Day',  build_query(session, 'day', first)))
 
-    end = datetime.datetime.utcnow()
+    end = utcnow()
     interval = datetime.timedelta(days=90)
     start = end - interval
 

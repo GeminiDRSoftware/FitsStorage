@@ -32,6 +32,8 @@ from fits_storage.gemini_metadata_utils import cal_types
 from . import templating
 from .templating import SkipTemplateError
 
+from fits_storage import utcnow
+
 from fits_storage.config import get_config
 
 no_func = lambda x: None
@@ -403,6 +405,6 @@ def calmgr(selection):
         machine_name = os.uname()[1],
         req_method   = method,
         now          = datetime.datetime.now(),
-        utcnow       = datetime.datetime.utcnow(),
+        utcnow       = utcnow(),
         generator    = gen(selection, caltype, procmode),
         )

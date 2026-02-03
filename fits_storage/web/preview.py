@@ -13,6 +13,7 @@ from fits_storage.server.orm.downloadlog import DownloadLog
 from fits_storage.server.wsgi.context import get_context
 from fits_storage.server.wsgi.returnobj import Return
 from fits_storage.config import get_config
+from fits_storage import utcnow
 
 fsc = get_config()
 
@@ -74,7 +75,7 @@ def preview(things):
 
     downloadlog = DownloadLog(ctx.usagelog)
     session.add(downloadlog)
-    downloadlog.query_started = datetime.datetime.utcnow()
+    downloadlog.query_started = utcnow()
 
     try:
         # Is the client allowed to get this file?
@@ -87,7 +88,7 @@ def preview(things):
             ctx.resp.client_error(Return.HTTP_FORBIDDEN,
                                   "You don't have access to the requested data")
     finally:
-        downloadlog.query_completed = datetime.datetime.utcnow()
+        downloadlog.query_completed = utcnow()
 
 
 def sendpreview(filename):

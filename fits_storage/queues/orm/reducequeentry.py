@@ -8,6 +8,7 @@ from sqlalchemy import Column, UniqueConstraint, Enum
 from sqlalchemy import Integer, Boolean, DateTime, Text, ARRAY, Float
 
 from fits_storage.core.orm import Base
+from fits_storage import utcnow
 from .ormqueuemixin import OrmQueueMixin
 
 
@@ -84,5 +85,5 @@ class ReduceQueueEntry(OrmQueueMixin, Base):
             self.filename = filenames[0]
         self.inprogress = False
         self.sortkey = self.sortkey_from_filename()
-        self.added = datetime.datetime.utcnow()
+        self.added = utcnow()
         self.fail_dt = self.fail_dt_false  # See Note in OrmQueueMixin

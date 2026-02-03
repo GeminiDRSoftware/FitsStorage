@@ -25,6 +25,8 @@ from fits_storage.server.wsgi.returnobj import Return
 
 from . import templating
 
+from fits_storage import utcnow
+
 from fits_storage.config import get_config
 
 if get_config().oauth_enabled:
@@ -232,7 +234,7 @@ def password_reset(userid, token):
     try:
         if user is None:
             return template_args
-        elif user.reset_token_expires < datetime.datetime.utcnow():
+        elif user.reset_token_expires < utcnow():
             template_args['expired'] = True
             return template_args
         elif user.reset_token != token:
@@ -830,7 +832,7 @@ def login(things):
 
     if valid_request:
         # Cookie expires in 1 year
-        exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=31536000)
+        exp = utcnow() + datetime.timedelta(seconds=31536000)
         ctx.cookies.set('gemini_archive_session', cookie, expires=exp, path="/")
         if redirect:
             ctx.resp.redirect_to(redirect)
@@ -1255,7 +1257,7 @@ def oauth_login(service, code):
             return dict(notification_message="", reason_bad=e)
 
         cookie = user.log_in(by=service)
-        exp = datetime.datetime.utcnow() + datetime.timedelta(days=365)
+        exp = utcnow() + datetime.timedelta(days=365)
         ctx.cookies.set('gemini_archive_session', cookie,
                         expires=exp, path="/")
         ctx.resp.redirect_to('/searchform')

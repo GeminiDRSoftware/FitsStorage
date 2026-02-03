@@ -3,6 +3,7 @@ from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Boolean, Text, DateTime
 
 from fits_storage.core.orm import Base
+from fits_storage import utcnow
 from .ormqueuemixin import OrmQueueMixin
 
 
@@ -60,7 +61,7 @@ class ExportQueueEntry(OrmQueueMixin, Base):
         self.sortkey = self.sortkey_from_filename()
         self.path = path
         self.destination = destination
-        self.added = datetime.datetime.utcnow()
+        self.added = utcnow()
         self.after = after if after is not None else self.added
         self.inprogress = False
         self.fail_dt = self.fail_dt_false  # See Note in OrmQueueMixin

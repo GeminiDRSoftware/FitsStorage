@@ -728,7 +728,7 @@ databases = {self.fsc.reduce_calibs_url} get
         # Are we passing any uparms?
         if self.rqe.uparms:
             try:
-                reduce.uparms = ast.literal_eval(self.rqe.uparms)
+                uparms = ast.literal_eval(self.rqe.uparms)
             except Exception as e:
                 self.logrqeerror(f"Exception in parsing uparms "
                                  f"{self.rqe.uparms}: {e}", exc_info=True)
@@ -742,13 +742,11 @@ databases = {self.fsc.reduce_calibs_url} get
                 self.s.commit()
                 return
         else:
-            reduce.uparms = {}
+            uparms = {}
 
         # If we are setting any primitive parameters from config, so do now
         if self.fsc.reducer_stackframes_memory:
-            reduce.uparms['stackFrames:memory'] = self.fsc.reducer_stackframes_memory
-
-        self.l.info(f"Specifying reduce uparms: {reduce.uparms}")
+            uparms['stackFrames:memory'] = self.fsc.reducer_stackframes_memory
 
         # chdir into the working directory for DRAGONS. Store the current
         # working dir so we can go back after
@@ -762,8 +760,12 @@ databases = {self.fsc.reduce_calibs_url} get
         try:
             # If we're not debundling, this is *the* Reduce call. If we are
             # debundling, this is the debundle and the main Reduce call follows.
-            self.l.info("Calling DRAGONS Reduce.runr() in directory "
-                        f"{self.workingdir} with recipe {reduce.recipename}")
+            # We do not specify uparms on debundle reduce calls as it barfs
+            reduce.uparms = {} if debundle else uparms
+            self.l.info("Calling DRAGONS Reduce.runr() "
+                        f"in directory {self.workingdir} "
+                        f"with recipe {reduce.recipename} "
+                        f"and uparms {reduce.uparms}")
             reduce.runr()
             self.reduced_files = reduce.output_filenames
             # If we're debundling, need to handle further calls to reduce here
@@ -772,9 +774,11 @@ databases = {self.fsc.reduce_calibs_url} get
                 reduce.files = reduce.output_filenames
                 reduce._output_filenames = []
                 reduce.recipename = recipe if recipe else "_default"
+                reduce.uparms = uparms
                 self.l.info("Debundle ALL - Calling DRAGONS Reduce.runr() in "
                             f"directory {self.workingdir} "
                             f"with recipe {reduce.recipename} "
+                            f"and uparms {reduce.uparms} "
                             f"on: {reduce.files}")
                 reduce.runr()
                 self.reduced_files = reduce.output_filenames
@@ -782,18 +786,21 @@ databases = {self.fsc.reduce_calibs_url} get
                 self.reduced_files = []
                 input_files = reduce.output_filenames
                 reduce.recipename = recipe if recipe else "_default"
+                reduce.uparms = uparms
                 for input_file in input_files:
                     reduce.files = [input_file]
                     reduce._output_filenames = []
                     self.l.info("Debundle INDIVIDUAL - Calling DRAGONS "
                                 f"Reduce.runr() in directory {self.workingdir} "
                                 f"with recipe {reduce.recipename} "
+                                f"and uparms {reduce.uparms} "
                                 f"on {reduce.files}")
                     reduce.runr()
                     self.reduced_files.extend(reduce.output_filenames)
             elif debundle and debundle.startswith('GHOST'):
                 self.reduced_files = []
                 reduce.recipename = recipe if recipe else "_default"
+                reduce.uparms = uparms
                 # Which arms do we want?
                 if debundle == 'GHOST-SLIT':
                     cameras = ['slit']
@@ -815,6 +822,7 @@ databases = {self.fsc.reduce_calibs_url} get
                     self.l.info("Debundle GHOST - Calling DRAGONS "
                                 f"Reduce.runr() in directory {self.workingdir} "
                                 f"with recipe {reduce.recipename} "
+                                f"and uparms {reduce.uparms} "
                                 f"on {reduce.files}")
                     reduce.runr()
                     self.reduced_files.extend(reduce.output_filenames)

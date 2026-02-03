@@ -20,6 +20,7 @@ from fits_storage.server.wsgi.context import get_context
 
 from fits_storage.web.user import needs_login
 
+from fits_storage import utcnow
 from fits_storage.config import get_config
 fsc = get_config()
 
@@ -80,7 +81,7 @@ def stats():
             start = end
         return ret
 
-    today = datetime.datetime.utcnow().date()
+    today = utcnow().date()
     zerohour = datetime.time(0, 0, 0)
     todayzero = datetime.datetime.combine(today, zerohour)
 

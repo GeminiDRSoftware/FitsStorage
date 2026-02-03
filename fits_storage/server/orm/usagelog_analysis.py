@@ -14,6 +14,7 @@ from fits_storage.db import sessionfactory
 from fits_storage.server.prefix_helpers import get_ipprefix
 from fits_storage.gemini_metadata_utils.telescope_instruments import \
     obs_types, obs_classes
+from fits_storage import utcnow
 
 from fits_storage.config import get_config
 
@@ -62,7 +63,7 @@ class UsageLogAnalysis(Base):
         Analyse the usagelog entry, update values.
         """
         logger.debug("Analysing usagelog entry %d", self.usagelog_id)
-        self.utc_analysed = datetime.datetime.utcnow()
+        self.utc_analysed = utcnow()
 
         self.uri_score = score_uri(self.usagelog.uri)
         self.agent_score = score_agent(self.usagelog.user_agent)

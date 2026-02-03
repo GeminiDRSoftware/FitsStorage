@@ -14,7 +14,7 @@ from fits_storage.server.aws_s3 import Boto3Helper
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.server.orm.glacier import Glacier
 from fits_storage.config import get_config
-
+from fits_storage import utcnow
 
 # This is the amount of rows to be retrieved at the same time from the database
 # Controls the resources taken in the local side. Too small number will result
@@ -120,7 +120,7 @@ try:
             glacier.filename = diskfile.filename
             glacier.path = diskfile.path
             glacier.md5 = diskfile.file_md5
-            glacier.when_uploaded = datetime.datetime.utcnow()
+            glacier.when_uploaded = utcnow()
             session.add(glacier)
         session.commit()
 except Exception:

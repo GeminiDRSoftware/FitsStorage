@@ -5,6 +5,8 @@ from sqlalchemy import Integer, Text, DateTime, BigInteger
 from sqlalchemy.orm import relationship
 
 from fits_storage.core.orm import Base
+from fits_storage import utcnow
+
 from .user import User
 
 # ------------------------------------------------------------------------------
@@ -41,7 +43,7 @@ class UsageLog(Base):
         ctx : :class:`~Context`
             The context for this web session
         """
-        self.utdatetime = datetime.datetime.utcnow()
+        self.utdatetime = utcnow()
 
         # We pass None for some testing context where we just need to
         # instantiate the object with no real content.
