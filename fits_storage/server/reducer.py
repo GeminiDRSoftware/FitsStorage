@@ -472,7 +472,10 @@ class Reducer(object):
                 dstpath = os.path.join(self.fsc.upload_staging_dir,
                                        self.rqe.tag)
                 self.s.commit()  # Ensure transaction on rqe is closed
-                dst = os.path.join(dstpath, filename)
+                # filename at this point (and correctly in the src) can have
+                # directories, eg calibrations/processed_cheese/blah.fits.
+                # Need to strip those off for the destination.
+                dst = os.path.join(dstpath, os.path.basename(filename))
                 self.l.info(f"Copying {src} to {dst}")
                 try:
                     os.makedirs(dstpath, exist_ok=True)
@@ -767,7 +770,17 @@ databases = {self.fsc.reduce_calibs_url} get
                         f"with recipe {reduce.recipename} "
                         f"and uparms {reduce.uparms}")
             reduce.runr()
-            self.reduced_files = reduce.output_filenames
+            self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
+            self.l.info("Output filenames are: %s", reduce.output_filenames)
+            self.l.info("Processed filenames are: %s", reduce.processed_filenames)
+            # If the recipe calls storeProcessedCheese, the filenames of the
+            # processed cheese are in reduce.processed_filenames. If it doesn't,
+            # then we use reduce.output_filenames, which is the content of the
+            # main stream at the end of the recipe. The debundle recipe for
+            # example does not storeProcessedCheese, and the processing
+            # following a debundle uses reduce.output_filenames directly.
+            self.reduced_files = self._get_reduce_outputs(reduce, debundle)
+            self.l.info("Reduced files are: %s", self.reduced_files)
             # If we're debundling, need to handle further calls to reduce here
             if debundle == 'ALL':
                 self.reduced_files = []
@@ -781,7 +794,11 @@ databases = {self.fsc.reduce_calibs_url} get
                             f"and uparms {reduce.uparms} "
                             f"on: {reduce.files}")
                 reduce.runr()
-                self.reduced_files = reduce.output_filenames
+                self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
+                self.l.info("Output filenames are: %s", reduce.output_filenames)
+                self.l.info("Processed filenames are: %s", reduce.processed_filenames)
+                self.reduced_files = self._get_reduce_outputs(reduce, debundle)
+                self.l.info("Reduced files are: %s", self.reduced_files)
             elif debundle == 'INDIVIDUAL':
                 self.reduced_files = []
                 input_files = reduce.output_filenames
@@ -796,7 +813,12 @@ databases = {self.fsc.reduce_calibs_url} get
                                 f"and uparms {reduce.uparms} "
                                 f"on {reduce.files}")
                     reduce.runr()
-                    self.reduced_files.extend(reduce.output_filenames)
+                    self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
+                    self.l.info("Output filenames are: %s", reduce.output_filenames)
+                    self.l.info("Processed filenames are: %s", reduce.processed_filenames)
+                    self.reduced_files.extend(
+                        self._get_reduce_outputs(reduce, debundle))
+                self.l.info("All Reduced files are: %s", self.reduced_files)
             elif debundle and debundle.startswith('GHOST'):
                 self.reduced_files = []
                 reduce.recipename = recipe if recipe else "_default"
@@ -825,7 +847,12 @@ databases = {self.fsc.reduce_calibs_url} get
                                 f"and uparms {reduce.uparms} "
                                 f"on {reduce.files}")
                     reduce.runr()
-                    self.reduced_files.extend(reduce.output_filenames)
+                    self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
+                    self.l.info("Output filenames are: %s", reduce.output_filenames)
+                    self.l.info("Processed filenames are: %s", reduce.processed_filenames)
+                    self.reduced_files.extend(
+                        self._get_reduce_outputs(reduce, debundle))
+                self.l.info("All Reduced files are: %s", self.reduced_files)
             elif debundle:
                 self.l.error(f"Debundle strategy {debundle} "
                              "not implemented in Reducer.call_reduce()")
@@ -867,9 +894,8 @@ databases = {self.fsc.reduce_calibs_url} get
         processinglog.end(len(self.reduced_files), self.rqe.failed)
         self.s.commit()  # Ensure transaction on rqe is closed
 
-        self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
-        self.l.info("Output files are: %s", reduce.output_filenames)
-        self.l.info("Reduced files are: %s", self.reduced_files)
+        self.l.info("At end of call_reduce, reduced files are: %s",
+                    self.reduced_files)
 
         # Terminate log capture
         self.l.removeHandler(handler)
@@ -879,3 +905,19 @@ databases = {self.fsc.reduce_calibs_url} get
         logcapture.close()
 
         self.s.commit()
+
+    def _get_reduce_outputs(self, reduce, debundle=None):
+        # Convenience method to deal with reduce .output_filenames and
+        # .processed_filenames
+        retary = reduce.processed_filenames
+        if not reduce.processed_filenames:
+            if not debundle:
+                self.l.warning("reduce.processed_filenames was empty after "
+                               "a non-debundle recipe. Using "
+                               "reduce.output_filenames instead.")
+            else:
+                self.l.debug("reduce.processed_filenames empty, capturing "
+                             "reduce.output_filenames instead")
+            retary = reduce.output_filenames
+        self.l.info(f"Reduced Files: {retary}")
+        return retary
