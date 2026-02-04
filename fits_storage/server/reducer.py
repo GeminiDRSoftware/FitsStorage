@@ -513,6 +513,8 @@ class Reducer(object):
                 destination_filename = filename + '.bz2'
                 flo = StreamBz2Compressor(f)
 
+            # destination filename should never have leading calibrations/...
+            destination_filename = os.path.basename(destination_filename)
             # Construct upload URL.
             dst = os.path.join(self.rqe.tag, destination_filename)
             self.s.commit()  # Ensure transaction on rqe is closed
