@@ -472,7 +472,10 @@ class Reducer(object):
                 dstpath = os.path.join(self.fsc.upload_staging_dir,
                                        self.rqe.tag)
                 self.s.commit()  # Ensure transaction on rqe is closed
-                dst = os.path.join(dstpath, filename)
+                # filename at this point (and correctly in the src) can have
+                # directories, eg calibrations/processed_cheese/blah.fits.
+                # Need to strip those off for the destination.
+                dst = os.path.join(dstpath, os.path.basename(filename))
                 self.l.info(f"Copying {src} to {dst}")
                 try:
                     os.makedirs(dstpath, exist_ok=True)
