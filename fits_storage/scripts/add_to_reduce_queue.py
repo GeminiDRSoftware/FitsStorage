@@ -205,6 +205,11 @@ if __name__ == "__main__":
                     # Deprecate header.estimate_numpix() once the header numpix
                     # column is fully populated after database rebuilds.
                     tmp_numpix = header.numpix if header.numpix is not None else header.estimate_numpix()
+
+                    # Put in a correction for GHOST here - we only ever process
+                    # half the GHOST pixels at once
+                    if header.instrument == 'GHOST':
+                        tmp_numpix //= 2
                     numpix.append(tmp_numpix)
 
             logger.debug(f"List of validated files: {validfiles}, {numpix=}")
