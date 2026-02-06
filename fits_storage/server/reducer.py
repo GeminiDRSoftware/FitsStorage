@@ -30,7 +30,7 @@ from fits_storage.queues.orm.reducequeentry import ReduceQueueEntry
 
 from fits_storage.server.orm.monitoring import Monitoring
 from fits_storage.server.orm.processinglog import ProcessingLog
-from fits_storage.server.monitoring import recipe_keywords
+from fits_storage.server.monitoring import get_recipe_keywords
 
 from fits_storage.core.hashes import md5sum
 from fits_storage.server.bz2stream import StreamBz2Compressor
@@ -100,6 +100,11 @@ class Reducer(object):
 
         # Initialize these to None here, they are set as they are used
         self.workingdir = None
+
+        # When we call reduce with no recipe, the recipe becomes '_default', but
+        # reduce.runr() returns the actual recipe name used. We record that and
+        # reference it in eg set_reduction_metadata and capture_monitoring
+        self.actual_recipe = None
 
         # If we are uploading reduced files to an upload_url, make the
         # requests session here.
@@ -442,8 +447,11 @@ class Reducer(object):
                 hdr['PROCTAG'] = self.rqe.tag
                 self.s.commit()  # Ensure transaction on rqe is closed
 
+                # And the actual recipe name
+                hdr['DRECIPE'] = self.actual_recipe
+
                 for kw in ['PROCSOFT', 'PROCSVER', 'PROCMODE', 'PROCITNT',
-                           'PROCINBY', 'PROCTAG']:
+                           'PROCINBY', 'PROCTAG', 'DRECIPE']:
                     if kw in hdr:
                         self.l.debug(f"{filename}: {kw} = {hdr[kw]}")
                     else:
@@ -584,25 +592,42 @@ class Reducer(object):
         for filename in self.reduced_files:
             self.l.debug(f"Capturing Monitoring values from {filename}")
 
-            recipe = self.rqe.recipe
-            self.s.commit()  # Ensure transaction on rqe is closed
+            # rqe.recipe may be None or '_default_. self.actual_recipe is set
+            # from the actual recipe name that reduce.runr() reported using.
+            self.l.debug(f"Actual Recipe name was: {self.actual_recipe}")
 
             try:
                 fpfn = os.path.join(self.workingdir, filename)
                 ad = astrodata.open(fpfn)
-                keywords = recipe_keywords[recipe]
+                keywords = get_recipe_keywords(self.actual_recipe, filename)
                 if len(keywords) == 0:
                     self.l.warning(f"No keywords to capture for {filename}")
-                for slice in ad:
-                    for keyword in keywords:
-                        mon = Monitoring(slice)
-                        mon.recipe = recipe
+                for keyword in keywords:
+                    # Is the value in the PHU?
+                    value = ad.phu.get(keyword)
+                    if value is not None:
+                        mon = Monitoring(ad)
+                        mon.recipe = self.actual_recipe
                         mon.keyword = keyword
-                        mon.label = slice.amp_read_area()
                         mon.header_id = self.header_id
-                        mon.set_value(slice.hdr.get(keyword))
+                        mon.label = 'PHU'
+                        mon.set_value(value)
                         self.s.add(mon)
                         self.s.commit()
+                    else:
+                        # Don't go through the slices if we got it from the PHU
+                        for slice in ad:
+                            # Is the value in the HDR?
+                            value = ad.hdr.get(keyword)
+                            if value is not None:
+                                mon = Monitoring(slice)
+                                mon.recipe = self.actual_recipe
+                                mon.keyword = keyword
+                                mon.header_id = self.header_id
+                                mon.label = slice.amp_read_area()
+                                mon.set_value(value)
+                                self.s.add(mon)
+                                self.s.commit()
                 # Quote-unquote close the astrodata instance
                 ad = None
             except Exception:
@@ -761,6 +786,9 @@ databases = {self.fsc.reduce_calibs_url} get
         recipe = self.rqe.recipe
         self.s.commit()  # Ensure transaction on rqe is closed
 
+        # Ensure we don't have an old value left over
+        self.actual_recipe = None
+
         try:
             # If we're not debundling, this is *the* Reduce call. If we are
             # debundling, this is the debundle and the main Reduce call follows.
@@ -772,6 +800,7 @@ databases = {self.fsc.reduce_calibs_url} get
                         f"and uparms {reduce.uparms}")
             reduce.runr()
             self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
+            self.l.info("Recipe name was: %s", reduce.recipename)
             self.l.info("Output filenames are: %s", reduce.output_filenames)
             self.l.info("Processed filenames are: %s", reduce.processed_filenames)
             # If the recipe calls storeProcessedCheese, the filenames of the
@@ -782,6 +811,7 @@ databases = {self.fsc.reduce_calibs_url} get
             # following a debundle uses reduce.output_filenames directly.
             self.reduced_files = self._get_reduce_outputs(reduce, debundle)
             self.l.info("Reduced files are: %s", self.reduced_files)
+            self.actual_recipe = reduce.recipename
             # If we're debundling, need to handle further calls to reduce here
             if debundle == 'ALL':
                 self.reduced_files = []
@@ -796,10 +826,12 @@ databases = {self.fsc.reduce_calibs_url} get
                             f"on: {reduce.files}")
                 reduce.runr()
                 self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
+                self.l.info("Recipe name was: %s", reduce.recipename)
                 self.l.info("Output filenames are: %s", reduce.output_filenames)
                 self.l.info("Processed filenames are: %s", reduce.processed_filenames)
                 self.reduced_files = self._get_reduce_outputs(reduce, debundle)
                 self.l.info("Reduced files are: %s", self.reduced_files)
+                self.actual_recipe = reduce.recipename
             elif debundle == 'INDIVIDUAL':
                 self.reduced_files = []
                 input_files = reduce.output_filenames
@@ -815,11 +847,13 @@ databases = {self.fsc.reduce_calibs_url} get
                                 f"on {reduce.files}")
                     reduce.runr()
                     self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
+                    self.l.info("Recipe name was: %s", reduce.recipename)
                     self.l.info("Output filenames are: %s", reduce.output_filenames)
                     self.l.info("Processed filenames are: %s", reduce.processed_filenames)
                     self.reduced_files.extend(
                         self._get_reduce_outputs(reduce, debundle))
                 self.l.info("All Reduced files are: %s", self.reduced_files)
+                self.actual_recipe = reduce.recipename
             elif debundle and debundle.startswith('GHOST'):
                 self.reduced_files = []
                 reduce.recipename = recipe if recipe else "_default"
@@ -849,11 +883,13 @@ databases = {self.fsc.reduce_calibs_url} get
                                 f"on {reduce.files}")
                     reduce.runr()
                     self.l.info("DRAGONS Reduce.runr() appeared to complete successfully")
+                    self.l.info("Recipe name was: %s", reduce.recipename)
                     self.l.info("Output filenames are: %s", reduce.output_filenames)
                     self.l.info("Processed filenames are: %s", reduce.processed_filenames)
                     self.reduced_files.extend(
                         self._get_reduce_outputs(reduce, debundle))
                 self.l.info("All Reduced files are: %s", self.reduced_files)
+                self.actual_recipe = reduce.recipename
             elif debundle:
                 self.l.error(f"Debundle strategy {debundle} "
                              "not implemented in Reducer.call_reduce()")
