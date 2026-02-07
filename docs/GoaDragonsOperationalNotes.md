@@ -27,12 +27,22 @@ currently no automatic way to know whether the slitflat has processed, transferr
 `add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST --tag GHOST-1 --selection /canonical/GHOST/dayCal/BIAS/Raw/RAW/notengineering/Pass/filepre=S202512`
 
 ## GHOST FLAT processing
-`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-1 --selection /canonical/GHOST/dayCal/BIAS/Raw/RAW/notengineering/Pass/filepre=S202512`
-`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-REDBLUE --tag GHOST-1 --selection /canonical/GHOST/dayCal/BIAS/Raw/RAW/notengineering/Pass/filepre=S202512`
+`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-1 --selection /canonical/GHOST/dayCal/FLAT/Raw/RAW/notengineering/filepre=S202512`
+`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-REDBLUE --tag GHOST-1 --selection /canonical/GHOST/dayCal/FLAT/Raw/RAW/notengineering/filepre=S202512`
+
+## GHOST ARC processing
+`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-1 --selection /canonical/GHOST/dayCal/ARC/Raw/RAW/notengineering/filepre=S202512`
+`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-REDBLUE --tag GHOST-1 --selection /canonical/GHOST/dayCal/ARC/Raw/RAW/notengineering/filepre=S202512`
+
 
 ## GHOST science processing (Vini style)
-`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-1 --selection /canonical/GHOST/Raw/RAW/notengineering/filepre=S20251231S0031`
-`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-REDBLUE --tag GHOST-1 --uparms='{"fluxCalibrate:do_cal": "skip"}' --selection /canonical/GHOST/Raw/RAW/notengineering/filepre=S20251231S0031`
+`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-1 --selection /canonical/GHOST/Raw/RAW/notengineering/science/filepre=S20251231S0031`
+`add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --capture_monitoring --debundle GHOST-REDBLUE --tag GHOST-1 --uparms='{"fluxCalibrate:do_cal": "skip", "combineOrders:stacking_mode": "none"}' --selection /canonical/GHOST/Raw/RAW/notengineering/science/filepre=S20251231S0031`
+
+# Latest GOA GHOST processing
+202501 03 04 done for Vini checks full stack
+202501xx biases, slitflats, flats, slitarcs, arcs, slits, science done
+2025xxxx biases in progress
 
 
 # Documenting what Vini's scripts do:
@@ -75,5 +85,5 @@ For one UT night:
 * for each science bundle:
 * * call reduce individually on each _blue???.fits file, passing -p fluxCalibrate:do_cal=skip (ie reduce ..._blue001.fits; reduce ..._blue002.fits; ...)
 * * same for the _red???.fits files
-* NOTE - there's no grouping at all here, not even by bundle.
+* NOTE - there's no grouping at all here, not even by bundle. As far as I can see, this is equvalent to calling reduce on blue*.fits with -p combineOrders:stacking_mode=none (see the DRAGONS GHOST tutorial for info on that)
 * 
