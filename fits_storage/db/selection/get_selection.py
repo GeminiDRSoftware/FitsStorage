@@ -63,6 +63,8 @@ getselection_key_value = {
     'ProgramText': 'ProgramText',
     'raw_cc': 'raw_cc',
     'raw_iq': 'raw_iq',
+    'raw_bg': 'raw_bg',
+    'raw_wv': 'raw_wv',
     'gain': 'gain',
     'readspeed': 'readspeed',
     'date': 'date',

@@ -161,6 +161,8 @@ def to_url(self, with_columns=False):
                 self._url += '/preimage'
         elif key == 'processing_tag':
             self._url += '/processing_tag=%s' % self[key]
+        elif key in ('raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'):
+            self._url += f'/{key}={self[key]}'
         else:
             self._url += '/%s' % self[key]
 
