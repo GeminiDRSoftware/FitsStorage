@@ -717,7 +717,7 @@ databases = {self.fsc.reduce_calibs_url} get
         for key in dragons_config['calibs']:
             self.l.info(f">>>    {key} : {dragons_config['calibs'][key]}")
 
-        # Call Reduce()
+        # Instantiate Reduce()
         try:
             reduce = Reduce()
         except Exception as e:
@@ -835,9 +835,9 @@ databases = {self.fsc.reduce_calibs_url} get
             elif debundle == 'INDIVIDUAL':
                 self.reduced_files = []
                 input_files = reduce.output_filenames
-                reduce.recipename = recipe if recipe else "_default"
                 reduce.uparms = uparms
                 for input_file in input_files:
+                    reduce.recipename = recipe if recipe else "_default"
                     reduce.files = [input_file]
                     reduce._output_filenames = []
                     self.l.info("Debundle INDIVIDUAL - Calling DRAGONS "
@@ -856,7 +856,6 @@ databases = {self.fsc.reduce_calibs_url} get
                 self.actual_recipe = reduce.recipename
             elif debundle and debundle.startswith('GHOST'):
                 self.reduced_files = []
-                reduce.recipename = recipe if recipe else "_default"
                 reduce.uparms = uparms
                 # Which arms do we want?
                 if debundle == 'GHOST-SLIT':
@@ -874,6 +873,7 @@ databases = {self.fsc.reduce_calibs_url} get
                             dict_of_lists[camera].append(filename)
                 # Call reduce on each of the lists
                 for camera in cameras:
+                    reduce.recipename = recipe if recipe else "_default"
                     reduce.files = dict_of_lists[camera]
                     reduce._output_filenames = []
                     self.l.info("Debundle GHOST - Calling DRAGONS "
