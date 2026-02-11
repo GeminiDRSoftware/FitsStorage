@@ -496,12 +496,14 @@ class Reducer(object):
                 # Add a fileops ingest_upload queue entry
                 self.l.info(f"Adding fileops ingest_upload request for {filename}")
                 fo_req = FileOpsRequest(request="ingest_upload",
-                                        args={"filename": filename,
+                                        args={"filename": os.path.basename(filename),
                                               "processed_cal": False,
                                               "path": self.rqe.tag,
-                                              "fileuploadlog_id": None})
+                                              "fileuploadlog_id": None,
+                                              "batch": self.rqe.batch})
 
-                foq.add(fo_req, filename=filename, response_required=False)
+                foq.add(fo_req, filename=os.path.basename(filename),
+                        response_required=False, batch=self.rqe.batch)
                 self.s.commit()  # Ensure transaction on rqe is closed
 
 
@@ -528,6 +530,8 @@ class Reducer(object):
             self.s.commit()  # Ensure transaction on rqe is closed
 
             url = f"{self.upload_url}/{dst}"
+            if self.rqe.batch:
+                url += f'?batch={self.rqe.batch}'
             self.l.info(f"Transferring file {filename} to {url}")
 
             try:

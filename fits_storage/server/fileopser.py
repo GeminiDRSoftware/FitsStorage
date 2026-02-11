@@ -128,6 +128,10 @@ class FileOpser(object):
             self.doerror("Request args must be a dict")
             return
 
+        # If the entry has a (processing) batch, add that to the args
+        if self.fqe.batch:
+            self.request_args['batch'] = self.fqe.batch
+
         # Find which function to call to do that.
         try:
             self.worker = self.workers[self.request_name]

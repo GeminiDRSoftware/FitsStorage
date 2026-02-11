@@ -27,7 +27,7 @@ class ReduceQueueEntry(OrmQueueMixin, Base):
     """
     __tablename__ = 'reducequeue'
     __table_args__ = (
-        UniqueConstraint('filenames', 'inprogress', 'fail_dt'),
+        UniqueConstraint('filenames', 'debundle', 'recipe', 'inprogress', 'fail_dt'),
     )
 
     id = Column(Integer, primary_key=True)
@@ -49,6 +49,8 @@ class ReduceQueueEntry(OrmQueueMixin, Base):
     uparms = Column(Text)
     capture_files = Column(Boolean)
     capture_monitoring = Column(Boolean)
+    batch = Column(Text)
+    after_batch = Column(Text)
     error = Column(Text)
 
     # These are used to ensure each machine servicing the queue does not take

@@ -15,8 +15,8 @@ class IngestQueue(Queue):
         super().__init__(session, ormclass=IngestQueueEntry, logger=logger)
 
     def add(self, filename, path, force_md5=False, force=False, after=None,
-            no_defer=False, header_update=None, md5_before_header_update=None,
-            md5_after_header_update=None):
+            no_defer=False, batch=None, header_update=None,
+            md5_before_header_update=None, md5_after_header_update=None):
         """
         Add an entry to the ingest queue. This instantiates an IngestQueueEntry
         object using the arguments passed, and adds it to the database.
@@ -35,6 +35,7 @@ class IngestQueue(Queue):
         force
         after
         no_defer
+        batch
         header_update
         md5_before_header_update
         md5_after_header_update
@@ -53,6 +54,7 @@ class IngestQueue(Queue):
         iqe = IngestQueueEntry(filename, path, force=force, force_md5=force_md5,
                                after=after, no_defer=no_defer,
                                header_update=header_update,
+                               batch=batch,
                                md5_before_header_update=md5_before_header_update,
                                md5_after_header_update=md5_after_header_update)
 

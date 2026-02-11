@@ -16,7 +16,7 @@ class FileopsQueue(Queue):
         super().__init__(session, ormclass=FileopsQueueEntry, logger=logger)
 
     def add(self, fo_reqest, filename=None, after=None,
-            response_required=False):
+            response_required=False, batch=None):
         """
         Add an entry to the fileops queue. This instantiates a FileopsQueueEntry
         object using the arguments passed, and adds it to the database.
@@ -34,7 +34,8 @@ class FileopsQueue(Queue):
 
         fqe = FileopsQueueEntry(fo_reqest.json(), filename=filename,
                                 after=after,
-                                response_required=response_required)
+                                response_required=response_required,
+                                batch=batch)
 
         self.session.add(fqe)
         try:

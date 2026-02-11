@@ -200,12 +200,17 @@ url_map = Map([
     #      methods=['POST']),
     #
     Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
-    Rule('/upload_file/<seq_of:things>', upload_file, methods=['POST']),   # The generic upload_file server
-    #Rule('/upload_processed_cal/<filename>',                        # The processed_cal upload server
+
+    # The generic upload_file server. This can take a ?batch=string argument
+    Rule('/upload_file/<seq_of:things>', upload_file, methods=['POST'],
+         collect_qs_args=dict(batch='batch'), defaults=dict(batch=None)),
+
+    # The processed_cal upload server. This is deprecated in 3.6.x - use
+    # the regular upload_file and have reduction metadata in the file
+    #Rule('/upload_processed_cal/<filename>',
     #    partial(upload_file, processed_cal=True), methods=['POST']),
     #
 
-    #
     Rule('/calibrations/<selection:selection>', calibrations),      # The calibrations handler
 
     Rule('/calmgr/<selection:selection>', xmlcalmgr),               # The calmgr handler, returning xml (legacy url)
