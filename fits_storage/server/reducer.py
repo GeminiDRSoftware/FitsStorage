@@ -622,7 +622,7 @@ class Reducer(object):
                         # Don't go through the slices if we got it from the PHU
                         for slice in ad:
                             # Is the value in the HDR?
-                            value = ad.hdr.get(keyword)
+                            value = slice.hdr.get(keyword)
                             if value is not None:
                                 mon = Monitoring(slice)
                                 mon.recipe = self.actual_recipe
