@@ -33,6 +33,7 @@ class IngestQueueEntry(OrmQueueMixin, Base):
     force = Column(Boolean)
     after = Column(DateTime)
     no_defer = Column(Boolean)
+    batch = Column(Text)
     sortkey = Column(Text, index=True)
     error = Column(Text)
     md5_before_header_update = Column(Text)
@@ -44,7 +45,7 @@ class IngestQueueEntry(OrmQueueMixin, Base):
     storage_root = None
 
     def __init__(self, filename, path, force=False, force_md5=False,
-                 after=None, no_defer=False, header_update=None,
+                 after=None, no_defer=False, batch=None, header_update=None,
                  md5_before_header_update=None,
                  md5_after_header_update=None):
         """
@@ -85,6 +86,7 @@ class IngestQueueEntry(OrmQueueMixin, Base):
         self.force = force
         self.after = after if after is not None else self.added
         self.no_defer = no_defer
+        self.batch = batch
         self.fail_dt = self.fail_dt_false  # See note in OrmQueueMixin
         self.sortkey = self.sortkey_from_filename()
         self.header_update = header_update

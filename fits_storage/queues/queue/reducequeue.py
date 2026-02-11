@@ -4,12 +4,16 @@ as opposed to the queue itself."""
 
 import socket
 import time
-from sqlalchemy import select, text
+from sqlalchemy import select, text, distinct, or_, and_
 from sqlalchemy.sql import func, desc
 from sqlalchemy.exc import IntegrityError
 
 from .queue import Queue
 from ..orm.reducequeentry import ReduceQueueEntry
+
+# For the "batch" queries
+from ..orm.fileopsqueueentry import FileopsQueueEntry
+from ..orm.ingestqueueentry import IngestQueueEntry
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -31,7 +35,7 @@ class ReduceQueue(Queue):
 
     def add(self, filenames, intent=None, initiatedby=None, tag=None,
             recipe=None, capture_files=True, capture_monitoring=True,
-            debundle=None, mem_gb=0, uparms=None):
+            debundle=None, mem_gb=0, uparms=None, batch=None, after_batch=None):
         """
         Add an entry to the reduce queue. This instantiates a ReduceQueueEntry
         object using the arguments passed, and adds it to the database.
@@ -56,6 +60,8 @@ class ReduceQueue(Queue):
         rqe.capture_monitoring = capture_monitoring
         rqe.debundle = debundle
         rqe.mem_gb = mem_gb
+        rqe.batch = batch
+        rqe.after_batch = after_batch
 
         self.session.add(rqe)
         try:
@@ -73,7 +79,8 @@ class ReduceQueue(Queue):
         Pop an entry from the queue. See the superclass version for more info
 
         Reduce queue does not have to worry about duplicate filenames
-        inprogress, but does have to worry about memory footprint.
+        inprogress, but does have to worry about memory footprint. It also has
+        to worry about the batch and after_batch parameters (see below).
 
         There's a subtle but important difference between the reducequeue and
         the other queues - with the other queues we only need to lock the rows
@@ -92,6 +99,21 @@ class ReduceQueue(Queue):
         on the table. So in all the reducequeue and reducer code, we need to
         be diligent about doing a session.commit() after we are done accessing
         elements of the reducequeue instance, even if we didn't modify them.
+
+        batch / after_batch: With DRAGONS processing in GOA, we store all
+        calibrations in GOA. This creates a subelty where even if you ensure
+        that files are processed in the correct order, if you process science
+        data that uses the file previously processed as a calibration, there is
+        no guarantee that the calibration has been transferred and ingested (so
+        that it is available as a calibration) by the time the subsequent
+        science file calls for it). This is because fileops (the transfer) and
+        ingest are aynchronous and there could be a long queue. To prevent this,
+        we can label reduction with a "batch". This is simple a user defined
+        string that is stored in the reducequeue, and also in the fileops queue
+        and ingestqueue entries that result from that reduction. Reducequeue
+        will not pop an entry for reduction that has an after_batch value that
+        appears in the batch value of any pending queue entry on the reduce,
+        fileops or ingest queues.
         """
 
         # for brevity:
@@ -102,7 +124,7 @@ class ReduceQueue(Queue):
 
             # Total GBs of entries not failed, in progress, and on this host.
             # coalesce is used to return 0 rather than NULL if no results.
-            subq = (
+            mem_subq = (
                 select(func.coalesce(func.sum(ReduceQueueEntry.mem_gb), 0.0))
                 .where(ReduceQueueEntry.fail_dt == ReduceQueueEntry.fail_dt_false)
                 .where(ReduceQueueEntry.inprogress == True)
@@ -110,11 +132,42 @@ class ReduceQueue(Queue):
                 .scalar_subquery()
             )
 
+            # "Batch"es that are pending processing on reducequeue. Note - do
+            # not filter on inprogress here, just eliminate failed entries.
+            # It is important to filter out the NULL values due to the way
+            # SQL ... expression IN (subquery) works.
+            rq_batch_subq = (
+                select(distinct(ReduceQueueEntry.batch))
+                .where(ReduceQueueEntry.fail_dt == ReduceQueueEntry.fail_dt_false)
+                .where(ReduceQueueEntry.batch != None)
+            )
+            # Same for fileops queue
+            fq_batch_subq = (
+                select(distinct(FileopsQueueEntry.batch))
+                .where(FileopsQueueEntry.fail_dt == FileopsQueueEntry.fail_dt_false)
+                .where(FileopsQueueEntry.batch != None)
+            )
+            # and ingest queue
+            iq_batch_subq = (
+                select(distinct(IngestQueueEntry.batch))
+                .where(IngestQueueEntry.fail_dt == IngestQueueEntry.fail_dt_false)
+                .where(IngestQueueEntry.batch != None)
+            )
+
             stmt = (
                 select(ReduceQueueEntry)
                 .where(ReduceQueueEntry.inprogress == False)
                 .where(ReduceQueueEntry.fail_dt == ReduceQueueEntry.fail_dt_false)
-                .where(ReduceQueueEntry.mem_gb < (self.server_gbs - subq))
+                .where(ReduceQueueEntry.mem_gb < (self.server_gbs - mem_subq))
+                .where(or_(
+                    ReduceQueueEntry.after_batch == None,
+                    (and_(
+                        (~ReduceQueueEntry.after_batch.in_(rq_batch_subq)),
+                        (~ReduceQueueEntry.after_batch.in_(fq_batch_subq)),
+                        (~ReduceQueueEntry.after_batch.in_(iq_batch_subq))
+                        ))
+                    )
+                )
                 .order_by(desc(ReduceQueueEntry.sortkey))
                 .limit(1)
             )

@@ -39,9 +39,10 @@ class FileopsQueueEntry(OrmQueueMixin, Base):
     error = Column(Text)
     request = Column(Text, nullable=False)
     response = Column(Text)
+    batch = Column(Text)
 
     def __init__(self, request, filename=None, after=None,
-                 response_required=False):
+                 response_required=False, batch=None):
         """
         Create a fileops queue instance with the given request
 
@@ -70,6 +71,7 @@ class FileopsQueueEntry(OrmQueueMixin, Base):
         self.after = after if after is not None else self.added
         self.fail_dt = self.fail_dt_false  # See note in OrmQueueMixin
         self.sortkey = self.added
+        self.batch = batch
 
     def __repr__(self):
         """

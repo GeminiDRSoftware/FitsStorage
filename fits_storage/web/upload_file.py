@@ -20,7 +20,7 @@ fsc = get_config()
 
 
 @needs_cookie(magic_cookie='gemini_fits_upload_auth', annotate=FileUploadLog)
-def upload_file(things):
+def upload_file(things, batch):
     """
     This handles uploading files, including processed calibrations and other
     reduced data products
@@ -31,6 +31,10 @@ def upload_file(things):
 
     'things' will be a list of path elements, ie /path/to/file.fits becomes
     things=['path', 'to', 'file.fits']
+
+    'batch' is a processing batch string which is passed on to the fileops
+    (and hence ingest) queues to allow reducequeue to check that calibrations
+    it just generated have been ingested before reducing data that needs them
 
     Log Entries are inserted into the FileUploadLog table
     """
@@ -58,6 +62,10 @@ def upload_file(things):
     fileuploadlog.processed_cal = processed_cal
     session.add(fileuploadlog)
     session.commit()
+
+    if batch is not None:
+        batch =batch[0]
+        fileuploadlog.add_note(f"Batch: {batch}")
 
     if ctx.env.method != 'POST':
         fileuploadlog.add_note("Aborted - not HTTP POST")
@@ -130,5 +138,5 @@ def upload_file(things):
                                   "processed_cal": processed_cal,
                                   "fileuploadlog_id": fileuploadlog.id})
 
-    fq.add(fo_req, filename=filename, response_required=False)
+    fq.add(fo_req, filename=filename, response_required=False, batch=batch)
     session.commit()

@@ -10,7 +10,6 @@ that should be recorded in the fileopsqueue entry.
 """
 
 import os.path
-import datetime
 import traceback
 import sys
 import shutil
@@ -60,13 +59,14 @@ def ingest_upload(args, session, logger):
         path = args['path']
         fileuploadlog_id = args['fileuploadlog_id']
         processed_cal = args['processed_cal']
+        batch = args.get('batch')  # Batch is optional, default to None
     except KeyError:
         logger.error("Missing critical arguments in ingest_upload",
                      exc_info=True)
         return False
 
     logger.info(f"ingest_upload: {filename=}, {path=}, {fileuploadlog_id=}, "
-                f"{processed_cal=}")
+                f"{processed_cal=} {batch=}")
 
     # When called to ingest locally processed data, fileuploadlog_id is None
     if fileuploadlog_id:
@@ -143,7 +143,7 @@ def ingest_upload(args, session, logger):
     # and cleared from the queue by the time we ask for that.
     logger.info(f"Queueing {path}/{filename} for Ingest")
     iq = IngestQueue(session, logger)
-    iqe = iq.add(filename, path, no_defer=False)
+    iqe = iq.add(filename, path, no_defer=False, batch=batch)
 
     # iq.add returns None if the file is already on the queue
     if iqe is not None:
