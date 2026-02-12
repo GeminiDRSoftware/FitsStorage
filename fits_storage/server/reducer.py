@@ -532,6 +532,8 @@ class Reducer(object):
             url = f"{self.upload_url}/{dst}"
             if self.rqe.batch:
                 url += f'?batch={self.rqe.batch}'
+                self.s.commit()  # Ensure transaction on rqe is closed
+
             self.l.info(f"Transferring file {filename} to {url}")
 
             try:
