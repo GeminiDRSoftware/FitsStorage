@@ -67,6 +67,10 @@ while True:
             newinp.append(orm.id)
             if orm.id in oldinp:
                 stuck.append(orm.id)
+
+        # We're done talking to the database, commit to avoid having a
+        # transaction in progress which will block reducequeue
+        session.commit()
         if len(stuck):
             logger.critical("%s has %d items stuck in progress: %s",
                             queue, len(stuck), stuck)
