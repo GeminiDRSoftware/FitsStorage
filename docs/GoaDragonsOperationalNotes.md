@@ -37,7 +37,7 @@ add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_f
 
 ## GHOST science processing (Vini style)
 add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-1 --batch ghost-slit --after_batch ghost-arc --selection /canonical/GHOST/Raw/RAW/notengineering/science/filepre=S20251231S0031
-add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --capture_monitoring --debundle GHOST-REDBLUE --tag GHOST-1 --batch ghost-science --after_batch ghost-arc --uparms='{"fluxCalibrate:do_cal": "skip", "combineOrders:stacking_mode": "none"}' --selection /canonical/GHOST/Raw/RAW/notengineering/science/filepre=S20251231S0031
+add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --capture_monitoring --debundle GHOST-REDBLUE --tag GHOST-1 --batch ghost-science --after_batch ghost-slit --uparms='{"fluxCalibrate:do_cal": "skip", "combineOrders:stacking_mode": "none"}' --selection /canonical/GHOST/Raw/RAW/notengineering/science/filepre=S20251231S0031
 
 
 # Documenting what Vini's scripts do:
