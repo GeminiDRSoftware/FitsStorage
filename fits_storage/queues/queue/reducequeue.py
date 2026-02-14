@@ -34,7 +34,7 @@ class ReduceQueue(Queue):
             pass
 
     def add(self, filenames, intent=None, initiatedby=None, tag=None,
-            recipe=None, capture_files=True, capture_monitoring=True,
+            recipe=None, capture_files=False, capture_monitoring=False,
             debundle=None, mem_gb=0, uparms=None, batch=None, after_batch=None):
         """
         Add an entry to the reduce queue. This instantiates a ReduceQueueEntry
@@ -202,3 +202,11 @@ class ReduceQueue(Queue):
             held_ms = (released_ns - got_ns) / 1E6
             logger.debug(f"PopRQ: waiting for lock: {waiting_ms} ms, held lock: {held_ms} ms")
         return qentry
+
+# Helper function for memory estimate from number of pixels
+def memory_estimate(numpixlist):
+    # Assume raw data becomes 12 bytes per pix: 4 data, 4 var, 2 dq, 2 objmask
+    # Add one file for the reduced product. Assume 10% overhead / safety margin
+    numpix = sum(numpixlist) + numpixlist[0] # For the reduced product
+    gb = 1.2 * 12 * numpix / 1E9
+    return gb

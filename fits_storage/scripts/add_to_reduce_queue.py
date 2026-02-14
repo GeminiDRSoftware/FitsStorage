@@ -11,7 +11,7 @@ from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.db import session_scope
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
-from fits_storage.queues.queue.reducequeue import ReduceQueue
+from fits_storage.queues.queue.reducequeue import ReduceQueue, memory_estimate
 from fits_storage.queues.orm.reducequeentry import debundle_options
 
 from fits_storage.db.list_headers import list_headers
@@ -19,13 +19,6 @@ from fits_storage.db.selection.get_selection import from_url_things
 
 from fits_storage.server.reduce_list import parse_listfile
 
-# Helper function for memory estimate from number of pixels
-def memory_estimate(numpixlist):
-    # Assume raw data becomes 12 bytes per pix: 4 data, 4 var, 2 dq, 2 objmask
-    # Add one file for the reduced product. Assume 10% overhead / safety margin
-    numpix = sum(numpixlist) + numpixlist[0] # For the reduced product
-    gb = 1.2 * 12 * numpix / 1E9
-    return gb
 
 if __name__ == "__main__":
     # Option Parsing
