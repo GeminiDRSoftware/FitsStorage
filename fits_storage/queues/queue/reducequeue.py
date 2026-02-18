@@ -35,10 +35,15 @@ class ReduceQueue(Queue):
 
     def add(self, filenames, intent=None, initiatedby=None, tag=None,
             recipe=None, capture_files=False, capture_monitoring=False,
-            debundle=None, mem_gb=0, uparms=None, batch=None, after_batch=None):
+            debundle=None, mem_gb=0, uparms=None, batch=None, after_batch=None,
+            commit=True, dryrun=False):
         """
         Add an entry to the reduce queue. This instantiates a ReduceQueueEntry
         object using the arguments passed, and adds it to the database.
+        If commit is True (the default) it will commit the session after
+        inserting the entry.
+        If dryrun is True (False is default) it will not actually add the
+        ORM instance to the session. This implies commit=False too.
 
         Parameters
         ----------
@@ -63,16 +68,18 @@ class ReduceQueue(Queue):
         rqe.batch = batch
         rqe.after_batch = after_batch
 
-        self.session.add(rqe)
-        try:
-            self.session.commit()
-            return rqe
-        except IntegrityError:
-            self.logger.debug(f"Integrity error adding files {filenames} "
-                              "to Reduce Queue. Most likely, files are already"
-                              "on queue. Silently rolling back.")
-            self.session.rollback()
-            return None
+        if not dryrun:
+            self.session.add(rqe)
+            if commit:
+                try:
+                    self.session.commit()
+                except IntegrityError:
+                    self.logger.debug(f"Integrity error adding files {filenames} "
+                                      "to Reduce Queue. Most likely, files are already"
+                                      "on queue. Silently rolling back.")
+                    self.session.rollback()
+                    return None
+        return rqe
 
     def pop(self, logger=None):
         """

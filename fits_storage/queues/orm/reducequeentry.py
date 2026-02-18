@@ -89,3 +89,23 @@ class ReduceQueueEntry(OrmQueueMixin, Base):
         self.sortkey = self.sortkey_from_filename()
         self.added = utcnow()
         self.fail_dt = self.fail_dt_false  # See Note in OrmQueueMixin
+
+    def as_dict(self, all=False):
+        """
+        Return a dictionary representation of the ReduceQueueEntry instance.
+        If 'all' is False (the default), include only items which are useful
+        to record in order to re-queue the processing in the future.
+        """
+
+        attrs = ('filenames', 'debundle', 'recipe', 'uparms',
+                 'intent', 'initiatedby', 'tag', 'batch', 'after_batch',
+                 'capture_files', 'capture_monitoring', 'mem_gb')
+        if all:
+            attrs += ('id', 'inprogress', 'fail_dt', 'added', 'sortkey',
+                      'filename', 'error', 'host')
+
+        d = {}
+        for a in attrs:
+            d[a] = getattr(self, a)
+
+        return d
