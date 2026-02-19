@@ -71,7 +71,12 @@ class Previewer(object):
 
         self.fpfn = os.path.join(self.previewpath, self.filename)
 
-        self.spectrum = self.header.spectroscopy
+        self.spectrum = False
+
+        # Ugh.
+        if self.header.instrument == 'GHOST' and self.header.processing != 'Raw' and 'dragons' in self.diskfile.filename:
+            self.spectrum = True
+
 
         self.force = force
         self.scavengeonly = scavengeonly
@@ -201,7 +206,7 @@ class Previewer(object):
             self.delete_file()
 
         try:
-            self.logger.info("Rendering preview for %s", self.diskfile.filename)
+            self.logger.info(f"Rendering preview for {self.diskfile.filename} at {self.fpfn}")
             # Ensure the path within the previewpath exists
             os.makedirs(os.path.dirname(self.fpfn), exist_ok=True)
             with open(self.fpfn, 'wb') as fp:
@@ -217,7 +222,7 @@ class Previewer(object):
                 self.delete_file()
                 return False
         except IOError:
-            self.logger.error("IO Error on %s", self.fpfn)
+            self.logger.error("IO Error", exc_info=True)
             self.delete_file()
             return False
         except Exception:
@@ -232,7 +237,7 @@ class Previewer(object):
         """
         if self.using_s3:
             # Fetch the file from S3 at this point
-            if not self.s3.fetch_to_storageroot(self.diskfile.filename,
+            if not self.s3.fetch_to_storageroot(self.diskfile.keyname,
                                                 self.diskfile.fullpath):
                 # Failed to fetch the file from S3.
                 self.logger.error("Failed to fetch %s from S3",
@@ -338,7 +343,7 @@ class Previewer(object):
         """
         if self.using_s3:
             # Fetch the file from S3 at this point
-            if not self.s3.fetch_to_storageroot(self.diskfile.filename,
+            if not self.s3.fetch_to_storageroot(self.diskfile.keyname,
                                                 self.diskfile.fullpath):
                 # Failed to fetch the file from S3.
                 self.logger.error("Failed to fetch %s from S3",
