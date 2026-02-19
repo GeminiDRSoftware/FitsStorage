@@ -14,6 +14,8 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--file-pre", action="store", type="string", dest="file_pre",
                   help="filename prefix to select files to queue by")
+parser.add_option("--file-contains", action="store", dest="file_contains",
+                  help="select files with filenames containing this string")
 parser.add_option("--instrument", action="store", type="string",
                   dest="instrument", help="add files from this instrument only")
 parser.add_option("--all", action="store_true", dest="all",
@@ -43,8 +45,8 @@ setdemon(options.demon)
 logger.info("***   add_to_preview_queue.py - starting up at %s",
             datetime.datetime.now())
 
-if not (options.file_pre or options.all):
-    logger.error("You must give either a file_pre, or use the all flag")
+if not (options.file_pre or options.all or options.file_contains):
+    logger.error("You must give either a file-pre, file-contains, or use the all flag")
     sys.exit(1)
 
 with session_scope() as session:
@@ -61,6 +63,10 @@ with session_scope() as session:
 
     if options.file_pre:
         query = query.filter(DiskFile.filename.startswith(options.file_pre))
+
+    if options.file_contains:
+        query = query.filter(DiskFile.filename.contains(options.file_contains))
+
     dfids = query.all()
 
     num = len(dfids)
