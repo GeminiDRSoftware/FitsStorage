@@ -238,6 +238,8 @@ function setPreviewVisibility() {
         e.preventDefault();
         // Set the image to the loading swirlything
         $('#previewbox').children('img').prop('src', "/static/ajax-loading.gif");
+        $('#previewbox').children('img').prop('width', 16);
+        $('#previewbox').children('img').prop('height', 16);
         $('#previewbox').show();
         // Get the URL from the a href link
         var url = ($(this).children('a').prop('href'));
