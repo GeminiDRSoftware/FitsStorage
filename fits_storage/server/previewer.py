@@ -74,7 +74,8 @@ class Previewer(object):
         self.spectrum = False
 
         # Ugh.
-        if self.header.instrument == 'GHOST' and self.header.processing != 'Raw' and 'dragons' in self.diskfile.filename:
+        if self.header.instrument == 'GHOST' and self.header.processing != 'Raw' and 'EXTRACTED' in self.header.types:
+            self.logger.debug('Previewer spectrum mode selected')
             self.spectrum = True
 
 
@@ -248,7 +249,8 @@ class Previewer(object):
 
         ad = self.diskfile.get_ad_object
 
-        if self.header.instrument == 'GHOST' and self.header.processing != 'Raw' and 'dragons' in self.diskfile.filename:
+        if self.header.instrument == 'GHOST' and self.header.processing != 'Raw' and '_dragons' in self.diskfile.filename:
+            # This doesn't work for _calibrated files
             self.logger.debug("GHOST processed spectrum plot")
 
             # This is based heavily on https://gitlab.com/nsf-noirlab/csdc/usngo/ghostdr/-/blob/main/code/plot_ghost_spect.py
@@ -312,10 +314,10 @@ class Previewer(object):
             # Adjust layout to remove gaps between subplots
             plt.tight_layout()
 
-            # These would be *way* better as pngs. Unfortunatley the legacy
+            # These would be *way* better as pngs. Unfortunately the legacy
             # preview code assumes everything is jpg.
             fig.savefig(fp, dpi='figure', format='jpg', metadata=None, bbox_inches=None,
-                        pad_inches=0.1)
+                        pad_inches=None)
             plt.close()
 
             return True
