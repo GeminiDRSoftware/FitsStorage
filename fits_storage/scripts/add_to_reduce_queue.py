@@ -1,6 +1,9 @@
 #! /usr/bin/env python3
 
 import datetime
+import os.path
+import json
+
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
 from fits_storage.config import get_config
@@ -11,7 +14,7 @@ from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.db import session_scope
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
-from fits_storage.queues.queue.reducequeue import ReduceQueue
+from fits_storage.queues.queue.reducequeue import ReduceQueue, memory_estimate
 from fits_storage.queues.orm.reducequeentry import debundle_options
 
 from fits_storage.db.list_headers import list_headers
@@ -19,13 +22,6 @@ from fits_storage.db.selection.get_selection import from_url_things
 
 from fits_storage.server.reduce_list import parse_listfile
 
-# Helper function for memory estimate from number of pixels
-def memory_estimate(numpixlist):
-    # Assume raw data becomes 12 bytes per pix: 4 data, 4 var, 2 dq, 2 objmask
-    # Add one file for the reduced product. Assume 10% overhead / safety margin
-    numpix = sum(numpixlist) + numpixlist[0] # For the reduced product
-    gb = 1.2 * 12 * numpix / 1E9
-    return gb
 
 if __name__ == "__main__":
     # Option Parsing
@@ -97,6 +93,17 @@ if __name__ == "__main__":
                              ", and ingested before processing science files "
                              "that need those calibrations")
 
+    parser.add_argument("--json_write", action="store",
+                        help="File to record entries to. The file must be empty"
+                             " or be a JSON list. Additional entries will be "
+                             "appended to the list.")
+
+    parser.add_argument("--json_read", action="store",
+                        help="JSON file to read entries from.")
+
+    parser.add_argument("--dryrun", action="store_true",
+                        help="Do not actually add to database. Does not prevent"
+                             " reading and writing JSON files")
     parser.add_argument("--logsuffix", action="store", type=str,
                         dest="logsuffix", default=None,
                         help="Extra suffix to add on logfile")
@@ -168,6 +175,11 @@ if __name__ == "__main__":
         logger.info("No list(s) of filenames was provided.")
         lists = []
 
+    # Keep a list of rqes we add, as dictionaries, so that we can write them
+    # to json at the end if requested. We store them as dicts rather than the
+    # actual rqes so that there is no session dependence.
+    rqeds = []
+
     with session_scope() as session:
 
         if options.selection:
@@ -227,16 +239,91 @@ if __name__ == "__main__":
 
             if len(validfiles):
                 rq = ReduceQueue(session, logger=logger)
-                logger.info(f"Queuing a batch of {len(validfiles)} files for "
-                            f"reduce, starting with {validfiles[0]}")
-                rq.add(validfiles, intent=intent, initiatedby=initiatedby,
-                       tag=tag, recipe=options.recipe, uparms=options.uparms,
-                       capture_files=options.capture_files,
-                       capture_monitoring=options.capture_monitoring,
-                       batch=options.batch, after_batch=options.after_batch,
-                       debundle=options.debundle, mem_gb=memory_estimate(numpix))
+                if options.dryrun:
+                    logger.info(f"Dryrun - not actually Queuing a batch of "
+                                f"{len(validfiles)} files for "
+                                f"reduce, starting with {validfiles[0]}")
+                else:
+                    logger.info(f"Queuing a batch of {len(validfiles)} files for "
+                                f"reduce, starting with {validfiles[0]}")
+                rqe = rq.add(validfiles,
+                             intent=intent,
+                             initiatedby=initiatedby,
+                             tag=tag,
+                             recipe=options.recipe, uparms=options.uparms,
+                             capture_files=options.capture_files,
+                             capture_monitoring=options.capture_monitoring,
+                             batch=options.batch,
+                             after_batch=options.after_batch,
+                             debundle=options.debundle,
+                             mem_gb=memory_estimate(numpix),
+                             dryrun=options.dryrun)
+                rqeds.append(rqe.as_dict())
             else:
                 logger.error("No valid files to add")
+
+        if options.json_read:
+            logger.info(f"Reading from JSON file: {options.json_read}")
+            try:
+                with open(options.json_read, 'r') as jf:
+                    entries = json.load(jf)
+                logger.info(f"Read {len(entries)} entries from JSON")
+            except Exception:
+                logger.error("Failed to read entries from JSON", exc_info=True)
+                entries = []
+
+            # Are we over-riding anything (e.g. processing tag etc.) from the
+            # command line?
+            overrides = {}
+            for item in ('initiatedby', 'intent', 'tag', 'recipe', 'debundle',
+                         'uparms', 'capture_monitoring', 'capture_files',
+                         'batch', 'after_batch'):
+                if getattr(options, item):
+                    logger.debug(f"Over-riding {item} from command line: "
+                                 f"{getattr(options, item)}")
+                    overrides[item] = getattr(options, item)
+
+            rq = ReduceQueue(session, logger=logger)
+            for entry in entries:
+                entry |= overrides
+                if options.dryrun:
+                    logger.info(f"Dryrun - not actually adding an entry of {len(entry['filenames'])} files "
+                                f"for reduce, starting with {entry['filenames'][0]}")
+                else:
+                    logger.info(f"Adding an entry of {len(entry['filenames'])} files "
+                                f"for reduce, starting with {entry['filenames'][0]}")
+                # Add the rqe. Commit all the entries in a single transaction,
+                # so that if one fails they all fail, and also to ensure that
+                # batch and after_batch dependencies are respected
+                rqe = rq.add(commit=False, dryrun=options.dryrun, **entry)
+
+            # Commit all the entries in one transaction
+            if not options.dryrun:
+                try:
+                    session.commit()
+                    logger.info("Transaction committed. All items added sucessfully")
+                except Exception:
+                    logger.error("Failed to commit the transaction adding all the "
+                                 "entries. None have been added.", exc_info=True)
+
+
+    if options.json_write:
+        jfn = options.json_write
+        logger.info(f"Writing Reduce Queue Entries to json file {jfn}")
+        if os.path.exists(jfn):
+            # read existing entries
+            with open(jfn, 'r') as jf:
+                entries = json.load(jf)
+                logger.debug(f"Read {len(entries)} existing entries from json")
+            entries += rqeds
+            logger.debug(f"Appended {len(rqeds)} new entries to list")
+        else:
+            entries = rqeds
+
+        # Write the json file, overwriting if it already exists
+        with open(jfn, 'w') as jf:
+            logger.debug(f"Writing {len(entries)} to json file")
+            json.dump(entries, jf, indent=2)
 
     logger.info("*** add_to_reducequeue.py exiting normally at %s",
                 datetime.datetime.now())

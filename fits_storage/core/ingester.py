@@ -36,6 +36,7 @@ if fsc.is_server:
         ingest_provenancehistory
     if fsc.using_previews:
         from fits_storage.server.previewer import Previewer
+    from fits_storage.server.reduce_on_ingest import ReduceOnIngest
 
 
 class Ingester(object):
@@ -46,7 +47,7 @@ class Ingester(object):
     """
     def __init__(self, session, logger,
                  skip_md=True, skip_fv=True, make_previews=False,
-                 override_engineering=False):
+                 override_engineering=False, queue_reduction=False):
         """
         Instantiate the Ingester class with a session, logger and configuration
         items.
@@ -71,6 +72,9 @@ class Ingester(object):
             local calibration manager as if a user has uploaded a file, they
             certainly want to use that file irrespective of whether the headers
             indicate that it's engineering.
+        queue_reduction: bool (default False)
+            - If True, pass diskfiles to reduce_immediately to queue for
+            reduction as configured on this server
         """
 
         self.s = session
@@ -78,6 +82,7 @@ class Ingester(object):
         self.skip_md = skip_md
         self.skip_fv = skip_fv
         self.make_previews = make_previews
+        self.queue_reduction = queue_reduction
 
         # We pull these configuration values into the local namespace for
         # convenience and to allow poking them for testing
@@ -233,6 +238,12 @@ class Ingester(object):
                     self.l.info("Adding %s to exportqueue for destination: %s",
                                 iqe.filename, destination)
                     self.exportqueue.add(iqe.filename, iqe.path, destination)
+
+        # If we are doing immediate reduction, call for that now
+        if fsc.is_server and self.queue_reduction:
+            self.l.info("Queue reduction")
+            roi = ReduceOnIngest(session=self.s, logger=self.l)
+            roi(diskfile)
 
         # Finally, delete the iqe we have just completed.
         # If we're not a server (ie the DRAGONS embedded local calibration

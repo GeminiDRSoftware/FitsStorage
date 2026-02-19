@@ -38,6 +38,10 @@ parser.add_argument("--make-previews", action="store_true",
                     help="Make previews during ingest rather than adding to"
                          "preview queue. This is more efficient overall but"
                          "slows down the actual ingest phase")
+parser.add_argument("--queue-reduction", action="store_false",
+                    dest="queue_reduction",
+                    help="Queue ingested files for immediate reduction. Default"
+                         " True")
 parser.add_argument("--debug", action="store_true", dest="debug",
                     default=False, help="Increase log level to debug")
 parser.add_argument("--demon", action="store_true", dest="demon", default=False,
@@ -101,7 +105,8 @@ try:
 
         ingest_queue = IngestQueue(session, logger)
         ingester = Ingester(session, logger, skip_fv=options.skip_fv,
-                            skip_md=options.skip_md)
+                            skip_md=options.skip_md,
+                            queue_reduction=options.queue_reduction)
 
         # Loop forever. loop is a global variable defined up top
         while loop:

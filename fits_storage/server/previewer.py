@@ -8,6 +8,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 
 from gemini_instruments.gmos.pixel_functions import get_bias_level
@@ -22,6 +23,7 @@ from gemini_instruments.gmos.pixel_functions import get_bias_level
 from fits_storage.logger_dummy import DummyLogger
 from fits_storage.config import get_config
 
+from fits_storage.core.orm.header import Header
 from fits_storage.server.orm.preview import Preview
 
 
@@ -50,6 +52,7 @@ class Previewer(object):
         fsc = get_config()
         self.using_s3 = using_s3 if using_s3 is not None else fsc.using_s3
         self.previewpath = previewpath if previewpath is not None else fsc.preview_path
+        self.previewpath = os.path.join(fsc.storage_root, self.previewpath)
         self.previewpath = fsc.s3_staging_dir if self.using_s3 else self.previewpath
         self.s3_preview_path = fsc.preview_path
 
@@ -63,12 +66,12 @@ class Previewer(object):
                                      .removesuffix('.fits') + '.jpg'
                                      )
 
+        findheader = select(Header).where(Header.diskfile_id == diskfile.id)
+        self.header = session.execute(findheader).scalar_one_or_none()
+
         self.fpfn = os.path.join(self.previewpath, self.filename)
 
-        # self.spectrum = len(diskfile.get_ad_object[0].shape) == 1
-        # This doesn't work when diskfile comes from the database as there's
-        # no file associated with it.
-        self.spectrum = False
+        self.spectrum = self.header.spectroscopy
 
         self.force = force
         self.scavengeonly = scavengeonly
@@ -225,8 +228,92 @@ class Previewer(object):
 
     def render_spectrum(self, fp):
         """
-        Not implemented yet
+        Only implemented for GHOST reduced data
         """
+        if self.using_s3:
+            # Fetch the file from S3 at this point
+            if not self.s3.fetch_to_storageroot(self.diskfile.filename,
+                                                self.diskfile.fullpath):
+                # Failed to fetch the file from S3.
+                self.logger.error("Failed to fetch %s from S3",
+                                  self.diskfile.filename)
+                return None
+            # Having magicaly dropped a local file there, the diskfile instance
+            # should be able to handle compression and astrodata for us.
+
+        ad = self.diskfile.get_ad_object
+
+        if self.header.instrument == 'GHOST' and self.header.processing != 'Raw' and 'dragons' in self.diskfile.filename:
+            self.logger.debug("GHOST processed spectrum plot")
+
+            # This is based heavily on https://gitlab.com/nsf-noirlab/csdc/usngo/ghostdr/-/blob/main/code/plot_ghost_spect.py
+            band = ad.arm()
+            flux = ad[0].data
+            lam = ad[0].wcs(numpy.arange(flux.size)).astype(numpy.float32)
+
+            # Stay in nm, do not convert to Angstrom
+            lambda_array = numpy.array(lam)
+            flux_array = numpy.array(flux)
+
+            # Define lambda ranges for each panel depending on the band
+            if band == 'red':
+                lambda_ranges = [(537, 633), (627, 723), (717, 813), (807, 903), (897, 993)]
+            else:
+                lambda_ranges = [(379, 411), (409, 441), (439, 471), (469, 501), (499, 531)]
+            # Create a figure and a set of 5 subplots
+            fig, axs = plt.subplots(len(lambda_ranges), 1, sharex=False, figsize=(10, 8))
+
+            # Plot data in each range
+            for i, (lam_min, lam_max) in enumerate(lambda_ranges):
+                # Filter data for the current range
+                mask = (lambda_array >= lam_min) & (lambda_array <= lam_max)
+                lambda_filtered = lambda_array[mask]
+                flux_filtered = flux_array[mask]
+
+                if len(lambda_filtered) > 0 and len(flux_filtered) > 0:
+                    # Plot the data
+                    axs[i].plot(lambda_filtered, flux_filtered, c=band, lw='.6')
+                    # Calculate the flux median of the range of flux in current range
+                    flux_median = numpy.median(flux_filtered)
+                    # Set the x-limits
+                    axs[i].set_xlim(lam_min, lam_max)
+                    # Set the y-limits for this particular panel
+                    ylim = (-0.25 * flux_median, 2.5 * flux_median)
+                    axs[i].set_ylim(ylim)
+                    #axs[i].set
+                    # Hide tick values in y
+                    # axs[i].set_yticks([])
+                    # Handling ticks
+                    axs[i].minorticks_on()
+                    if band == 'red':
+                        axs[i].set_xticks(numpy.arange(lam_min + 3, lam_max + 3, step=15))
+                        axs[i].set_xticks(numpy.arange(lam_min + 8, lam_max, step=5), minor=True)
+                    axs[i].tick_params(axis='y', which='major', labelsize=8)
+                    # axs[i].ticklabel_format(axis='both', style='sci', scilimits=(0,0))
+                else:
+                    # Handle the case where no data points are in the range
+                    axs[i].text(0.5, 0.5, 'No data in this range', transform=axs[i].transAxes,
+                                ha='center', va='center', color=band)
+
+                # Optionally, set y-label for each panel
+                # axs[i].set_yticks()
+                # Only y-label on the 3rd panel
+                if i == 2: axs[i].set_ylabel('Flux')
+
+            # Set x-axis label for the bottom plot
+            axs[-1].set_xlabel('λ(nm)')
+            # Set title for the whole plot
+            fig.suptitle(self.diskfile.filename)
+            # Adjust layout to remove gaps between subplots
+            plt.tight_layout()
+
+            # These would be *way* better as pngs. Unfortunatley the legacy
+            # preview code assumes everything is jpg.
+            fig.savefig(fp, dpi='figure', format='jpg', metadata=None, bbox_inches=None,
+                        pad_inches=0.1)
+            plt.close()
+
+            return True
         self.logger.warning("Spectrum preview not implemented yet")
         return False
 
