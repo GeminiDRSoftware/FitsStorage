@@ -243,6 +243,9 @@ function setPreviewVisibility() {
         var url = ($(this).children('a').prop('href'));
         // Set the URL of the img element to the preview url
         $('#previewbox').children('img').prop('src', url);
+        // Force the size of the img element to that of the CSS preview box
+        $('#previewbox').children('img').prop('width', 800);
+        $('#previewbox').children('img').prop('height', 600);
         // Hide it on click anywhere
         $('#previewbox').click(function() {
             $('#previewbox').hide();
