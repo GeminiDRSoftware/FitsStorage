@@ -78,7 +78,7 @@ def get_prefixes(ip, api=None, logger=DummyLogger()):
 
     if api == 'bgpview':
         apis = [bgpview]
-    elif api == 'airn':
+    elif api == 'arin':
         apis = [arin]
     else:
         apis = [bgpview, arin]
@@ -338,6 +338,9 @@ class ArinApi(object):
             length = j['cidr0_cidrs'][0]['length']
             cidr = f"{v4prefix}/{length}"
 
+            if cidr == '0.0.0.0/0':
+                return None
+            
             ipp = IPPrefix()
             ipp.prefix = cidr
             ipp.api_used = self.urlbase
