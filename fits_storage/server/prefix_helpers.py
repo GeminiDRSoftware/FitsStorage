@@ -332,15 +332,15 @@ class ArinApi(object):
             if r.status_code != 200:
                 self.logger.error("Bad status code %s from %s",
                                   r.status_code, url)
-                return None
+                return []
             j = r.json()
             v4prefix = j['cidr0_cidrs'][0]['v4prefix']
             length = j['cidr0_cidrs'][0]['length']
             cidr = f"{v4prefix}/{length}"
 
             if cidr == '0.0.0.0/0':
-                return None
-            
+                return []
+
             ipp = IPPrefix()
             ipp.prefix = cidr
             ipp.api_used = self.urlbase

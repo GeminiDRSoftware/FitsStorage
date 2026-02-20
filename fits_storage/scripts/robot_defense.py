@@ -186,8 +186,8 @@ if args.update:
                 ipp.deny = True
         else:
             if ipp.deny:
-                logger.info("Updating badness and UNdenying prefix %s: %d",
+                logger.info("Updating badness consider UNdenying prefix %s: %d",
                             ipp.prefix, ipp.badness)
-                ipp.deny = False
+                #ipp.deny = False
 
         session.commit()
