@@ -26,7 +26,7 @@ from fits_storage.server.access_control_utils import icanhave
 
 def preview(things):
     """
-    This is the preview server, it sends you the preview jpg for the
+    This is the preview server, it sends you the preview jpg/png for the
     requested file. It handles authentication in that it won't give you the
     preview if you couldn't access the pixel data.
 
@@ -97,7 +97,12 @@ def sendpreview(filename):
     """
 
     resp = get_context().resp
-    resp.content_type = 'image/jpeg'
+    resp.set_header('Content-Disposition', f'inline; filename="{filename}"')
+
+    if filename.endswith('.jpg'):
+        resp.content_type = 'image/jpeg'
+    elif filename.endswith('.png'):
+        resp.content_type = 'image/png'
 
     # Send them the data
     if fsc.using_s3:
