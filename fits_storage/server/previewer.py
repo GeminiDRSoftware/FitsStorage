@@ -33,18 +33,9 @@ class Previewer(object):
     it with a diskfile object, database session, and optional logger and
     configuration parameters, then call methods on it to generate the preview.
     """
-    diskfile = None
-    session = None
-    logger = None
-    path = None
-    using_s3 = None
-    filename = None
-    fpfn = None  # Full Path Filename
-    spectrum = None
-    s3_helper = None
 
     def __init__(self, diskfile, session, logger=None, previewpath = None,
-                 using_s3 = None, force=False, scavengeonly=False):
+                 using_s3 = None, force=False, scavengeonly=False, header=None):
         self.diskfile = diskfile
         self.session = session
         self.logger = logger if logger is not None else DummyLogger()
@@ -54,30 +45,29 @@ class Previewer(object):
         self.previewpath = previewpath if previewpath is not None else fsc.preview_path
         self.previewpath = os.path.join(fsc.storage_root, self.previewpath)
         self.previewpath = fsc.s3_staging_dir if self.using_s3 else self.previewpath
-        self.s3_preview_path = fsc.preview_path
+        self.s3_preview_path = fsc.preview_path if fsc.using_s3 else None
 
         # Push our logger instance into the diskfile if it doesn't have one.
         # diskfiles from a database session do not get __init__()ed.
         if not hasattr(self.diskfile, '_logger'):
             self.diskfile._logger = logger
 
-        self.filename = os.path.join(diskfile.path,
-                                     diskfile.filename.removesuffix('.bz2') \
-                                     .removesuffix('.fits') + '.jpg'
-                                     )
-
-        findheader = select(Header).where(Header.diskfile_id == diskfile.id)
-        self.header = session.execute(findheader).scalar_one_or_none()
-
-        self.fpfn = os.path.join(self.previewpath, self.filename)
+        if header:
+            self.header = header
+        else:
+            findheader = select(Header).where(Header.diskfile_id == diskfile.id)
+            self.header = session.execute(findheader).scalar_one_or_none()
 
         self.spectrum = False
-
         # Ugh.
         if self.header.instrument == 'GHOST' and self.header.processing != 'Raw' and 'EXTRACTED' in self.header.types:
             self.logger.debug('Previewer spectrum mode selected')
             self.spectrum = True
 
+        self.filetype = 'png' if self.spectrum else 'jpg'
+        self.filename = diskfile.keyname.removesuffix('.bz2').removesuffix('.fits')
+        self.filename += '.' + self.filetype
+        self.fpfn = os.path.join(self.previewpath, self.filename)
 
         self.force = force
         self.scavengeonly = scavengeonly
@@ -314,10 +304,8 @@ class Previewer(object):
             # Adjust layout to remove gaps between subplots
             plt.tight_layout()
 
-            # These would be *way* better as pngs. Unfortunately the legacy
-            # preview code assumes everything is jpg.
-            fig.savefig(fp, dpi='figure', format='jpg', metadata=None, bbox_inches=None,
-                        pad_inches=None)
+            fig.savefig(fp, dpi='figure', format=self.filetype, metadata=None,
+                        bbox_inches=None, pad_inches=None)
             plt.close()
 
             return True
@@ -591,7 +579,7 @@ class Previewer(object):
             fig.add_axes(ax)
             ax.imshow(full, cmap=plt.cm.gray)
 
-        fig.savefig(fp, format='jpg')
+        fig.savefig(fp, format=self.filetype)
 
         plt.close()
         return True
