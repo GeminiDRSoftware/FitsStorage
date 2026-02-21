@@ -731,7 +731,7 @@ databases = {self.fsc.reduce_calibs_url} get
                              exc_info=True)
             # Capture log and close down log capture
             self.l.removeHandler(handler)
-            processinglog.end(len(self.reduced_files), self.rqe.failed)
+            processinglog.end(self.reduced_files, self.rqe.failed)
             self.s.commit()  # Ensure transaction on rqe is closed
             # Add the captured log output and close the logcapture StringIO
             processinglog.log = logcapture.getvalue()
@@ -769,7 +769,7 @@ databases = {self.fsc.reduce_calibs_url} get
                                  f"{self.rqe.uparms}: {e}", exc_info=True)
                 # Capture log and close down log capture
                 self.l.removeHandler(handler)
-                processinglog.end(len(self.reduced_files), self.rqe.failed)
+                processinglog.end(self.reduced_files, self.rqe.failed)
                 self.s.commit()  # Ensure transaction on rqe is closed
                 # Add the captured log output and close the logcapture StringIO
                 processinglog.log = logcapture.getvalue()
@@ -906,7 +906,7 @@ databases = {self.fsc.reduce_calibs_url} get
                              f"DRAGONS Reduce.runr(): {e}", exc_info=True)
             # Capture log and close down log capture
             self.l.removeHandler(handler)
-            processinglog.end(len(self.reduced_files), self.rqe.failed)
+            processinglog.end(self.reduced_files, self.rqe.failed)
             self.s.commit()  # Ensure transaction on rqe is closed
             # Add the captured log output and close the logcapture StringIO
             processinglog.log = logcapture.getvalue()
@@ -934,7 +934,7 @@ databases = {self.fsc.reduce_calibs_url} get
         # current reduction though, so we check this (again) at the end of do_reduce()
         # and raise an exception there to trigger service_reduce_queue to bail out.
 
-        processinglog.end(len(self.reduced_files), self.rqe.failed)
+        processinglog.end(self.reduced_files, self.rqe.failed)
         self.s.commit()  # Ensure transaction on rqe is closed
 
         self.l.info("At end of call_reduce, reduced files are: %s",
