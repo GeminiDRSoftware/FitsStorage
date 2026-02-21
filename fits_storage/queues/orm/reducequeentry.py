@@ -14,6 +14,7 @@ from .ormqueuemixin import OrmQueueMixin
 
 from fits_storage.config import get_config
 
+# Note that DEBUNDLE_ENUM is used in the processinglog table too.
 debundle_options = ['INDIVIDUAL', 'ALL', 'GHOST', 'GHOST-SLIT', 'GHOST-REDBLUE',
                     'IGRINS-2']
 DEBUNDLE_ENUM = Enum(*debundle_options, name='debundle_options')
