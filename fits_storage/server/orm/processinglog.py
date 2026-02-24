@@ -8,6 +8,9 @@ from fits_storage.core.orm import Base
 from fits_storage import utcnow
 from fits_storage.queues.orm.reducequeentry import DEBUNDLE_ENUM
 
+from fits_storage.config import get_config
+fsc = get_config()
+
 class ProcessingLog(Base):
     """
     This is a reduction log. Note unlike most of the other log tables this is
@@ -18,8 +21,13 @@ class ProcessingLog(Base):
 
     id = Column(BigInteger, primary_key=True)
     filenames = Column(Text)
-    input_files = Column(ARRAY(Text))
-    output_files = Column(ARRAY(Text))
+    # For testing - this wouldn't be used in the real world
+    if fsc.using_sqlite:
+        input_files = Column(Text)
+        output_files = Column(Text)
+    else:
+        input_files = Column(ARRAY(Text))
+        output_files = Column(ARRAY(Text))
     capture_files = Column(Boolean)
     capture_monitoring = Column(Boolean)
     debundle = Column(DEBUNDLE_ENUM)
