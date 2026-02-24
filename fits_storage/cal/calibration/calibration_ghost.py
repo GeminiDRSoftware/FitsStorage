@@ -386,7 +386,7 @@ class CalibrationGHOST(Calibration):
         return self.spectroscopy_flat(processed, howmany, flat_descriptors,
                                       filters)
 
-    def processed_slitflat(self, howmany=None):
+    def processed_slitflat(self, howmany=1):
         """
         Method to find the best GHOST SLITFLAT for the target dataset
 
@@ -427,7 +427,7 @@ class CalibrationGHOST(Calibration):
         return self.imaging_flat(False, howmany, flat_descriptors, filters,
                                  sf=True)
 
-    def processed_slit(self, howmany=None):
+    def processed_slit(self, howmany=1):
         """
         Method to find the best processed GHOST SLIT for the target dataset
 
