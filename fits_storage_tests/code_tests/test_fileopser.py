@@ -39,6 +39,7 @@ class DummyFqe(object):
     request = '{"request": "echo", "args": {"echo": "Hello, world"}}'
     response_required = True
     response = None
+    batch = None
 
 
 def test_reset():
