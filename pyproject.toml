@@ -5,7 +5,7 @@ build-backend = 'setuptools.build_meta'
 [project]
 name = "fits_storage"
 # Don't forget to also update fits_storage/__init__.py
-version = "3.6.1"
+version = "3.6.2-dev"
 authors = [
   { name="Paul Hirst", email="paul.hirst@noirlab.edu" },
 ]
