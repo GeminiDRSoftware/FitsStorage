@@ -128,7 +128,8 @@ def get_fitsweb_granthelper():
          'nici', 'ghost', 'photstandard', 'photstandardobs', 'footprint',
          'preview', 'obslog', 'miscfile', 'obslog_comment', 'program',
          'publication', 'programpublication', 'provenance', 'history',
-         'reduction', 'processingtag', 'monitoring'])
+         'reduction', 'processingtag', 'monitoring', 'processinglog',
+         'processinglog_files'])
 
     # For the notification system:
     grant.select('notification')
@@ -213,7 +214,11 @@ def get_dragons_granthelper():
     grant.update('processinglog')
     grant.select('processinglog_id_seq')
     grant.update('processinglog_id_seq')
-
+    grant.select('processinglog_files')
+    grant.insert('processinglog_files')
+    grant.update('processinglog_files')
+    grant.select('processinglog_files_id_seq')
+    grant.update('processinglog_files_id_seq')
 
     return grant
 
