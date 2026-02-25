@@ -48,3 +48,4 @@ from fits_storage_tests.code_tests.test_modify_fitsheader import *
 from fits_storage_tests.code_tests.test_parse_post_calmgr_inputs import *
 from fits_storage_tests.code_tests.test_reducequeue import *
 from fits_storage_tests.code_tests.test_reduce_on_ingest import *
+from fits_storage_tests.code_tests.test_processinglog import *
