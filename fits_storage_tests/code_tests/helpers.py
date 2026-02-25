@@ -131,6 +131,8 @@ def make_empty_testing_db_env(tmpdir):
     drop_tables(session)
     create_tables(session)
 
+    return session
+
 def make_empty_pg_testing_db():
     """
     Make a testing database environment consisting an empty postgres database

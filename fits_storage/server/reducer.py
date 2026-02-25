@@ -29,7 +29,7 @@ from fits_storage.queues.queue.fileopsqueue import FileopsQueue, FileOpsRequest
 from fits_storage.queues.orm.reducequeentry import ReduceQueueEntry
 
 from fits_storage.server.orm.monitoring import Monitoring
-from fits_storage.server.orm.processinglog import ProcessingLog
+from fits_storage.server.orm.processinglog import ProcessingLog, ProcessingLogFile
 from fits_storage.server.monitoring import get_recipe_keywords
 
 from fits_storage.core.hashes import md5sum
@@ -688,6 +688,11 @@ class Reducer(object):
         """
         # See https://dragons.readthedocs.io/projects/recipe-system-users-manual/en/v3.2.3/appendices/full_api_example.html#api-example
 
+        # chdir into the working directory for DRAGONS. Store the current
+        # working dir so we can go back after
+        pwd = os.getcwd()
+        os.chdir(self.workingdir)
+
         # Add the DRAGONS customizations (ie additional log levels) to logger
         customize_logger(self.l)
 
@@ -708,6 +713,13 @@ databases = {self.fsc.reduce_calibs_url} get
         # Instantiate the ProcessingLog record with initial values from the rqe
         processinglog = ProcessingLog(self.rqe)
         self.s.add(processinglog)
+        self.s.commit()
+        # Add the input files to the processinglog
+        for filename in self.rqe.filenames:
+            plfile = ProcessingLogFile(processinglog.id,
+                                       filename, md5sum(filename),
+                                       output=False)
+            self.s.add(plfile)
         self.s.commit()
 
         # Start the log capture for the processing log at this point
@@ -737,6 +749,7 @@ databases = {self.fsc.reduce_calibs_url} get
             processinglog.log = logcapture.getvalue()
             logcapture.close()
             self.s.commit()
+            os.chdir(pwd)
             return
 
         # Set mode. It defaults to sq, but we need to over-ride to qa for the
@@ -775,6 +788,7 @@ databases = {self.fsc.reduce_calibs_url} get
                 processinglog.log = logcapture.getvalue()
                 logcapture.close()
                 self.s.commit()
+                os.chdir(pwd)
                 return
         else:
             uparms = {}
@@ -782,11 +796,6 @@ databases = {self.fsc.reduce_calibs_url} get
         # If we are setting any primitive parameters from config, so do now
         if self.fsc.reducer_stackframes_memory:
             uparms['stackFrames:memory'] = self.fsc.reducer_stackframes_memory
-
-        # chdir into the working directory for DRAGONS. Store the current
-        # working dir so we can go back after
-        pwd = os.getcwd()
-        os.chdir(self.workingdir)
 
         debundle = self.rqe.debundle
         recipe = self.rqe.recipe
@@ -912,10 +921,16 @@ databases = {self.fsc.reduce_calibs_url} get
             processinglog.log = logcapture.getvalue()
             logcapture.close()
             self.s.commit()
+            # Add the output files to the processinglog
+            for filename in self.reduced_files:
+                plfile = ProcessingLogFile(processinglog.id,
+                                           os.path.basename(filename),
+                                           md5sum(filename),
+                                           output=True)
+                self.s.add(plfile)
+            self.s.commit()
             os.chdir(pwd)
             return
-
-        os.chdir(pwd)
 
         # As of 2025-06-17 DRAGONS Reduce() appears to create cyclic object
         # references, or otherwise causes the effects of a memory leak.
@@ -937,6 +952,15 @@ databases = {self.fsc.reduce_calibs_url} get
         processinglog.end(self.reduced_files, self.rqe.failed)
         self.s.commit()  # Ensure transaction on rqe is closed
 
+        # Add the output files to the processinglog
+        for filename in self.reduced_files:
+            plfile = ProcessingLogFile(processinglog.id,
+                                       os.path.basename(filename),
+                                       md5sum(filename),
+                                       output=True)
+            self.s.add(plfile)
+        self.s.commit()
+
         self.l.info("At end of call_reduce, reduced files are: %s",
                     self.reduced_files)
 
@@ -948,6 +972,8 @@ databases = {self.fsc.reduce_calibs_url} get
         logcapture.close()
 
         self.s.commit()
+
+        os.chdir(pwd)
 
     def _get_reduce_outputs(self, reduce, debundle=None):
         # Convenience method to deal with reduce .output_filenames and
