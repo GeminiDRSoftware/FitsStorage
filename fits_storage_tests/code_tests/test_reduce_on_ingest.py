@@ -1,25 +1,59 @@
 import os.path
 
-from fits_storage_tests.code_tests.helpers import get_test_config
+from fits_storage.server.reduce_on_ingest import ReduceOnIngest
+from fits_storage.core.orm.header import Header
+from fits_storage.logger_dummy import DummyLogger
 
-from fits_storage.server.reduce_on_ingest import (ReduceOnIngest)
+from fits_storage_tests.code_tests.helpers import get_test_config, make_diskfile
+
+
+class DummyReduceQueue(object):
+    def __init__(self):
+        self.added = []
+        self.actions = []
+    def add(self, item, **kws):
+        self.added.append(item)
+        self.actions.append(kws)
+
+def compareactions(a, b):
+    ignore = ['mem_gb']
+    for i in a.keys():
+        if i in ignore:
+            continue
+        if i not in b.keys():
+            return False
+        if a[i] != b[i]:
+            return False
+    return True
 
 def test_reduce_on_ingest(tmp_path):
     get_test_config()
 
-    # Write a test rules file to the tmp_path
-    rf = os.path.join(tmp_path, 'rules.json')
-    rules_json="""[
-  [{"instrument": "GMOS-N", "observation_type": "BIAS"},
-   {"recipe": "checkBiasOSCO", "capture_monitoring": true, "processing_tag": "GMOS-N_BIAS-1", "initiated_by": "GOA-ingest", "intent": "Science-Quality"}]
-]"""
-    with open(rf, "w") as f:
-        f.write(rules_json)
+    diskfile = make_diskfile('N20200127S0023.fits.bz2', tmp_path)
+    header = Header(diskfile)
 
-    roi = ReduceOnIngest(rules_file=rf, session=None)
+    rules_fpfn = os.path.join(tmp_path, 'roi_rules.json')
+    rules_text = """[
+  [{"instrument": "NIRI", "observation_type": "OBJECT", "onlynew": true},
+   {"recipe": "testrecipe1", "capture_monitoring": true, "tag": "testtag", "initiatedby": "testib", "intent": "Science-Quality"}],
+     [{"instrument": "NIRI", "observation_type": "OBJECT", "onlynew": false},
+   {"recipe": "testrecipe2", "capture_monitoring": true, "tag": "testtag", "initiatedby": "testib", "intent": "Science-Quality"}]
+]
+"""
+    with open(rules_fpfn, 'w') as f:
+        f.write(rules_text)
 
-    assert len(roi.rules) == 1
+    rq = DummyReduceQueue()
+    roi = ReduceOnIngest(rules_file=rules_fpfn, session=None, logger=DummyLogger())
 
-    r1, a1 = roi.rules[0]
-    assert r1.get('instrument') == 'GMOS-N'
-    assert a1.get('intent') == 'Science-Quality'
+    roi(diskfile, True, header=header, rq=rq)
+    assert len(rq.added) == 2
+    assert rq.added[0] == ['N20200127S0023.fits.bz2']
+    assert rq.added[1] == ['N20200127S0023.fits.bz2']
+    assert compareactions(rq.actions[0], {"recipe": "testrecipe1", "capture_monitoring": True, "tag": "testtag", "initiatedby": "testib", "intent": "Science-Quality"})
+    assert compareactions(rq.actions[1], {"recipe": "testrecipe2", "capture_monitoring": True, "tag": "testtag", "initiatedby": "testib", "intent": "Science-Quality"})
+
+    roi(diskfile, False, header=header, rq=rq)
+    assert len(rq.added) == 3
+    assert compareactions(rq.actions[2], {"recipe": "testrecipe2", "capture_monitoring": True, "tag": "testtag", "initiatedby": "testib", "intent": "Science-Quality"})
+

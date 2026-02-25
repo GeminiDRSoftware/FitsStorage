@@ -11,10 +11,18 @@ from fits_storage.config import get_config
 fsc = get_config()
 
 
-def _matches(header, rule):
+def _matches(header, rule, newfile):
+    # 'newfile' comes from the ingester rather than the header orm, it indicates
+    # if this is a new file
+    # If onlynew=True in the rule, we only match if newfile is True
+    header.newfile = newfile
+
     matches = True
     for key, value in rule.items():
-        if getattr(header, key) != value:
+        if key == 'onlynew':
+            if value is True and header.newfile is False:
+                matches = False
+        elif getattr(header, key) != value:
             matches = False
     return matches
 
@@ -54,8 +62,9 @@ class ReduceOnIngest(object):
                               diskfile.id)
             return None
 
-    def __call__(self, diskfile):
-        self.logger.debug("Reduce on Ingest file %s", diskfile.filename)
+    def __call__(self, diskfile, newfile=False, header=None, rq=None):
+        # Can pass a dummy reducequeue as rq for testing
+        self.logger.debug("Reduce on Ingest file {diskfile.filename} {newfile=}")
 
         # Bail out if no rules defined
         if not self.rules:
@@ -64,15 +73,18 @@ class ReduceOnIngest(object):
 
         # This is called by ingester on anything that it just ingested.
         # Bail out if there's no header (e.g. miscfile, obslog, error)
-        header = self._get_header(diskfile)
+        # Header is supplied as an argument for testing
+        if header is None:
+            header = self._get_header(diskfile)
         if header is None:
             self.logger.debug("Reduce-on-ingest: No header entry found")
             return
 
-        rq = ReduceQueue(self.session, logger=self.logger)
+        if rq is None:
+            rq = ReduceQueue(self.session, logger=self.logger)
         # Loop through the rules, see if we match
         for rule, action in self.rules:
-            if _matches(header, rule):
+            if _matches(header, rule, newfile):
                 self.logger.info(f"Queuing for reduction under rule: {rule}")
                 action['mem_gb'] = memory_estimate([header.numpix])
                 rq.add([diskfile.filename], **action)

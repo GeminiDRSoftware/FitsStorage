@@ -169,7 +169,9 @@ class Ingester(object):
                 self.s.commit()
                 return False
 
-        # Ensure a File Object exists in the database
+        # Ensure a File Object exists in the database.
+        # Record whether we needed to create one (for ReduceOnIngest)
+        newfile = False
         try:
             trimmed_name = File.trim_name(iqe.filename)
             fileobj = self.s.query(File).filter(File.name == trimmed_name).one()
@@ -177,6 +179,7 @@ class Ingester(object):
         except NoResultFound:
             fileobj = File(iqe.filename)
             self.l.debug("Adding new file table entry for %s", iqe.filename)
+            newfile = True
             self.s.add(fileobj)
             self.s.commit()
 
@@ -243,7 +246,7 @@ class Ingester(object):
         if fsc.is_server and self.queue_reduction:
             self.l.info("Queue reduction")
             roi = ReduceOnIngest(session=self.s, logger=self.l)
-            roi(diskfile)
+            roi(diskfile, newfile)
 
         # Finally, delete the iqe we have just completed.
         # If we're not a server (ie the DRAGONS embedded local calibration
