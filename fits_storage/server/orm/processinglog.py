@@ -28,6 +28,7 @@ class ProcessingLog(Base):
     capture_monitoring = Column(Boolean)
     debundle = Column(Text)
     recipe = Column(Text)
+    actual_recipe = Column(Text)
     processing_tag = Column(Text, index=True)
     processing_started = Column(DateTime(timezone=False))
     processing_completed = Column(DateTime(timezone=False))
@@ -50,13 +51,14 @@ class ProcessingLog(Base):
         self.processing_started = utcnow()
         self.start_process_time = time.process_time()
 
-    def end(self, reduced_files, failed):
+    def end(self, reduced_files, failed, actual_recipe):
         self.processing_completed = utcnow()
         self.cpu_secs = time.process_time() - self.start_process_time
         output_files = [os.path.basename(i) for i in reduced_files]
         self.output_files = ', '.join(output_files)
         self.num_output_files = len(reduced_files)
         self.failed = failed
+        self.actual_recipe = actual_recipe
 
 class ProcessingLogFile(Base):
     """
