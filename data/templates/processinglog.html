@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block title %}Gemini Archive Reduced data Processing Log{% endblock %}
+
+{% block body %}
+<h1>Gemini Archive Reduced data Processing Log</h1>
+
+<TABLE class="nowrap">
+    <tr class="tr_head">
+        <th>ID</th>
+        <th>Input Files</th>
+        <th>Output Files
+        <th>Failed</th>
+        <th>Capture Files</th>
+        <th>Capture Monitoring</th>
+        <th>Debundle - Recipe</th>
+        <th>DateTime</th>
+        <th>CPU secs</th>
+    </tr>
+    {% for pl in pls %}
+    <tr class="alternating">
+        <td><a href="/processinglog/{{ pl.id }}">{{pl.id}}</a></td>
+        <td>{{pl.input_files}}</td>
+        <td>{{pl.output_files}}</td>
+        <td>{{pl.failed}}</td>
+        <td>{{pl.capture_files}}</td>
+        <td>{{pl.capture_monitoring}}</td>
+        <td>{{pl.debundle}} - {{pl.recipe}}</td>
+        <td>{{pl.processing_started}} - {{pl.processing_completed}}</td>
+        <td>{{pl.cpu_secs}}</td>
+    </tr>
+    {% endfor %}
+</TABLE>
+    {% if num == 1 %}
+    <pre>{{ pls[0].log }}</pre>
+    {% endif %}
+{% endblock %}

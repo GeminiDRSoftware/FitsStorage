@@ -64,6 +64,7 @@ from fits_storage.web.logcomments import log_comments
 from fits_storage.web.programs import programs
 from fits_storage.web.ingest_programs import ingest_programs
 from fits_storage.web.processingtags import processingtags
+from fits_storage.web.processinglog import processinglog
 
 from fits_storage.web.miscfiles import miscfiles
 
@@ -92,6 +93,7 @@ url_map = Map([
     Rule('/usagedetails/<int:ulid>', usagedetails),
     Rule('/downloadlog/<seq_of:patterns>', downloadlog),
     Rule('/monitoring/<seq_of:things>', monitoring),
+    Rule('/processinglog/<thing>', processinglog),
 
     # User accounts
     Rule('/whoami/<seq_of:things>', whoami),
