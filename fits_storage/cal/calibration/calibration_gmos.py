@@ -702,6 +702,7 @@ class CalibrationGMOS(Calibration):
         # in spectroscopy.
 
         # Default number to associate
+        howmany = 1 if processed else howmany
         howmany = howmany if howmany else 4
 
         filters = []
@@ -726,7 +727,7 @@ class CalibrationGMOS(Calibration):
                 # They are OBJECT spectroscopy frames
                 # As of DRAGONS 3.2, the 'STANDARD' tag is the definitive way
                 # to tell if it is a valid specphot star.
-                .raw().OBJECT().spectroscopy(True)
+#                .raw().OBJECT().spectroscopy(True)
                 .add_filters(Header.types.contains('STANDARD'),
                              Header.object != 'Twilight',
                              *filters)
@@ -739,6 +740,10 @@ class CalibrationGMOS(Calibration):
                 # Absolute time separation must be within 6 months (KL20250204)
                 .max_interval(days=183)
             )
+        if processed:
+            query = query.standard(processed)
+        else:
+            query = query.raw().OBJECT().spectroscopy(True)
 
         orderby = self._closest_wlen_time_order(time_range=365,
                                                 wlen_range=tol)
