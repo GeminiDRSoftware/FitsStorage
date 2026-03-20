@@ -32,6 +32,7 @@ report_keywords = {
                   'STCOMEAN', 'STCOSTDV', 'STCOMED'],
     'checkFlat': ['FLATMEAN', 'FLATSTDV', 'FLATMED'],
     'ghostScience': ['ESEEINGR', 'ESEEINGB', 'NCRSFND'],
+    'ghostWfit': ['WFITCO0', 'WFITCO1', 'WFITCO2', 'WFITCO3', 'WFITCO4', 'WFITCO5'],
 }
 
 def get_recipe_keywords(recipe, filename):
