@@ -20,6 +20,7 @@ recipe_keywords = {
     'checkBiasSTCO': ['STCOMEAN', 'STCOSTDV', 'STCOMED'],
     'checkFlatCounts': ['FLATMEAN', 'FLATSTDV', 'FLATMED'],
     'reduceScience': {'_calibrated': ['ESEEINGR', 'ESEEINGB', 'NCRSFND']},  # GHOST science
+    'checkArcWfit': ['WFITCO0', 'WFITCO1', 'WFITCO2', 'WFITCO3', 'WFITCO4', 'WFITCO5'], # GHOST arc
 }
 
 # These tell us the keywords to include (if they are present) in each report
