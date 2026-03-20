@@ -81,4 +81,7 @@ For one UT night:
 * * call reduce individually on each _blue???.fits file, passing -p fluxCalibrate:do_cal=skip (ie reduce ..._blue001.fits; reduce ..._blue002.fits; ...)
 * * same for the _red???.fits files
 * NOTE - there's no grouping at all here, not even by bundle. As far as I can see, this is equvalent to calling reduce on blue*.fits with -p combineOrders:stacking_mode=none (see the DRAGONS GHOST tutorial for info on that)
-* 
+
+
+## GHOST WFIT instrument monitoring
+add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --tag GHOST-1 --recipe checkArcWfit --capture_monitoring --selection /canonical/GHOST/ARC/processing_tag=GHOST-1/NotFail/Science-Quality/notengineering/camera=RED/filepre=S20260313
