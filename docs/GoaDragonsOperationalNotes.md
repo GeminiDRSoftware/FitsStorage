@@ -85,3 +85,12 @@ For one UT night:
 
 ## GHOST WFIT instrument monitoring
 add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --tag GHOST-1 --recipe checkArcWfit --capture_monitoring --selection /canonical/GHOST/ARC/processing_tag=GHOST-1/NotFail/Science-Quality/notengineering/camera=RED/filepre=S20260313
+
+
+# GMOS Longslit
+
+## Flats
+add_to_reduce_queue.py --selection=notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/FLAT/Raw/spectroscopy --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
+
+## Arcs
+add_to_reduce_queue.py --selection=notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/ARC/Raw/spectroscopy --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
