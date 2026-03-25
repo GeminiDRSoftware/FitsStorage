@@ -208,7 +208,7 @@ if __name__ == "__main__":
                     lists.append([header.diskfile.filename])
                 logger.info(f"Selection found {len(lists)} files to add")
             if options.selectionone:
-                lists[0] = []
+                lists.append([])
                 for header in headers:
                     lists[0].append(header.diskfile.filename)
                 logger.info(f"Selection found {len(lists[0])} files to add")
