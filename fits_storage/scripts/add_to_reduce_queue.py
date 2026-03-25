@@ -50,6 +50,11 @@ if __name__ == "__main__":
                              "this selection in the database, as individual"
                              "file entries to the reduce queue.")
 
+    parser.add_argument("--selectionone", action="store", type=str, default=None,
+                        help="URL-style selection criteria. Add all files matching"
+                             "this selection in the database, as one multi-file"
+                             "entry to the reduce queue.")
+
     parser.add_argument("--initiatedby", action="store", type=str, default=None,
                         help="Processing Initiated By record for reduced data."
                              "Cannot be defaulted in production environments")
@@ -171,6 +176,13 @@ if __name__ == "__main__":
         if selection.openquery:
             logger.warning("Selection is open - this may not be what you want")
 
+    elif options.selectionone:
+        # Get list from database
+        things = options.selectionone.split('/')
+        selection = from_url_things(things)
+        logger.info("Selection: %s" % selection)
+        if selection.openquery:
+            logger.warning("Selection is open - this may not be what you want")
     else:
         logger.info("No list(s) of filenames was provided.")
         lists = []
@@ -182,19 +194,26 @@ if __name__ == "__main__":
 
     with session_scope() as session:
 
-        if options.selection:
+        if options.selection or options.selectionone:
             logger.info("Getting header object list")
-            headers = list_headers(selection, [], session=session,
-                                   unlimit=True)
+            headers = list_headers(selection, ['ut_datetime'],
+                                   session=session, unlimit=True)
 
             # Looping through the header list directly for the add
             # is really slow if the list is big.
             logger.info("Building filename lists")
             lists = []
-            for header in headers:
-                lists.append([header.diskfile.filename])
+            if options.selection:
+                for header in headers:
+                    lists.append([header.diskfile.filename])
+                logger.info(f"Selection found {len(lists)} files to add")
+            if options.selectionone:
+                lists[0] = []
+                for header in headers:
+                    lists[0].append(header.diskfile.filename)
+                logger.info(f"Selection found {len(lists[0])} files to add")
+
             headers = None
-            logger.info(f"Selection found {len(lists)} files to add")
 
         for filelist in lists:
             # Check that all the filenames given are valid and ensure they end
