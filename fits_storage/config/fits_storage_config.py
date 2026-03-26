@@ -57,7 +57,7 @@ class FitsStorageConfig(dict):
     _ints = ['postgres_database_pool_size', 'postgres_database_max_overflow',
              'defer_threshold', 'defer_delay', 'fits_open_result_limit',
              'fits_closed_result_limit', 'min_dhs_age_seconds',
-             'robot_badness_threshold']
+             'robot_badness_threshold', 'reduce_linalg_threads']
     _lists = ['blocked_urls', 'export_destinations', 'gemini_fits_upload_auth',
               'gemini_api_authorization', 'block_user_agent_substrings',
               'allow_user_agent_strings', 'gemini_user_transfer']
