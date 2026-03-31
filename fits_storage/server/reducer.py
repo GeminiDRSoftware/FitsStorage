@@ -706,7 +706,7 @@ class Reducer(object):
         # environment variable if it not already set.
         if self.fsc.reduce_linalg_threads is not None:
             if 'OMP_NUM_THREADS' not in os.environ:
-                os.environ['OMP_NUM_THREADS'] = self.fsc.reduce_linalg_threads
+                os.environ['OMP_NUM_THREADS'] = str(self.fsc.reduce_linalg_threads)
 
         # Add the DRAGONS customizations (ie additional log levels) to logger
         customize_logger(self.l)
