@@ -87,5 +87,6 @@ class ReduceOnIngest(object):
             if _matches(header, rule, newfile):
                 self.logger.info(f"Queuing for reduction under rule: {rule}")
                 action['mem_gb'] = memory_estimate([header.numpix])
-                rq.add([diskfile.filename], **action)
+                # Strip any trailing .bz2 off the filename
+                rq.add([diskfile.filename.removesuffix('.bz2')], **action)
 
