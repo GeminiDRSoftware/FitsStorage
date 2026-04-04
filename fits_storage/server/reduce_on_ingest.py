@@ -20,8 +20,9 @@ def _matches(header, rule, newfile):
 
     matches = True
     for key, value in rule.items():
-        if key == 'active' and not value:
-            return False
+        if key == 'active':
+            if not value:
+                return False
         elif key == 'onlynew':
             if value is True and header.newfile is False:
                 matches = False
