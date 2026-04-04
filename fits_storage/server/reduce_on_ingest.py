@@ -14,11 +14,14 @@ fsc = get_config()
 def _matches(header, rule, newfile):
     # 'newfile' comes from the ingester rather than the header orm, it indicates
     # if this is a new file
-    # If onlynew=True in the rule, we only match if newfile is True
+    # If onlynew=True in the rule, we only match if newfile is True.
+    # If active=False in the rule, we never match
     header.newfile = newfile
 
     matches = True
     for key, value in rule.items():
+        if key == 'active' and not value:
+            return False
         if key == 'onlynew':
             if value is True and header.newfile is False:
                 matches = False
@@ -84,6 +87,9 @@ class ReduceOnIngest(object):
             rq = ReduceQueue(self.session, logger=self.logger)
         # Loop through the rules, see if we match
         for rule, action in self.rules:
+            # This allows pseudo comments in the json...
+            if not isinstance(rule, dict):
+                continue
             if _matches(header, rule, newfile):
                 self.logger.info(f"Queuing for reduction under rule: {rule}")
                 action['mem_gb'] = memory_estimate([header.numpix])
