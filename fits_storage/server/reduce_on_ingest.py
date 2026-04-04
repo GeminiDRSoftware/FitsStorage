@@ -22,7 +22,7 @@ def _matches(header, rule, newfile):
     for key, value in rule.items():
         if key == 'active' and not value:
             return False
-        if key == 'onlynew':
+        elif key == 'onlynew':
             if value is True and header.newfile is False:
                 matches = False
         elif getattr(header, key) != value:
