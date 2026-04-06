@@ -110,6 +110,8 @@ if fsc.is_server:
 
     from fits_storage.server.orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 
+    from fits_storage.server.orm.semester import Semester
+
 # Archive specific tables
 if fsc.is_archive:
     from fits_storage.cal.orm.calcache import CalCache
