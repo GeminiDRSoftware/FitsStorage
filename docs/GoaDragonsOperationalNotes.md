@@ -4,6 +4,11 @@ GMOS-N checkBiasOSCO run up to 20260319
 GMOS-S checkBiasOSCO run up to 20260319
 GHOST checkBiasOSCO run up to 20260319
 
+GMOS-N and S LS FLATs and ARCs running on ingest for 2025-
+GMOS-N and S LS FLATs and ARCs run for 2025
+GMOS-N and S LS progCal and partnerCal OBJECTs (ie standards) run for 2025
+
+
 ## Adding to Reduce Queue
 
 add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --tag GMOS-N_BIAS_1 --recipe checkBiasOSCO --capture_monitoring --selection /canonical/GMOS-N/BIAS/Raw/RAW/notengineering/filepre=N2010
@@ -98,3 +103,6 @@ add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20
 
 ## Arcs
 add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/ARC/Raw/spectroscopy --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
+
+## Standards (aka specphots)
+add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/OBJECT/Raw/spectroscopy/progCal --selectiongroup=observation_id --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
