@@ -47,13 +47,14 @@ if __name__ == "__main__":
 
     parser.add_argument("--selection", action="store", type=str, default=None,
                         help="URL-style selection criteria. Add files matching"
-                             "this selection in the database, as individual"
-                             "file entries to the reduce queue.")
+                             "this selection in the database. See also"
+                             "selectiongroup")
 
-    parser.add_argument("--selectionone", action="store", type=str, default=None,
-                        help="URL-style selection criteria. Add all files matching"
-                             "this selection in the database, as one multi-file"
-                             "entry to the reduce queue.")
+    parser.add_argument("--selectiongroup", action="store", type=str, default=None,
+                        help="Affects how --selection is interpreted. "
+                             "None (default) - add each file as an individual entry. "
+                             "ALL - add all files in one single entry. "
+                             "<attribute> - group the files by header ORM attribute <attribute>")
 
     parser.add_argument("--initiatedby", action="store", type=str, default=None,
                         help="Processing Initiated By record for reduced data."
@@ -176,13 +177,6 @@ if __name__ == "__main__":
         if selection.openquery:
             logger.warning("Selection is open - this may not be what you want")
 
-    elif options.selectionone:
-        # Get list from database
-        things = options.selectionone.split('/')
-        selection = from_url_things(things)
-        logger.info("Selection: %s" % selection)
-        if selection.openquery:
-            logger.warning("Selection is open - this may not be what you want")
     else:
         logger.info("No list(s) of filenames was provided.")
         lists = []
@@ -194,7 +188,7 @@ if __name__ == "__main__":
 
     with session_scope() as session:
 
-        if options.selection or options.selectionone:
+        if options.selection:
             logger.info("Getting header object list")
             headers = list_headers(selection, ['ut_datetime'],
                                    session=session, unlimit=True)
@@ -203,16 +197,32 @@ if __name__ == "__main__":
             # is really slow if the list is big.
             logger.info("Building filename lists")
             lists = []
-            if options.selection:
+            if options.selectiongroup is None or options.selectiongroup == 'None':
+                logger.info("Adding each file as an individual reducequeue entry")
                 for header in headers:
                     lists.append([header.diskfile.filename])
                 logger.info(f"Selection found {len(lists)} files to add")
-            if options.selectionone:
+            elif options.selectiongroup == 'ALL':
+                logger.info("Adding all files as a single reducequeue entry")
                 lists.append([])
                 for header in headers:
                     lists[0].append(header.diskfile.filename)
                 logger.info(f"Selection found {len(lists[0])} files to add")
-
+            elif len(headers) and hasattr(headers[0], options.selectiongroup):
+                groupby = options.selectiongroup
+                logger.info(f"Grouping by header attribute {groupby}")
+                # Build a dict where the key is the attribute value and the value is a list of filenames
+                groupdict = {}
+                for header in headers:
+                    if getattr(header, groupby) not in groupdict:
+                        groupdict[getattr(header, groupby)] = []
+                    groupdict[getattr(header, groupby)].append(header.diskfile.filename)
+                logger.info(f"Built {len(groupdict)} groups as follows:")
+                for key in groupdict:
+                    lists.append(groupdict[key])
+                    logger.info(f" - {key}: {len(groupdict[key])} files")
+            else:
+                logger.error("Invalid --selectiongroup value")
             headers = None
 
         for filelist in lists:
