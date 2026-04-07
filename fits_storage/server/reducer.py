@@ -706,7 +706,12 @@ class Reducer(object):
         # environment variable if it not already set.
         if self.fsc.reduce_linalg_threads is not None:
             if 'OMP_NUM_THREADS' not in os.environ:
+                self.l.info(f"Setting [OMP|OPENBLAS]_NUM_THREADS to {str(self.fsc.reduce_linalg_threads)}")
                 os.environ['OMP_NUM_THREADS'] = str(self.fsc.reduce_linalg_threads)
+                os.environ['OPENBLAS_NUM_THREADS'] = str(self.fsc.reduce_linalg_threads)
+            else:
+                self.l.warning(f"OMP_NUM_THREADS={os.environ['OMP_NUM_THREADS']} "
+                               f"already set in environment. Not over-riding.")
 
         # Add the DRAGONS customizations (ie additional log levels) to logger
         customize_logger(self.l)
