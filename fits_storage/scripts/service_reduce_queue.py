@@ -3,6 +3,7 @@
 import datetime
 import signal
 import time
+import os
 
 from argparse import ArgumentParser
 
@@ -12,7 +13,8 @@ from fits_storage.server.pidfile import PidFile, PidFileError
 from fits_storage.db import sessionfactory
 from fits_storage.queues.queue.reducequeue import ReduceQueue
 
-from fits_storage.server.reducer import Reducer, ReducerMemoryLeak
+# This is done later - see below for why
+# from fits_storage.server.reducer import Reducer, ReducerMemoryLeak
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -47,6 +49,30 @@ if __name__ == "__main__":
 
     if options.name is not None:
         setlogfilesuffix(options.name)
+
+    # Some primitives make (indirect) use of numpy.linalg eg .lstsq which uses
+    # BLAS or similar, which will by default use many threads / CPU cores for
+    # speed. This can be an issue when we are running many instances of Reduce() on
+    # the same machine - if each one tries to use all the cores, the system grinds
+    # to a halt.  Since most of the processing is single threaded, we generally run
+    # as many processing jobs as we have cores, and thus it's preferable to have
+    # each job stay single threaded, which is done by setting the OMP_NUM_THREADS
+    # (and others? it's unclear...) environment variable to 1. We store this in the
+    # reduce_linalg_threads configuration parameter. We only set the environment
+    # variable if it not already set.
+
+    # Irritatingly, this seems to need to be done before the relevant import
+    if fsc.reduce_linalg_threads is not None:
+        if 'OMP_NUM_THREADS' not in os.environ:
+            logger.info(f"Setting [OMP|OPENBLAS|MKL|BLIS]_NUM_THREADS to {str(fsc.reduce_linalg_threads)}")
+            for i in ['OMP', 'OPENBLAS', 'MKL', 'BLIS']:
+                os.environ[f'{i}_NUM_THREADS'] = str(fsc.reduce_linalg_threads)
+            else:
+                logger.warning(f"OMP_NUM_THREADS={os.environ['OMP_NUM_THREADS']} "
+                               f"already set in environment. Not over-riding.")
+
+    # *NOW* we can import Reducer, which imports the DRAGONS API...
+    from fits_storage.server.reducer import Reducer, ReducerMemoryLeak
 
     # Need to set up the global loop variable before we define the signal handlers
     loop = True

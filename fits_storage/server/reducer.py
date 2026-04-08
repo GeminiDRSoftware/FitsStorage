@@ -693,25 +693,9 @@ class Reducer(object):
         pwd = os.getcwd()
         os.chdir(self.workingdir)
 
-        # Some primitives make (indirect) use of numpy.linalg eg .lstsq which
-        # in uses BLAS or similar, which will by default use many threads /
-        # CPU cores for speed. This can be an issue when we are running many
-        # instances of Reduce() on the same machine - if each one tries to use
-        # all the cores, the system grinds to a halt.  Since most of the
-        # processing is single threaded, we generally run as many processing
-        # jobs as we have cores, and thus it's preferable to have each job
-        # stay single threaded, which is done by setting the OMP_NUM_THREADS
-        # environment variable to 1. We store this in the
-        # reduce_linalg_threads configuration parameter. We only set the
-        # environment variable if it not already set.
-        if self.fsc.reduce_linalg_threads is not None:
-            if 'OMP_NUM_THREADS' not in os.environ:
-                self.l.info(f"Setting [OMP|OPENBLAS]_NUM_THREADS to {str(self.fsc.reduce_linalg_threads)}")
-                os.environ['OMP_NUM_THREADS'] = str(self.fsc.reduce_linalg_threads)
-                os.environ['OPENBLAS_NUM_THREADS'] = str(self.fsc.reduce_linalg_threads)
-            else:
-                self.l.warning(f"OMP_NUM_THREADS={os.environ['OMP_NUM_THREADS']} "
-                               f"already set in environment. Not over-riding.")
+        # Note, we used to setenv OMP_NUM_THREADS here, but it doesn't always
+        # work - I think it needs to be set before things get imported, so we
+        # now do that in service_reduce_queue.py
 
         # Add the DRAGONS customizations (ie additional log levels) to logger
         customize_logger(self.l)
