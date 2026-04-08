@@ -694,8 +694,12 @@ class Reducer(object):
         os.chdir(self.workingdir)
 
         # Note, we used to setenv OMP_NUM_THREADS here, but it doesn't always
-        # work - I think it needs to be set before things get imported, so we
-        # now do that in service_reduce_queue.py
+        # work - it needs to be set before numpy is imported, and that's
+        # difficult to arrange in-code, so we now just require it to be set in
+        # the environment before invoking service_reduce_queue
+        if 'OMP_NUM_THREADS' not in os.environ:
+            self.l.warning("OMP_NUM_THREADS not set in environment. This "
+                           "process may use all CPU cores.")
 
         # Add the DRAGONS customizations (ie additional log levels) to logger
         customize_logger(self.l)
