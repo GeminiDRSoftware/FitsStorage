@@ -67,9 +67,9 @@ if __name__ == "__main__":
             logger.info(f"Setting [OMP|OPENBLAS|MKL|BLIS]_NUM_THREADS to {str(fsc.reduce_linalg_threads)}")
             for i in ['OMP', 'OPENBLAS', 'MKL', 'BLIS']:
                 os.environ[f'{i}_NUM_THREADS'] = str(fsc.reduce_linalg_threads)
-            else:
-                logger.warning(f"OMP_NUM_THREADS={os.environ['OMP_NUM_THREADS']} "
-                               f"already set in environment. Not over-riding.")
+        else:
+            logger.warning(f"OMP_NUM_THREADS={os.environ['OMP_NUM_THREADS']} "
+                           f"already set in environment. Not over-riding.")
 
     # *NOW* we can import Reducer, which imports the DRAGONS API...
     from fits_storage.server.reducer import Reducer, ReducerMemoryLeak
