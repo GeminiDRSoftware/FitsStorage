@@ -819,6 +819,7 @@ databases = {self.fsc.reduce_calibs_url} get
             reduce.uparms = {} if debundle else uparms
             self.l.info("Calling DRAGONS Reduce.runr() "
                         f"in directory {self.workingdir} "
+                        f"in {reduce.mode} mode "
                         f"with recipe {reduce.recipename} "
                         f"and uparms {reduce.uparms}")
             reduce.runr()
