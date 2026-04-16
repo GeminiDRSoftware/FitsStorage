@@ -5,8 +5,7 @@ GMOS-S checkBiasOSCO run up to 20260319
 GHOST checkBiasOSCO run up to 20260319
 
 GMOS-N and S LS FLATs and ARCs running on ingest for 2025-
-GMOS-N and S LS FLATs and ARCs run for 2025
-GMOS-N and S LS progCal and partnerCal OBJECTs (ie standards) run for 2025
+GMOS-N and S LS FLATs and ARCs, stds, sci run for 2020- and 20220826-
 
 
 ## Adding to Reduce Queue
