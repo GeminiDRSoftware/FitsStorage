@@ -22,7 +22,7 @@ recipe_keywords = {
     'reduceScience': {'_calibrated': ['ESEEINGR', 'ESEEINGB', 'NCRSFND']},  # GHOST science
     'checkArcWfit': ['WFITCO0', 'WFITCO1', 'WFITCO2', 'WFITCO3', 'WFITCO4', 'WFITCO5',
                      'GRATMNTT', 'OPBENCHT', 'DRYAIRT', 'INENCT1', 'OUTENCT1', 'PLABAIRT'], # GHOST arc
-    'checkProcessedArc': ['MWS_C0', 'MWS_C1', 'MWS_C2', 'MWS_C3', 'MWS_RMS' 'MWS_FWID',
+    'checkProcessedArc': ['MWS_C0', 'MWS_C1', 'MWS_C2', 'MWS_C3', 'MWS_RMS', 'MWS_FWID',
                           'MWS_C0DE', 'MWS_C1DE', 'MWS_NUML']
 }
 
@@ -37,7 +37,7 @@ report_keywords = {
     'ghostScience': ['ESEEINGR', 'ESEEINGB', 'NCRSFND'],
     'ghostWfit': ['WFITCO0', 'WFITCO1', 'WFITCO2', 'WFITCO3', 'WFITCO4', 'WFITCO5',
                   'GRATMNTT', 'OPBENCHT', 'DRYAIRT', 'INENCT1', 'OUTENCT1', 'PLABAIRT'],
-    'checkProcessedArc': ['MWS_C0', 'MWS_C1', 'MWS_C2', 'MWS_C3', 'MWS_RMS' 'MWS_FWID',
+    'checkProcessedArc': ['MWS_C0', 'MWS_C1', 'MWS_C2', 'MWS_C3', 'MWS_RMS', 'MWS_FWID',
                           'MWS_C0DE', 'MWS_C1DE', 'MWS_NUML']
 }
 
