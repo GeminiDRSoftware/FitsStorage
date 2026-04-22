@@ -77,6 +77,7 @@ class InstMonPlot(object):
         self.url_roi_select = Select(options=[None, "fullframe", "centralspectrum"])
         self.url_speed_select = Select(options=[None, "slow", "fast"])
         self.url_gain_select = Select(options=[None, "low", "high"])
+        self.url_filter_select = Select(options=[None, 'u', 'g', 'r', 'i', 'z', 'Y', 'Z', 'ri'])
         self.url_startdate_picker = DatePicker()
         self.url_enddate_picker = DatePicker()
         self.url_build_button = Button(label="Build URL")
@@ -106,7 +107,8 @@ class InstMonPlot(object):
         url_row = row(self.url_prefix_text, self.url_report_select,
                       self.url_inst_select, self.url_binning_select,
                       self.url_roi_select, self.url_speed_select,
-                      self.url_gain_select, self.url_startdate_picker,
+                      self.url_gain_select, self.url_filter_select,
+                      self.url_startdate_picker,
                       Div(text='-'), self.url_enddate_picker,
                       self.url_build_button, self.url_example_button)
         load_col = column(self.status_text, url_row, load_row, sizing_mode="stretch_width")
@@ -154,7 +156,8 @@ class InstMonPlot(object):
         all_items = [self.url_prefix_text.value, self.url_report_select.value,
                      select_assist, self.url_inst_select.value,
                      self.url_binning_select.value, self.url_roi_select.value,
-                     self.url_speed_select.value, self.url_gain_select.value]
+                     self.url_speed_select.value, self.url_gain_select.value,
+                     f'filter={self.url_filter_select.value}' if self.url_filter_select.value else None]
         if self.url_startdate_picker.value and self.url_enddate_picker.value:
             all_items.append(f"{self.url_startdate_picker.value.replace('-', '')}-"
                              f"{self.url_enddate_picker.value.replace('-', '')}")
