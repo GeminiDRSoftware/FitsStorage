@@ -1,10 +1,12 @@
+import numpy
 import pandas as pd
 import copy
 from math import pi
+import datetime
 
 from bokeh.plotting import figure
 from bokeh.layouts import column, row
-from bokeh.models import Button, TextInput, Select, HoverTool, \
+from bokeh.models import Button, TextInput, TextAreaInput, Select, HoverTool, \
     ColumnDataSource, CategoricalColorMapper, DatePicker, Div, \
     BasicTickFormatter, DatetimeTickFormatter, BoxSelectTool, Legend
 
@@ -90,6 +92,8 @@ class InstMonPlot(object):
         self.plot_select = Select(title="Plot", options=self.plots, value='Any')
         self.plot_default_button = Button(label="Default", align='end')
 
+        self.selection_info = TextAreaInput(cols=40, rows=4, title='Selection Info')
+
         self.selectnone_button = Button(label="Select None")
         self.selectpass_button = Button(label="Select Pass")
         self.selectfail_button = Button(label="Select Fail")
@@ -108,12 +112,15 @@ class InstMonPlot(object):
         load_col = column(self.status_text, url_row, load_row, sizing_mode="stretch_width")
         select_row = row(self.xaxis_select, Div(width=100),
                          self.group_select, self.plot_select,
-                         self.plot_default_button)
+                         self.plot_default_button
+                         )
         fig_buttons_col = column(Div(), self.selectnone_button,
                                  self.selectpass_button,
                                  self.selectfail_button,
                                  self.selectundef_button,
-                                 self.selectusable_button)
+                                 self.selectusable_button,
+                                 self.selection_info
+                                 )
         fig_row = row(self.fig, fig_buttons_col)
         self.element = column(load_col, select_row, fig_row)
 
@@ -134,6 +141,8 @@ class InstMonPlot(object):
         self.selectfail_button.on_event('button_click', self.select_fail_callback)
         self.selectundef_button.on_event('button_click', self.select_undef_callback)
         self.selectusable_button.on_event('button_click', self.select_usable_callback)
+
+        self.scatter.data_source.selected.on_change('indices', self.get_selection_info)
 
     # Define Callback functions
     def build_url(self):
@@ -256,3 +265,30 @@ class InstMonPlot(object):
         self.scatter.data_source.selected.indices = []
         new_indices = [i for i, qa in enumerate(self.scatter.data_source.data["qastate"]) if qa == qastate]
         self.scatter.data_source.selected.indices = new_indices
+
+    def get_selection_info(self, attr, old, new):
+        self.selection_info.value = 'Got Data'
+        total = 0
+        count = 0
+        min_dl = self.scatter.data_source.data['data_label'][0]
+        max_dl = self.scatter.data_source.data['data_label'][0]
+        min_ut = self.scatter.data_source.data['ut_datetime'][0]
+        max_ut = self.scatter.data_source.data['ut_datetime'][0]
+        for i in self.scatter.data_source.selected.indices:
+            total += self.scatter.data_source.data[self.yaxis][i]
+            count += 1
+            dl = self.scatter.data_source.data['data_label'][i]
+            min_dl = dl if dl < min_dl else min_dl
+            max_dl = dl if dl > max_dl else max_dl
+            ut = self.scatter.data_source.data['ut_datetime'][i]
+            min_ut = ut if ut < min_ut else min_ut
+            max_ut = ut if ut > max_ut else max_ut
+        min_dlsplit = min_dl.split('-')
+        max_dlsplit = max_dl.split('-')
+        min_dl = min_dlsplit[1] if len(min_dlsplit) == 4 else min_dl
+        max_dl = max_dlsplit[1] if len(max_dlsplit) == 4 else max_dl
+        # Have to jump through some numpy.datetime64 hoops
+        min_ut = numpy.datetime64(min_ut, 'D').astype(datetime.date).strftime('%Y%m%d')
+        max_ut = numpy.datetime64(max_ut, 'D').astype(datetime.date).strftime('%Y%m%d')
+        self.selection_info.value = f'Total: {total:,}\nCount: {count:,}\nDL: {min_dl}-{max_dl}\nUT: {min_ut}-{max_ut}'
+
