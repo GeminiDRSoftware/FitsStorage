@@ -273,9 +273,9 @@ class InstMonPlot(object):
         self.selection_info.value = 'Got Data'
         total = 0
         count = 0
-        min_dl = self.scatter.data_source.data['data_label'][0]
+        min_dl = self.scatter.data_source.data['data_label'][-1]
         max_dl = self.scatter.data_source.data['data_label'][0]
-        min_ut = self.scatter.data_source.data['ut_datetime'][0]
+        min_ut = self.scatter.data_source.data['ut_datetime'][-1]
         max_ut = self.scatter.data_source.data['ut_datetime'][0]
         for i in self.scatter.data_source.selected.indices:
             total += self.scatter.data_source.data[self.yaxis][i]
