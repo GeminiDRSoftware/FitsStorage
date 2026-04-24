@@ -142,7 +142,8 @@ class ReduceListConfig:
 
 def findfiles(selection, start, end, logger=DummyLogger()):
     baseurl = "https://archive.gemini.edu/jsonfilelist/canonical/"
-    daterange = f"{start.strftime('%Y%m%d')}" if end is None else \
+
+    daterange = f"{start.strftime('%Y%m%d')}" if ((end is None) or (start == end)) else \
         f"{start.strftime('%Y%m%d')}-{end.strftime('%Y%m%d')}"
     logger.debug(f"FindFiles Daterange: {daterange}; Selection: {selection}")
 
