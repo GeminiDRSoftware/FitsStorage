@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
         for selection in selections:
             start = config['startdate']
-            while start < config['enddate']:
+            while start <= config['enddate']:
                 end =  min(start + ndays, config['enddate'])
                 actual_ndays = (end-start).days + 1
                 logger.debug(f"{selection=}, {start=}, {end=}")
