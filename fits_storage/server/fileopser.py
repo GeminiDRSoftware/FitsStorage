@@ -83,6 +83,9 @@ class FileOpser(object):
         self.response.ok = False
         self.response.error = message
         self.fqe.response = self.response.json()
+        # TODO - we should probably have these here to deal with failed entries
+        #self.inprogress = False
+        #self.failed = True
         self.s.commit()
 
     def fileop(self, fqe):
