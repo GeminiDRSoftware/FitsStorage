@@ -59,6 +59,11 @@ class ReduceQueueEntry(OrmQueueMixin, Base):
     mem_gb = Column(Float) # Estimated Memory Footprint of reduce job
     host = Column(Text) # IP address or other ID of machine
 
+    # This is used to force a reduction to run only on a specific host. That
+    # host may or may not be configured to only run reductions specifically
+    # designated for it
+    designated_host = Column(Text)
+
     # Processing metadata passed into the reduced data
     intent = Column(Text)  # Goes into PROCITNT header
     initiatedby = Column(Text)  # Goes into PROCINBY header

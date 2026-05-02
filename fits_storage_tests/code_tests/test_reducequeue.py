@@ -64,3 +64,75 @@ def test_reducequeue(tmp_path):
 
     pop3_rqe = rq.pop()
     assert pop3_rqe is None
+
+def test_reducequeue_no_designated_host(tmp_path):
+    make_empty_testing_db_env(tmp_path)
+    fsc = get_config()
+    session = sessionfactory()
+    logger = DummyLogger()
+
+    # Testing with SQLite, where the filenames column is just text rather than
+    # a list. That's fine for the test because we don't use filename*s* at all.
+    rqe = ReduceQueueEntry('N20100101S0001.fits')
+    rqe.mem_gb = 1
+    rqe.designated_host = 'foo'
+    session.add(rqe)
+    session.commit()
+
+    rqe = ReduceQueueEntry('N20200101S0001.fits')
+    rqe.mem_gb = 1
+    session.add(rqe)
+    session.commit()
+
+    rq = ReduceQueue(session, logger)
+    rq.server_gbs = 10
+    rq.server_designated_host = None
+
+    pop1_rqe = rq.pop()
+    assert pop1_rqe is not None
+    assert pop1_rqe.inprogress is True
+    assert pop1_rqe.designated_host is None
+
+    # Should be the most recent one (which has no designated host)
+    assert pop1_rqe.filenames == 'N20200101S0001.fits'
+
+
+    pop2_rqe = rq.pop()
+    # The other has a designated host so should not get popped
+    assert pop2_rqe is None
+
+def test_reducequeue_designated_host(tmp_path):
+    make_empty_testing_db_env(tmp_path)
+    fsc = get_config()
+    session = sessionfactory()
+    logger = DummyLogger()
+
+    # Testing with SQLite, where the filenames column is just text rather than
+    # a list. That's fine for the test because we don't use filename*s* at all.
+    rqe = ReduceQueueEntry('N20100101S0001.fits')
+    rqe.mem_gb = 1
+    rqe.designated_host = 'foo'
+    session.add(rqe)
+    session.commit()
+
+    rqe = ReduceQueueEntry('N20200101S0001.fits')
+    rqe.mem_gb = 1
+    session.add(rqe)
+    session.commit()
+
+    rq = ReduceQueue(session, logger)
+    rq.server_gbs = 10
+    rq.server_designated_host = 'foo'
+
+    pop1_rqe = rq.pop()
+    assert pop1_rqe is not None
+    assert pop1_rqe.inprogress is True
+    assert pop1_rqe.designated_host == 'foo'
+
+    # Should be the dedicated_host one
+    assert pop1_rqe.filenames == 'N20100101S0001.fits'
+
+
+    pop2_rqe = rq.pop()
+    # The other has no designated host so should not get popped
+    assert pop2_rqe is None

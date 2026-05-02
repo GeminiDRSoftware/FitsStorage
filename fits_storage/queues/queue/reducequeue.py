@@ -23,6 +23,7 @@ class ReduceQueue(Queue):
     def __init__(self, session, logger=None):
         super().__init__(session, ormclass=ReduceQueueEntry, logger=logger)
         self.server_gbs = fsc.get('reducer_memory_gb')
+        self.server_designated_host = fsc.get('reducer_designated_host')
         try:
             # Set host to hostname
             self.host = socket.gethostname()
@@ -36,7 +37,7 @@ class ReduceQueue(Queue):
     def add(self, filenames, intent=None, initiatedby=None, tag=None,
             recipe=None, capture_files=False, capture_monitoring=False,
             debundle=None, mem_gb=0, uparms=None, batch=None, after_batch=None,
-            commit=True, dryrun=False):
+            commit=True, dryrun=False, designated_host=None):
         """
         Add an entry to the reduce queue. This instantiates a ReduceQueueEntry
         object using the arguments passed, and adds it to the database.
@@ -67,6 +68,7 @@ class ReduceQueue(Queue):
         rqe.mem_gb = mem_gb
         rqe.batch = batch
         rqe.after_batch = after_batch
+        rqe.designated_host = designated_host
 
         if not dryrun:
             self.session.add(rqe)
@@ -87,7 +89,8 @@ class ReduceQueue(Queue):
 
         Reduce queue does not have to worry about duplicate filenames
         inprogress, but does have to worry about memory footprint. It also has
-        to worry about the batch and after_batch parameters (see below).
+        to worry about the batch and after_batch parameters (see below),
+        and the designated_host feature (also see below)
 
         There's a subtle but important difference between the reducequeue and
         the other queues - with the other queues we only need to lock the rows
@@ -121,6 +124,12 @@ class ReduceQueue(Queue):
         will not pop an entry for reduction that has an after_batch value that
         appears in the batch value of any pending queue entry on the reduce,
         fileops or ingest queues.
+
+        designated_host: If designated_host is set in the reduceQueueEntry,
+        then that rqe can *only* be popped on hosts which have the same value
+        in their reducer_designated_host configuration parameter. Hosts which
+        have that configuration parameter set will *only* process reduction
+        queue entries that have the corresponding value in designated_host.
         """
 
         # for brevity:
@@ -175,6 +184,8 @@ class ReduceQueue(Queue):
                         ))
                     )
                 )
+                # This generates the required IS NULL if server_designated_host is None
+                .where(ReduceQueueEntry.designated_host == self.server_designated_host)
                 .order_by(desc(ReduceQueueEntry.sortkey))
                 .limit(1)
             )

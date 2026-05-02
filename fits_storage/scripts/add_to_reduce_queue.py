@@ -99,6 +99,12 @@ if __name__ == "__main__":
                              ", and ingested before processing science files "
                              "that need those calibrations")
 
+    parser.add_argument("--designated_host", action="store",
+                        help="Only process this reduction entry on a node that"
+                             "has a matching reduce_dedicated_host value "
+                             "configured. This allows reduction queue entries "
+                             "to be tied to a designated processing node")
+
     parser.add_argument("--json_write", action="store",
                         help="File to record entries to. The file must be empty"
                              " or be a JSON list. Additional entries will be "
@@ -286,7 +292,8 @@ if __name__ == "__main__":
                              after_batch=options.after_batch,
                              debundle=options.debundle,
                              mem_gb=memory_estimate(numpix),
-                             dryrun=options.dryrun)
+                             dryrun=options.dryrun,
+                             designated_host=options.designated_host)
                 rqeds.append(rqe.as_dict())
             else:
                 logger.error("No valid files to add")
@@ -324,7 +331,9 @@ if __name__ == "__main__":
                 # Add the rqe. Commit all the entries in a single transaction,
                 # so that if one fails they all fail, and also to ensure that
                 # batch and after_batch dependencies are respected
-                rqe = rq.add(commit=False, dryrun=options.dryrun, **entry)
+                rqe = rq.add(commit=False, dryrun=options.dryrun,
+                             designated_host=options.designated_host,
+                             **entry)
 
             # Commit all the entries in one transaction
             if not options.dryrun:
