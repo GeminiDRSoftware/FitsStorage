@@ -103,6 +103,7 @@ if fsc.is_server:
     from fits_storage.server.orm.monitoring import Monitoring
     from fits_storage.server.orm.processinglog import ProcessingLog, ProcessingLogFile
     from fits_storage.server.orm.processingtag import ProcessingTag
+    from fits_storage.server.orm.arin import ArinAsn, ArinNetwork
 
 
     from fits_storage.server.orm.qastuff import QAreport, \
