@@ -51,7 +51,11 @@ class CalibrationIgrins2(Calibration):
         # FLAT exposures with less than 3.5 secs (typically 3.2) are test frames
         # that should be excluded. (HS 2025204, 20250321 doubled to 3.2)
         filters = [Header.exposure_time >= 3.5]
-        
+
+        # Need to add detector name once the descriptor returns something
+        # consistent for both bundles and split files, then this should be good
+        # for both archive (bundles) and dragons (split files)
+
         query = self.get_query() \
             .flat(processed) \
             .add_filters(*filters) \
@@ -70,9 +74,13 @@ class CalibrationIgrins2(Calibration):
                    # are getting taken as science.
                    ]
 
+        # Need to add detector name once the descriptor returns something
+        # consistent for both bundles and split files, then this should be good
+        # for both archive (bundles) and dragons (split files)
+
         # We can't use '.arc' here because they're not actually arcs, at least
         # until we have a read astrodata class for IG-2 that recognizes them
-        # as arcs...
+        # as arcs, or we sort out non-arc wavecal functionality.
         query = self.get_query()\
             .add_filters(*filters) \
             .match_descriptors(Header.instrument)
