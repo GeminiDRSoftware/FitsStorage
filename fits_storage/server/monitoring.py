@@ -24,6 +24,8 @@ recipe_keywords = {
                      'GRATMNTT', 'OPBENCHT', 'DRYAIRT', 'INENCT1', 'OUTENCT1', 'PLABAIRT'], # GHOST arc
     'checkProcessedArc': ['MWS_C0', 'MWS_C1', 'MWS_C2', 'MWS_C3', 'MWS_RMS', 'MWS_IRMS',
                           'MWS_FWID', 'MWS_DWCL', 'MWS_DDIS', 'MWS_NUML']
+    'checkArc': ['MWS_C0', 'MWS_C1', 'MWS_C2', 'MWS_C3', 'MWS_RMS', 'MWS_IRMS',
+                          'MWS_FWID', 'MWS_DWCL', 'MWS_DDIS', 'MWS_NUML']
 }
 
 # These tell us the keywords to include (if they are present) in each report
