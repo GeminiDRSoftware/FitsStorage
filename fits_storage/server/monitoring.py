@@ -23,9 +23,9 @@ recipe_keywords = {
     'checkArcWfit': ['WFITCO0', 'WFITCO1', 'WFITCO2', 'WFITCO3', 'WFITCO4', 'WFITCO5',
                      'GRATMNTT', 'OPBENCHT', 'DRYAIRT', 'INENCT1', 'OUTENCT1', 'PLABAIRT'], # GHOST arc
     'checkProcessedArc': ['MWS_C0', 'MWS_C1', 'MWS_C2', 'MWS_C3', 'MWS_RMS', 'MWS_IRMS',
-                          'MWS_FWID', 'MWS_DWCL', 'MWS_DDIS', 'MWS_NUML'],
+                          'MWS_FWID', 'MWS_DCWL', 'MWS_DDIS', 'MWS_NUML'],
     'checkArc': ['MWS_C0', 'MWS_C1', 'MWS_C2', 'MWS_C3', 'MWS_RMS', 'MWS_IRMS',
-                          'MWS_FWID', 'MWS_DWCL', 'MWS_DDIS', 'MWS_NUML']
+                          'MWS_FWID', 'MWS_DCWL', 'MWS_DDIS', 'MWS_NUML']
 }
 
 # These tell us the keywords to include (if they are present) in each report
@@ -40,7 +40,7 @@ report_keywords = {
     'ghostWfit': ['WFITCO0', 'WFITCO1', 'WFITCO2', 'WFITCO3', 'WFITCO4', 'WFITCO5',
                   'GRATMNTT', 'OPBENCHT', 'DRYAIRT', 'INENCT1', 'OUTENCT1', 'PLABAIRT'],
     'checkProcessedArc': ['MWS_C0', 'MWS_C1', 'MWS_C2', 'MWS_C3', 'MWS_RMS', 'MWS_IRMS',
-                          'MWS_FWID', 'MWS_DWCL', 'MWS_DDIS', 'MWS_NUML']
+                          'MWS_FWID', 'MWS_DCWL', 'MWS_DDIS', 'MWS_NUML']
 }
 
 def get_recipe_keywords(recipe, filename):
