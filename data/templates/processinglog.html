@@ -9,11 +9,14 @@
     <tr class="tr_head">
         <th>ID</th>
         <th>Input Files</th>
-        <th>Output Files
+        <th>Output Files</th>
+        <th>Processing Tag</th>
         <th>Failed</th>
         <th>Capture Files</th>
         <th>Capture Monitoring</th>
-        <th>Debundle - Recipe - Actual_Recipe</th>
+        <th>Debundle<th>
+        <th>Recipe</th>th>
+        <th>Actual_Recipe</th>
         <th>DateTime</th>
         <th>CPU secs</th>
     </tr>
@@ -22,10 +25,13 @@
         <td><a href="/processinglog/{{ pl.id }}">{{pl.id}}</a></td>
         <td>{{pl.input_files}}</td>
         <td>{{pl.output_files}}</td>
+        <td>{{pl.processing_tag}}</td>
         <td>{{pl.failed}}</td>
         <td>{{pl.capture_files}}</td>
         <td>{{pl.capture_monitoring}}</td>
-        <td>{{pl.debundle}} - {{pl.recipe}} - {{pl.actual_recipe}}</td>
+        <td>{{pl.debundle}}</td>td>
+        <td>{{pl.recipe}}</td>td>
+        <td>{{pl.actual_recipe}}</td>
         <td>{{pl.processing_started}} - {{pl.processing_completed}}</td>
         <td>{{pl.cpu_secs}}</td>
     </tr>
