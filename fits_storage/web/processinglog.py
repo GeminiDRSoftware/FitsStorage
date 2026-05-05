@@ -15,10 +15,9 @@ def processinglog(thing):
         processinglog_id = int(thing)
     except ValueError:
         filename = thing
-
-    if filename.startswith('search='):
-        search = True
-        filename = filename[7:]
+        if filename.startswith('search='):
+            search = True
+            filename = filename[7:]
 
     ctx = get_context()
 
