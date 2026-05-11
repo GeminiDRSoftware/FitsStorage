@@ -109,5 +109,8 @@ add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20
 ## ARC checking 3-May-2026
 add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/LS/ARC/Raw/spectroscopy/GMOS-N/daterange=20260501-20260510/ --initiatedby=phirst --intent=Science-Quality --tag=GMOS-ARCCHECK --capture_monitoring --designated_host=lair2 --recipe=checkArc
 
+add_to_reduce_queue.py --selection=canonical/LS/ARC/Science-Quality/processing_tag=GMOS-N_LS-2 --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-2 --capture_monitoring --recipe=checkProcessedArc
+
+
 # GMOS Imaging
-add_to_reduce_queue.py --selectiongroup=observation_id --selection=canonical/notengineering/RAW/Raw/NotFail/imaging/science/OBJECT/2x2/fast/low/GMOS-N/daterange=20250101-20250131/filter=g --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_IM-1 --capture_files
+add_to_reduce_queue.py --selectiongroup=observation_id --selection=canonical/notengineering/RAW/Raw/NotFail/imaging/science/OBJECT/2x2/slow/low/GMOS-N/daterange=20250101-20250131/filter=g --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_IM-1 --capture_files
