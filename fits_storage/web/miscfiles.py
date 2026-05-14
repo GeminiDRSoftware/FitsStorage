@@ -231,6 +231,7 @@ def save_file(formdata):
 
         fo_req = FileOpsRequest(request='ingest_upload',
                                 args={'filename': localfilename,
+                                      'path': '',
                                       'fileuploadlog_id': fileuploadlog.id,
                                       'processed_cal': False})
 
