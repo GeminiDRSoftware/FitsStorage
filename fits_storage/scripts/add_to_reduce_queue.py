@@ -40,6 +40,14 @@ if __name__ == "__main__":
                         help="Add this space separated list of filenames as a "
                              "single entry to the queue")
 
+    parser.add_argument("--path", action="store", type=str,
+                        default='',
+                        help="Path to prepend to --filenames. This allows running "
+                             "dragons on already processed files that are in a "
+                             "processing_tag path, or files that are otherwise "
+                             "not in the storageroot root. Paths retuned from "
+                             "--selection queries are automatically propogated.")
+
     parser.add_argument("--listfile", action="store", type=str, default=None,
                         help="Filename of a file containing one or more lists "
                              "of files to add to the queue, each list as a "
@@ -163,11 +171,11 @@ if __name__ == "__main__":
             exit(1)
 
     if options.filenames:
-        # Just add a list of filename
-        logger.info("Adding single entry list of filenames: %s",
-                    options.filenames)
-        files = options.filenames
-        lists = [files]
+        # Just add a list of filenames at path
+        logger.info(f"Adding single entry list of filenames: {options.filenames}"
+                    f"at path {options.path}")
+        pathfiles = [os.path.join(options.path, fn) for fn in options.filenames]
+        lists = [pathfiles]
 
     elif options.listfile:
         # Get list(s) of files from list file
@@ -206,13 +214,13 @@ if __name__ == "__main__":
             if options.selectiongroup is None or options.selectiongroup == 'None':
                 logger.info("Adding each file as an individual reducequeue entry")
                 for header in headers:
-                    lists.append([header.diskfile.filename])
+                    lists.append([header.diskfile.keyname])
                 logger.info(f"Selection found {len(lists)} files to add")
             elif options.selectiongroup == 'ALL':
                 logger.info("Adding all files as a single reducequeue entry")
                 lists.append([])
                 for header in headers:
-                    lists[0].append(header.diskfile.filename)
+                    lists[0].append(header.diskfile.keyname)
                 logger.info(f"Selection found {len(lists[0])} files to add")
             elif len(headers) and hasattr(headers[0], options.selectiongroup):
                 groupby = options.selectiongroup
@@ -222,7 +230,7 @@ if __name__ == "__main__":
                 for header in headers:
                     if getattr(header, groupby) not in groupdict:
                         groupdict[getattr(header, groupby)] = []
-                    groupdict[getattr(header, groupby)].append(header.diskfile.filename)
+                    groupdict[getattr(header, groupby)].append(header.diskfile.keyname)
                 logger.info(f"Built {len(groupdict)} groups as follows:")
                 for key in groupdict:
                     lists.append(groupdict[key])
@@ -237,6 +245,11 @@ if __name__ == "__main__":
             validfiles = []
             numpix = []
             for filename in filelist:
+                if '/' in filename:
+                    (path, slash, filename) = filename.rpartition('/')
+                else:
+                    path = ''
+
                 if filename.endswith('.fits.bz2'):
                     filename = filename.removesuffix('.bz2')
                 elif filename.endswith('.fits'):
@@ -248,18 +261,19 @@ if __name__ == "__main__":
 
                 query = session.query(Header).join(DiskFile) \
                     .filter(DiskFile.present == True)\
+                    .filter(DiskFile.path == path)\
                     .filter(DiskFile.filename.in_(possible_filenames))
 
                 try:
                     header = query.one()
                 except NoResultFound:
-                    logger.error("Filename %s not found in database, not adding "
-                                 "this file to the list", filename)
+                    logger.error(f"Filename {filename} at path {path} not found "
+                                 f"in database, not adding this file to the list")
                 except MultipleResultsFound:
-                    logger.error("Filename %s has multiple results, not adding "
-                                 "this file to the list", filename)
+                    logger.error(f"Filename {filename} at path {path} has multiple "
+                                 f"results, not adding this file to the list")
                 else:
-                    validfiles.append(filename)
+                    validfiles.append(os.path.join(path, filename))
                     # Deprecate header.estimate_numpix() once the header numpix
                     # column is fully populated after database rebuilds.
                     tmp_numpix = header.numpix if header.numpix is not None else header.estimate_numpix()
