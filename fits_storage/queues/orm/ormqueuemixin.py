@@ -42,6 +42,10 @@ class OrmQueueMixin:
         if filename is None:
             filename = self.filename
 
+        # If the filename has a path component, remove it.
+        if '/' in filename:
+            path, slash, filename = filename.rpartition('/')
+
         sortkey = 'aaaa' + filename
 
         # Note, we can't do a 'for a, b in blah' unpack here as the dictionary

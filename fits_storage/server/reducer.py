@@ -303,18 +303,25 @@ class Reducer(object):
         self.s.commit()  # Ensure transaction on rqe is closed
 
         for filename in filenames:
+            if '/' in filename:
+                (path, slash, filename) = filename.rpartition('/')
+                os.mkdir(os.path.join(self.workingdir, path))
+            else:
+                path = ''
+
             possible_filenames = [filename, filename+'.bz2']
             query = self.s.query(DiskFile).filter(DiskFile.present == True)\
+                .filter(DiskFile.path == path)\
                 .filter(DiskFile.filename.in_(possible_filenames))
             try:
                 df = query.one()
             except NoResultFound:
-                self.logrqeerror('Cannot find diskfile for filename %s'
-                                 % filename)
+                self.logrqeerror(f'Cannot find diskfile for filename {filename}'
+                                 f' at path {path}')
                 return
             except MultipleResultsFound:
-                self.logrqeerror('Multiple results for diskfile with filename'
-                                 '%s' % filename)
+                self.logrqeerror(f'Multiple results for diskfile with filename '
+                                 f'{filename} at path {path}')
                 return False
 
             # Grab the (or a representative, ie first) header_id at this point.
@@ -331,13 +338,12 @@ class Reducer(object):
             if self.using_s3:
                 s3helper = Boto3Helper()
                 # Fetch from S3 into the working dir
-                keyname = f"{df.path}/{df.filename}" if df.path else df.filename
-                self.l.info(f"Fetching {keyname} from S3 to decompress")
+                self.l.info(f"Fetching {df.keyname} from S3 to decompress")
                 working_filename = df.filename.removesuffix('.bz2')
-                outfile = os.path.join(self.workingdir, working_filename)
+                outfile = os.path.join(self.workingdir, path, working_filename)
                 self.l.info(f"Fetching from S3 into {outfile}")
                 if df.compressed:
-                    s3flo = s3helper.get_flo(keyname)
+                    s3flo = s3helper.get_flo(df.keyname)
                     with bz2.BZ2File(s3flo) as infile:
                         chunksize = 1000000  # 1MB
                         numbytes = 0
@@ -354,13 +360,14 @@ class Reducer(object):
                     s3flo.close()
                 else:
                     # Uncompressed file on S3
-                    s3helper.fetch_to_storageroot(keyname, outfile)
+                    s3helper.fetch_to_storageroot(df.keyname, outfile)
             else:
                 # Copy the file into the working directory, decompressing it if
                 # appropriate to ensure that AstroData doesn't end up doing that
                 # multiple times and to facilitate memory mapping
-                outfile = os.path.join(df.filename.removesuffix('.bz2'),
-                                       self.workingdir, filename)
+                working_filename = df.filename.removesuffix('.bz2')
+                outfile = os.path.join(self.workingdir, path, working_filename)
+
                 if df.compressed:
                     chunksize = 1000000  # 1MB
                     self.l.debug(f"Decompressing {df.fullpath} into {outfile}")
