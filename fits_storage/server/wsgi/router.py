@@ -66,7 +66,7 @@ from fits_storage.web.ingest_programs import ingest_programs
 from fits_storage.web.processingtags import processingtags
 from fits_storage.web.processinglog import processinglog
 
-from fits_storage.web.miscfiles import miscfiles
+from fits_storage.web.miscfiles import miscfiles, validate
 
 from fits_storage.web.standards import standardobs
 
@@ -198,8 +198,7 @@ url_map = Map([
     # Miscfiles
     Rule('/miscfiles', miscfiles),
     Rule('/miscfiles/<int:handle>', miscfiles),
-    # Rule('/miscfiles/validate_add', miscfiles.validate,
-    #      methods=['POST']),
+    Rule('/miscfiles/validate_add', validate, methods=['POST']),
     #
     Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
 
