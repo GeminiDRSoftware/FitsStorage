@@ -71,7 +71,7 @@ class InstMonPlot(object):
         self.url_prefix_text = TextInput(prefix="URL builder:", sizing_mode="fixed",
                             width=340,
                             value="https://archive.gemini.edu/monitoring")
-        self.url_report_select = Select(options=["checkBias", "checkFlat"])
+        self.url_report_select = Select(options=["checkBias", "checkFlat", "checkProcessedArc"])
         self.url_inst_select = Select(options=["GMOS-N", "GMOS-S"])
         self.url_binning_select = Select(options=[None, "1x1", "1x2", "1x4", "2x1", "2x2", "2x4", "4x1", "4x2", "4x4"])
         self.url_roi_select = Select(options=[None, "fullframe", "centralspectrum"])
@@ -153,6 +153,8 @@ class InstMonPlot(object):
             select_assist = 'BIAS/DayCal/Raw'
         elif self.url_report_select.value == 'checkFlat':
             select_assist = 'OBJECT/DayCal/Raw/object=Twilight'
+        elif self.url_report_select.value == 'checkProcessedArc':
+            select_assist = 'ARC'
         all_items = [self.url_prefix_text.value, self.url_report_select.value,
                      select_assist, self.url_inst_select.value,
                      self.url_binning_select.value, self.url_roi_select.value,
