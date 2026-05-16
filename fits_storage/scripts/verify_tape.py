@@ -114,7 +114,7 @@ with session_scope() as session:
                 try:
                     tf = session.query(TapeFile)\
                         .filter(TapeFile.tapewrite_id==tw.id)\
-                        .filter(TapeFile.filename==filename).one()
+                        .filter(TapeFile.filename==filename).first()
                 except NoResultFound:
                     logger.error("File %s on tape but not found in DB - at "
                                  "filenum %d.", filename, tw.filenum)
