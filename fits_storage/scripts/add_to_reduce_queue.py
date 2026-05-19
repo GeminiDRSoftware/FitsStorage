@@ -211,6 +211,8 @@ if __name__ == "__main__":
             # is really slow if the list is big.
             logger.info("Building filename lists")
             lists = []
+            if len(headers) == 0:
+                logger.info("No files found matching selection criteria")
             if options.selectiongroup is None or options.selectiongroup == 'None':
                 logger.info("Adding each file as an individual reducequeue entry")
                 for header in headers:
