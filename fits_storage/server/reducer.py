@@ -20,6 +20,7 @@ import astrodata
 import gemini_instruments
 
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
+from sqlalchemy import delete
 
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
@@ -616,36 +617,54 @@ class Reducer(object):
                 if len(keywords) == 0:
                     self.l.warning(f"No keywords to capture for {filename}")
                 for keyword in keywords:
-                    # Is the value in the PHU?
-                    value = ad.phu.get(keyword)
-                    if value is not None:
-                        mon = Monitoring(ad)
-                        mon.recipe = self.actual_recipe
-                        mon.keyword = keyword
-                        mon.header_id = self.header_id
-                        mon.label = 'PHU'
-                        mon.set_value(value)
-                        self.s.add(mon)
-                        self.s.commit()
-                    else:
-                        # Don't go through the slices if we got it from the PHU
-                        for slice in ad:
-                            # Is the value in the HDR?
-                            value = slice.hdr.get(keyword)
-                            if value is not None:
-                                mon = Monitoring(slice)
-                                mon.recipe = self.actual_recipe
-                                mon.keyword = keyword
-                                mon.header_id = self.header_id
-                                mon.label = slice.amp_read_area()
-                                mon.set_value(value)
-                                self.s.add(mon)
-                                self.s.commit()
+                    self._add_monitoring_value(ad, keyword)
                 # Quote-unquote close the astrodata instance
                 ad = None
             except Exception:
                 self.l.warning("Exception capturing monitoring data",
                                exc_info=True)
+
+    def _add_monitoring_value(self, ad, keyword):
+        # To avoid duplication, we delete any monitoring records of this
+        # keyword for this header id. Note that some keywords can be generated
+        # by different recipes (eg checkCheese and checkProcessedCheese) and we
+        # do not differentiate between them, so do not check the recipe here.
+        # If we do encounter a duplicate, we do want to update it with the new
+        # value, so this is simpler (albeit slightly less efficient on the
+        # database) than having a uniqueness constraint on the table, as we
+        # would then have to then re-try failures as an update.
+
+        stmt = (delete(Monitoring)
+                .where(Monitoring.header_id == self.header_id)
+                .where(Monitoring.keyword == keyword))
+        self.s.execute(stmt)
+
+
+        # Is the value in the PHU?
+        value = ad.phu.get(keyword)
+        if value is not None:
+            mon = Monitoring(ad)
+            mon.recipe = self.actual_recipe
+            mon.keyword = keyword
+            mon.header_id = self.header_id
+            mon.label = 'PHU'
+            mon.set_value(value)
+            self.s.add(mon)
+            self.s.commit()
+        else:
+            # Don't go through the slices if we got it from the PHU
+            for slice in ad:
+                # Is the value in the HDR?
+                value = slice.hdr.get(keyword)
+                if value is not None:
+                    mon = Monitoring(slice)
+                    mon.recipe = self.actual_recipe
+                    mon.keyword = keyword
+                    mon.header_id = self.header_id
+                    mon.label = slice.amp_read_area()
+                    mon.set_value(value)
+                    self.s.add(mon)
+                    self.s.commit()
 
     def cleanup(self):
         """
