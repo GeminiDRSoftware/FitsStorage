@@ -1,4 +1,4 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -212,7 +212,7 @@ processing may be appropriate.</p>
 
 <h2 id="processing-tags">Processed data Tags</h2>
 
-<p>The archive Processing Tag concept accounts for the fact that the same raw data result in multiple sets of processed data - for
+<p>The archive <em>Processing Tag</em> concept accounts for the fact that the same raw data can result in multiple sets of processed data - for
 example processed by different software such as IRAF or DRAGONS, or by different versions of the same software. It would generally
 be unhelpful to mix files from these different processed data sets in the same set of search results, and where there are several
 sets of reduced data available, the archive will generally show you the "best" one by default, with an option to select others.
@@ -220,6 +220,44 @@ This is facilitated by the "Processing Tags" pulldown on the searchform. After y
 all the available processing tags for the search results. It also has the special value "Default" which will include data from
 the highest priority processing tag for each domain applicable. If you want to see results from a specific processing tag,
 simply select that tag in the pulldown and click search.</p>
+
+<h3>Technical details and the "Default" processing tag</h3>
+<p>When specifying a processing tag, the special value "Default" can be used. This almost always gives the best available data,
+    and behaves in an intuitive manner. The process here is quite subtle though, so warrants some explanation. The subtleties
+arrise when you have for example two instruments each of which have multiple independent versions of their reduced data, and
+you carry out a search which includes reduced data from both instruments.</p>
+
+<p>Each processing tag has a <em>domain</em>, and a <em>priority</em>. The domain represents the domain or scope to which the tag applies.
+    In some cases, the domain is simply an instrument name. In other cases, it can represent a specific mode of an instrument.
+    The priority represents the priority of this tag with respect to other tags with the same domain. Priority values are
+    in the sense that a numerically higher value is a higher priority.
+
+<p>In simple cases where search results only contain data from tags with the same domain, the "Default" tag is simply the
+tag for that domain with the highest priority. In actual fact though, the "Default" tag actually represents a set of tags.
+In the simple example just mentioned, if two (or more) tags for that domain have equal priority values, and that is the highest
+priority value for that domain, all such tags will be included in "Default" set.</p>
+
+<p>When we carry out a search form (or other) search, we first run the search disregarding any processing tag constraints, and
+determine the list of processing tags in the search results. This list is used to populate the "Processing Tags" pulldown in the
+search form, allowing the user to re-run the search for any processing tag relevant to their search. We then generate a list of
+    processing tag <em>domains</em> from this list, and for each domain determine the tag(s) with highest priority.
+This is the set of tags that will be included in searches for the "Default" processing tag.</p>
+
+<p>Finally, each processing tag also has a boolean <em>published</em> property. Only tags are "published" are
+eligible to be included in the "Default" tag set, or to be available as a calibration association result. Data
+for which published is set to False are essentially "unpublished". The tag will still appear in the Processing Tags pulldown on
+the search form, but a user has to set it themselves if they want to see data from that tag.</p>
+
+<p>This scheme generally behaves intuitively. There are however corner cases where it does not. Generally these are when
+the search criteria are very narrow. For example if an old processing tag includes a processed data file where the results are
+actually invalid, and the newer processing tag for the same data does not contain that file because the newer algorithms determined
+themselves that the data was bad, any search that matches data in the new processing tag will exclude the data from the old tag as the new
+one will have higher priority. But if you carry out a search that very specific - e.g. you specify the exact filename, or you search a time
+window so small it only includes the bad file), then the results will not contain any results from the new processing tag, but will include results
+from the old processing tag, and so you will get results from the old tag.</p>
+
+<p>A complete list of processing tags known to the archive system is available at:
+    <a href="/processingtags">/processingtags</a></p>
 
 <h2 id="data-access">Data Access and Proprietary Period</h2>
 
@@ -318,7 +356,7 @@ are stored here for example.</p>
 
 <p>Many URLs to services on the archive can be constructed easily by hand or programmatically, and then accessed using
 command line tools such as <kbd>wget</kbd> or <kbd>curl</kbd>, or from a scripting language, for example using the 
-<kbd>requests</kbd> or </kbd><kbd>urllib</kbd> modules in python. Further details are provided in the
+<kbd>requests</kbd> or <kbd>urllib</kbd> modules in python. Further details are provided in the
 <a href="/help/api.html">Application Programmer Interface (API) documentation</a></p>
 
 <h2 id="common-problems">HELP - Things don't seem to be working</h2>
