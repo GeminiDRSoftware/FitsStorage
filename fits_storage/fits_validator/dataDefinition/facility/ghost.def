@@ -1,0 +1,32 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME: [ GHOST ]
+
+import: [ fac-pdu, ext, wcs, provenance ]
+
+validation(final):
+  - primary-hdu:   ghost-pdu
+  - extension  : [ ghost-slitv ]
+
+ghost-pdu:
+  - keywords:
+    - OBJECT:
+      - char
+
+ghost-slitv:
+  - conditions:
+    - matching:
+      - CAMERA: SLITV
+  - keywords:
+    - if not prepared:
+      - GAIN:
+        - float
+      - RDNOISE:
+        - float
+      - CCDSUM:
+        - char:     [ '1 1', '1 2', '1 4', '2 1', '2 2', '2 4', '4 1', '4 2', '4 4' ]
+      - CCDNAME:
+        - char:       not null
+      - CCDSIZE,CCDSEC,DATASEC,DETSEC:
+        - pattern:    '\[\d+:\d+,\d+:\d+]'
+
