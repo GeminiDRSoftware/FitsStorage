@@ -98,18 +98,21 @@ add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --tag GHOST
 # GMOS Longslit
 
 ## Flats
-add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/FLAT/Raw/spectroscopy --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
+add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/FLAT/Raw/RAW/spectroscopy --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
 
 ## Arcs
-add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/ARC/Raw/spectroscopy --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
+add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/ARC/Raw/RAW/spectroscopy --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
 
 ## Standards (aka specphots)
-add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/OBJECT/Raw/spectroscopy/progCal --selectiongroup=observation_id --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
+add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/OBJECT/Raw/RAW/spectroscopy/progCal --selectiongroup=observation_id --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
 
 ## ARC checking 3-May-2026
 add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/LS/ARC/Raw/spectroscopy/GMOS-N/daterange=20260501-20260510/ --initiatedby=phirst --intent=Science-Quality --tag=GMOS-ARCCHECK --capture_monitoring --designated_host=lair2 --recipe=checkArc
 
 add_to_reduce_queue.py --selection=canonical/LS/ARC/Science-Quality/processing_tag=GMOS-N_LS-2 --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-2 --capture_monitoring --recipe=checkProcessedArc
+
+## LS science
+add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/OBJECT/Raw/RAW/spectroscopy/science --selectiongroup=observation_id --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
 
 
 # GMOS Imaging
