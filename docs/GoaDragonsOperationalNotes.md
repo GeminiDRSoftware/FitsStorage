@@ -10,9 +10,9 @@ GMOS-N and S LS FLATs and ARCs, stds, sci run for 2020- and 20220826-
 
 ## Adding to Reduce Queue
 
-add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --tag GMOS-N_BIAS_1 --recipe checkBiasOSCO --capture_monitoring --selection /canonical/GMOS-N/BIAS/Raw/RAW/notengineering/filepre=N2010
+add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --tag GMOS-N_BIAS-1 --recipe checkBiasOSCO --capture_monitoring --selection /canonical/GMOS-N/BIAS/Raw/RAW/notengineering/filepre=N2010
 
-add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_monitoring --recipe checkFlatCounts --tag GMOS-S_IM_1 --selection /canonical/GMOS-S/dayCal/OBJECT/Raw/RAW/fullframe/imaging/slow/low/object=Twilight/filepre=S202
+add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_monitoring --recipe checkFlatCounts --tag GMOS-S_IM-1 --selection /canonical/GMOS-S/dayCal/OBJECT/Raw/RAW/fullframe/imaging/slow/low/object=Twilight/filepre=S202
 
 # GHOST bias checking
 add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_monitoring --recipe checkBiasOSCO --tag GOA-GHOST-CAL-1 --debundle INDIVIDUAL --selection /canonical/GHOST/dayCal/Raw/RAW/BIAS/filepre=S202
@@ -22,7 +22,7 @@ https://archive.gemini.edu/monitoring/checkBias/BIAS/DayCal/Raw/GHOST/1x1/202512
 
 
 ## Set IMQA example
-`set-imqa.py --server cpofits-lv1 --selection=RAW/Raw/GMOS-S/low/slow/centralspectrum/dayCal/BIAS/filepre=S2024/UndefinedQA --pass`
+set-imqa.py --server cpofits-lv1 --selection=RAW/Raw/GMOS-S/low/slow/centralspectrum/dayCal/BIAS/filepre=S2024/UndefinedQA --pass
 
 # GHOST processing:
 
@@ -32,20 +32,20 @@ has to have been ingested so that it will associate when the redblue are process
 currently no automatic way to know whether the slitflat has processed, transferred and ingested before queueing the redblue etc.
 
 ## GHOST BIAS processing
-add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST --tag GHOST-1 --batch ghost-bias --selection /canonical/GHOST/dayCal/BIAS/Raw/RAW/notengineering/Pass/filepre=S202512
+add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST --tag GHOST-2 --batch ghost-bias --selection /canonical/GHOST/dayCal/BIAS/Raw/RAW/notengineering/Pass/filepre=S202512
 
 ## GHOST FLAT processing
-add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-1 --batch ghost-slitflat --after_batch ghost-bias --selection /canonical/GHOST/dayCal/FLAT/Raw/RAW/notengineering/filepre=S202512
-add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-REDBLUE --tag GHOST-1 --batch ghost-flat --after_batch ghost-slitflat --selection /canonical/GHOST/dayCal/FLAT/Raw/RAW/notengineering/filepre=S202512
+add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-2 --batch ghost-slitflat --after_batch ghost-bias --selection /canonical/GHOST/dayCal/FLAT/Raw/RAW/notengineering/filepre=S202512
+add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-REDBLUE --tag GHOST-2 --batch ghost-flat --after_batch ghost-slitflat --selection /canonical/GHOST/dayCal/FLAT/Raw/RAW/notengineering/filepre=S202512
 
 ## GHOST ARC processing
-add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-1 --batch ghost-slitarc --after_batch ghost-flat --selection /canonical/GHOST/dayCal/ARC/Raw/RAW/notengineering/filepre=S202512
-add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-REDBLUE --tag GHOST-1 --batch ghost-arc --after_batch ghost-slitarc --selection /canonical/GHOST/dayCal/ARC/Raw/RAW/notengineering/filepre=S202512
+add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-2 --batch ghost-slitarc --after_batch ghost-flat --selection /canonical/GHOST/dayCal/ARC/Raw/RAW/notengineering/filepre=S202512
+add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-REDBLUE --tag GHOST-2 --batch ghost-arc --after_batch ghost-slitarc --selection /canonical/GHOST/dayCal/ARC/Raw/RAW/notengineering/filepre=S202512
 
 
 ## GHOST science processing (Vini style)
-add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-1 --batch ghost-slit --after_batch ghost-arc --selection /canonical/GHOST/Raw/RAW/notengineering/science/filepre=S20251231S0031
-add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --capture_monitoring --debundle GHOST-REDBLUE --tag GHOST-1 --batch ghost-science --after_batch ghost-slit --uparms='{"fluxCalibrate:do_cal": "skip", "combineOrders:stacking_mode": "none"}' --selection /canonical/GHOST/Raw/RAW/notengineering/science/filepre=S20251231S0031
+add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --debundle GHOST-SLIT --tag GHOST-2 --batch ghost-slit --after_batch ghost-arc --selection /canonical/GHOST/Raw/RAW/notengineering/science/filepre=S20251231S0031
+add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_files --capture_monitoring --debundle GHOST-REDBLUE --tag GHOST-2 --batch ghost-science --after_batch ghost-slit --uparms='{"fluxCalibrate:do_cal": "skip", "combineOrders:stacking_mode": "none"}' --selection /canonical/GHOST/Raw/RAW/notengineering/science/filepre=S20251231S0031
 
 
 # Documenting what Vini's scripts do:
@@ -92,19 +92,19 @@ For one UT night:
 
 
 ## GHOST WFIT instrument monitoring
-add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --tag GHOST-1 --recipe checkArcWfit --capture_monitoring --selection /canonical/GHOST/ARC/processing_tag=GHOST-1/NotFail/Science-Quality/notengineering/camera=RED/filepre=S20260313
+add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --tag GHOST-2 --recipe checkArcWfit --capture_monitoring --selection /canonical/GHOST/ARC/processing_tag=GHOST-1/NotFail/Science-Quality/notengineering/camera=RED/filepre=S20260313
 
 
 # GMOS Longslit
 
 ## Flats
-add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/FLAT/Raw/RAW/spectroscopy --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
+add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/FLAT/Raw/RAW/spectroscopy --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-2 --capture_files
 
 ## Arcs
-add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/ARC/Raw/RAW/spectroscopy --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
+add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/ARC/Raw/RAW/spectroscopy --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-2 --capture_files
 
 ## Standards (aka specphots)
-add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/OBJECT/Raw/RAW/spectroscopy/progCal --selectiongroup=observation_id --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
+add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/OBJECT/Raw/RAW/spectroscopy/progCal --selectiongroup=observation_id --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-2 --capture_files
 
 ## ARC checking 3-May-2026
 add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/LS/ARC/Raw/spectroscopy/GMOS-N/daterange=20260501-20260510/ --initiatedby=phirst --intent=Science-Quality --tag=GMOS-ARCCHECK --capture_monitoring --designated_host=lair2 --recipe=checkArc
@@ -112,7 +112,7 @@ add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/LS/ARC/Raw/s
 add_to_reduce_queue.py --selection=canonical/LS/ARC/Science-Quality/processing_tag=GMOS-N_LS-2 --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-2 --capture_monitoring --recipe=checkProcessedArc
 
 ## LS science
-add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/OBJECT/Raw/RAW/spectroscopy/science --selectiongroup=observation_id --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-1 --capture_files
+add_to_reduce_queue.py --selection=canonical/notengineering/NotFail/daterange=20250101-20250131/GMOS-N/LS/OBJECT/Raw/RAW/spectroscopy/science --selectiongroup=observation_id --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_LS-2 --capture_files
 
 
 # GMOS Imaging
