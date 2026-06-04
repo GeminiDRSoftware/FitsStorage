@@ -71,8 +71,11 @@ class InstMonPlot(object):
         self.url_prefix_text = TextInput(prefix="URL builder:", sizing_mode="fixed",
                             width=340,
                             value="https://archive.gemini.edu/monitoring")
-        self.url_report_select = Select(options=["checkBias", "checkFlat"])
-        self.url_inst_select = Select(options=["GMOS-N", "GMOS-S"])
+
+        self.url_report_select = Select(options=["checkBias", "checkFlat", "checkProcessedArc"])
+        self.url_inst_select = Select(options=["GMOS-N", "GMOS-S", "GHOST"])
+        self.url_processingtag_select = Select(options=[None, 'GMOS-N_BIAS-1', 'GMOS-S_BIAS-1', 'GMOS-N_IM-1', 'GMOS-S_IM-1', 'GMOS-N_LS-2', 'GMOS-S_LS-2', 'GHOST-2'])
+        self.url_engineering_select = Select(options=[None, 'notengineering', 'engineering'])
         self.url_binning_select = Select(options=[None, "1x1", "1x2", "1x4", "2x1", "2x2", "2x4", "4x1", "4x2", "4x4"])
         self.url_roi_select = Select(options=[None, "fullframe", "centralspectrum"])
         self.url_speed_select = Select(options=[None, "slow", "fast"])
@@ -93,7 +96,7 @@ class InstMonPlot(object):
         self.plot_select = Select(title="Plot", options=self.plots, value='Any')
         self.plot_default_button = Button(label="Default", align='end')
 
-        self.selection_info = TextAreaInput(cols=40, rows=4, title='Selection Info')
+        self.selection_info = TextAreaInput(cols=40, rows=6, title='Selection Info')
 
         self.selectnone_button = Button(label="Select None")
         self.selectpass_button = Button(label="Select Pass")
@@ -102,16 +105,22 @@ class InstMonPlot(object):
         self.selectusable_button = Button(label="Select Usable")
 
 
-        load_row = row(self.datasource_text, self.url_buildload_button,
-                       self.load_button, sizing_mode="stretch_width")
+        status_row = row(self.status_text, self.url_example_button,
+                         sizing_mode="stretch_width")
         url_row = row(self.url_prefix_text, self.url_report_select,
-                      self.url_inst_select, self.url_binning_select,
-                      self.url_roi_select, self.url_speed_select,
-                      self.url_gain_select, self.url_filter_select,
-                      self.url_startdate_picker,
-                      Div(text='-'), self.url_enddate_picker,
-                      self.url_build_button, self.url_example_button)
-        load_col = column(self.status_text, url_row, load_row, sizing_mode="stretch_width")
+                      self.url_inst_select, self.url_processingtag_select,
+                      self.url_engineering_select,
+                      self.url_startdate_picker, Div(text='-'),
+                      self.url_enddate_picker,
+                      self.url_build_button, self.url_buildload_button)
+        url_row2 = row(Div(text="Instrument Details:"),
+                       self.url_binning_select, self.url_roi_select,
+                       self.url_speed_select, self.url_gain_select,
+                       self.url_filter_select)
+        load_row = row(self.datasource_text,
+                       self.load_button, sizing_mode="stretch_width")
+        load_col = column(status_row, url_row, url_row2, load_row,
+                          sizing_mode="stretch_width")
         select_row = row(self.xaxis_select, Div(width=100),
                          self.group_select, self.plot_select,
                          self.plot_default_button
@@ -155,6 +164,8 @@ class InstMonPlot(object):
             select_assist = 'OBJECT/DayCal/Raw/object=Twilight'
         all_items = [self.url_prefix_text.value, self.url_report_select.value,
                      select_assist, self.url_inst_select.value,
+                     f'processing_tag={self.url_processingtag_select.value}' if self.url_processingtag_select.value else None,
+                     self.url_engineering_select.value,
                      self.url_binning_select.value, self.url_roi_select.value,
                      self.url_speed_select.value, self.url_gain_select.value,
                      f'filter={self.url_filter_select.value}' if self.url_filter_select.value else None]
@@ -293,5 +304,9 @@ class InstMonPlot(object):
         # Have to jump through some numpy.datetime64 hoops
         min_ut = numpy.datetime64(min_ut, 'D').astype(datetime.date).strftime('%Y%m%d')
         max_ut = numpy.datetime64(max_ut, 'D').astype(datetime.date).strftime('%Y%m%d')
-        self.selection_info.value = f'Total: {total:,}\nCount: {count:,}\nDL: {min_dl}-{max_dl}\nUT: {min_ut}-{max_ut}'
+        if len(self.scatter.data_source.selected.indices) ==1:
+            the_dl = self.scatter.data_source.data['data_label'][self.scatter.data_source.selected.indices[0]]
+        else:
+            the_dl = f'{min_dl}-{max_dl}'
+        self.selection_info.value = f'Total: {total:,}\nCount: {count:,}\nDL: {the_dl}\nUT: {min_ut}-{max_ut}'
 
