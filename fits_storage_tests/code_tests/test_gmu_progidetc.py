@@ -99,15 +99,17 @@ def test_gdl():
         assert gdl.dlnum == '002'
     for pid in pid_valid:
         dlnoext = pid + '-3-123'
-        dl = dlnoext + '-blah'
-        gdl = GeminiDataLabel(dl)
-        assert gdl.valid is True
-        assert gdl.datalabel == dl
-        assert gdl.datalabel_noextension == dlnoext
-        assert gdl.program_id == pid
-        assert gdl.observation_id == '%s-%s' % (pid, '3')
-        assert gdl.dlnum == '123'
-        assert gdl.extension == 'blah'
+        for ext in ('-blah', '-SQ-ARC'):
+            dl = dlnoext + ext
+            gdl = GeminiDataLabel(dl)
+            assert gdl.valid is True
+            assert gdl.datalabel == dl
+            assert gdl.datalabel_noextension == dlnoext
+            assert gdl.program_id == pid
+            assert gdl.observation_id == '%s-%s' % (pid, '3')
+            assert gdl.dlnum == '123'
+            assert gdl.extension == ext[1:]
+
     for pid in pid_invalid:
         dl = pid + '-1-002'
         gdl = GeminiDataLabel(dl)
