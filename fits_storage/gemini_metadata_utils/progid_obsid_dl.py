@@ -58,9 +58,9 @@ obsid_cre = re.compile(obsid)
 # This matches a data-label with an optional extension
 # ie program_id-obsnum-dlnum[-ext], with groups progid, obsid, dlid, extn.
 # Note the extn has to start with a letter to avoid confusion with the various
-# program ID and thus datalabel formats.
+# program ID and thus datalabel formats, though it may contain -s
 dl = r'(?P<progid>%s)-(?P<obsid>\d+)-(?P<dlid>\d+(-\d+)?)' \
-     r'(?:-(?P<extn>[A-Za-z]\w*))?' % pid
+     r'(?:-(?P<extn>[A-Za-z][\w\-]*))?' % pid
 dl_cre = re.compile(dl)
 
 
