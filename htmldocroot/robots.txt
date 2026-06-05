@@ -1,9 +1,9 @@
-Sitemap: https://archive.gemini.edu/sitemap.xml
+sitemap: https://archive.gemini.edu/sitemap.xml
 
-User-agent: *
-Allow: /help/
-Allow: /programinfo/
-Allow: /sitemap.xml
-Allow: /searchform$
-Allow: /$
-Disallow: /
+user-agent: *
+allow: /help/
+allow: /programinfo/
+allow: /sitemap.xml
+allow: /searchform$
+allow: /$
+disallow: /
