@@ -34,9 +34,11 @@ if fsc.is_server:
     from fits_storage.server.orm.obslog import Obslog
     from fits_storage.server.orm.provenancehistory import \
         ingest_provenancehistory
+    from fits_storage.server.orm.objcat import Objcat
     if fsc.using_previews:
         from fits_storage.server.previewer import Previewer
     from fits_storage.server.reduce_on_ingest import ReduceOnIngest
+
 
 
 class Ingester(object):
@@ -540,6 +542,22 @@ class Ingester(object):
                 iqe.seterror(message)
                 self.s.commit()
                 return False
+            try:
+                for ext in diskfile.get_ad_object:
+                    if hasattr(ext, 'OBJCAT'):
+                        self.l.debug(f"Adding objcat entries for ext id {ext.id}")
+                        for row in ext.OBJCAT:
+                            objcat = Objcat(header.id, ext.id, row, logger=self.l)
+                            self.s.add(objcat)
+                        self.s.commit()
+            except:
+                message = "Exception adding objcat entries - see log file"
+                self.l.error(message, exc_info=True)
+                self.s.rollback()
+                iqe.seterror(message)
+                self.s.commit()
+                return False
+
 
         try:
             if not self.using_sqlite:
