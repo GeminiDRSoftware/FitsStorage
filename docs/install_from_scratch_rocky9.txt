@@ -85,7 +85,10 @@ df -h .
 cd /opt/DRAGONS
 git clone git@github.com:/GeminiDRSoftware/DRAGONS .
 git fetch
-git switch release/3.2.x  # or master, depending what you want...
+git switch release/4.2.x  # or master, depending what you want...
+cd /opt/DRAGONS/gempy/library
+conda install cython
+cythonize -i cython_utils.pyx
 cd /opt/FitsStorage
 git clone git@github.com:GeminiDRSoftware/FitsStorage.git .
 git switch release/3.2.x  # or main, depending what you want...
