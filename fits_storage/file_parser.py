@@ -513,6 +513,10 @@ class AstroDataFileParser(FileParser):
             ra = ratodeg(ra)
         if ra is not None and (ra > 360.0 or ra < 0.0):
             ra = None
+
+        if isinstance(ra, np.floating):
+            ra = float(ra)
+
         return ra
 
     def raw_bg(self) -> Union[float, None]:
@@ -701,6 +705,10 @@ class AlopekeZorroFileParser(AstroDataFileParser):
             dec = dectodeg(dec)
         if dec is not None and (dec > 90.0 or dec < -90.0):
             dec = None
+
+        if isinstance(dec, np.floating):
+            dec = float(dec)
+
         return dec
 
     def exposure_time(self) -> Union[float, None]:
