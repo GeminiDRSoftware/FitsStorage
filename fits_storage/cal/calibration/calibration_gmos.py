@@ -477,7 +477,7 @@ class CalibrationGMOS(Calibration):
             howmany = 1 if processed else 2
 
         ifu = mos_or_ls = False
-        el_thres = 0.0
+        el_thres = 30.0
         under_85 = False
         crpa_thres = 0.0
         # QAP might not give us these for now. Remove this 'if' later when it does
@@ -490,14 +490,16 @@ class CalibrationGMOS(Calibration):
             try:
                 ifu = self.descriptors['focal_plane_mask'].startswith('IFU')
                 # For IFU, elevation must we within 7.5 degrees
-                el_thres = 7.5
+                if ifu:
+                    el_thres = 7.5
             except AttributeError:
                 # focal_plane_mask came as None. Leave 'ifu' as False
                 pass
             try:
                 mos_or_ls = self.descriptors['central_wavelength'] > 0.55 or self.descriptors['disperser'].startswith('R150')
                 # For MOS and LS, elevation must we within 15 degrees
-                el_thres = 15.0
+                if mos_or_ls:
+                    el_thres = 15.0
             except (AttributeError, TypeError):
                 # In cases where disperser or central_wavelength is None
                 pass
