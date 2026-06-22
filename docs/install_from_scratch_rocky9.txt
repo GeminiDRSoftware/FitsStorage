@@ -139,3 +139,38 @@ tail /data/logs/service_fileops_queue.py
 # If you cycle the magic download cookie, let Kathleen know, it's needed by
 # SCALes (for processing pre-imaging) and stored on the scales server.
 
+
+
+# DRAGONS update notes on lairs:
+cd /opt/FitsStorage
+git pull
+cd /opt/DRAGONS
+git pull
+
+conda deactivate
+conda rename -n dragons dragons421old
+conda update -n base -c conda-forge conda
+conda create -p /opt/miniforge3/envs/dragons python=3.12
+conda activate /opt/miniforge3/envs/dragons
+conda install dragons
+conda remove --force dragons # remove the dragons package, we run from a checkout
+conda remove --force fits_storage # we only really wanted the other dragons deps.
+conda install fitsverify
+conda install cython
+cd /opt/DRAGONS/gempy/library
+cythonize -i cython_utils.pyx
+pip3 install boto3
+pip3 install -r /opt/FitsStorage/requirements.txt
+pip3 install -r /opt/FitsStorage/requirements_server.txt
+
+cd
+conda export --name dragons --file conda-lock.yaml
+mv conda-lock.yaml dragons422-conda-lock.yaml
+conda list --explicit > dragons422-conda-list-explicit.txt
+# (not clear which of these is best, do both for now?)
+
+OR if have already done that,
+conda deactivate
+conda rename -n dragons dragons421old
+conda create --name dragons --file dragons422-conda-lock.yaml
+etc
