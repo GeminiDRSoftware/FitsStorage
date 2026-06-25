@@ -90,8 +90,8 @@ if len(candidates) > 2000 and not options.yesimsure:
     logger.error("To proceed with this many files, you must say --yesimsure")
     exit(1)
 
-# We use the FileOnTapeHelper class here which provides caching..
-foth = FileOnTapeHelper(tapeserver=options.tapeserver, logger=logger)
+# We use the FileOnTapeHelper class here which provides caching.
+foth = FileOnTapeHelper(tapeserver="http://"+options.tapeserver, logger=logger)
 
 if options.filepre:
     logger.info("Pre-populating tape server results cache from filepre")
