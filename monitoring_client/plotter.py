@@ -71,7 +71,7 @@ class InstMonPlot(object):
         self.url_prefix_text = TextInput(prefix="URL builder:", sizing_mode="fixed",
                             width=340,
                             value="https://archive.gemini.edu/monitoring")
-        self.url_report_select = Select(options=["checkBias", "checkFlat", "checkProcessedArc"])
+        self.url_report_select = Select(options=["checkBias", "checkFlat", "checkProcessedArc", "ghostWfit", "ghostScience"])
         self.url_inst_select = Select(options=["GMOS-N", "GMOS-S", "GHOST"])
         self.url_processingtag_select = Select(options=[None, 'GMOS-N_BIAS-1', 'GMOS-S_BIAS-1', 'GMOS-N_IM-1', 'GMOS-S_IM-1', 'GMOS-N_LS-2', 'GMOS-S_LS-2', 'GHOST-2'])
         self.url_engineering_select = Select(options=[None, 'notengineering', 'engineering'])
@@ -163,6 +163,10 @@ class InstMonPlot(object):
             select_assist = 'OBJECT/DayCal/Raw/object=Twilight'
         elif self.url_report_select.value == 'checkProcessedArc':
             select_assist = 'ARC'
+        elif self.url_report_select.value == 'ghostScience':
+            select_assist = 'GHOST'
+        elif self.url_report_select.value == 'ghostWfit':
+            select_assist = 'GHOST/ARC'
         all_items = [self.url_prefix_text.value, self.url_report_select.value,
                      select_assist, self.url_inst_select.value,
                      f'processing_tag={self.url_processingtag_select.value}' if self.url_processingtag_select.value else None,
