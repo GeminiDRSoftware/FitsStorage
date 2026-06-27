@@ -168,7 +168,7 @@ class InstMonPlot(object):
         elif self.url_report_select.value == 'ghostWfit':
             select_assist = 'GHOST/ARC'
         all_items = [self.url_prefix_text.value, self.url_report_select.value,
-                     select_assist, self.url_inst_select.value,
+                     'canonical', select_assist, self.url_inst_select.value,
                      f'processing_tag={self.url_processingtag_select.value}' if self.url_processingtag_select.value else None,
                      self.url_engineering_select.value,
                      self.url_binning_select.value, self.url_roi_select.value,
