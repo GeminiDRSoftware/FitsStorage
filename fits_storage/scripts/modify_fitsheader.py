@@ -3,6 +3,7 @@
 from optparse import OptionParser
 import re
 import json
+import os.path
 from astropy.io import fits
 
 from fits_storage.logger import logger, setdebug, setdemon
@@ -61,6 +62,9 @@ def main():
                            "to see the parsed actions")
     parser.add_option("--backup", action="store_true", dest="backup",
                       help="Create .bak backup files of any files modified")
+    parser.add_option("--writeto", action="store", dest="writeto",
+                      help="write files to this output directory. Leave "
+                           "originals unmodified")
     parser.add_option("--debug", action="store_true", dest="debug")
     parser.add_option("--demon", action="store_true", dest="demon")
 
@@ -102,6 +106,14 @@ def main():
                     len(filenames), options.listfile)
         if len(filenames) == 0:
             logger.error("No files to process. Exiting.")
+            return
+
+    if options.writeto:
+        if os.path.exists(options.writeto) and os.path.isdir(options.writeto):
+            logger.info(f"Writing files to dir: {options.writeto}")
+        else:
+            logger.error(f"Specified output directory {options.writeto} does "
+                         f"not exist or is not a directory. Exiting.")
             return
 
     # Parse action list and build action dictionaries.
@@ -172,7 +184,7 @@ def main():
 
 
 def modify_fitsfile(filename, actions, options, logger):
-    mode = 'readonly' if options.dryrun else 'update'
+    mode = 'readonly' if options.dryrun or options.writeto else 'update'
     save_backup = True if options.backup else False
     logger.info("Opening FITS file %s (mode %s)", filename, mode)
     hdulist = fits.open(filename, mode=mode, save_backup=save_backup,
@@ -181,6 +193,10 @@ def modify_fitsfile(filename, actions, options, logger):
     for action in actions:
         apply_action(hdulist, action, logger)
 
+    if options.writeto:
+        newfn = os.path.join(options.writeto, filename)
+        logger.debug(f"Writing to: {newfn}")
+        hdulist.writeto(newfn)
     logger.debug("Closing FITS file")
     hdulist.close()
 
