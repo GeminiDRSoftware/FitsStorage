@@ -194,7 +194,7 @@ def modify_fitsfile(filename, actions, options, logger):
         apply_action(hdulist, action, logger)
 
     if options.writeto:
-        newfn = os.path.join(options.writeto, filename)
+        newfn = os.path.join(options.writeto, os.path.basename(filename))
         logger.debug(f"Writing to: {newfn}")
         hdulist.writeto(newfn)
     logger.debug("Closing FITS file")
