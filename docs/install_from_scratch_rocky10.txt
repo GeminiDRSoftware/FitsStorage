@@ -1,0 +1,176 @@
+# Update and basic installs
+sudo dnf update
+sudo dnf autoremove
+sudo dnf install nginx postgresql-server sysstat wget vim
+sudo dnf group install "Development Tools"
+
+# Add to /etc/passwd:
+fitsdata:x:5179:5179:FITS Data User:/home/fitsdata:/bin/bash
+fitsweb:x:5180:5179:FITS Web WSGI User:/home/fitsweb:/bin/bash
+# And to /etc/group:
+fitsdata:x:5179:fitsdata,fitsweb
+# also add fitsdata to local-users if want to be able to ssh in
+
+# Set up postgres
+sudo mkdir -p /data/postgres/pgdata
+sudo chown -R postgres:postgres /data/postgres
+sudo chmod -R 700 /data/postgres
+sudo mkdir /etc/systemd/system/postgresql.service.d
+echo "[Service]" | sudo tee /etc/systemd/system/postgresql.service.d/fitsstorage.conf
+echo "Environment=PGDATA=/data/postgres/pgdata" | sudo tee -a /etc/systemd/system/postgresql.service.d/fitsstorage.conf
+sudo systemctl daemon-reload
+sudo postgresql-setup --initdb
+sudo -i -u postgres
+  vi /data/postgres/pgdata/postgresql.conf
+    shared_buffers = 4GB    # 25% of ram if ram > 1GB
+    effective_cache_size = 8GB   # 50% of ram size ish
+    max_connections = 200  # we're using 100 for uwsgi, plus scripts.
+sudo systemctl start postgresql
+sudo systemctl status postgresql
+sudo systemctl enable postgresql
+sudo -i -u postgres
+  /usr/bin/createuser --no-superuser --no-createrole --createdb fitsdata
+  /usr/bin/createuser --no-superuser --no-createrole --no-createdb fitsweb
+  /usr/bin/createuser --no-superuser --no-createrole --no-createdb dragons
+sudo -i -u fitsdata
+  createdb fitsdata
+
+
+sudo mkdir /opt/miniforge3
+sudo chown fitsdata /opt/miniforge3
+# Miniconda install (as fitsdata)
+# Go to https://conda-forge.org/miniforge/ and get the latest URL
+wget https://github.com/conda-forge/miniforge/releases/download/24.3.0-0/Miniforge3-24.3.0-0-Linux-x86_64.sh
+
+# As fitsdata
+bash Miniforge3-24.3.0-0-Linux-x86_64.sh -f
+install location /opt/miniforge3
+do activate
+# log out and back in
+# may need to source .bashrc if conda is not on path
+conda config --add channels conda-forge
+conda config --add channels http://astroconda.gemini.edu/public
+conda create -p /opt/miniforge3/envs/fitsdata python=3.12
+conda activate /opt/miniforge3/envs/fitsdata
+#conda install dragons
+conda install dragons
+conda remove --force dragons # remove the dragons package, we run from a checkout
+conda remove --force fits_storage # we only really wanted the other dragons deps.
+conda install fitsverify
+
+# In bash profile, add:
+export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
+
+# At end of bashrc, add:
+conda activate fitsdata
+export PATH="/opt/FitsStorage/fits_storage/scripts:$PATH"
+
+# As you
+cd /opt
+sudo mkdir DRAGONS FitsStorage FitsStorageConfigurations
+sudo chown fitsdata DRAGONS FitsStorage FitsStorageConfigurations
+sudo mkdir /data/logs /data/locks /data/upload_staging /data/z_staging /data/s3_staging
+sudo chown fitsdata:fitsdata /data/logs/ /data/locks /data/upload_staging /data/z_staging /data/s3_staging
+sudo chmod g+w /data/upload_staging /data/s3_staging
+# If configuring autofs. note mko vs cpo
+sudo cp /opt/FitsStorage/system_install_files/etc-auto.sci-mko /etc/auto.sci
+sudo vi /etc/auto.master
+/sci	/etc/auto.sci --timeout=60
+sudo systemctl restart autofs
+cd /sci/dataflow
+df -h .
+
+
+# As fitsdata
+cd /opt/DRAGONS
+git clone git@github.com:/GeminiDRSoftware/DRAGONS .
+git fetch
+git switch release/4.2.x  # or master, depending what you want...
+cd /opt/DRAGONS/gempy/library
+conda install cython
+cythonize -i cython_utils.pyx
+cd /opt/FitsStorage
+git clone git@github.com:GeminiDRSoftware/FitsStorage.git .
+git switch release/3.2.x  # or main, depending what you want...
+cd /opt/FitsStorageConfigurations
+git clone git@github.com:/phirstgemini/FitsStorageConfigurations .
+
+#pip3 install astrodata
+#pip3 uninstall astrodata  # We just wanted the dependencies really...
+pip3 install -r /opt/FitsStorage/requirements.txt
+pip3 install -r /opt/FitsStorage/requirements_server.txt # For servers
+pip3 install -r /opt/FitsStorage/requirements_dev.txt   # For development systems
+conda install uwsgi
+pip3 install boto3 # if required
+
+create_tables.py
+ingest_standards.py
+touch /data/logs/uwsgi.log
+chmod g+w /data/logs/uwsgi.log
+
+# As you
+
+sudo cp /opt/FitsStorage/system_install_files/etc_systemd_system/* /etc/systemd/system
+sudo mkdir /opt/uwsgi
+sudo chown fitsweb:fitsdata /opt/uwsgi
+sudo cp /opt/FitsStorage/system_install_files/fitsservice.ini /opt/uwsgi
+sudo cp /opt/FitsStorage/system_install_files/fits_server-nginx.conf /etc/nginx/nginx.conf
+sudo systemctl start fits-nginx
+sudo systemctl status fits-nginx
+sudo systemctl enable fits-nginx
+sudo systemctl start fits-uwsgi
+sudo systemctl status fits-uwsgi
+sudo systemctl enable fits-uwsgi
+sudo chmod og+rx /var/log/nginx
+# Try and hit the web server. If you get error, look in /opt/uwsgi/fits.log
+
+sudo systemctl start fits-service_ingest_queue1
+sudo systemctl status fits-service_ingest_queue1
+tail /data/logs/service_ingest_queue.py-1.log
+# Create and start other ingest queues if required
+
+sudo systemctl start fits-service_fileops_queue1
+sudo systemctl status fits-service_fileops_queue1
+sudo systemctl enable fits-service_fileops_queue1
+tail /data/logs/service_fileops_queue.py
+
+# Same for other queues, if appropriate, plus fits-queue_monitor
+
+# If you cycle the magic download cookie, let Kathleen know, it's needed by
+# SCALes (for processing pre-imaging) and stored on the scales server.
+
+
+
+# DRAGONS update notes on lairs:
+cd /opt/FitsStorage
+git pull
+cd /opt/DRAGONS
+git pull
+
+conda deactivate
+conda rename -n dragons dragons421old
+conda update -n base -c conda-forge conda
+conda create -p /opt/miniforge3/envs/dragons python=3.12
+conda activate /opt/miniforge3/envs/dragons
+conda install dragons
+conda remove --force dragons # remove the dragons package, we run from a checkout
+conda remove --force fits_storage # we only really wanted the other dragons deps.
+conda install fitsverify
+conda install cython
+cd /opt/DRAGONS/gempy/library
+cythonize -i cython_utils.pyx
+pip3 install boto3
+pip3 install -r /opt/FitsStorage/requirements.txt
+pip3 install -r /opt/FitsStorage/requirements_server.txt
+
+cd
+conda export --name dragons --file conda-lock.yaml
+mv conda-lock.yaml dragons422-conda-lock.yaml
+conda list --explicit > dragons422-conda-list-explicit.txt
+# (not clear which of these is best, do both for now?)
+
+OR if have already done that,
+conda deactivate
+conda rename -n dragons dragons421old
+conda create --name dragons --file dragons422-conda-lock.yaml
+etc
