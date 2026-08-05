@@ -1,8 +1,19 @@
 # Update and basic installs
 sudo dnf update
 sudo dnf autoremove
-sudo dnf install nginx postgresql-server sysstat wget vim
+sudo dnf install nginx sysstat wget vim
 sudo dnf group install "Development Tools"
+
+# Postgres rocky 10 canned version is 16. We want 18.
+# Following https://www.postgresql.org/download/linux/redhat/:
+# Install the repository RPM:
+sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+# Install PostgreSQL:
+sudo dnf install -y postgresql18-server
+#  # Optionally initialize the database and enable automatic start:
+#  sudo /usr/pgsql-18/bin/postgresql-18-setup initdb
+#  sudo systemctl enable postgresql-18
+#  sudo systemctl start postgresql-18
 
 # Add to /etc/passwd:
 fitsdata:x:5179:5179:FITS Data User:/home/fitsdata:/bin/bash
