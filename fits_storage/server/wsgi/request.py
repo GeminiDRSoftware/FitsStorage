@@ -17,6 +17,7 @@ class Request(object):
 
     def __init__(self, session, wsgienv):
         self._s = session
+        self._wsgienv = wsgienv
         self._env = Environment(wsgienv)
         self._fields = None
 
@@ -71,8 +72,8 @@ class Request(object):
         If files = True, returns the multipart files dict
         """
 
-        if multipart.is_form_request(self._env):
-            forms, files = multipart.parse_form_data(self.input, self._env)
+        if multipart.is_form_request(self._wsgienv):
+            forms, files = multipart.parse_form_data(self._wsgienv)
 
             if getfiles:
                 return files
