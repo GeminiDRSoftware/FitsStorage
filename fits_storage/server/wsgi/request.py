@@ -1,7 +1,7 @@
 import json
+import multipart
 
 from .environment import Environment
-from .helperobjects import ItemizedFieldStorage
 
 
 class Request(object):
@@ -64,20 +64,22 @@ class Request(object):
         except KeyError:
             return False
 
-    def get_form_data(self, large_file=False):
+    def get_form_data(self, getfiles=False):
         """
-        Returns an object with the same interface as
-        :py:class:`cgi.FieldStorage`, with the contents of a form sent by a
-        POST request.
-
-        If we expect a large file to be sent, ``large_file`` should be set to
-        True. Some implementations of ``FieldStorage`` may benefit from
-        knowing this.
+        Parses form data, if getfiles = False, returns a dict of form field
+        strings.
+        If files = True, returns the multipart files dict
         """
 
-        form_data = ItemizedFieldStorage(self.input, environ=self._env)
+        if multipart.is_form_request(self._env):
+            forms, files = multipart.parse_form_data(self.input, self._env)
 
-        return form_data
+            if getfiles:
+                return files
+            else:
+                return forms
+        else:
+            return {}
 
     @property
     def input(self):
