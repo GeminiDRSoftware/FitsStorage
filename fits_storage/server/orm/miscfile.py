@@ -60,7 +60,7 @@ def miscfile_meta_path(path):
     str : path to JSON metadata file
     """
     fsc = get_config()
-    return os.path.join(fsc.upload_staging_dir, path + '.json')
+    return os.path.join(fsc.storage_root, path + '.json')
 
 
 def is_miscfile(path):

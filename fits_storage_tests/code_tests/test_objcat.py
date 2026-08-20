@@ -20,7 +20,7 @@ def test_reduction(tmp_path):
     assert table is not None
 
     row = table[0]
-    objcat = Objcat(header.id, row)
+    objcat = Objcat(header.id, 0, row)
 
     # spot checks.
     # integer values should compare directly
@@ -28,7 +28,7 @@ def test_reduction(tmp_path):
     assert row['X_WORLD'] - objcat.X_WORLD < 0.001
 
     for row in table:
-        objcat = Objcat(header.id, row)
+        objcat = Objcat(header.id, 0, row)
 
         assert objcat.NUMBER is not None
 

@@ -29,7 +29,7 @@ def test_processinglog_sanity():
 
     reduced_files = ['foo/out1.fits', 'out2.fits']
     time.sleep(1)
-    p.end(reduced_files, failed=False)
+    p.end(reduced_files, actual_recipe='actual recipe', failed=False)
 
     assert p.failed is False
     assert p.output_files == 'out1.fits, out2.fits'

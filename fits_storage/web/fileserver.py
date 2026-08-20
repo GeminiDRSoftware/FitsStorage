@@ -1,15 +1,10 @@
 import time
-import datetime
 import bz2
 from io import BytesIO
 import tarfile
-import os
 
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
-from fits_storage.gemini_metadata_utils import gemini_fitsfilename
-
-from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
 
@@ -102,16 +97,8 @@ def make_tarinfo(name, **kw):
 def download_post():
     # Parse form data
     formdata = get_context().req.get_form_data()
-    thelist = []
-    if 'files' in formdata: #hasattr(formdata, 'files'):
-        fields = formdata["files"]
-        if isinstance(fields, list):
-            for field in fields:
-                thelist.append(str(field.value))
-        else:
-            thelist.append(fields.value)
     selection = Selection()
-    selection['filelist'] = thelist
+    selection['filelist'] = formdata.getall('files')
     return download(selection = selection,
                     associated_calibrations = False)
 

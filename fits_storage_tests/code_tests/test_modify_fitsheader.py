@@ -25,6 +25,7 @@ def test_modify_fitsheader(tmp_path):
     options = types.SimpleNamespace()
     options.dryrun = False
     options.backup = False
+    options.writeto = None
     logger = DummyLogger(print=True)
 
     # Create and apply an action dicts to the file. Manually update the hdulist

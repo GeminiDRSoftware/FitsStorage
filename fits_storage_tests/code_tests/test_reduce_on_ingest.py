@@ -48,8 +48,8 @@ def test_reduce_on_ingest(tmp_path):
 
     roi(diskfile, True, header=header, rq=rq)
     assert len(rq.added) == 2
-    assert rq.added[0] == ['N20200127S0023.fits.bz2']
-    assert rq.added[1] == ['N20200127S0023.fits.bz2']
+    assert rq.added[0] == ['N20200127S0023.fits']
+    assert rq.added[1] == ['N20200127S0023.fits']
     assert compareactions(rq.actions[0], {"recipe": "testrecipe1", "capture_monitoring": True, "tag": "testtag", "initiatedby": "testib", "intent": "Science-Quality"})
     assert compareactions(rq.actions[1], {"recipe": "testrecipe2", "capture_monitoring": True, "tag": "testtag", "initiatedby": "testib", "intent": "Science-Quality"})
 
