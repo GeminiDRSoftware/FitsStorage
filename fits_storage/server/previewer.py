@@ -13,6 +13,8 @@ from sqlalchemy.exc import NoResultFound
 
 from gemini_instruments.gmos.pixel_functions import get_bias_level
 
+from gempy.adlibrary.plotting import _setup_dgsplots, COLORS
+
 # This causes a circular import if fits storage tries to call dragons and
 # fits storage has using_previews=True. This is because it does a
 # 'from geminidr.gemini.lookups import DQ_definitions as DQ' which means that
@@ -60,7 +62,7 @@ class Previewer(object):
 
         self.spectrum = False
         # Ugh.
-        if self.header.instrument == 'GHOST' and self.header.processing != 'Raw' and 'EXTRACTED' in self.header.types:
+        if self.header.processing != 'Raw' and 'EXTRACTED' in self.header.types:
             self.logger.debug('Previewer spectrum mode selected')
             self.spectrum = True
 
@@ -309,7 +311,30 @@ class Previewer(object):
             plt.close()
 
             return True
-        self.logger.warning("Spectrum preview not implemented yet")
+
+        if (self.header.instrument in ('GMOS-N', 'GMOS-S') and
+                self.header.processing != 'Raw' and
+                self.header.mode == 'LS'):
+
+            self.logger.debug("GMOS processed spectrum plot")
+
+            plot_data = _setup_dgsplots(ad, 1, False)
+
+            plt.title(plot_data['title'])
+            plt.xlabel(plot_data['xaxis'])
+            plt.ylabel(plot_data['yaxis'])
+            for i, (x, y) in enumerate(zip(plot_data['wavelength'], plot_data['data'])):
+                plt.plot(x, y, color=COLORS[i % len(COLORS)])
+            plt.savefig(fp, dpi='figure', format=self.filetype, metadata=None,
+                        bbox_inches=None, pad_inches=None)
+            plt.close()
+
+            return True
+
+        self.logger.warning(f"Spectrum preview not implemented for "
+                            f"instrument {self.header.instrument} "
+                            f"mode {self.header.mode} "
+                            f"processing {self.header.processing}")
         return False
 
     def norm(self, data, percentile=0.3):
