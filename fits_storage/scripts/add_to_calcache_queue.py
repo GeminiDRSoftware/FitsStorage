@@ -91,16 +91,9 @@ with session_scope() as session:
     else:
         query = query.filter(Header.engineering == False)
 
-    headers = query.all()
-
-    logger.info("Got %d header items to queue" % len(headers))
-
-    # Looping through the header list directly for the add is really slow
-    # if the list is big.
-
     logger.info("Building (hid, filename) list...")
     items = []
-    for header in headers:
+    for header in query:
         items.append((header.id, header.diskfile.filename))
 
 
