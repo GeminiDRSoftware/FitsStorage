@@ -13,8 +13,6 @@ from sqlalchemy.exc import NoResultFound
 
 from gemini_instruments.gmos.pixel_functions import get_bias_level
 
-from gempy.adlibrary.plotting import _setup_dgsplots, COLORS
-
 # This causes a circular import if fits storage tries to call dragons and
 # fits storage has using_previews=True. This is because it does a
 # 'from geminidr.gemini.lookups import DQ_definitions as DQ' which means that
@@ -668,3 +666,54 @@ class Previewer(object):
     #
     #     plt.close()
     #     return True
+
+# This is copied from gempy.adlibrary.plotting which we can't import because
+# we probably don't have bokeh installed and don't want to make it a dependency
+def _setup_dgsplots(ad, aperture, ignore_mask):
+    exts_to_plot = [ext for ext, apnum in zip(ad, ad.hdr.get("APERTURE")) if apnum == aperture]
+    if not exts_to_plot:
+        if not (0 < aperture <= len(ad)):
+            raise ValueError(f"Aperture {aperture} is invalid "
+                             f"({ad.filename} has {len(ad)} extensions)")
+        exts_to_plot = [ad[aperture-1]]
+
+    setup_plot = {'data': [], 'wavelength': []}
+    wave_units = set()
+    signal_units = set()
+    for ext in exts_to_plot:
+        nworld_axes = ext.wcs.output_frame.naxes
+        if nworld_axes != 1:
+            raise ValueError(f"{ad.filename} has {nworld_axes} world axes")
+
+        pix = np.arange(ext.data.shape[-1])
+        if ext.data.ndim == 1:
+            setup_plot['data'].append(ext.data if (ext.mask is None or ignore_mask) else
+                                      np.where(ext.mask==0, ext.data, np.nan))
+            setup_plot['wavelength'].append(ext.wcs(pix).astype(np.float32))
+        else:
+            setup_plot['data'].extend(ext.data if (ext.mask is None or ignore_mask) else
+                                      np.where(ext.mask==0, ext.data, np.nan))
+            grid = np.meshgrid(pix, np.arange(ext.data.shape[0]),
+                               sparse=True, indexing='xy')
+            setup_plot['wavelength'].extend(ext.wcs(*grid).astype(np.float32))
+
+        wave_units.add(ext.wcs.output_frame.unit[0])
+        signal_units.add(ext.hdr["BUNIT"])
+
+    if len(wave_units) > 1:
+        raise ValueError(f"{ad.filename} has different wavelength units in the "
+                         "extensions to be plotted")
+    if len(signal_units) > 1:
+        raise ValueError(f"{ad.filename} has different signal units in the "
+                         f"extensions to be plotted")
+
+    setup_plot['wave_units'] = wave_units.pop()
+    setup_plot['signal_units'] = signal_units.pop()
+    setup_plot['title'] = f'{ad.filename} - Aperture {aperture}'
+    setup_plot['xaxis'] = f'Wavelength ({setup_plot["wave_units"]})'
+    setup_plot['yaxis'] = f'Signal ({setup_plot["signal_units"]})'
+
+    return setup_plot
+
+COLORS = ['blue', 'orange', 'green', 'red', 'purple',
+          'brown', 'pink', 'grey', 'olive', 'cyan']
