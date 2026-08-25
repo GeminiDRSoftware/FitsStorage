@@ -608,65 +608,6 @@ class Previewer(object):
         return True
 
 
-    # # This isn't used - needs some refactoring and rework to paste all the
-    # # spectra into one plot and do away with the idx thing.
-    # def render_spectra_preview(self, ad, outfile, idx):
-    #     """
-    #     Pass in an astrodata object and a file-like outfile. This function will
-    #     create a jpeg rendering of the ad object and write it to the outfile.
-    #
-    #     Parameters:
-    #     ----------
-    #     ad: <AstroData>
-    #         An instance of AstroData
-    #
-    #     outfile: <str>
-    #        Filename to write.
-    #
-    #     Returns:
-    #     -------
-    #     <void>
-    #
-    #     """
-    #     add = ad[idx]
-    #
-    #     # plot without axes or frame
-    #     fig = plt.figure(frameon=False)
-    #
-    #     spek = Spek1D(add)
-    #     flux = spek.flux
-    #     variance = numpy.sqrt(spek.variance)
-    #     # mask values below a certain threshold
-    #     flux_masked = numpy.ma.masked_where(spek.mask == 16, flux)
-    #     variance_masked = numpy.ma.masked_where(spek.mask == 16, variance)
-    #
-    #     try:
-    #         if len(ad) > 1:
-    #             plt.title(spek.filename)
-    #         else:
-    #             plt.title("%s - %d" % (spek.filename, idx))
-    #         plt.xlabel("wavelength %s" % spek.spectral_axis_unit)
-    #         plt.ylabel("flux density %s" % spek.unit)
-    #     except Exception as e:
-    #         pass
-    #     try:
-    #         x_axis = spek.spectral_axis
-    #         # full = full[~numpy.isnan(full)]
-    #         # full = numpy.squeeze(full)
-    #         plt.plot(x_axis, flux_masked, label="data")
-    #         plt.plot(x_axis, variance_masked, color='r', label="stddev")
-    #         plt.legend()
-    #     except Exception as e:
-    #         self.logger.debug("Exception. Generating simplified preview instead",
-    #                      exc_info=True)
-    #         plt.plot(flux_masked)
-    #         plt.plot(variance_masked, color='r')
-    #
-    #     fig.savefig(outfile, format='jpg')
-    #
-    #     plt.close()
-    #     return True
-
 # This is copied from gempy.adlibrary.plotting which we can't import because
 # we probably don't have bokeh installed and don't want to make it a dependency
 def _setup_dgsplots(ad, aperture, ignore_mask):
