@@ -626,17 +626,17 @@ def _setup_dgsplots(ad, aperture, ignore_mask):
         if nworld_axes != 1:
             raise ValueError(f"{ad.filename} has {nworld_axes} world axes")
 
-        pix = np.arange(ext.data.shape[-1])
+        pix = numpy.arange(ext.data.shape[-1])
         if ext.data.ndim == 1:
             setup_plot['data'].append(ext.data if (ext.mask is None or ignore_mask) else
-                                      np.where(ext.mask==0, ext.data, np.nan))
-            setup_plot['wavelength'].append(ext.wcs(pix).astype(np.float32))
+                                      numpy.where(ext.mask==0, ext.data, numpy.nan))
+            setup_plot['wavelength'].append(ext.wcs(pix).astype(numpy.float32))
         else:
             setup_plot['data'].extend(ext.data if (ext.mask is None or ignore_mask) else
-                                      np.where(ext.mask==0, ext.data, np.nan))
-            grid = np.meshgrid(pix, np.arange(ext.data.shape[0]),
+                                      numpy.where(ext.mask==0, ext.data, numpy.nan))
+            grid = numpy.meshgrid(pix, numpy.arange(ext.data.shape[0]),
                                sparse=True, indexing='xy')
-            setup_plot['wavelength'].extend(ext.wcs(*grid).astype(np.float32))
+            setup_plot['wavelength'].extend(ext.wcs(*grid).astype(numpy.float32))
 
         wave_units.add(ext.wcs.output_frame.unit[0])
         signal_units.add(ext.hdr["BUNIT"])
