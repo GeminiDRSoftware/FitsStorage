@@ -392,113 +392,113 @@ criteria that do not have a <code>key=value</code> form and are simply values th
 
 <tr>
 <td>Single UTC Date</td>
-<td>date</td>
-<td>YYYYMMDD</td>
-<td>date=20100401, 20100401</td>
+<td><code>date</code></td>
+<td><code>YYYYMMDD</code></td>
+<td><code>date=20100401</code>, <code>20100401</code></td>
 <td>Note that this is specifically a UTC date. Chilean observing nights span multiple UTC dates.</td>
 </tr>
 
 <tr>
 <td>Observing Night</td>
-<td>night</td>
-<td>YYYYMMDD</td>
-<td>night=20100401</td>
+<td><code>night</code></td>
+<td><code>YYYYMMDD</code></td>
+<td><code>night=20100401</code></td>
 <td>Search by observing night. For data from Gemini North in Hawaii, this is the same as <code>date</code> as the UT date does not change during Hawaiian observing night.
 For data from Gemini South, this is the date that is used to label the night. It rolls over to the next date at 2pm local time (which is the same local time that the UTC date rolls over in Hawaii)</td>
 </tr>
 
 <tr>
 <td>UT Date Range</td>
-<td>daterange</td>
-<td>yyyymmdd-YYYYMMDD</td>
-<td>daterange=20100401-20100420, 20100401-20100420</td>
+<td><code>daterange</code></td>
+<td><code>yyyymmdd-YYYYMMDD</code></td>
+<td><code>daterange=20100401-20100420</code>, <code>20100401-20100420</code></td>
 <td>As <code>date</code>, but specifies a range. The range is inclusive.</td>
 </tr>
 
 <tr>
 <td>Night Range</td>
-<td>nightrange</td>
-<td>yyyymmdd-YYYYMMDD</td>
-<td>nightrange=20100401-20100420</td>
+<td><code>nightrange</code></td>
+<td><code>yyyymmdd-YYYYMMDD</code></td>
+<td><code>nightrange=20100401-20100420</code></td>
 <td>As <code>night</code>, but specifies a range. The range is inclusive.</td>
 </tr>
 
 <tr>
 <td>Telescope</td>
-<td>telescope</td>
-<td>Gemini-North | Gemini-South</td>
-<td>telescope=Gemini-South, Gemini-South</td>
+<td><code>telescope</code></td>
+<td><code>Gemini-North</code> | <code>Gemini-South</code></td>
+<td><code>telescope=Gemini-South</code>, <code>Gemini-South</code></td>
 <td></td>
 </tr>
 
 <tr>
 <td>Instrument</td>
-<td>inst</td>
+<td><code>inst</code></td>
 <td>Case-sensitive string</td>
-<td>inst=GNIRS, GNIRS</td>
+<td><code>inst=GNIRS</code>, <code>GNIRS</code></td>
 <td>to get both GMOS-N and GMOS-S use <code>GMOS</code>.</td>
 </tr>
 
 <tr>
 <td>Program ID</td>
-<td>progid</td>
+<td><code>progid</code></td>
 <td>(GN|GS)-(Semester)-(Program Type)-(Program Number), or GPP equivalent.</td>
-<td>GN-2009B-Q-51, progid=GN-GNIRS-Engineering</td>
+<td><code>GN-2009B-Q-51</code>, <code>progid=GN-GNIRS-Engineering</code></td>
 <td>If the program ID is non-standard, use progid=</td>
 </tr>
 
 <tr>
 <td>Observation ID</td>
-<td>obsid</td>
+<td><code>obsid</code></td>
 <td>(Program ID)-(Observation Number)</td>
-<td>GN-2009B-Q-51-9</td>
-<td>If the observation ID is non-standard, you can use e.g. obsid=GN-GNIRS-Engineering-003</td>
+<td><code>GN-2009B-Q-51-9</code></td>
+<td>If the observation ID is non-standard, you can use e.g. <code>obsid=GN-GNIRS-Engineering-003</code></td>
 </tr>
 
 <tr>
 <td>Data Label</td>
-<td>datalabel</td>
+<td><code>datalabel</code></td>
 <td>(Observation ID)-(Dataset number)</td>
-<td>GN-2009B-Q-51-28-001</td>
+<td><code>GN-2009B-Q-51-28-001</code></td>
 <td>If the data label is non-standard, use datalabel=</td>
 </tr>
 
 <tr>
 <td>Observation Type</td>
-<td>observation_type</td>
+<td><code>observation_type</code></td>
 <td></td>
-<td>OBJECT</td>
+<td><code>OBJECT</code></td>
 <td></td>
 </tr>
 
 <tr>
 <td>Observation Class</td>
-<td>observation_class</td>
+<td><code>observation_class</code></td>
 <td></td>
-<td>science</td>
+<td><code>science</code></td>
 <td></td>
 </tr>
 
 <tr>
 <td>Filename</td>
-<td>filename</td>
+<td><code>filename</code></td>
 <td></td>
-<td>S20091028S0097.fits</td>
-<td>Works with or without the .fits. For non-standard filenames, use filename=some_odd_filename.fits</td>
+<td><code>S20091028S0097.fits</code></td>
+<td>Works with or without the .fits. For non-standard filenames, use <code>filename=some_odd_filename.fits</code></td>
 </tr>
 
 <tr>
 <td>Filename prefix</td>
-<td>filepre</td>
+<td><code>filepre</code></td>
 <td></td>
-<td>N201203</td>
-<td>Selects all files that have names beginning with... For non-standard filenames, use e.g. filepre=00AUG</td>
+<td><code>N201203</code></td>
+<td>Selects all files that have names beginning with... For non-standard filenames, use e.g. <code>filepre=00AUG</code></td>
 </tr>
 
 <tr>
 <td>QA state</td>
 <td></td>
-<td>Pass, Usable, Fail, NotFail, Win, Lucky, AnyQA, UndefinedQA, or CHECK</td>
+<td><code>Pass</code>, <code>Usable</code>, <code>Fail</code>, <code>NotFail</code>, <code>Win</code>, <code>Lucky</code>, <code>AnyQA</code>, <code>UndefinedQA</code>, or <code>CHECK</code></td>
 <td>Pass</td>
 <td>Win means Pass or Usable (ie not Fail or Undefined), NotFail is literally every state other than Fail, Lucky means Pass or Undefined. AnyQA means any QA state, and UndefinedQA means he QA state is Undefined.</td>
 </tr>
@@ -507,31 +507,31 @@ For data from Gemini South, this is the date that is used to label the night. It
 <td>Mode</td>
 <td></td>
 <td><code>imaging</code>, <code>spectroscopy</code>, <code>LS</code>, <code>MOS</code>, <code>IFS</code></td>
-<td>spectroscopy</td>
+<td><code>spectroscopy</code></td>
 <td>imaging or spectroscopy. LS = Long Slit Spectroscopy, MOS = Multi Object Spectroscopy, IFS = Integral Field Spectroscopy</td>
 </tr>
 
 <tr>
 <td>Adaptive Optics</td>
 <td></td>
-<td>AO, NOTAO, NGS, LGS</td>
-<td>AO</td>
+<td><code>AO</code>, <code>NOTAO</code>, <code>NGS</code>, <code>LGS</code></td>
+<td><code>AO</code></td>
 <td>AO means any adaptive optics in use. NOTAO means not AO. NGS means NGS AO, LGS means LGS AO</td>
 </tr>
 
 <tr>
 <td>Processing Intent</td>
-<td>processing</td>
+<td><code>processing</code></td>
 <td><code>Raw</code>, <code>Science-Quality</code>, <code>Quick-Look</code></td>
-<td>Science-Quality</td>
+<td><code>Science-Quality</code></td>
 <td></td>
 </tr>
 
 <tr>
 <td>Processing Tag</td>
-<td>processing_tag</td>
-<td>String Literal</td>
-<td>GHOST-2</td>
+<td><code>processing_tag</code></td>
+<td>String</td>
+<td><code>GHOST-2</code></td>
 <td>Processing Tags only apply to reduced data. The special value <code>default</code> selects the best available reduced data for a given query.</td>
 </tr>
 
@@ -539,30 +539,30 @@ For data from Gemini South, this is the date that is used to label the night. It
 <tr>
 <td>File curation</td>
 <td></td>
-<td>present, canonical, notpresent, notcanonical, defaults</td>
+<td><code>present</code>, <code>canonical</code>, <code>notpresent</code>, <code>notcanonical</code>, <code>defaults</code></td>
 <td></td>
-<td>See note above. defaults is shorthand for canonical/notengineering/notsite_monitoring/qa_state=NotFail/processing_tag=default</td>
+<td>See note above. <code>defaults</code> is shorthand for <code>canonical/notengineering/notsite_monitoring/qa_state=NotFail/processing_tag=default</code></td>
 </tr>
 
 <tr>
 <td>Disperser name</td>
-<td>disperser</td>
-<td>String Literal</td>
-<td>B600</td>
-<td>Selects only files using that disperser (eg grating or prism). Common GMOS gratings are recognized without needing disperser=</td>
+<td><code>disperser</code></td>
+<td>String</td>
+<td><code>B600</code></td>
+<td>Selects only files using that disperser (eg grating or prism). Common GMOS gratings are recognized without needing <code>disperser=</code></td>
 </tr>
 
 <tr>
 <td>Focal Plane Mask name</td>
-<td>mask</td>
+<td><code>mask</code></td>
 <td></td>
-<td>GN2009BC009-04</td>
-<td>Selects only files using that focal plane mask name. Standard values and GMOS MOS mask names are recognized without needing mask=</td>
+<td><code>GN2009BC009-04</code></td>
+<td>Selects only files using that focal plane mask name. Standard values and GMOS MOS mask names are recognized without needing <code>mask=</code></td>
 </tr>
 
 <tr>
 <td>Pupil Mask name</td>
-<td>pupil_mask</td>
+<td><code>pupil_mask</code></td>
 <td></td>
 <td></td>
 <td>Selects only files using that pupil plane mask name.</td>
@@ -570,15 +570,15 @@ For data from Gemini South, this is the date that is used to label the night. It
 
 <tr>
 <td>Binning</td>
-<td>binning</td>
-<td>NxM</td>
-<td>2x2</td>
-<td>Pixel binning. Unbinned data shows as 1x1</td>
+<td><code>binning</code></td>
+<td><code>NxM</code></td>
+<td><code>2x2</code></td>
+<td>Pixel binning. Unbinned data shows as <code>1x1</code></td>
 </tr>
 
 <tr>
 <td>Camera</td>
-<td>camera</td>
+<td><code>camera</code></td>
 <td></td>
 <td></td>
 <td>Selects only files using that camera. For multi-arm spectrographs, this is the arm name.</td>
@@ -586,72 +586,73 @@ For data from Gemini South, this is the date that is used to label the night. It
 
 <tr>
 <td>Detector Read Speed Setting</td>
-<td>readspeed</td>
+<td><code>readspeed</code></td>
 <td></td>
-<td>slow</td>
-<td>The words slow or fast will be interpreted as detector read speed settings</td>
+<td><code>slow</code></td>
+<td>The words <code>slow</code> or <code>fast</code> will be interpreted as detector read speed settings</td>
 </tr>
 
 <tr>
 <td>Detector Gain Setting</td>
-<td>gain</td>
+<td><code>gain</code></td>
 <td></td>
-<td>slow</td>
-<td>The words low or high will be interpreted as detector gain settings</td>
+<td><code>low</code></td>
+<td>The words <code>low</code> or <code>high</code> will be interpreted as detector gain settings</td>
 </tr>
 
 <tr>
 <td>Detector Well Depth Setting</td>
-<td>welldepth</td>
+<td><code>welldepth</code></td>
 <td></td>
-<td>Shallow, Deep</td>
-<td>The words Shallow or Deep will be interpreted as detector well depth settings</td>
+<td><code>Shallow</code>, <code>Deep</code></td>
+<td>The words <code>Shallow</code> or <code>Deep</code> will be interpreted as detector well depth settings</td>
 </tr>
 
 <tr>
 <td>Detector Region Of Interest</td>
 <td></td>
 <td></td>
-<td>FullFrame</td>
-<td>The words FullFrame, CentralSpectrum, CentralStamp, central768, central512, central256 are interpreted as detector Region of Interest (ROI). FullFrame will include instruments that do not have configurable ROIs.</td>
+<td><code>FullFrame</code></td>
+<td>The words <code>FullFrame</code>, <code>CentralSpectrum</code>, <code>CentralStamp</code>, <code>central768</code>, <code>central512</code>, <code>central256</code> are interpreted as detector Region of Interest (ROI). <code>FullFrame</code> will include instruments that do not have configurable ROIs.</td>
 </tr>
 
 <tr>
 <td>Detector Read Mode</td>
-<td>readmode</td>
+<td><code>readmode</code></td>
 <td></td>
 <td></td>
-<td>This is a bit of a catch-all, interpreted differently for different instruments. GMOS support Classic and NodAndShuffle, some NIR instruments support values like Bright_Object and Faint_Object</td>
+<td>This is a bit of a catch-all, interpreted differently for different instruments. GMOS support <code>Classic</code> and <code>NodAndShuffle</code>, some NIR instruments support values like <code>Bright_Object</code> and <code>Faint_Object</code></td>
 </tr>
 
 <tr>
 <td>Calibration Type</td>
-<td>caltype</td>
+<td><code>caltype</code></td>
 <td></td>
-<td>ARC</td>
+<td><code>ARC</code></td>
 <td>This is only useful with the calibration systems</td>
 </tr>
 
 <tr>
 <td>Reduction State</td>
-<td>reduction</td>
+<td><code>reduction</code></td>
 <td></td>
-<td>RAW</td>
-<td>e.g. RAW, PREPARED, PROCESSED_BIAS, PROCESSED_FLAT. This field is being deprecated in favor of using the processing status and regular data types.</td>
+<td><code>RAW</code></td>
+<td>e.g. <code>RAW</code>, <code>PREPARED</code>, <code>PROCESSED_BIAS</code>, <code>PROCESSED_FLAT</code>. This field is being deprecated in favor of using the processing status and regular data types.</td>
 </tr>
 
 <tr>
 <td>Photometric Standard</td>
 <td></td>
-<td>photstandard</td>
-<td>photstandard</td>
+<td><code>photstandard</code></td>
+<td><code>photstandard</code></td>
 <td>Selects only data that have a Gemini photometric standard in the field of view.</td>
 </tr>
 
 <tr>
 <td>Filter</td>
-<td>filter=(filtername)</td>
-<td>filter=g</td>
+<td><code>filter</code></td>
+<td></td>
+<td><code>filter=g</code></td>
 <td>Select by filter name. Don't include any _G1234 type suffix.</td>
 </tr>
 
@@ -659,53 +660,53 @@ For data from Gemini South, this is the date that is used to label the night. It
 <td>Twilight observation</td>
 <td></td>
 <td></td>
-<td>Twilight</td>
-<td>Use Twilight or NotTwilight to select or exclude twilight sky observations (eg twilight flat fields)</td>
+<td><code>Twilight</code></td>
+<td>Use <code>Twilight</code> or <code>NotTwilight</code> to select or exclude twilight sky observations (eg twilight flat fields)</td>
 </tr>
 
 <tr>
 <td>exposure time</td>
-<td>exposure_time</td>
+<td><code>exposure_time</code></td>
 <td>exposure_time=(number or range)</td>
-<td>exposure_time=59-61</td>
+<td><code>exposure_time=59-61</code></td>
 <td>Select by exposure time. Due to floating point ambiguity with some of the instruments, it's best to use a range.</td>
 </tr>
 
 <tr>
 <td>coadds</td>
-<td>coadds</td>
+<td><code>coadds</code></td>
 <td>coadds=(integer)</td>
-<td>coadds=10</td>
+<td><code>coadds=10</code></td>
 <td>Select by number of coadds. Integer exact match</td>
 </tr>
 
 <tr>
 <td>Telescope sky position</td>
-<td>ra, dec, sr</td>
+<td><code>ra</code>, <code>dec</code>, <code>sr</code></td>
 <td>ra=(min-max)/dec=(min-max)</td>
-<td>ra=123.5-123.6/dec=21.1-22.2. For negative Dec, dec=-22.3--24.5.</td>
+<td><code>ra=123.5-123.6/dec=21.1-22.2</code>. For negative Dec, <code>dec=-22.3--24.5</code>.</td>
 <td>ICRS RA and Dec, decimal degrees, or HH:MM:SS.sss / [-]DD:MM:SS.sss. sr is the search radius</td>
 </tr>
 
 <tr>
 <td>Telescope position</td>
-<td>az, el, crpa</td>
+<td><code>az</code>, <code>el</code>, <code>crpa</code></td>
 <td>az=(min-max)/el=(min-max)/crpa=(min-max)</td>
-<td>az=155.0-155.5/el=88.0-89.0</td>
+<td><code>az=155.0-155.5/el=88.0-89.0</code></td>
 <td>Telescope Azimuth, Elevation and Cassegrain Rotator Position Angle. Decimal degrees. You must supply two numbers (decimal point optional and negative sign) separated by a hyphen. Note that it does not do intelligent range wrapping, the smaller number must be first and there's currently no way to select everything in the 20 degree range between 350 and 10 degrees. Also it takes the numbers from the header literally, in the az and crpa systems these may not be limited to 0:360 or -180:180 due to the 540 degree range of these systems.</td>
 </tr>
 
 <tr>
 <td>Object Name</td>
-<td>object</td>
+<td><code>object</code></td>
 <td></td>
-<td>object=3c241</td>
+<td><code>object=3c241</code></td>
 <td>Object name from FITS header. Note that PIs have discretion to use whatever values they like here, so unless you know the value used in the data you are better off using name resolution and doing an RA/DEC search.</td>
 </tr>
 
 <tr>
 <td>Central Wavelength</td>
-<td>cenwlen</td>
+<td><code>cenwlen</code></td>
 <td></td>
 <td></td>
 <td>Central Wavelength. Only relevant to spectroscopy.</td>
@@ -713,7 +714,7 @@ For data from Gemini South, this is the date that is used to label the night. It
 
 <tr>
 <td>Gemini site conditions</td>
-<td>raw_cc, raw_iq, raw_wv, raw_bg</td>
+<td><code>raw_cc</code>, <code>raw_iq</code>, <code>raw_wv</code>, <code>raw_bg</code></td>
 <td></td>
 <td></td>
 <td>Gemini raw site condition percentile values</td>
@@ -722,46 +723,46 @@ For data from Gemini South, this is the date that is used to label the night. It
 <tr>
 <td>Engineering data</td>
 <td></td>
-<td>engineering, notengineering</td>
-<td>notengineering</td>
+<td><code>engineering</code>, <code>notengineering</code></td>
+<td><code>notengineering</code></td>
 <td>Used to select or exclude engineering data from results</td>
 </tr>
 
 <tr>
 <td>Science Verification data</td>
 <td></td>
-<td>science_verification, notscience_verification</td>
-<td>notscience_verification</td>
+<td><code>science_verification</code>, <code>notscience_verification</code></td>
+<td><code>notscience_verification</code></td>
 <td>Used to select or exclude science verification data from results</td>
 </tr>
 
 <tr>
 <td>Site Monitoring data</td>
 <td></td>
-<td>site_monitoring, notsite_monitoring</td>
-<td>notsite_monitoring</td>
+<td><code>site_monitoring</code>, <code>notsite_monitoring</code></td>
+<td><code>notsite_monitoring</code></td>
 <td>Used to select or exclude site monitoring data from results. This applies specifically to data from site monitoring instruments such as the GS all sky camera, it doesn't apply to data from the regular science instruments that were intended for or could be used for site monitoring</td>
 </tr>
 
 <tr>
 <td>Calibration Program Data</td>
 <td></td>
-<td>calprog, notcalprog</td>
+<td><code>calprog</code>, <code>notcalprog</code></td>
 <td></td>
 <td>Used to select or exclude data associated with a calibration program</td>
 </tr>
 
 <tr>
 <td>PI Name</td>
-<td>PIname</td>
+<td><code>PIname</code></td>
 <td></td>
 <td></td>
 <td>PI or CoI name search. This requires the data to have a valid program ID, and for the details of that program to be stored in the archive database.</td>
 </tr>
 
 <tr>
-<td>ProgramText</td>
-<td>PIname</td>
+<td>Program Text</td>
+<td><code>ProgramText</code></td>
 <td></td>
 <td></td>
 <td>Searches the abstract of the science program for the given text. This requires the data to have a valid program ID, and for the details of that program to be stored in the archive database.</td>
@@ -769,7 +770,7 @@ For data from Gemini South, this is the date that is used to label the night. It
 
 <tr>
 <td>Publications</td>
-<td>publication</td>
+<td><code>publication</code></td>
 <td>bibcode</td>
 <td></td>
 <td>This will search for data associated with a given publication bibcode. </td>
@@ -777,7 +778,7 @@ For data from Gemini South, this is the date that is used to label the night. It
 
 <tr>
 <td>Path to file</td>
-<td>path</td>
+<td><code>path</code></td>
 <td></td>
 <td></td>
 <td>The relative path to the file in the archive. This is generally not intended for end-user use.</td>
@@ -785,7 +786,7 @@ For data from Gemini South, this is the date that is used to label the night. It
 
 <tr>
 <td>Database entry date range</td>
-<td>entrytimedaterange</td>
+<td><code>entrytimedaterange</code></td>
 <td></td>
 <td></td>
 <td>Find data by when the database entry was made. This is generally not intended for end-user use.</td>
@@ -793,7 +794,7 @@ For data from Gemini South, this is the date that is used to label the night. It
 
 <tr>
 <td>Last modification date range</td>
-<td>lastmoddaterange</td>
+<td><code>lastmoddaterange</code></td>
 <td></td>
 <td></td>
 <td>Find data by last modification timestamp of the ingested file. This is generally not intended for end-user use.</td>
