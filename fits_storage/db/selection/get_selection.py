@@ -206,8 +206,9 @@ def from_url_things(things):
             elif thing.lower() == 'nottwilight':
                 selection['twilight'] = False
             elif (len(thing) < 14) and (thing[:4] in {'N200', 'N201', 'N202',
-                                                      'S200', 'S201', 'S202'}):
-                # Good through 2029, don't match full filenames :-)
+                                                      'N203', 'S200', 'S201',
+                                                      'S202', 'S203'}):
+                # Good through 2039, don't match full filenames :-)
                 selection['filepre'] = thing
             elif key in {'object', 'Object'}:
                 # Handle the custom escaping of '/' characters here
