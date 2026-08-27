@@ -5,6 +5,7 @@ This is the IGRINS-2 calibration class
 from fits_storage.core.orm.header import Header
 from .calibration import Calibration
 
+from sqlalchemy import or_
 
 class CalibrationIgrins2(Calibration):
 
@@ -84,5 +85,92 @@ class CalibrationIgrins2(Calibration):
         query = self.get_query()\
             .add_filters(*filters) \
             .match_descriptors(Header.instrument)
+
+        return query.all(howmany)
+
+    def telluric(self, processed=False, howmany=None):
+        """
+        Find the optimal IGRINS-2 telluric observations for this target frame
+
+        This will find IGRINS-2 telluric standards with matching wavelength.
+        For raw data, it looks only for a qa_state of 'Pass' or 'Undefined'.
+        For processed data, the 'TELLURIC' tag must be present.
+        It matches within 1 day.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw telluric standards
+        howmany : int, default 1 if processed else 8
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
+        if howmany is None:
+            howmany = 1 if processed else 4
+
+        query = self.get_query().spectroscopy(True).OBJECT()
+        query = query.tolerance(central_wavelength=0.001)
+        query = query.match_descriptors(Header.spectroscopy)
+
+        if processed:
+            query = query.filter(Header.types.contains('TELLURIC'))
+        else:
+            query = query.raw().filter(
+                or_(Header.observation_class == 'partnerCal',
+                    Header.observation_class == 'progCal'))
+
+            # Usable is not OK for these - may be partly saturated for example
+            query = query.add_filters(
+                or_(Header.qa_state == 'Pass', Header.qa_state == 'Undefined'))
+
+        # Absolute time separation must be within 1 day
+        query = query.max_interval(days=1)
+
+        return query.all(howmany)
+
+    def standard(self, processed=False, howmany=None):
+        """
+        Find the optimal IGRINS-2 (spectro)photometric standard observations for
+        this target frame
+
+        This will find IGRINS-2 flux standards with matching wavelength.
+        For raw data, it looks only for a qa_state of 'Pass' or 'Undefined'.
+        For processed data, the 'STANDARD' tag must be present.
+        It matches within 1 day.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw (spectro)
+             photometric standards
+        howmany : int, default 1 if processed else 8
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
+        if howmany is None:
+            howmany = 1 if processed else 4
+
+        query = self.get_query().spectroscopy(True).OBJECT()
+        # Must match: disperser, central_wavelength, focal_plane_mask, camera, filter_name
+        query = query.tolerance(central_wavelength=0.001)
+        query = query.match_descriptors(Header.spectroscopy)
+        # AstroDataIgrins defines "STANDARD" for raw frames
+        query = query.filter(Header.types.contains('STANDARD'))
+
+        if not processed:
+           # Usable is not OK for these - may be partly saturated for example
+            query = query.add_filters(
+                or_(Header.qa_state == 'Pass', Header.qa_state == 'Undefined'))
+
+        # Absolute time separation must be within 1 day
+        query = query.max_interval(days=1)
 
         return query.all(howmany)
