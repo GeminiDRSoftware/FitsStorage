@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-
+import os.path
 from argparse import ArgumentParser
 import requests
 from os import path, makedirs
@@ -7,7 +7,8 @@ import hashlib
 
 
 def fetch_files_by_selection(server, selection,
-                             check=True, dryrun=False, debug=False):
+                             check=True, dryrun=False, debug=False,
+                             cookie=None, cookiefile=None):
     if not server:
         print("No server specified, exiting")
         exit(1)
@@ -15,9 +16,25 @@ def fetch_files_by_selection(server, selection,
         print("No selection specified, exiting")
         exit(2)
 
+    if cookie is None:
+        if cookiefile is not None:
+            cookiefile = path.expanduser(cookiefile)
+            if path.isfile(cookiefile):
+                if debug:
+                    print(f"Reading cookie from {cookiefile}")
+                with open(cookiefile, 'r') as f:
+                    for line in f:
+                        if line.startswith('#'):
+                            pass
+                        else:
+                            cookie = line.strip()
+                            break
+
+    if cookie:
+        print("Using supplied authentication cookie")
+
     # Get the file list
-    filelist = get_filelist(server, selection,
-                            debug=debug)
+    filelist = get_filelist(server, selection, cookie=cookie, debug=debug)
     print(f"Got {len(filelist)} files")
 
     downloaded = 0
@@ -28,7 +45,7 @@ def fetch_files_by_selection(server, selection,
             print(f"Skipping {entry['filename']}")
             skipped += 1
         else:
-            ok = download_file(server, entry, dryrun, debug)
+            ok = download_file(server, entry, cookie, dryrun, debug)
             if ok:
                 downloaded += 1
             else:
@@ -39,11 +56,12 @@ def fetch_files_by_selection(server, selection,
 
 
 
-def get_filelist(server, selection, debug=False):
-    url = f"{server}/jsonfilelist/{selection}"
+def get_filelist(server, selection, cookie=None, debug=False):
+    url = f"{server}/jsonfilelist/present/{selection}"
+    cookies = {'gemini_archive_session': cookie}
     if debug:
         print(f"Fetching file list from {url}")
-    filelist = requests.get(url).json()
+    filelist = requests.get(url, cookies=cookies).json()
     return filelist
 
 def already_downloaded(entry, debug=False):
@@ -63,7 +81,7 @@ def already_downloaded(entry, debug=False):
         return False
     return True
 
-def download_file(server, entry, dryrun=False, debug=False):
+def download_file(server, entry, cookie=None, dryrun=False, debug=False):
     url = '/'.join([server, 'file', entry['path'], entry['filename']])
     if dryrun:
         print(f"Dryrun - not downloading from: {url}")
@@ -77,7 +95,8 @@ def download_file(server, entry, dryrun=False, debug=False):
     pfn = path.join(entry['path'], entry['filename'])
 
     try:
-        with requests.get(url, stream=True) as r:
+        cookies = {'gemini_archive_session': cookie}
+        with requests.get(url, cookies=cookies, stream=True) as r:
             r.raise_for_status()
             with open(pfn, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=None):
@@ -86,6 +105,10 @@ def download_file(server, entry, dryrun=False, debug=False):
         print(f"HTTP error fetching {url}")
         if debug:
             raise
+
+    # Check we got a file
+    if not path.isfile(pfn) and not dryrun:
+        return False
 
     # Check md5 of downloaded file
     if getmd5(pfn) != entry['file_md5']:
@@ -120,9 +143,19 @@ if __name__ == "__main__":
                         help="Server to use. Default is https://archive.gemini.edu",
                         default="https://archive.gemini.edu")
 
+    parser.add_argument("--cookie", action="store", type=str,
+                        help="Authentication cookie value to send to server")
+
+    parser.add_argument("--cookiefile", action="store", type=str,
+                        help="Read Authentication cookie value from this file."
+                             "Default is ~/.gemini_archive_session",
+                        default="~/.gemini_archive_session")
+
     options = parser.parse_args()
 
     fetch_files_by_selection(options.server, options.selection,
                              check=options.check_local,
                              dryrun=options.dryrun,
-                             debug=options.debug)
+                             debug=options.debug,
+                             cookie=options.cookie,
+                             cookiefile=options.cookiefile)
