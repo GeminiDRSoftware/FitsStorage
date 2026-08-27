@@ -94,6 +94,7 @@ def download_file(server, entry, cookie=None, dryrun=False, debug=False):
 
     pfn = path.join(entry['path'], entry['filename'])
 
+    print(f"Downloading {pfn}")
     try:
         cookies = {'gemini_archive_session': cookie}
         with requests.get(url, cookies=cookies, stream=True) as r:
