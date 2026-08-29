@@ -3,6 +3,7 @@
 import datetime
 import sys
 
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from fits_storage.queues.queue import CalCacheQueue
@@ -62,38 +63,42 @@ with session_scope() as session:
     # Get a list of header IDs to queue. NB files don't have to be
     # present, but we do want the canonical one.
     # We use the header.ut_datetime as the sortkey for the queue
-    query = session.query(Header).join(DiskFile)\
-        .filter(DiskFile.canonical == True)
+    stmt = select(Header).join(DiskFile)\
+        .where(DiskFile.canonical == True)
 
     if not options.noprecheck:
-        subquery = session.query(CalCacheQueueEntry.obs_hid).\
-            filter(CalCacheQueueEntry.inprogress == False).\
-            filter(CalCacheQueueEntry.fail_dt !=
+        subquery = select(CalCacheQueueEntry.obs_hid).\
+            where(CalCacheQueueEntry.inprogress == False).\
+            where(CalCacheQueueEntry.fail_dt !=
                    CalCacheQueueEntry.fail_dt_false)
 
-        query = query.filter(Header.id.not_in(subquery))
+        stmt = stmt.where(Header.id.not_in(subquery))
 
     if not options.ignore_mdbad:
-        query = query.filter(DiskFile.mdready == True)
+        stmt = stmt.where(DiskFile.mdready == True)
 
     if options.file_pre:
-        query = query.filter(DiskFile.filename.like(options.file_pre+'%'))
+        stmt = stmt.where(DiskFile.filename.like(options.file_pre+'%'))
 
     if options.lastdays:
         then = utcnow() - datetime.timedelta(days=options.lastdays)
-        query = query.filter(Header.ut_datetime > then)
+        stmt = stmt.where(Header.ut_datetime > then)
 
     if options.instrument:
-        query = query.filter(Header.instrument == options.instrument)
+        stmt = stmt.where(Header.instrument == options.instrument)
 
     if options.include_eng:
         pass
     else:
-        query = query.filter(Header.engineering == False)
+        stmt = stmt.where(Header.engineering == False)
+
+    # Tell SQLAlchemy not to try and fetch too many at a time from the backend
+    # as this leads to excessive memory consumption...
+    stmt = stmt.execution_options(yield_per=1000)
 
     logger.info("Building (hid, filename) list...")
     items = []
-    for header in query:
+    for header in session.scalars(stmt):
         items.append((header.id, header.diskfile.filename))
 
 
