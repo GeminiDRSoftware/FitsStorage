@@ -26,23 +26,23 @@ fitsdata:x:5179:fitsdata,fitsweb
 sudo mkdir -p /data/postgres/pgdata
 sudo chown -R postgres:postgres /data/postgres
 sudo chmod -R 700 /data/postgres
-sudo mkdir /etc/systemd/system/postgresql.service.d
-echo "[Service]" | sudo tee /etc/systemd/system/postgresql.service.d/fitsstorage.conf
-echo "Environment=PGDATA=/data/postgres/pgdata" | sudo tee -a /etc/systemd/system/postgresql.service.d/fitsstorage.conf
+sudo mkdir /etc/systemd/system/postgresql-18.service.d
+echo "[Service]" | sudo tee /etc/systemd/system/postgresql-18.service.d/fitsstorage.conf
+echo "Environment=PGDATA=/data/postgres/pgdata" | sudo tee -a /etc/systemd/system/postgresql-18.service.d/fitsstorage.conf
 sudo systemctl daemon-reload
-sudo postgresql-setup --initdb
 sudo -i -u postgres
+/usr/pgsql-18/bin/initdb -D /data/postgres/pgdata
   vi /data/postgres/pgdata/postgresql.conf
     shared_buffers = 4GB    # 25% of ram if ram > 1GB
     effective_cache_size = 8GB   # 50% of ram size ish
     max_connections = 200  # we're using 100 for uwsgi, plus scripts.
-sudo systemctl start postgresql
-sudo systemctl status postgresql
-sudo systemctl enable postgresql
+sudo systemctl start postgresql-18
+sudo systemctl status postgresql-18
+sudo systemctl enable postgresql-18
 sudo -i -u postgres
-  /usr/bin/createuser --no-superuser --no-createrole --createdb fitsdata
-  /usr/bin/createuser --no-superuser --no-createrole --no-createdb fitsweb
-  /usr/bin/createuser --no-superuser --no-createrole --no-createdb dragons
+  createuser --no-superuser --no-createrole --createdb fitsdata
+  createuser --no-superuser --no-createrole --no-createdb fitsweb
+  createuser --no-superuser --no-createrole --no-createdb dragons
 sudo -i -u fitsdata
   createdb fitsdata
 
@@ -61,13 +61,17 @@ do activate
 # may need to source .bashrc if conda is not on path
 conda config --add channels conda-forge
 conda config --add channels http://astroconda.gemini.edu/public
+
+# TO build environment from scratch:
 conda create -p /opt/miniforge3/envs/fitsdata python=3.12
 conda activate /opt/miniforge3/envs/fitsdata
-#conda install dragons
 conda install dragons
 conda remove --force dragons # remove the dragons package, we run from a checkout
 conda remove --force fits_storage # we only really wanted the other dragons deps.
 conda install fitsverify
+
+# OR install a pre-canned environment from the time of dragons release.
+
 
 # In bash profile, add:
 export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
@@ -102,12 +106,11 @@ conda install cython
 cythonize -i cython_utils.pyx
 cd /opt/FitsStorage
 git clone git@github.com:GeminiDRSoftware/FitsStorage.git .
-git switch release/3.2.x  # or main, depending what you want...
+git switch release/3.6.x  # or main, depending what you want...
 cd /opt/FitsStorageConfigurations
 git clone git@github.com:/phirstgemini/FitsStorageConfigurations .
 
-#pip3 install astrodata
-#pip3 uninstall astrodata  # We just wanted the dependencies really...
+
 pip3 install -r /opt/FitsStorage/requirements.txt
 pip3 install -r /opt/FitsStorage/requirements_server.txt # For servers
 pip3 install -r /opt/FitsStorage/requirements_dev.txt   # For development systems
