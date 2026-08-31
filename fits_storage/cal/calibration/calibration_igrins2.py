@@ -60,7 +60,8 @@ class CalibrationIgrins2(Calibration):
         query = self.get_query() \
             .flat(processed) \
             .add_filters(*filters) \
-            .match_descriptors(Header.instrument)
+            .match_descriptors(Header.instrument) \
+            .tolerance(central_wavelength=0.001)
 
         return query.all(howmany)
 
@@ -84,7 +85,8 @@ class CalibrationIgrins2(Calibration):
         # as arcs, or we sort out non-arc wavecal functionality.
         query = self.get_query()\
             .add_filters(*filters) \
-            .match_descriptors(Header.instrument)
+            .match_descriptors(Header.instrument) \
+            .tolerance(central_wavelength = 0.001)
 
         return query.all(howmany)
 
