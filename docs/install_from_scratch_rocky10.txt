@@ -15,6 +15,24 @@ sudo dnf install -y postgresql18-server
 #  sudo systemctl enable postgresql-18
 #  sudo systemctl start postgresql-18
 
+# Install pgSphere if using...
+# Need to be careful here to get ONLY postgres packages from the postgres repo, NOT from rocky/rhel appstream.
+# Also there are some packages needed for the devel package that are in epel and crb
+sudo dnf install clang llvm
+sudo dnf install epel-release
+sudo dnf config-manager --set-enabled crb
+sudo dnf install postgresql18-devel
+# Go to https://github.com/postgrespro/pgsphere/releases and get latest version
+sudo mkdir /opt/pgSphere
+sudo chown phirst /opt/pgSphere
+cd /opt/pgSphere
+wget https://github.com/postgrespro/pgsphere/archive/refs/tags/1.5.2.tar.gz
+tar xvzf 1.5.2.tar.gz
+cd pgSphere-1.5.2
+make PG_CONFIG=/usr/pgsql-18/bin/pg_config USE_HEALPIX=0
+sudo make PG_CONFIG=/usr/pgsql-18/bin/pg_config USE_HEALPIX=0 install
+
+
 # Add to /etc/passwd:
 fitsdata:x:5179:5179:FITS Data User:/home/fitsdata:/bin/bash
 fitsweb:x:5180:5179:FITS Web WSGI User:/home/fitsweb:/bin/bash
@@ -45,6 +63,7 @@ sudo -i -u postgres
   createuser --no-superuser --no-createrole --no-createdb dragons
 sudo -i -u fitsdata
   createdb fitsdata
+  psql -U postgres -c 'CREATE EXTENSION pg_sphere' fitsdata
 
 
 sudo mkdir /opt/miniforge3
