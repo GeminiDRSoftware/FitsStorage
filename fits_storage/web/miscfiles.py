@@ -32,13 +32,18 @@ from fits_storage import utcnow
 
 from fits_storage.config import get_config
 
+# multipart will save incoming uploaded file data to a tempfile.
+# Use upload_staging as the tempdir to keep it off the root filesystem
+import tempfile
+tempfile.tempdir = get_config().upload_staging_dir
+
 SEARCH_LIMIT = 500
 
 
 def miscfiles(handle=None):
     formdata = None
     try:
-        formdata = get_context().get_form_data(large_file=True)
+        formdata = get_context().get_form_data(getfile='uploadFile')
         if handle is None:
             if 'search' in formdata:
                 return search_miscfiles(formdata)
@@ -50,7 +55,7 @@ def miscfiles(handle=None):
 
         return bare_page()
     finally:
-        if formdata and formdata.uploaded_file is not None:
+        if formdata and formdata.get('uploaded_file') is not None:
             try:
                 os.unlink(formdata.uploaded_file.name)
             except OSError:
@@ -80,14 +85,12 @@ def search_miscfiles(formdata):
         join(File, DiskFile.file_id == File.id).\
         filter(DiskFile.canonical == True)
 
-    message = []
-
-    name = formdata['name'].value.strip() if 'name' in formdata else ''
+    name = formdata['name'].strip() if 'name' in formdata else ''
     # Make sure there are no '&' in the keywords
-    keyw = ' '.join(formdata['keyw'].value.split('&')).strip() \
+    keyw = ' '.join(formdata['keyw'].split('&')).strip() \
         if 'keyw' in formdata else ''
 
-    prog = formdata['prog'].value.strip() if 'prog' in formdata else ''
+    prog = formdata['prog'].strip() if 'prog' in formdata else ''
 
     if name:
         query = query.filter(File.name.like('%' + name + '%'))
@@ -148,8 +151,8 @@ def validate():
 @templating.templated("miscfiles/miscfiles.html")
 def save_file(formdata):
     fsc = get_config()
-    fileitem = formdata['uploadFile'].uploaded_file
-    localfilename = normalize_diskname(fileitem.name)
+    fileitem = formdata.get('uploadFile')
+    localfilename = normalize_diskname(fileitem.filename)
     fullpath = os.path.join(fsc.upload_staging_dir, localfilename)
     jsonpath = fullpath + '.json'
     current_data = {}
@@ -160,7 +163,7 @@ def save_file(formdata):
         except KeyError:
             pass
 
-    uploadRelease = formdata.getvalue('uploadRelease', '').strip()
+    uploadRelease = formdata.get('uploadRelease', '').strip()
     if uploadRelease == 'default':
         # Now + 18 pseudo-months
         release_date = datetime.now() + timedelta(days=540)
@@ -168,7 +171,7 @@ def save_file(formdata):
         release_date = datetime.now()
     else:
         try:
-            release_date = string_to_date(formdata.getvalue('arbRelease', '')
+            release_date = string_to_date(formdata.get('arbRelease', '')
                                           .strip())
         except (ValueError, KeyError):
             return dict(can_add=True,
@@ -198,21 +201,8 @@ def save_file(formdata):
     # Stream the data into the upload_staging file.
     # Calculate the md5 and size as we do it
     m = hashlib.md5()
-    size = 0
-    chunksize = 1000000  # 1MB
     try:
-        with open(fullpath, 'wb') as staging_file:
-            fileuploadlog.ut_transfer_start = utcnow()
-            read_file = formdata['uploadFile'].file
-            read_file.seek(0)
-            while chunk := read_file.read(chunksize):
-                size += len(chunk)
-                m.update(chunk)
-                staging_file.write(chunk)
-                # Work around simple_server bug if content_length is set.
-                bytes_left = content_length - size if content_length else None
-                if content_length and (bytes_left < chunksize):
-                    chunksize = bytes_left
+        size=formdata['uploadFile'].save_as(fullpath)
 
         fileuploadlog.ut_transfer_complete = utcnow()
         fileuploadlog.size = size
@@ -220,11 +210,11 @@ def save_file(formdata):
         ctx.session.commit()
         os.chmod(fullpath, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
         with open(jsonpath, 'w') as meta:
-            json.dump({'filename': fileitem.name,
+            json.dump({'filename': fileitem.filename,
                        'is_misc':  'True',
                        'release':  release_date.strftime('%Y-%m-%d'),
-                       'description': formdata['uploadDesc'].value,
-                       'program': formdata['uploadProg'].value},
+                       'description': formdata['uploadDesc'],
+                       'program': formdata['uploadProg']},
                       meta)
 
         fq = FileopsQueue(ctx.session, logger=DummyLogger())
@@ -278,7 +268,7 @@ def detail_miscfile(handle, formdata={}):
             )
 
         if 'save' in formdata:
-            release = formdata.getvalue('release', '').strip()
+            release = formdata.get('release', '').strip()
             if release == 'default':
                 # Now + 18 pseudo-months
                 release_date = datetime.now() + timedelta(days=540)
@@ -287,14 +277,14 @@ def detail_miscfile(handle, formdata={}):
             else:
                 try:
                     release_date = string_to_date(
-                        formdata.getvalue('arbRelease', '').strip())
+                        formdata.get('arbRelease', '').strip())
                 except (ValueError, KeyError):
                     ret['errorMessage'] = "Wrong value for release date"
                     return ret
 
             meta.release = release_date
-            meta.program_id = formdata.getvalue('prog', '')
-            meta.description = formdata.getvalue('desc', '')
+            meta.program_id = formdata.get('prog', '')
+            meta.description = formdata.get('desc', '')
             ctx.session.flush()
             ret['message'] = "Successfully updated"
 

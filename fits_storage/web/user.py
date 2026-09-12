@@ -59,16 +59,13 @@ def request_account(things):
     # Parse the form data here
     if formdata:
         request_attempted = True
-        if 'username' in formdata:
-            username = formdata['username'].value.lower()
-        if 'fullname' in formdata:
-            fullname = formdata['fullname'].value
-        if 'email' in formdata:
-            email = formdata['email'].value.lower()
+        username = formdata.get('username', '').lower()
+        fullname = formdata.get('fullname')
+        email = formdata.get('email', '').lower()
 
         # Validate
         valid_request = False
-        if username == '':
+        if not username:
             reason_bad = "No Username supplied"
         elif not username.isalnum():
             reason_bad = "Username may only contain alphanumeric characters"
@@ -80,11 +77,11 @@ def request_account(things):
                          '<a href="/login">log in</a> if you know your ' \
                          'password, or <a href="/request_password_reset">' \
                          'reset your password</a> if you have forgotten it.'
-        elif fullname == '':
+        elif not fullname:
             reason_bad = "No Full name supplied"
         elif len(fullname) < 5:
             reason_bad = "Full name must be at least 5 characters"
-        elif email == '':
+        elif not email:
             reason_bad = "No Email address supplied"
         elif ('@' not in email) or ('.' not in email):
             reason_bad = "Not a valid Email address"
@@ -254,13 +251,11 @@ def password_reset(userid, token):
     password = None
     again = None
     if formdata:
-        if 'password' in formdata:
-            password = formdata['password'].value
-        if 'again' in formdata:
-            again = formdata['again'].value
+        password = formdata.get('password')
+        again = formdata.get('again')
 
         # Validate
-        if password is None:
+        if not password:
             template_args['reason_bad'] = 'No new Password supplied'
         elif password != again:
             template_args['reason_bad'] = \
@@ -309,17 +304,15 @@ def change_email(things):
 
     # Parse the form data here
     if formdata:
-        if 'newemail' in formdata:
-            newemail = formdata['newemail'].value
-        if 'newagain' in formdata:
-            newagain = formdata['newagain'].value
+        newemail = formdata.get('newemail', '')
+        newagain = formdata.get('newagain')
 
         # Validate what came in
         valid_request = False
 
-        if newemail == '':
+        if not newemail:
             reason_bad = 'No new email supplied'
-        elif newagain == '':
+        elif not newagain:
             reason_bad = 'No new email again supplied'
         elif ('@' not in newemail) or ('.' not in newemail):
             reason_bad = "Not a valid Email address"
@@ -373,21 +366,18 @@ def change_password(things):
 
     # Parse the form data here
     if formdata:
-        if 'oldpassword' in formdata:
-            oldpassword = formdata['oldpassword'].value
-        if 'newpassword' in formdata:
-            newpassword = formdata['newpassword'].value
-        if 'newagain' in formdata:
-            newagain = formdata['newagain'].value
+        oldpassword = formdata.get('oldpassword')
+        newpassword = formdata.get('newpassword')
+        newagain = formdata.get('newagain')
 
         # Validate what came in
         valid_request = False
 
-        if oldpassword == '':
+        if not oldpassword:
             reason_bad = 'No old password supplied'
-        elif newpassword == '':
+        elif not newpassword:
             reason_bad = 'No new password supplied'
-        elif newagain == '':
+        elif not newagain:
             reason_bad = 'No new password again supplied'
         elif bad_password(newpassword):
             reason_bad = bad_password_msg
@@ -436,8 +426,7 @@ def request_password_reset():
     # Parse the form data here
     thing = None
     if formdata:
-        if 'thing' in list(formdata.keys()):
-            thing = formdata['thing'].value
+        thing = formdata.get('thing')
 
         # Validate
         if username_inuse(thing):
@@ -499,10 +488,8 @@ def staff_access():
 
     # Parse the form data
     if formdata:
-        if 'username' in list(formdata.keys()):
-            username = formdata['username'].value
-        if 'action' in list(formdata.keys()):
-            action = formdata['action'].value
+        username = formdata.get('username')
+        action = formdata.get('action')
 
     thisuser = ctx.user
     if thisuser is None or thisuser.superuser is not True:
@@ -549,14 +536,11 @@ def admin_change_email():
     formdata = ctx.get_form_data()
     username = ''
     email = ''
-    action = ''
 
     # Parse the form data
     if formdata:
-        if 'username' in list(formdata.keys()):
-            username = formdata['username'].value
-        if 'email' in list(formdata.keys()):
-            email = formdata['email'].value
+        username = formdata.get('username')
+        email = formdata.get('email')
 
     # Permission requires either superuser or user_admin
     thisuser = ctx.user
@@ -609,10 +593,8 @@ def admin_change_password():
 
     # Parse the form data
     if formdata:
-        if 'username' in list(formdata.keys()):
-            username = formdata['username'].value
-        if 'password' in list(formdata.keys()):
-            password = formdata['password'].value
+        username = formdata.get('username')
+        password = formdata.get('password')
 
     # Permission requires either superuser or user_admin
     thisuser = ctx.user
@@ -662,14 +644,10 @@ def admin_file_permissions():
 
     # Parse the form data
     if formdata:
-        if 'username' in list(formdata.keys()):
-            usernames = formdata['username'].value
-        if 'item' in list(formdata.keys()):
-            item = formdata['item'].value
-        if 'filter' in list(formdata.keys()):
-            filter = formdata['filter'].value
-        if 'delete' in list(formdata.keys()):
-            delete = int(formdata['delete'].value)
+        usernames = formdata.get('username')
+        item = formdata.get('item')
+        filter = formdata.get('filter')
+        delete = int(formdata.get('delete'))
 
     # Permission requires either superuser or user_admin
     thisuser = ctx.user
@@ -799,18 +777,15 @@ def login(things):
 
     # Parse the form data here
     if formdata:
-        if 'username' in formdata:
-            username = formdata['username'].value
-        if 'password' in formdata:
-            password = formdata['password'].value
-        if 'redirect' in formdata:
-            redirect = formdata['redirect'].value
+        username = formdata.get('username')
+        password = formdata.get('password')
+        redirect = formdata.get('redirect')
 
         # Validate
         valid_request = False
-        if username == '':
+        if not username:
             reason_bad = "No Username supplied"
-        elif password == '':
+        elif not password:
             reason_bad = "No Password supplied"
         elif not username_inuse(username):
             reason_bad = 'Username / password not valid. ' \

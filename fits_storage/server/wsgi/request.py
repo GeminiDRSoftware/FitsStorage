@@ -1,7 +1,7 @@
 import json
+import multipart
 
 from .environment import Environment
-from .helperobjects import ItemizedFieldStorage
 
 
 class Request(object):
@@ -17,6 +17,7 @@ class Request(object):
 
     def __init__(self, session, wsgienv):
         self._s = session
+        self._wsgienv = wsgienv
         self._env = Environment(wsgienv)
         self._fields = None
 
@@ -64,20 +65,27 @@ class Request(object):
         except KeyError:
             return False
 
-    def get_form_data(self, large_file=False):
+    def get_form_data(self, getfile=None):
         """
-        Returns an object with the same interface as
-        :py:class:`cgi.FieldStorage`, with the contents of a form sent by a
-        POST request.
-
-        If we expect a large file to be sent, ``large_file`` should be set to
-        True. Some implementations of ``FieldStorage`` may benefit from
-        knowing this.
+        Parses form data, if getfile is not None, add the item with key=getfile
+        from the files MultiDict into the forms dict
         """
 
-        form_data = ItemizedFieldStorage(self.input, environ=self._env)
+        if multipart.is_form_request(self._wsgienv):
+            forms, files = multipart.parse_form_data(self._wsgienv)
+            if getfile:
+                forms[getfile] = files.get(getfile)
 
-        return form_data
+            # Remove empty items from the dict.
+            badkeys = []
+            for key in forms:
+                if forms[key] is None or forms[key] == '':
+                    badkeys.append(key)
+            for key in badkeys:
+                del forms[key]
+            return forms
+        else:
+            return {}
 
     @property
     def input(self):

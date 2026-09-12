@@ -78,24 +78,15 @@ def usagereport():
     session = ctx.session
 
     formdata = ctx.get_form_data()
-    for key, value in ((k, v.value) for (k, v) in list(formdata.items())):
-        if key == 'start' and len(value):
-            start = dateutil.parser.parse(value)
-        elif key == 'end' and len(value):
-            end = dateutil.parser.parse(value)
-        elif key == 'username' and len(value):
-            user = session.query(User).filter(User.username == value).first()
-            if user:
-                username = user.username
-        elif key == 'ipaddr' and len(value):
-            ipaddr = str(value)
-        elif key == 'this' and len(value):
-            this = str(value)
-        elif key == 'status' and len(value):
-            try:
-                status = int(value)
-            except:
-                pass
+    start = formdata.get('start')
+    start = dateutil.parser.parse(start) if start else ''
+    end = formdata.get('end')
+    end = dateutil.parser.parse(end) if end else ''
+    username = formdata.get('username', '')
+    ipaddr = formdata.get('ipaddr', '')
+    this = formdata.get('this', '')
+    status = formdata.get('status')
+    status = int(status) if status else ''
 
     template_args = dict(
         form=dict(start=start,
@@ -121,10 +112,7 @@ def usagereport():
             if this:
                 query = query.filter(UsageLog.this == this)
             if status:
-                try:
-                    query = query.filter(UsageLog.status == int(status))
-                except:
-                    pass
+                query = query.filter(UsageLog.status == int(status))
             return query
 
         # Subquery to add a "row count" to the QueryLog and the DownloadLog.

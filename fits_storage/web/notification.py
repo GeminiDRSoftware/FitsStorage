@@ -30,10 +30,10 @@ def notification():
 
     # Process form data first
     formdata = ctx.get_form_data()
-    for key, value in list(formdata.items()):
+    for key in formdata:
         field = key.split('-')[0]
         nid = int(key.split('-')[1])
-        value = value.value
+        value = formdata[key]
 
         if nid:
             notif = session.query(Notification).\

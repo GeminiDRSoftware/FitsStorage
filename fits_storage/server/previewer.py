@@ -60,7 +60,7 @@ class Previewer(object):
 
         self.spectrum = False
         # Ugh.
-        if self.header.instrument == 'GHOST' and self.header.processing != 'Raw' and 'EXTRACTED' in self.header.types:
+        if self.header.processing != 'Raw' and 'EXTRACTED' in self.header.types:
             self.logger.debug('Previewer spectrum mode selected')
             self.spectrum = True
 
@@ -309,7 +309,30 @@ class Previewer(object):
             plt.close()
 
             return True
-        self.logger.warning("Spectrum preview not implemented yet")
+
+        if (self.header.instrument in ('GMOS-N', 'GMOS-S') and
+                self.header.processing != 'Raw' and
+                self.header.mode == 'LS'):
+
+            self.logger.debug("GMOS processed spectrum plot")
+
+            plot_data = _setup_dgsplots(ad, 1, False)
+
+            plt.title(plot_data['title'])
+            plt.xlabel(plot_data['xaxis'])
+            plt.ylabel(plot_data['yaxis'])
+            for i, (x, y) in enumerate(zip(plot_data['wavelength'], plot_data['data'])):
+                plt.plot(x, y, color=COLORS[i % len(COLORS)])
+            plt.savefig(fp, dpi='figure', format=self.filetype, metadata=None,
+                        bbox_inches=None, pad_inches=None)
+            plt.close()
+
+            return True
+
+        self.logger.warning(f"Spectrum preview not implemented for "
+                            f"instrument {self.header.instrument} "
+                            f"mode {self.header.mode} "
+                            f"processing {self.header.processing}")
         return False
 
     def norm(self, data, percentile=0.3):
@@ -585,61 +608,53 @@ class Previewer(object):
         return True
 
 
-    # # This isn't used - needs some refactoring and rework to paste all the
-    # # spectra into one plot and do away with the idx thing.
-    # def render_spectra_preview(self, ad, outfile, idx):
-    #     """
-    #     Pass in an astrodata object and a file-like outfile. This function will
-    #     create a jpeg rendering of the ad object and write it to the outfile.
-    #
-    #     Parameters:
-    #     ----------
-    #     ad: <AstroData>
-    #         An instance of AstroData
-    #
-    #     outfile: <str>
-    #        Filename to write.
-    #
-    #     Returns:
-    #     -------
-    #     <void>
-    #
-    #     """
-    #     add = ad[idx]
-    #
-    #     # plot without axes or frame
-    #     fig = plt.figure(frameon=False)
-    #
-    #     spek = Spek1D(add)
-    #     flux = spek.flux
-    #     variance = numpy.sqrt(spek.variance)
-    #     # mask values below a certain threshold
-    #     flux_masked = numpy.ma.masked_where(spek.mask == 16, flux)
-    #     variance_masked = numpy.ma.masked_where(spek.mask == 16, variance)
-    #
-    #     try:
-    #         if len(ad) > 1:
-    #             plt.title(spek.filename)
-    #         else:
-    #             plt.title("%s - %d" % (spek.filename, idx))
-    #         plt.xlabel("wavelength %s" % spek.spectral_axis_unit)
-    #         plt.ylabel("flux density %s" % spek.unit)
-    #     except Exception as e:
-    #         pass
-    #     try:
-    #         x_axis = spek.spectral_axis
-    #         # full = full[~numpy.isnan(full)]
-    #         # full = numpy.squeeze(full)
-    #         plt.plot(x_axis, flux_masked, label="data")
-    #         plt.plot(x_axis, variance_masked, color='r', label="stddev")
-    #         plt.legend()
-    #     except Exception as e:
-    #         self.logger.debug("Exception. Generating simplified preview instead",
-    #                      exc_info=True)
-    #         plt.plot(flux_masked)
-    #         plt.plot(variance_masked, color='r')
-    #
-    #     fig.savefig(outfile, format='jpg')
-    #
-    #     plt.close()
-    #     return True
+# This is copied from gempy.adlibrary.plotting which we can't import because
+# we probably don't have bokeh installed and don't want to make it a dependency
+def _setup_dgsplots(ad, aperture, ignore_mask):
+    exts_to_plot = [ext for ext, apnum in zip(ad, ad.hdr.get("APERTURE")) if apnum == aperture]
+    if not exts_to_plot:
+        if not (0 < aperture <= len(ad)):
+            raise ValueError(f"Aperture {aperture} is invalid "
+                             f"({ad.filename} has {len(ad)} extensions)")
+        exts_to_plot = [ad[aperture-1]]
+
+    setup_plot = {'data': [], 'wavelength': []}
+    wave_units = set()
+    signal_units = set()
+    for ext in exts_to_plot:
+        nworld_axes = ext.wcs.output_frame.naxes
+        if nworld_axes != 1:
+            raise ValueError(f"{ad.filename} has {nworld_axes} world axes")
+
+        pix = numpy.arange(ext.data.shape[-1])
+        if ext.data.ndim == 1:
+            setup_plot['data'].append(ext.data if (ext.mask is None or ignore_mask) else
+                                      numpy.where(ext.mask==0, ext.data, numpy.nan))
+            setup_plot['wavelength'].append(ext.wcs(pix).astype(numpy.float32))
+        else:
+            setup_plot['data'].extend(ext.data if (ext.mask is None or ignore_mask) else
+                                      numpy.where(ext.mask==0, ext.data, numpy.nan))
+            grid = numpy.meshgrid(pix, numpy.arange(ext.data.shape[0]),
+                               sparse=True, indexing='xy')
+            setup_plot['wavelength'].extend(ext.wcs(*grid).astype(numpy.float32))
+
+        wave_units.add(ext.wcs.output_frame.unit[0])
+        signal_units.add(ext.hdr["BUNIT"])
+
+    if len(wave_units) > 1:
+        raise ValueError(f"{ad.filename} has different wavelength units in the "
+                         "extensions to be plotted")
+    if len(signal_units) > 1:
+        raise ValueError(f"{ad.filename} has different signal units in the "
+                         f"extensions to be plotted")
+
+    setup_plot['wave_units'] = wave_units.pop()
+    setup_plot['signal_units'] = signal_units.pop()
+    setup_plot['title'] = f'{ad.filename} - Aperture {aperture}'
+    setup_plot['xaxis'] = f'Wavelength ({setup_plot["wave_units"]})'
+    setup_plot['yaxis'] = f'Signal ({setup_plot["signal_units"]})'
+
+    return setup_plot
+
+COLORS = ['blue', 'orange', 'green', 'red', 'purple',
+          'brown', 'pink', 'grey', 'olive', 'cyan']

@@ -74,16 +74,16 @@ def searchform(things, orderby):
 
     if formdata:
         if (len(formdata) == 7 and
-                ('engineering' in list(formdata.keys())) and (formdata['engineering'].value == 'EngExclude') and
-                ('science_verification' in list(formdata.keys())) and (formdata['science_verification'].value == 'SvInclude') and
-                ('qa_state' in list(formdata.keys())) and (formdata['qa_state'].value == 'NotFail') and
-                ('col_selection' in list(formdata.keys())) and
-                ('site_monitoring' in list(formdata.keys())) and (formdata['site_monitoring'].value == 'SmExclude') and
+                (formdata.get('engineering') == 'EngExclude') and
+                (formdata.get('science_verification') == 'SvInclude') and
+                (formdata.get('qa_state') == 'NotFail') and
+                ('col_selection' in formdata) and
+                (formdata.get('site_monitoring') == 'SmExclude') and
                 ('datetype' in list(formdata.keys())) and
-                ('Search' in list(formdata.keys())) and (formdata['Search'].value == 'Search')):
+                (formdata.get('Search') == 'Search')):
             # This is the default form state, someone just hit submit without doing anything.
             pass
-        elif list(formdata.keys()) == ['orderby']:
+        elif len(formdata) == 1 and 'orderby' in formdata:
             # All we have is an orderby - don't redirect
             pass
         else:
@@ -96,16 +96,15 @@ def searchform(things, orderby):
 
             # The following will redirect to some other page. Redirects work by
             # raising an exception, meaning that there's no need for return
-            if 'ObsLogsOnly' in list(formdata.keys()):
+            if 'ObsLogsOnly' in formdata:
                 # ObsLogs Only search
                 ctx.resp.redirect_to('/obslogs' + urlstring)
-            elif 'ProgramsOnly' in list(formdata.keys()):
+            elif 'ProgramsOnly' in formdata:
                 # Program info only search
                 ctx.resp.redirect_to('/programs' + urlstring)
             else:
                 # Regular data search
-                # clear formdata, refreshe page with updated selection from form
-                # formdata.clear()
+                # redirect to page with updated selection from form
                 ctx.resp.redirect_to('/searchform' + urlstring + args_string)
     else:
         # No form data
@@ -317,14 +316,13 @@ def updateselection(formdata, selection):
 
     # Populate selection dictionary with values from form input
     for key in formdata:
-        # if we got a list, there are multiple fields with that name. This is
-        # true for filter at least. Use the last one (except for col_selection)
-        if type(formdata[key]) is list and key != 'col_selection':
-            value = formdata[key][-1].value
         if key == 'col_selection':
-            value = [x.value for x in formdata[key]]
+            # This is the only one we want a list for if there are multiple
+            # values, the others we want the last one, which get() does anyway.
+            value = formdata.getall(key)
         else:
-            value = formdata[key].value
+            value = formdata.get(key)
+
         if key == 'program_id':
             # if the string starts with progid= then trim that off
             if value[:7] == 'progid=':
@@ -354,7 +352,7 @@ def updateselection(formdata, selection):
             gd = gemini_date(value)
             gdr = gemini_daterange(value)
             # Put it in the correct selection depending on UTC vs night pulldown
-            if formdata['datetype'].value == 'night':
+            if formdata.get('datetype') == 'night':
                 if gd:
                     selection['night'] = gd
                 elif gdr:
@@ -402,8 +400,7 @@ def updateselection(formdata, selection):
 
         elif key == 'focal_plane_mask':
             if value == 'custom':
-                if 'custom_mask' in list(formdata.keys()):
-                    selection[key] = formdata['custom_mask'].value
+                selection[key] = formdata.get('custom_mask')
             else:
                 selection[key] = value
         elif key == 'custom_mask':
