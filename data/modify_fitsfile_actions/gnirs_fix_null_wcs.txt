@@ -1,0 +1,8 @@
+[{"action": "SET", "keyword": "CTYPE1", "new_value": "RA---TAN", "comment": "Partial fix of Null WCS in raw data"},
+{"action": "SET", "keyword": "CTYPE2", "new_value": "DEC--TAN", "comment": "Partial fix of Null WCS in raw data"},
+{"action": "SET", "keyword": "CRPIX1", "new_value": 512, "comment": "Partial fix of Null WCS in raw data"},
+{"action": "SET", "keyword": "CRPIX2", "new_value": 511, "comment": "Partial fix of Null WCS in raw data"},
+{"action": "SET", "keyword": "CRVAL1", "from_keyword": "RA", "comment": "Partial fix of Null WCS in raw data"},
+{"action": "SET", "keyword": "CRVAL2", "from_keyword": "DEC", "comment": "Partial fix of Null WCS in raw data"},
+{"action": "SET", "keyword": "CD1_1", "new_value": -4.2138888889E-05, "comment": "Partial fix of Null WCS in raw data"},
+{"action": "SET", "keyword": "CD2_2", "new_value": 4.2138888889E-05, "comment": "Partial fix of Null WCS in raw data"}]
