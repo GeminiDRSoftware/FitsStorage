@@ -27,9 +27,11 @@ def my_programs(things):
     program_key = ''
     if formdata:
         if 'program_id' in formdata:
-            program_id = formdata['program_id'].value.strip()
+            program_id = formdata.get('program_id')
+            program_id = program_id.strip() if program_id else None
         if 'program_key' in formdata:
-            program_key = formdata['program_key'].value.strip()
+            program_key = formdata.get('program_key')
+            program_key = program_key.strip() if program_key else None
 
     # Now figure out if we are logged in, who we are, and current prog_list
     # If we have form data, try and action it
@@ -137,7 +139,7 @@ def get_file_list(user):
 def request_user_program(user, program_id, program_key):
     """
     Requests to register a program_id for a user
-    Returns an empty string if sucessfull, a reason why not if not
+    Returns an empty string if successful, a reason why not if not
     This function does commit the changes to the database
     """
 
