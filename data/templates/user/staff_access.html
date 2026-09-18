@@ -1,5 +1,19 @@
 {% extends "layout.html" %}
 
+{% block extra_header %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+  $("#filterInput").on("keyup", function() {
+    var value = $(this).val().toLowerCase();
+    $("#userTable tr").filter(function() {
+      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+    });
+  });
+});
+</script>
+{%  endblock %}
+
 {% block title %}Gemini Archive Staff Access{% endblock %}
 
 {% block body %}
@@ -10,18 +24,23 @@
  {% elif no_result %}
    <p>Could not locate user in database</p>
  {% endif %}
+
+<p>Filter User Table: <label for="filterInput"><input type="text" id="filterInput" placeholder="Search..."></label></p>
+
  <TABLE>
- <tr class='tr_head'><th>Username</th><th>Full Name</th><th>Email</th><th>Staff Access</th><th>Superuser</th><tr>
+ <thead class='tr_head'><th>Username</th><th>Full Name</th><th>Email</th><th>Staff Access</th><th>Superuser</th><thead>
+ <tbody  id="userTable">
    {% for user in user_list %}
      <tr class='alternating'>
        <td>{{ user.username }}<td>{{ user.fullname }}<td>{{ user.email }}
        <td>{{ user.gemini_staff }}<td>{{ user.superuser }}</tr>
    {% endfor %}
+ </tbody>
  </TABLE>
 
  <h2>Grant or Revoke Staff Access</h2>
  <form action="/staff_access" method="POST">
-  <label for="username">Username:</label><input type="text" name="username">
+  <label for="username">Username:<input type="text" name="username"></label>
   <select name="action"><option value="">Action</option><option value="Grant">Grant</option><option value="Revoke">Revoke</option></select>
   <input type="submit" value="Submit" />
  </form>
