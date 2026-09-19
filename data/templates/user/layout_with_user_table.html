@@ -1,0 +1,53 @@
+{# This template is used in the user admin forms where we present a list of
+users and a form to update user records in various ways (eg staff access, ...) #}
+{% extends "layout.html" %}
+
+{% block extra_header %}
+    {# This implements simple table row filtering for the user table #}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+    $(document).ready(function(){
+        $("#filterInput").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#userTable tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+    });
+    </script>
+
+    {# This styles a div with an outline box for use on the admin_file_permissions page #}
+    <style>
+    .outlinebox {
+        border: 2px solid lightblue;
+        padding: 5px;
+    }
+    </style>
+{% endblock %}
+
+{% macro user_table() %}
+    <p>Filter User Table: <label for="filterInput"><input type="text" id="filterInput" placeholder="Search..."></label></p>
+
+    <TABLE>
+        <thead class='tr_head'>
+            <tr>
+                <th>Username</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Staff Access</th>
+                <th>Superuser</th>
+            </tr>
+        </thead>
+        <tbody id="userTable">
+            {% for user in user_list %}
+                <tr class='alternating' onclick="$('#username').val('{{ user.username }}');">
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.fullname }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.gemini_staff }}</td>
+                    <td>{{ user.superuser }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </TABLE>
+{%  endmacro %}

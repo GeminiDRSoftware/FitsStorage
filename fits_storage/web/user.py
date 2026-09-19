@@ -629,7 +629,7 @@ def admin_change_password():
 @templating.templated("user/admin_file_permissions.html")
 def admin_file_permissions():
     """
-    Allows supersusers to set emails on user accounts
+    Allows supersusers or user_admins to grant access by filename or obsid
     """
 
     ctx = get_context()
@@ -647,7 +647,8 @@ def admin_file_permissions():
         usernames = formdata.get('username')
         item = formdata.get('item')
         filter = formdata.get('filter')
-        delete = int(formdata.get('delete'))
+        delete = formdata.get('delete')
+        delete = int(delete) if delete else None
 
     # Permission requires either superuser or user_admin
     thisuser = ctx.user
