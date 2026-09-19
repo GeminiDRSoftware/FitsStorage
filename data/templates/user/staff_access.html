@@ -6,9 +6,9 @@
     <h1>Gemini Archive Staff Access</h1>
     {% if allowed %}
         {% if action_name %}
-            <p>{{ action_name }} staff access for username: {{ action_user.username }} - {{ action_user.fullname }} - {{ action_user.email }}</p>
-        {% elif no_result %}
-            <p>Could not locate user in database</p>
+            <p>{{ action_name }} staff access for {{ action_user.fullname }} - {{ action_user.email }}, username: {{ action_user.username }}, ORCID: {{ action_user.orcid_id }}, NOIRLab: {{ action_user.noirlab_id }}</p>
+        {%  elif error_message %}
+            <p>Error: {{ error_message }}</p>
         {% endif %}
 
         {{ user_table() }}
@@ -17,6 +17,10 @@
         <form action="/staff_access" method="POST">
             <label for="username">Username:</label>
             <input type="text" id="username" name="username" placeholder="Type in or click table..."/>
+            <label for="orcid_id">ORCID:</label>
+            <input type="text" id="orcid_id" name="orcid_id" placeholder="Type in or click table..."/>
+            <label for="noirlab_id">NOIRLab ID:</label>
+            <input type="text" id="noirlab_id" name="noirlab_id" placeholder="Type in or click table..."/>
             <select name="action">
                 <option value="">Action</option>
                 <option value="Grant">Grant</option>
