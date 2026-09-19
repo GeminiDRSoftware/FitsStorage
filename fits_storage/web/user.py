@@ -619,7 +619,7 @@ def admin_change_password():
 
     # Have applied changes, now generate list of staff users
     template_args['user_list'] = ctx.session.query(User)\
-        .order_by(User.gemini_staff, User.username)
+        .order_by(User.gemini_staff, User.fullname)
 
     ctx.session.commit()
 
@@ -720,14 +720,8 @@ def admin_file_permissions():
         obs_perm['observation_id'] = up.observation_id
         observation_list.append(obs_perm)
 
-    user_list = list()
-    q = ctx.session.query(User).order_by(User.username)
-    for u in q.all():
-        usr = dict()
-        usr['username'] = u.username
-        usr['fullname'] = u.fullname
-        usr['email'] = u.email
-        user_list.append(usr)
+    user_list = ctx.session.query(User) \
+        .order_by(User.gemini_staff, User.fullname)
 
     file_list = list()
     q = ctx.session.query(UserProgram, User)\

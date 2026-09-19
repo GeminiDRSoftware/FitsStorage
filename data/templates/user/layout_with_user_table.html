@@ -32,6 +32,8 @@ users and a form to update user records in various ways (eg staff access, ...) #
         <thead class='tr_head'>
             <tr>
                 <th>Username</th>
+                <th>ORCID</th>
+                <th>NOIRLab</th>
                 <th>Full Name</th>
                 <th>Email</th>
                 <th>Staff Access</th>
@@ -42,6 +44,8 @@ users and a form to update user records in various ways (eg staff access, ...) #
             {% for user in user_list %}
                 <tr class='alternating' onclick="$('#username').val('{{ user.username }}');">
                     <td>{{ user.username }}</td>
+                    <td>{{ user.orcid_id }}</td>
+                    <td>{{ user.noirlab_id }}</td>
                     <td>{{ user.fullname }}</td>
                     <td>{{ user.email }}</td>
                     <td>{{ user.gemini_staff }}</td>
