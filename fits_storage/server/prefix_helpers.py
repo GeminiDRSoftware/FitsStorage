@@ -87,7 +87,7 @@ def get_prefixes(ip, api=None, logger=DummyLogger()):
         prefixes = theapi(ip)
         if prefixes is not None:
             return prefixes
-    return None
+    return []
 
 
 # The two "BGP" APIs (BgpViewApi and ArinApi) are instantiated with an optional
