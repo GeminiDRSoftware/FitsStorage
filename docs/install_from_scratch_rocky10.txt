@@ -65,6 +65,11 @@ sudo -i -u fitsdata
   createdb fitsdata
   psql -U postgres -c 'CREATE EXTENSION pg_sphere' fitsdata
 
+# Sort out schema permissions
+sudo -i -u postgres
+psql fitsdata
+revoke create on schema public from public;
+grant create on schema public to fitsdata;
 
 sudo mkdir /opt/miniforge3
 sudo chown fitsdata /opt/miniforge3
