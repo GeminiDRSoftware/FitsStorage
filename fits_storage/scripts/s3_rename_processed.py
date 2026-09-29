@@ -92,7 +92,8 @@ if __name__ == "__main__":
 
     session = sessionfactory()
     query = session.query(Header).join(DiskFile).filter(DiskFile.present==True)
-
+    query = query.order_by(DiskFile.filename)
+    
     if options.tag:
         query = query.filter(Header.processing_tag==options.tag)
 
