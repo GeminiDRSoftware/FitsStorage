@@ -13,10 +13,10 @@
                 </div>
             {% endfor %}
             <form action="/admin_file_permissions" method="POST">
-                <p><label for="username">Username(s) (comma separate):</label>
-                <input type="text" name="username" id="username" /></p>
+                <p><label for="username">Username(s), ORCID_IDs, or Noirlab_IDs (comma separate):</label>
+                <input type="text" name="username" id="username" size="54"/></p>
                 <p><label for="item">Data (Obs ID or Filename(s) - comma separate):</label>
-                <input type="text" name="item" id="item" /></p>
+                <input type="text" name="item" id="item" size="54"/></p>
                 <button type="submit" class="btn btn-primary" value="Submit">Submit</button>
             </form>
         </div>
@@ -25,7 +25,7 @@
             <h2>Search Permissions</h2>
             <form action="/admin_file_permissions" method="POST">
                 <label for="filter">Search (Username, Obs ID or Filename):</label>
-                <input type="text" name="filter" id="filter" value="{{ filter }}" />
+                <input type="text" name="filter" id="filter" value="{{ filter }}" size="20"/>
                 <button type="submit" class="btn btn-primary" value="Submit">Search</button>
             </form>
 
@@ -34,6 +34,8 @@
                 <thead class='tr_head'>
                     <tr>
                         <th>Username</th>
+                        <th>ORCID ID</th>
+                        <th>NoirLab ID</th>
                         <th>Observation ID</th>
                         <th>Action</th>
                     </tr>
@@ -42,6 +44,8 @@
                     {% for observation in observation_list %}
                         <tr class='alternating'>
                             <td>{{ observation.username }}</td>
+                            <td>{{ observation.orcid_id }}</td>
+                            <td>{{ observation.noirlab_id }}</td>
                             <td>{{ observation.observation_id }}</td>
                             <td>
                                 <form action="/admin_file_permissions" method="POST">
@@ -59,6 +63,8 @@
                 <thead class='tr_head'>
                     <tr>
                         <th>Username</th>
+                        <th>ORCID ID</th>
+                        <th>NoirLab ID</th>
                         <th>Filename</th>
                         <th>Action</th>
                     </tr>
@@ -67,6 +73,8 @@
                     {% for file in file_list %}
                         <tr class='alternating'>
                             <td>{{ file.username }}</td>
+                            <td>{{ file.orcid_id }}</td>
+                            <td>{{ file.noirlab_id }}</td>
                             <td>{{ file.filename }}</td>
                             <td>
                                 <form action="/admin_file_permissions" method="POST">

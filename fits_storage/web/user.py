@@ -692,9 +692,18 @@ def admin_file_permissions():
     if usernames and item:
         for username in usernames.split(','):
             username = username.strip()
-            try:
-                user = ctx.session.query(User)\
-                    .filter(User.username == username).one()
+            # Did we get a username?
+            user = ctx.session.query(User) \
+                .filter(User.username == username).one_or_none()
+            if user is None:
+                # Did we get an ORCID?
+                user = ctx.session.query(User) \
+                    .filter(User.orcid_id == username).one_or_none()
+            if user is None:
+                # Did we get a Noirlab_od?
+                user = ctx.session.query(User) \
+                    .filter(User.noirlab_id == username).one_or_none()
+            if user is not None:
                 for itemx in item.split(','):
                     itemx = itemx.strip()
                     if itemx.endswith('.fits'):
@@ -714,9 +723,9 @@ def admin_file_permissions():
                                              observation_id=itemx)
                             ctx.session.add(up)
                             ctx.session.flush()
-            except NoResultFound:
-                warnings.append(f'Username <b>{username}</b> not found in '
-                                'system, ignoring')
+            else:
+                warnings.append(f'Username, ORCID_ID or NORILAB_ID <b>'
+                                f'{username}</b> not found in system, ignoring')
 
     observation_list = list()
     q = ctx.session.query(UserProgram, User)\
@@ -730,6 +739,8 @@ def admin_file_permissions():
         obs_perm = dict()
         obs_perm['id'] = up.id
         obs_perm['username'] = usr.username
+        obs_perm['orcid_id'] = usr.orcid_id
+        obs_perm['noirlab_id'] = usr.noirlab_id
         obs_perm['observation_id'] = up.observation_id
         observation_list.append(obs_perm)
 
@@ -748,6 +759,8 @@ def admin_file_permissions():
         obs_perm = dict()
         obs_perm['id'] = up.id
         obs_perm['username'] = usr.username
+        obs_perm['orcid_id'] = usr.orcid_id
+        obs_perm['noirlab_id'] = usr.noirlab_id
         obs_perm['filename'] = up.filename
         file_list.append(obs_perm)
 
