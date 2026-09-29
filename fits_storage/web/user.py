@@ -13,8 +13,8 @@ import json
 import requests
 import urllib3
 
-from sqlalchemy import desc, and_, or_
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy import select, desc, and_, or_
+from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
 from fits_storage.gemini_metadata_utils import GeminiObservation
 from fits_storage.server.orm.user import User
@@ -478,18 +478,7 @@ def staff_access():
     """
     Allows supersusers to set accounts to be or not be gemini staff
     """
-
     ctx = get_context()
-
-    # Process the form data first if there is any
-    formdata = ctx.get_form_data()
-    username = ''
-    action = ''
-
-    # Parse the form data
-    if formdata:
-        username = formdata.get('username')
-        action = formdata.get('action')
 
     thisuser = ctx.user
     if thisuser is None or thisuser.superuser is not True:
@@ -497,27 +486,51 @@ def staff_access():
 
     template_args = dict(allowed=True)
 
-    # If we got an action, do it
-    if username:
-        try:
-            user = ctx.session.query(User).filter(User.username == username)\
-                .one()
+    # Process the form data if there is any
+    formdata = ctx.get_form_data()
+    error_message = None
+    if formdata:
+        username = formdata.get('username')
+        orcid_id = formdata.get('orcid_id')
+        noirlab_id = formdata.get('noirlab_id')
+        action = formdata.get('action')
+
+        # Identify the target user
+        stmt = select(User)
+        if username:
+            stmt = stmt.where(User.username == username)
+        elif orcid_id:
+            stmt = stmt.where(User.orcid_id == orcid_id)
+        elif noirlab_id:
+            stmt = stmt.where(User.noirlab_id == noirlab_id)
+        else:
+            error_message = 'No user identifier provided'
+
+        if error_message is None:
+            try:
+                user = ctx.session.execute(stmt).scalars().one()
+            except NoResultFound:
+                error_message = 'Could not find user in database'
+            except MultipleResultsFound:
+                error_message = 'Multiple users matched query - Aborting!'
+
+        if error_message is None:
+            template_args['action_user'] = user
             if action == "Grant":
-                action_name = 'Granting'
+                template_args['action_name'] = 'Granting'
                 user.gemini_staff = True
             elif action == "Revoke":
-                action_name = 'Revoking'
+                template_args['action_name'] = 'Revoking'
                 user.gemini_staff = False
             else:
                 # This shouldn't happen.
-                action_name = None
-                user = None
-            template_args['action_name'] = action_name
-            template_args['action_user'] = user
-        except NoResultFound:
-            template_args['no_result'] = True
+                error_message = 'Undefined action - Aborting!'
+        ctx.session.commit()
 
-    # Have applied changes, now generate list of staff users
+    # If there was an error, put that in the response
+    template_args['error_message'] = error_message
+
+    # Have applied any change, now generate list of staff users
     template_args['user_list'] = ctx.session.query(User).\
         order_by(User.gemini_staff, User.username)
 
@@ -619,7 +632,7 @@ def admin_change_password():
 
     # Have applied changes, now generate list of staff users
     template_args['user_list'] = ctx.session.query(User)\
-        .order_by(User.gemini_staff, User.username)
+        .order_by(User.gemini_staff, User.fullname)
 
     ctx.session.commit()
 
@@ -629,7 +642,7 @@ def admin_change_password():
 @templating.templated("user/admin_file_permissions.html")
 def admin_file_permissions():
     """
-    Allows supersusers to set emails on user accounts
+    Allows supersusers or user_admins to grant access by filename or obsid
     """
 
     ctx = get_context()
@@ -647,7 +660,8 @@ def admin_file_permissions():
         usernames = formdata.get('username')
         item = formdata.get('item')
         filter = formdata.get('filter')
-        delete = int(formdata.get('delete'))
+        delete = formdata.get('delete')
+        delete = int(delete) if delete else None
 
     # Permission requires either superuser or user_admin
     thisuser = ctx.user
@@ -678,9 +692,18 @@ def admin_file_permissions():
     if usernames and item:
         for username in usernames.split(','):
             username = username.strip()
-            try:
-                user = ctx.session.query(User)\
-                    .filter(User.username == username).one()
+            # Did we get a username?
+            user = ctx.session.query(User) \
+                .filter(User.username == username).one_or_none()
+            if user is None:
+                # Did we get an ORCID?
+                user = ctx.session.query(User) \
+                    .filter(User.orcid_id == username).one_or_none()
+            if user is None:
+                # Did we get a Noirlab_od?
+                user = ctx.session.query(User) \
+                    .filter(User.noirlab_id == username).one_or_none()
+            if user is not None:
                 for itemx in item.split(','):
                     itemx = itemx.strip()
                     if itemx.endswith('.fits'):
@@ -700,9 +723,9 @@ def admin_file_permissions():
                                              observation_id=itemx)
                             ctx.session.add(up)
                             ctx.session.flush()
-            except NoResultFound:
-                warnings.append(f'Username <b>{username}</b> not found in '
-                                'system, ignoring')
+            else:
+                warnings.append(f'Username, ORCID_ID or NORILAB_ID <b>'
+                                f'{username}</b> not found in system, ignoring')
 
     observation_list = list()
     q = ctx.session.query(UserProgram, User)\
@@ -716,17 +739,13 @@ def admin_file_permissions():
         obs_perm = dict()
         obs_perm['id'] = up.id
         obs_perm['username'] = usr.username
+        obs_perm['orcid_id'] = usr.orcid_id
+        obs_perm['noirlab_id'] = usr.noirlab_id
         obs_perm['observation_id'] = up.observation_id
         observation_list.append(obs_perm)
 
-    user_list = list()
-    q = ctx.session.query(User).order_by(User.username)
-    for u in q.all():
-        usr = dict()
-        usr['username'] = u.username
-        usr['fullname'] = u.fullname
-        usr['email'] = u.email
-        user_list.append(usr)
+    user_list = ctx.session.query(User) \
+        .order_by(User.gemini_staff, User.fullname)
 
     file_list = list()
     q = ctx.session.query(UserProgram, User)\
@@ -740,6 +759,8 @@ def admin_file_permissions():
         obs_perm = dict()
         obs_perm['id'] = up.id
         obs_perm['username'] = usr.username
+        obs_perm['orcid_id'] = usr.orcid_id
+        obs_perm['noirlab_id'] = usr.noirlab_id
         obs_perm['filename'] = up.filename
         file_list.append(obs_perm)
 

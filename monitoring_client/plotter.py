@@ -187,7 +187,7 @@ class InstMonPlot(object):
 
     def load_data(self):
         print(f"loading {self.datasource_text.value} into fdf")
-        self.fdf = pd.read_csv(self.datasource_text.value, sep='\t', header=0)
+        self.fdf = pd.read_csv(self.datasource_text.value, sep='\t', header=0, storage_options={'User-Agent': 'GeminiInstMon'})
         self.fdf['ut_datetime'] = pd.to_datetime(self.fdf['ut_datetime'], format='ISO8601')
         self.fdf.sort_values(by=['ut_datetime', 'adid'], inplace=True)
 

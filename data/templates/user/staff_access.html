@@ -1,31 +1,34 @@
-{% extends "layout.html" %}
+{% extends "user/layout_with_user_table.html" %}
 
 {% block title %}Gemini Archive Staff Access{% endblock %}
 
 {% block body %}
-<h1>Gemini Archive Staff Access</h1>
-{% if allowed %}
- {% if action_name %}
-   <p>{{ action_name }} staff access for username: {{ action_user.username }} - {{ action_user.fullname }} - {{ action_user.email }}</p>
- {% elif no_result %}
-   <p>Could not locate user in database</p>
- {% endif %}
- <TABLE>
- <tr class='tr_head'><th>Username</th><th>Full Name</th><th>Email</th><th>Staff Access</th><th>Superuser</th><tr>
-   {% for user in user_list %}
-     <tr class='alternating'>
-       <td>{{ user.username }}<td>{{ user.fullname }}<td>{{ user.email }}
-       <td>{{ user.gemini_staff }}<td>{{ user.superuser }}</tr>
-   {% endfor %}
- </TABLE>
+    <h1>Gemini Archive Staff Access</h1>
+    {% if allowed %}
+        {% if action_name %}
+            <p>{{ action_name }} staff access for {{ action_user.fullname }} - {{ action_user.email }}, username: {{ action_user.username }}, ORCID: {{ action_user.orcid_id }}, NOIRLab: {{ action_user.noirlab_id }}</p>
+        {%  elif error_message %}
+            <p>Error: {{ error_message }}</p>
+        {% endif %}
 
- <h2>Grant or Revoke Staff Access</h2>
- <form action="/staff_access" method="POST">
-  <label for="username">Username:</label><input type="text" name="username">
-  <select name="action"><option value="">Action</option><option value="Grant">Grant</option><option value="Revoke">Revoke</option></select>
-  <input type="submit" value="Submit" />
- </form>
-{% else %}
- <p>You don't appear to be logged in as a superuser. Sorry.</p>
-{% endif %}
+        {{ user_table() }}
+
+        <h2>Grant or Revoke Staff Access</h2>
+        <form action="/staff_access" method="POST">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" placeholder="Type in or click table..."/>
+            <label for="orcid_id">ORCID:</label>
+            <input type="text" id="orcid_id" name="orcid_id" placeholder="Type in or click table..."/>
+            <label for="noirlab_id">NOIRLab ID:</label>
+            <input type="text" id="noirlab_id" name="noirlab_id" placeholder="Type in or click table..."/>
+            <select name="action">
+                <option value="">Action</option>
+                <option value="Grant">Grant</option>
+                <option value="Revoke">Revoke</option>
+            </select>
+            <input type="submit" value="Submit" />
+        </form>
+    {% else %}
+        <p>You don't appear to be logged in as a superuser. Sorry.</p>
+    {% endif %}
 {% endblock %}

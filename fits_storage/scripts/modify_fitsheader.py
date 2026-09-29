@@ -89,7 +89,7 @@ def main():
             with open(options.listfile, "r") as file:
                 while line := file.readline():
                     line = line.strip().rstrip(',')
-                    if line[0] != '#':
+                    if len(line) > 0 and line[0] != '#':
                         filenames.append(line)
         except FileNotFoundError:
             logger.error("List File not found: %s", options.listfile)
