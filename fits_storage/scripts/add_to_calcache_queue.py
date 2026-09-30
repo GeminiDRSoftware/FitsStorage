@@ -34,7 +34,7 @@ parser.add_argument("--all", action="store_true", dest="all",
                     help="queue all observations in database. Use with Caution")
 parser.add_argument("--ignore-mdbad", action="store_true",
                     dest="ignore_mdbad",
-                    help="add files that fail metadata validation (skipped by default")
+                    help="add files that fail metadata validation (skipped by default)")
 parser.add_argument("--debug", action="store_true", dest="debug",
                     help="Increase log level to debug")
 parser.add_argument("--demon", action="store_true", dest="demon",
@@ -49,7 +49,7 @@ parser.add_argument("--no-precheck", action="store_true", dest="noprecheck",
                        " initial header list. We do this by default so that we "
                        "can reasonably safely do a bulk commit, otherwise this "
                        "is really slow for large numbers of entries.")
-options, args = parser.parse_args()
+options = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
@@ -59,7 +59,7 @@ setdemon(options.demon)
 logger.info("***   add_to_calcache_queue.py - starting up at %s"
             % datetime.datetime.now())
 
-if not (options.file_pre or options.lastdays or options.all):
+if not (options.file_pre or options.lastdays is not None or options.all):
     logger.error("You must give either a file-pre or lastdays, "
                  "or use the all flag")
     sys.exit(1)
@@ -122,6 +122,7 @@ with session_scope() as session:
             logger.error("Bulk add commit failed. None of the items have been "
                          "added. Suggest re-run without bulk-add, or ensure "
                          "queue is empty before adding.")
+            sys.exit(1)
 
 
 logger.info("*** add_to_calcache_queue.py exiting normally at %s" %
