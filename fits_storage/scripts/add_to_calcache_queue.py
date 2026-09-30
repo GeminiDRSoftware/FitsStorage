@@ -24,7 +24,7 @@ parser.add_option("--lastdays", action="store", type="int", dest="lastdays",
                   help="queue observations with ut_datetime in last n days")
 parser.add_option("--instrument", action="store", dest="instrument",
                   type="string", help="Only add files for this instrument")
-parser.add_option("--include-eng", action="store", dest="include_eng",
+parser.add_option("--include-eng", action="store_true", dest="include_eng",
                   default=False, help="Include engineering files")
 parser.add_option("--all", action="store_true", dest="all",
                   help="queue all observations in database. Use with Caution")
@@ -87,9 +87,7 @@ with session_scope() as session:
     if options.instrument:
         stmt = stmt.where(Header.instrument == options.instrument)
 
-    if options.include_eng:
-        pass
-    else:
+    if not options.include_eng:
         stmt = stmt.where(Header.engineering == False)
 
     # Tell SQLAlchemy not to try and fetch too many at a time from the backend
