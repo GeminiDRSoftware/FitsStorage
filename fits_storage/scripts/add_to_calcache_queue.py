@@ -70,7 +70,7 @@ with session_scope() as session:
     # We use the header.ut_datetime as the sortkey for the queue
     stmt = (select(Header.id, DiskFile.filename)
             .select_from(Header).join(DiskFile)
-            .where(DiskFile.canonical == True))
+            .where(DiskFile.canonical))
 
     if not options.noprecheck:
         subquery = select(CalCacheQueueEntry.obs_hid).\
@@ -105,7 +105,7 @@ with session_scope() as session:
     items = session.execute(stmt).all()
 
     ccq = CalCacheQueue(session, logger=logger)
-    individual_commit = True if options.no_bulk_add else False
+    individual_commit = bool(options.no_bulk_add)
     i = 0
     n = len(items)
     for (hid, filename) in items:
