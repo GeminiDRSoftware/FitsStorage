@@ -29,7 +29,7 @@ parser.add_option("--include-eng", action="store_true", dest="include_eng",
 parser.add_option("--all", action="store_true", dest="all",
                   help="queue all observations in database. Use with Caution")
 parser.add_option("--ignore-mdbad", action="store_true", dest="ignore_mdbad",
-                  help="don't add files if they fail metadata validation")
+                  help="add files that fail metadata validation (skipped by default")
 parser.add_option("--debug", action="store_true", dest="debug",
                   help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon",
@@ -69,7 +69,7 @@ with session_scope() as session:
     if not options.noprecheck:
         subquery = select(CalCacheQueueEntry.obs_hid).\
             where(CalCacheQueueEntry.inprogress == False).\
-            where(CalCacheQueueEntry.fail_dt !=
+            where(CalCacheQueueEntry.fail_dt ==
                    CalCacheQueueEntry.fail_dt_false)
 
         stmt = stmt.where(Header.id.not_in(subquery))
@@ -115,7 +115,7 @@ with session_scope() as session:
             session.commit()
         except IntegrityError:
             session.rollback()
-            logger.debug("Bulk add commit failed. None of the items have been "
+            logger.error("Bulk add commit failed. None of the items have been "
                          "added. Suggest re-run without bulk-add, or ensure "
                          "queue is empty before adding.")
 
