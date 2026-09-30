@@ -2,6 +2,7 @@
 
 import datetime
 import sys
+from argparse import ArgumentParser
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -16,30 +17,34 @@ from fits_storage import utcnow
 
 
 # Option Parsing
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option("--file-pre", action="store", type="string", dest="file_pre",
-                  help="filename prefix to select files to queue by")
-parser.add_option("--lastdays", action="store", type="int", dest="lastdays",
-                  help="queue observations with ut_datetime in last n days")
-parser.add_option("--instrument", action="store", dest="instrument",
-                  type="string", help="Only add files for this instrument")
-parser.add_option("--include-eng", action="store_true", dest="include_eng",
-                  default=False, help="Include engineering files")
-parser.add_option("--all", action="store_true", dest="all",
-                  help="queue all observations in database. Use with Caution")
-parser.add_option("--ignore-mdbad", action="store_true", dest="ignore_mdbad",
-                  help="add files that fail metadata validation (skipped by default")
-parser.add_option("--debug", action="store_true", dest="debug",
-                  help="Increase log level to debug")
-parser.add_option("--demon", action="store_true", dest="demon",
-                  help="Run as a background demon, do not generate stdout")
-parser.add_option("--no-bulk-add", action="store_true", dest="no_bulk_add",
+parser = ArgumentParser()
+parser.add_argument("--file-pre", action="store", type=str,
+                    dest="file_pre",
+                    help="filename prefix to select files to queue by")
+parser.add_argument("--lastdays", action="store", type=int,
+                    dest="lastdays",
+                    help="queue observations with ut_datetime in last n days")
+parser.add_argument("--instrument", action="store",
+                    dest="instrument", type=str,
+                    help="Only add files for this instrument")
+parser.add_argument("--include-eng", action="store_true",
+                    dest="include_eng", default=False,
+                    help="Include engineering files")
+parser.add_argument("--all", action="store_true", dest="all",
+                    help="queue all observations in database. Use with Caution")
+parser.add_argument("--ignore-mdbad", action="store_true",
+                    dest="ignore_mdbad",
+                    help="add files that fail metadata validation (skipped by default")
+parser.add_argument("--debug", action="store_true", dest="debug",
+                    help="Increase log level to debug")
+parser.add_argument("--demon", action="store_true", dest="demon",
+                    help="Run as a background demon, do not generate stdout")
+parser.add_argument("--no-bulk-add", action="store_true", dest="no_bulk_add",
                   help="Add the entries in individual database commits. This is"
                        " a lot slower for a large number of entries, but avoids"
                        " the problem with a bulk add where if any one entry has"
                        " an error, they will all fail to add")
-parser.add_option("--no-precheck", action="store_true", dest="noprecheck",
+parser.add_argument("--no-precheck", action="store_true", dest="noprecheck",
                   help="Do not exclude header IDs already on the queue from the"
                        " initial header list. We do this by default so that we "
                        "can reasonably safely do a bulk commit, otherwise this "
@@ -63,8 +68,9 @@ with session_scope() as session:
     # Get a list of header IDs to queue. NB files don't have to be
     # present, but we do want the canonical one.
     # We use the header.ut_datetime as the sortkey for the queue
-    stmt = select(Header).join(DiskFile)\
-        .where(DiskFile.canonical == True)
+    stmt = (select(Header.id, DiskFile.filename)
+            .select_from(Header).join(DiskFile)
+            .where(DiskFile.canonical == True))
 
     if not options.noprecheck:
         subquery = select(CalCacheQueueEntry.obs_hid).\
@@ -78,9 +84,10 @@ with session_scope() as session:
         stmt = stmt.where(DiskFile.mdready == True)
 
     if options.file_pre:
-        stmt = stmt.where(DiskFile.filename.like(options.file_pre+'%'))
+        stmt = stmt.where(DiskFile.filename.startswith(options.file_pre,
+                                                       autoescape=True))
 
-    if options.lastdays:
+    if options.lastdays is not None:
         then = utcnow() - datetime.timedelta(days=options.lastdays)
         stmt = stmt.where(Header.ut_datetime > then)
 
@@ -95,10 +102,7 @@ with session_scope() as session:
     stmt = stmt.execution_options(yield_per=1000)
 
     logger.info("Building (hid, filename) list...")
-    items = []
-    for header in session.scalars(stmt):
-        items.append((header.id, header.diskfile.filename))
-
+    items = session.execute(stmt).all()
 
     ccq = CalCacheQueue(session, logger=logger)
     individual_commit = True if options.no_bulk_add else False
