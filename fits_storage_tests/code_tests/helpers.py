@@ -175,5 +175,6 @@ def get_test_config():
     configstring = f"""
             [DEFAULT]
             is_server = True
+            http_user_agent = GeminiFitsStorage
             """
     return get_config(configstring=configstring, builtinonly=True, reload=True)

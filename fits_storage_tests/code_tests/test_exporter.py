@@ -3,7 +3,7 @@ import os.path
 
 import requests
 
-from fits_storage_tests.code_tests.helpers import make_empty_testing_db_env
+from fits_storage_tests.code_tests.helpers import make_empty_testing_db_env, get_test_config
 from fits_storage.db import sessionfactory
 from fits_storage.config import get_config
 from fits_storage.logger_dummy import DummyLogger
@@ -34,6 +34,7 @@ def test_reset():
 
 
 def test_get_destination_file_info():
+    get_test_config()
     exp = Exporter(None, DummyLogger())
 
     eqe = dummy_qe()
