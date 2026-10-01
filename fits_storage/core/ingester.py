@@ -58,13 +58,13 @@ class Ingester(object):
         ----------
         session - database session
         logger - Fits Storage Logger
-        skip_md: bool (default False)
+        skip_md: bool (default True)
             - Whether to skip metadata validation
-        skip_fv: bool (default False)
+        skip_fv: bool (default True)
             - Whether to skip fits verification
         make_previews: bool (default False)
             - Whether to build previews during ingestion (True) or to simply
-            ass the files to the preview queue (False). Building previews
+            add the files to the preview queue (False). Building previews
             during ingestion is more efficient overall as we already have the
             file fetched, open, and uncompressed, but slows down the ingest
             significantly.
@@ -136,7 +136,7 @@ class Ingester(object):
         appropriate, and setting the status and error messages in iqe and
         outputting appropriate log messages if there's a failure. We return
         a True / False return status more to make it clear in the code if an
-        exit path is a sucess or a failure, but this value does not need to be
+        exit path is a success or a failure, but this value does not need to be
         checked or acted on by the caller.
 
         Parameters
@@ -185,9 +185,19 @@ class Ingester(object):
             self.s.add(fileobj)
             self.s.commit()
 
-        # At this point, 'fileobj' should be a valid DB  object.
+        # At this point, 'fileobj' should be a valid DB object.
 
-        if self.need_to_add_diskfile(iqe, fileobj) or iqe.force:
+        try:
+            need_to_add = self.need_to_add_diskfile(iqe, fileobj)
+        except MultipleResultsFound:
+            # need_to_add_diskfile() will have logged the details
+            message = "Multiple diskfiles marked as present for " \
+                      f"{iqe.path}/{iqe.filename} - aborting ingest"
+            iqe.seterror(message)
+            self.s.commit()
+            return False
+
+        if need_to_add or iqe.force:
             diskfile = self.add_diskfile_entry(fileobj, iqe)
             if diskfile is None:
                 # We tried to add a diskfile but failed
@@ -198,7 +208,7 @@ class Ingester(object):
             # In this case, we don't delete any failed entries for the same
             # file, as if processing failed after diskfile entry, there could
             # still be value in re-trying those. That will need to be triggered
-            # manually by re=adding them with force=True
+            # manually by re-adding them with force=True
             if fsc.is_server:
                 # in non-server mode, the iqe is an ORM instance, but is never
                 # added to the session, so we shouldn't attempt to delete it
@@ -209,7 +219,7 @@ class Ingester(object):
         # At this point, 'diskfile' should be a valid DB object. It could
         # represent a fits file, or an obslog or miscfile etc.
 
-        # If the file is not their type, these add_blah() methods do nothing
+        # If the file is not of their type, these add_blah() methods do nothing
         # and return False. If the file is their type, they return True after
         # adding the database entry. They return True even if they fail,
         # in which case they call iqe.seterror() and commit. Note, this
@@ -217,19 +227,27 @@ class Ingester(object):
         # during evaluation of the condition rather than in the code block
         # for the first two conditions.
 
+        fitsfile_ok = True
         if fsc.is_archive and self.add_miscfile(diskfile, iqe):
             pass
         elif fsc.is_server and self.add_obslog(diskfile, iqe):
             pass
         else:
             # Proceed with normal fits file ingestion
-            if not self.add_fitsfile(diskfile, iqe):
+            fitsfile_ok = self.add_fitsfile(diskfile, iqe)
+            if not fitsfile_ok:
                 self.l.debug("add_fitsfile failed (returned False)")
 
         # We're done with the diskfile we created now
         if fsc.using_s3 and self.local_copy_of_s3_file:
             os.unlink(diskfile.fullpath)
+            self.local_copy_of_s3_file = False
         diskfile.cleanup()
+
+        # If add_fitsfile failed, it will have set the iqe error status and
+        # committed. Don't export or reduce a file that failed to ingest.
+        if not fitsfile_ok:
+            return False
 
         # If we are exporting to downstream servers, add to export queue now.
         # We don't do this earlier as the downstream server will query back
@@ -272,6 +290,11 @@ class Ingester(object):
         Returns
         -------
         True if we do need to add a diskfile entry, False otherwise
+
+        Raises
+        ------
+        MultipleResultsFound if there is more than one diskfile marked as
+        present for this file and path
         """
         # Does a diskfile for this file already exist with the same path, that
         # is marked as present? This allows catching that we should not have
@@ -288,7 +311,7 @@ class Ingester(object):
                          f"as present for file id {fileobj.id} at path "
                          f"{iqe.path} with name {fileobj.name}. Aborting "
                          f"Ingest")
-            return False
+            raise
         except NoResultFound:
             self.l.debug("No diskfile marked as present found for file id "
                          f"{fileobj.id} name {fileobj.name} at path {iqe.path}. "
@@ -323,7 +346,7 @@ class Ingester(object):
         else:
             self.l.debug("MD5s do not match, will reingest")
             self.l.debug("Database MD5: %s", diskfile.file_md5)
-            self.l.debug(f"File MD5: %s", file_md5)
+            self.l.debug("File MD5: %s", file_md5)
             return True
 
     def add_diskfile_entry(self, fileobj, iqe):
@@ -343,22 +366,6 @@ class Ingester(object):
         None otherwise
         """
 
-        # First, check to see if there is are older versions that are either
-        # present or canonical and mark them as not present and not canonical
-        olddiskfiles = self.s.query(DiskFile) \
-            .filter(DiskFile.file_id == fileobj.id) \
-            .filter(DiskFile.path == iqe.path) \
-            .filter(or_(DiskFile.present == True, DiskFile.canonical == True))
-
-        for odf in olddiskfiles:
-            self.l.debug("Marking old diskfile id %s as not present and not "
-                         "canonical", odf.id)
-            odf.canonical = False
-            odf.present = False
-        self.s.commit()
-
-        # Now add the new diskfile
-
         # If we're ingesting from S3, fetch a local copy now
         if self.using_s3:
             if not (self.s3.fetch_to_storageroot (os.path.join(
@@ -374,16 +381,46 @@ class Ingester(object):
         self.l.info("Adding new DiskFile entry for file "
                      f"name {fileobj.name} - id {fileobj.id}")
 
-        # Instantiating the DiskFile object with a bzip2 filename will trigger
-        # creation of the unzipped cache file too.
-        diskfile = DiskFile(fileobj, iqe.filename, iqe.path, logger=self.l)
+        diskfile = None
         try:
+            # Instantiating the DiskFile object with a bzip2 filename will
+            # trigger creation of the unzipped cache file too.
+            diskfile = DiskFile(fileobj, iqe.filename, iqe.path, logger=self.l)
+
+            # Now we have the new diskfile, check to see if there are older
+            # versions that are either present or canonical and mark them as
+            # not present and not canonical. We do this after creating the
+            # new diskfile, and commit it together with adding the new
+            # diskfile, so that if that fails, the old ones are left as they
+            # were.
+            olddiskfiles = self.s.query(DiskFile) \
+                .filter(DiskFile.file_id == fileobj.id) \
+                .filter(DiskFile.path == iqe.path) \
+                .filter(or_(DiskFile.present == True,
+                            DiskFile.canonical == True))
+
+            for odf in olddiskfiles:
+                self.l.debug("Marking old diskfile id %s as not present and "
+                             "not canonical", odf.id)
+                odf.canonical = False
+                odf.present = False
+
             self.s.add(diskfile)
             self.s.commit()
             return diskfile
         except:
             message = f"Failed to add new diskfile"
             self.l.error(message, exc_info=True)
+            self.s.rollback()
+            if diskfile is not None:
+                diskfile.cleanup()
+            if self.using_s3 and self.local_copy_of_s3_file:
+                try:
+                    os.unlink(os.path.join(self.s3.storage_root, iqe.path,
+                                           iqe.filename))
+                except OSError:
+                    pass
+                self.local_copy_of_s3_file = False
             iqe.seterror(message)
             self.s.commit()
             return None
@@ -422,8 +459,10 @@ class Ingester(object):
 
     def add_obslog(self, diskfile, iqe):
         """
-        Add an obslog. This is a no-op if the file is not an obslog
-        Parameters. If any errors, set status in iqe
+        Add an obslog. This is a no-op if the file is not an obslog.
+        If any errors, set status in iqe.
+
+        Parameters
         ----------
         diskfile - the file to add
         iqe - IngestQueueEntry
@@ -515,7 +554,7 @@ class Ingester(object):
             self.l.debug("Adding new Header entry")
             header = Header(diskfile, self.l)
             if header.engineering and self.override_engineering is True:
-                self.l.warn("Overriding engineering status on file %s",
+                self.l.warning("Overriding engineering status on file %s",
                             diskfile.filename)
                 header.engineering = False
             self.s.add(header)
@@ -576,6 +615,7 @@ class Ingester(object):
             # We don't consider this an ingest failure.
             # Just log the error and press on.
             self.l.error("Error adding Footprints", exc_info=True)
+            self.s.rollback()
 
         try:
             if not self.using_sqlite and header.spectroscopy == False:
@@ -584,6 +624,7 @@ class Ingester(object):
         except:
             self.l.error("Error adding populating PhotStandardObs",
                          exc_info=True)
+            self.s.rollback()
             # We don't consider this an ingest failure
             # Just log the error and press on
 
@@ -643,11 +684,14 @@ class Ingester(object):
                 # Just log the error and press on
 
         # Yay. If we got here, we successfully ingested the file.
-        # Delete any iqe entries for this filename that are marked as failed
+        # Delete any iqe entries for this filename that are marked as failed,
+        # other than this one, which may have been marked as failed by a
+        # non-fatal error above, and we want to keep that error status.
         failed_iqes = self.s.query(IngestQueueEntry)\
             .filter(IngestQueueEntry.fail_dt != iqe.fail_dt_false)\
             .filter(IngestQueueEntry.filename == iqe.filename)\
-            .filter(IngestQueueEntry.path == iqe.path)
+            .filter(IngestQueueEntry.path == iqe.path)\
+            .filter(IngestQueueEntry.id != iqe.id)
 
         for failed_iqe in failed_iqes:
             self.l.info("Deleting failed ingestqueue entry %d having "
