@@ -96,11 +96,11 @@ class DiskFile(Base):
     # of this diskfile instance.
     uncompressed_cache_file = None
 
-    # We store an astrodata instance here in the same way These are expensive
-    # to instantiate We instantiate  and close this externally though. It's
+    # We store an astrodata instance here in the same way. These are expensive
+    # to instantiate. We instantiate and close this externally though. It's
     # stored here as it is tightly linked to this actual diskfile,
     # but obviously, this will not be set in any DiskFile object returned by
-    # the ORM layer, or pulled in as a relation
+    # the ORM layer, or pulled in as a relation.
     ad_object = None
 
     # We store some fsc values to allow poking for testing etc.
@@ -113,12 +113,12 @@ class DiskFile(Base):
                  compressed=None, logger=DummyLogger(),
                  storage_root=None, z_staging_dir=None, s3_staging_dir=None):
         """
-        Create a :class:`~fits_storage_core.orm.diskfile.DiskFile` record.
+        Create a :class:`~fits_storage.core.orm.diskfile.DiskFile` record.
 
         Parameters
         ----------
-        given_file : :class:`~fits_storage_core.orm.file.File`
-            A :class:`~fits_storage_core.orm.file.File` record to associate with
+        given_file : :class:`~fits_storage.core.orm.file.File`
+            A :class:`~fits_storage.core.orm.file.File` record to associate with
         given_filename : str
             The name of the file
         given_path : str
@@ -130,7 +130,7 @@ class DiskFile(Base):
         storage_root : str or None
         z_staging_dir : str or None
         s3_staging_dir : str or None
-            These three are provided here to they can be overridden for
+            These three are provided here so they can be overridden for
             testing and debugging. They default to None which causes them
             to take the values from the configuration system.
         """
@@ -231,11 +231,7 @@ class DiskFile(Base):
             hashobj = hashlib.md5()
             with bz2.open(self.fullpath, mode='rb') as ifp:
                 chunksize = 1000000  # 1 MByte
-                # TODO: use python 3.8 assignment expression
-                while True:
-                    chunk = ifp.read(chunksize)
-                    if not chunk:
-                        break
+                while chunk := ifp.read(chunksize):
                     tmpfile.write(chunk)
                     if compute_values:
                         data_size += len(chunk)
@@ -247,11 +243,22 @@ class DiskFile(Base):
 
         except:
             # Failed to create the unzipped cache file
-            self.uncompressed_cache_file = None
             self.logger.error("Exception creating uncompressed_cache_file "
                               f"{self.uncompressed_cache_file} from "
                               f"{self.fullpath} for "
                               f"{self.filename}", exc_info=True)
+            # If the tmpfile got created, close and remove it, as it's
+            # created with delete=False
+            if self.uncompressed_cache_file is not None:
+                try:
+                    tmpfile.close()
+                except OSError:
+                    pass
+                try:
+                    os.unlink(self.uncompressed_cache_file)
+                except OSError:
+                    pass
+            self.uncompressed_cache_file = None
             raise
 
         return self.uncompressed_cache_file
@@ -328,7 +335,7 @@ class DiskFile(Base):
         Returns
         -------
         bool
-            True if the file exits, is a file, and is readable, else False
+            True if the file exists, is a file, and is readable, else False
         """
         exists = os.access(self.fullpath, os.F_OK | os.R_OK)
         isfile = os.path.isfile(self.fullpath)
@@ -375,8 +382,9 @@ class DiskFile(Base):
                               "to diskfile ad_object")
             self.ad_object = astrodata.open(fullpath)
             return self.ad_object
-        except:
-            self.logger.error(f"Error opening {fullpath} with AstroData")
+        except Exception:
+            self.logger.error(f"Error opening {fullpath} with AstroData",
+                              exc_info=True)
             return None
 
     def __repr__(self):
@@ -387,7 +395,7 @@ class DiskFile(Base):
         -------
         str
             A human readable representation of this
-            :class:`~fits_storage_core.orm.diskfile.DiskFile`
+            :class:`~fits_storage.core.orm.diskfile.DiskFile`
         """
         return f"<DiskFile({self.id}, {self.file_id}, {self.filename}, " \
                f"{self.path})>"
