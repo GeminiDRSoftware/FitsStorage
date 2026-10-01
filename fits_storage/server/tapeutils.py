@@ -339,6 +339,8 @@ class FileOnTapeHelper(object):
     def __init__(self, tapeserver=None, archive=None, logger=None):
         fsc = get_config()
         self.reqses = requests.Session()
+        self.reqses.headers.update({'User-Agent': fsc.http_user_agent})
+
         self.tapeserver = fsc.tape_server if tapeserver is None else tapeserver
         self.archive = archive
         self._cache = []

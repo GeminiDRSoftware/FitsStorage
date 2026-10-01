@@ -54,7 +54,7 @@ url = "http://%s/calibrations/GMOS/NotFail/%s/arc/warnings" % \
       (options.httpserver, daterange)
 
 logger.debug("URL is: %s", url)
-r = requests.get(url)
+r = requests.get(url, headers={'User-Agent': fsc.http_user_agent})
 html = r.text
 
 cremissing = re.compile(r'Counted (\d*) potential missing Calibrations')

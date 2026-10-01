@@ -68,7 +68,7 @@ with session_scope() as session:
     sumfiles = 0
 
     url = f"http://{options.tapeserver}/jsontapefile/{options.filepre}"
-    r = requests.get(url)
+    r = requests.get(url, headers={'User-Agent': fsc.http_user_agent})
     if r.status_code != http.HTTPStatus.OK:
         logger.error("Got status code %s for url %s", (r.status_code, url))
         sys.exit(1)

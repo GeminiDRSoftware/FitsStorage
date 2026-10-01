@@ -54,6 +54,7 @@ class Exporter(object):
 
         # Set up a requests session object with the magic cookie
         self.rs = requests.Session()
+        self.rs.headers.update({'User-Agent': fsc.http_user_agent})
         cookie_dict = {'gemini_fits_upload_auth': fsc.export_auth_cookie}
         requests.utils.add_dict_to_cookiejar(self.rs.cookies, cookie_dict)
 

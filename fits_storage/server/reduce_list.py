@@ -151,7 +151,8 @@ def findfiles(selection, start, end, logger=DummyLogger()):
 
     url = baseurl + '/' + selection
     logger.debug(f"Fetching {url}")
-    r = requests.get(url)
+    fsc=get_config()
+    r = requests.get(url, headers={'User-Agent': fsc.http_user_agent})
 
     if r.status_code != 200:
         logger.error(f"Got status code {r.status_code} fetching {url}")

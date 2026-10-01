@@ -117,6 +117,7 @@ with session_scope() as session:
 
             try:
                 s = requests.Session()
+                s.headers.update({'User-Agent': fsc.http_user_agent})
                 retries = Retry(total=5, backoff_factor=1)
                 s.mount('http://', HTTPAdapter(max_retries=retries))
 

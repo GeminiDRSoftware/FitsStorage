@@ -111,6 +111,7 @@ class Reducer(object):
         # requests session here.
         if self.upload_url:
             self.rs = requests.Session()
+            self.rs.headers.update({'User-Agent': self.fsc.http_user_agent})
             requests.utils.add_dict_to_cookiejar(
                 self.rs.cookies,
                 {'gemini_fits_upload_auth': self.fsc.export_auth_cookie})
