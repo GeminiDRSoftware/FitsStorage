@@ -21,12 +21,16 @@ def fetch_file(filename, dest_dir):
 
     destination = os.path.join(dest_dir, filename)
     srcdir = os.environ.get('FITS_STORAGE_TEST_DATA')
+    if srcdir is None:
+        print("FITS_STORAGE_TEST_DATA undefined in env - will download")
     if srcdir:
         source = os.path.join(srcdir, filename)
         if os.path.exists(source):
             print(f"Copying {source} to {destination}")
             shutil.copyfile(source, destination)
             return
+        else:
+            print(f'File {filename} not found in FITS_STORAGE_TEST_DATA')
     url = 'https://archive.gemini.edu/file/%s' % filename
     print(f"Downloading {url} to {destination}")
     r = requests.get(url, allow_redirects=True)
