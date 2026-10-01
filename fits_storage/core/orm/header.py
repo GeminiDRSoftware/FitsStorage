@@ -48,7 +48,7 @@ class Header(Base):
 
     Parameters
     ----------
-    diskfile : :class:`~fits_storage_core.orm.diskfile.DiskFile`
+    diskfile : :class:`~fits_storage.core.orm.diskfile.DiskFile`
         The file this header is taken from
     """
     __tablename__ = 'header'
@@ -120,12 +120,12 @@ class Header(Base):
     pre_image = Column(Boolean)
 
     if not fsc.using_sqlite:
-        __table__args__ = (Index('ix_header_ut_datetime_desc_nullslast',
-                                 nullslast(desc(ut_datetime))))
+        __table_args__ = (Index('ix_header_ut_datetime_desc_nullslast',
+                                nullslast(desc(ut_datetime))),)
 
     if fsc.is_server:
         # Numpix column is only relevant to servers. For 3.6 at least, we don't
-        # add it in the general case to preserve db compatability for dragons.
+        # add it in the general case to preserve db compatibility for dragons.
         numpix = Column(Integer)
 
         # Note, we don't define ObslogComment.data_label to be a foreign key to
@@ -167,7 +167,7 @@ class Header(Base):
 
         Parameters
         ----------
-        diskfile : :class:`~fits_storage_core.orm.diskfile.DiskFile`
+        diskfile : :class:`~fits_storage.core.orm.diskfile.DiskFile`
             DiskFile record to read to populate :class:`~Header` record
         log : :class:`logging.Logger` or
             :class:`fits_storage.logger.DummyLogger`
@@ -200,6 +200,7 @@ class Header(Base):
             else:
                 self.engineering = True
             self.science_verification = False
+            self.calibration_program = False
 
         # Do we have an engineering over-ride header?
         eng_data = parser.engineering()
@@ -299,7 +300,7 @@ class Header(Base):
         # a temporary workaround when releasing 3.6 to avoid needing a database
         # rebuild. Once the numpix column is fully populated, remove this.
         bytepix = 2 if self.instrument in ('GMOS-N', 'GMOS-S', 'GHOST') else 4
-        if self.diskfile:
+        if self.diskfile and self.diskfile.data_size is not None:
             return self.diskfile.data_size // bytepix
         else:
             return None
