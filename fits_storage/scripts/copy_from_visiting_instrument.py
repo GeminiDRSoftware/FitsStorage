@@ -84,6 +84,8 @@ parser.add_option("--maroonx", action="store_true", dest="maroonx",
                   default=False, help="Copy MAROON-X data")
 parser.add_option("--datepre", action="store", dest="datepre", default=None,
                   help="Date prefix to filter directory names on")
+parser.add_option("--filepre", action="store", dest="filepre", default=None,
+                  help="Only copy files with this filename prefix")
 parser.add_option("--onepass", action="store_true", dest="onepass",
                   help="Perform a single pass rather than looping indefinately")
 parser.add_option("--noqueue", action="store_true", dest="noqueue",
@@ -194,6 +196,11 @@ with session_scope() as session:
                     if not options.force and vihelper.file_exists(filename):
                         logger.debug("File %s already exists on destination, "
                                      "skipping", filename)
+                        continue
+
+                    if options.filepre and not filename.startswith(options.filepre):
+                        logger.debug("File %s doesnt match filepre. Skipping",
+                                     filename)
                         continue
 
                     # If we got here, there was at least one actionable file
