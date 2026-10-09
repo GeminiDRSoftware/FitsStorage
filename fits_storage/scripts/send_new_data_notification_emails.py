@@ -156,23 +156,16 @@ elif options.reduced:
     Automatically reduced data products are available in the archive for {sel}. The attached html file gives details.
     
     The archive search for this data may be found at: {form_url}
-
     
-    Processed (ie reduced) data files in the archive generally have a processing classification specified as "Quick-Look" or "Science-Quality". 
-    Quick-Look data are intended for doing a quick evaluation of those observation(s). Science-Quality data have been processed more accurately and are intended for conducting science. 
-    Our criteria for classifying processed data as either Science-Quality or Quick-Look are given below:
+    Processed (ie reduced) data files in the archive generally have a processing classification specified as "Science-Quality" or"Quick-Look". 
 
-    Science-Quality
-
-    The Data have been reduced by data reduction software which is not known to contain any bugs or deficiencies which would significantly affect the quality of the reduced data products.
+    Science-Quality data have been reduced by data reduction software which is not known to contain any bugs or deficiencies which would significantly affect the quality of the reduced data products.
     The best available calibrations have been applied, and the calibrations are also considered Science-Quality.
 
     Science Quality data are intended to be suitable for science use, however in most cases they have been generated automatically and have not been reviewed by an expert. 
     There will likely be cases where the automatic reduction does not provide good results and the onus is on the end user to verify that the data and reduction meets their requirements. They are reduced in a general manner which we believe is applicable to most science cases, however some science cases will require that the data be re-reduced with reduction techniques specific to the particular scientific use case.
 
-    Quick-Look
-
-    One or more of the criteria for designating the data as Science-Quality have not been met.
+    Quick-Look data do not meet one or more of the above criteria for designating the data as Science-Quality.
 
     Quick-Look reduced data are intended to be used to assess simply whether the data are of interest to the user, in which case re-reduction or manual processing may be appropriate.
     """
@@ -182,8 +175,7 @@ else:
 
     The archive search for this data may be found at: {form_url}
     
-    Automatic reduction will have been initiated for modes where it is available. 
-    and any reduced data products from that should appear in the archive shortly.
+    Automatic reduction will have been initiated for modes where it is available, a separate notification will be send for any resulting reduced data products.
     
     Data Quality assessment will proceed as normal over the next few days.
     """
@@ -203,7 +195,7 @@ if options.check:
 
 # The project / email list. Get from the database
 with session_scope() as session:
-    query = session.quert(Notification)
+    query = session.query(Notification)
     if options.notification_id:
         query = query.filter(Notification.id == options.notification_id)
     for notif in query:
@@ -249,6 +241,10 @@ with session_scope() as session:
             if fitscre.search(html):
                 if options.check:
                     subject = "Data set to CHECK for %s" % notif.selection
+                elif options.reduced_preimage:
+                    subject = "Reduced Pre-image data available for %s" % notif.selection
+                elif options.reduced:
+                    subject = "Automatically reduced science data available for %s" % notif.selection
                 else:
                     subject = "New Data for %s" % notif.selection
                 logger.info(subject)
