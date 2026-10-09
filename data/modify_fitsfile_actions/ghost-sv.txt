@@ -1,0 +1,4 @@
+[{"action": "ADD", "keyword": "PROCITNT", "new_value": "Quick-Look", "comment": "Processing Intent"},
+{"action": "UPDATE", "keyword": "PROCMODE", "old_value": "ql", "new_value": "Quick-Look", "comment": "DRAGONS Processing Mode"},
+{"action": "ADD", "keyword": "PROCINBY", "new_value": "USNGO-Placco", "comment": "Processing Initiated By"},
+{"action": "ADD", "keyword": "PROCTAG", "new_value": "GHOST-SV", "comment": "Gemini Processing Tag"}]
