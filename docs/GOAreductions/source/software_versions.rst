@@ -51,12 +51,16 @@ not compatible with installations of the same DRAGONS version that have not
 upgraded to a new version of ``asdf``.
 
 On the GOA servers that carry out DRAGONS data reduction, we install a clean
-and up-to-date conda environment at the same time as we deploy a new version
-of DRAGONS. This means that the DRAGONS dependencies installed by conda are
-the latest compatible versions of those packages at the time that version of
-DRAGONS was released. We then do not update packages in the conda environment
-during the time we are using that DRAGONS version. We recommend this practice
-to our users, especially if you plan on sharing reduced data with others.
+and up-to-date conda environment at the same time as we deploy a new major or
+minor release of DRAGONS. DRAGONS version number terminology is that the 3
+version numbers (eg 4.2.1) are the major, minor and patch release numbers. We do
+not deploy a new conda environment when installing a patch release.
+This means that the DRAGONS dependencies installed by conda are
+the latest compatible versions of those packages at the time that minor version
+of DRAGONS was released. We then do not update packages in the conda environment
+during the time we are using that DRAGONS minor version (eg 4.2).
+We recommend this practice to our users, especially if you plan on sharing
+reduced data with others.
 
 
 Use of calibrations from GOA with DRAGONS
