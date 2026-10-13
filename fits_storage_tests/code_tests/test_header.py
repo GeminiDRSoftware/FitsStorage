@@ -16,6 +16,7 @@ def test_header(tmp_path):
     assert header.science_verification is False
     assert header.calibration_program is False
     assert header.processing == 'Raw'
+    assert header.processing_level == 1
     assert header.observation_id == 'GN-2019B-FT-111-31'
     assert header.data_label == 'GN-2019B-FT-111-31-001'
     assert header.telescope == 'Gemini-North'

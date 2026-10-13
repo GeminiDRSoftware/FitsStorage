@@ -50,5 +50,6 @@ from fits_storage_tests.code_tests.test_reducequeue import *
 from fits_storage_tests.code_tests.test_reduce_on_ingest import *
 from fits_storage_tests.code_tests.test_processinglog import *
 from fits_storage_tests.code_tests.test_reducer import *
+from fits_storage_tests.code_tests.test_reduction import *
 from fits_storage_tests.code_tests.test_objcat import *
 from fits_storage_tests.code_tests.test_add_to_calcache_queue import *

@@ -1,14 +1,15 @@
+from fits_storage.core.orm.header import Header
+
 from fits_storage.server.orm.reduction import Reduction
 
-from fits_storage.core.orm.header import Header
 from fits_storage_tests.code_tests.helpers import get_test_config, make_diskfile
 
 
-def test_reduction(tmp_path):
+def test_reduction1(tmp_path):
     get_test_config()
 
     # We use this RAW GNIRS file as a basis
-    data_file = 'N20180524S0117.fits'
+    data_file = 'N20180524S0117.fits.bz2'
 
     diskfile = make_diskfile(data_file, tmp_path)
     header = Header(diskfile)
@@ -23,7 +24,7 @@ def test_reduction(tmp_path):
     assert reduction.processing_initiated_by is None
     assert reduction.processing_reviewed_by is None
     assert reduction.processing_review_outcome is None
-    assert reduction.processing_level == 0
+    assert reduction.processing_level == 1
     assert reduction.processing_tag is None
 
     # Poke some values and test

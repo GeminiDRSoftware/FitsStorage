@@ -164,6 +164,9 @@ class FileParser(ABC):
     def processing_tag(self) -> str:
         raise NotImplementedError
 
+    def processing_level(self) -> int:
+        raise NotImplementedError
+
     def program_id(self) -> str:
         raise NotImplementedError()
 
@@ -483,6 +486,9 @@ class AstroDataFileParser(FileParser):
 
     def processing_tag(self):
         return self.ad.phu.get('PROCTAG')
+
+    def processing_level(self):
+        return self.ad.processing_level()
 
     def program_id(self) -> str:
         return self._try_or_none(lambda: self.ad.program_id(), 'Unable to read Program ID from header',

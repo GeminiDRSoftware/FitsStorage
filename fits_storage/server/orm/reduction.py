@@ -45,7 +45,7 @@ class Reduction(Base):
         self.processing_initiated_by = ad.phu.get('PROCINBY')
         self.processing_reviewed_by = ad.phu.get('PROCRVBY')
         self.processing_review_outcome = self._get_processing_review_outcome(ad)
-        self.processing_level = self._get_processing_level(ad)
+        self.processing_level = ad.processing_level()
         self.processing_tag = ad.phu.get('PROCTAG')
 
     def _get_processing_intent(self, ad):
@@ -61,19 +61,3 @@ class Reduction(Base):
         valid = (*gemini_processing_modes, 'FAIL')
         return ro if ro in valid else None
 
-    def _get_processing_level(self, ad):
-        # If there's a valid proclevl header, always respect it, If it is
-        # not an integer, return None.
-        if 'PROCLEVL' in ad.phu.keys():
-            try:
-                proclevl = int(ad.phu.get('PROCLEVL'))
-            except (ValueError, TypeError):
-                proclevl = None
-            return proclevl
-
-        # Otherwise, Return 0 for raw data
-        if 'RAW' in ad.tags:
-            return 0
-
-        # Otherwise, return None
-        return None
