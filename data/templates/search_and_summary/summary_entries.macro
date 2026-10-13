@@ -34,6 +34,7 @@
       {%- elif column.key == 'observation_type' -%}{{ generate_uri_link(column.content, row.uri) }}
       {%- elif column.key == 'object' -%}{{ generate_object(column.content) }}
       {%- elif column.key == 'download' -%}{{ generate_download(column.content, row.sumtype, row.has_provenance, row.has_reduction) }}
+      {%- elif column.key == 'processing' -%}{{ generate_processing(column.content) }}
     {%- endif -%}
   {%- endif -%}
 {%- endfor %}
@@ -120,4 +121,20 @@
 {%- if col.centered %}<div class="center">{% endif %}
 <abbr title="This is proprietary data to which you do not have access. It becomes public on {{ col.release }}">{{ col.prop_message }}</abbr>
 {%- if col.centered %}</div>{% endif %}
+{%- endmacro %}
+
+{%- macro generate_processing(col) %}
+{%- if col.procmode == 'Raw' %}Raw Data
+{%- else %}
+<a href="/help/index.html#data-quality" target="_blank">{{ col.procmode }}</a>
+{%- if col.proclevel == 1 %} - <abbr title="Level 1 - Raw Data">L1</abbr>
+{%- elif col.proclevel == 2 %} - <abbr title="Level 2 - Processed Single Frame">L2</abbr>
+{%- elif col.proclevel == 3 %} - <abbr title="Level 3 - Processed Stack">L3</abbr>
+{%- elif col.proclevel == 4 %} - <abbr title="Level 4 - Extracted higher level data produce (eg catalog)">L4</abbr>
+{%- else %} - <abbr title="Unknown Processing Level">L?</abbr>
+{%- endif %}
+{%- if col.proctag %} - <a href="/processingtags" target="_blank">{{ col.proctag }}</a>
+{%- else %} - Unknown Processing Tag
+{%- endif %}
+{%- endif %}
 {%- endmacro %}
