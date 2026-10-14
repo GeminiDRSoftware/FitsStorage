@@ -73,13 +73,14 @@ def searchform(things, orderby):
     column_selection = {}
 
     if formdata:
-        if (len(formdata) == 7 and
+        if (len(formdata) == 8 and
                 (formdata.get('engineering') == 'EngExclude') and
                 (formdata.get('science_verification') == 'SvInclude') and
                 (formdata.get('qa_state') == 'NotFail') and
                 ('col_selection' in formdata) and
                 (formdata.get('site_monitoring') == 'SmExclude') and
                 ('datetype' in list(formdata.keys())) and
+                (formdata.get('processing_tag') == 'default') and
                 (formdata.get('Search') == 'Search')):
             # This is the default form state, someone just hit submit without doing anything.
             pass
@@ -124,6 +125,7 @@ def searchform(things, orderby):
     try:
         indices = selection_to_form_indices(selection)
         column_selection = dict((k, k in indices) for k in search_col_mapping)
+
     except KeyError:
         pass
 
