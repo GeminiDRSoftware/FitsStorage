@@ -144,6 +144,10 @@ getselection_data = [
     (['IFS'], 'mode', 'IFS'),
     (['IFS'], 'spectroscopy', True),
     (['fubar'], 'notrecognised', 'fubar'),
+    (['processing_level=1'], 'processing_level', 1),
+    (['processing_level=3'], 'processing_level', 3),
+    (['processing_level=foo'], 'processing_level', None),
+
 ]
 
 

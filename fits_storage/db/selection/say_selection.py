@@ -11,6 +11,7 @@ sayselection_defs = {
     'path': 'Path',
     'processing': 'Processing',
     'processing_tag': 'Processing Tag',
+    'processing_level': 'Processing Level',
     'object': 'Object Name',
     'engineering': 'Engineering Data',
     'science_verification': 'Science Verification Data',

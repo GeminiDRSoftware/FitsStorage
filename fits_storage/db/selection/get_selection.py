@@ -169,6 +169,12 @@ def from_url_things(things):
                 selection[getselection_key_value[key]] = value
             elif sep == '=' and key == 'cols':
                 selection['cols'] = value
+            elif sep == '=' and key == 'processing_level':
+                try:
+                    value = int(value)
+                except ValueError:
+                    value = None
+                selection['processing_level'] = value
             elif thing in getselection_booleans:
                 kw, val = getselection_booleans[thing]
                 selection[kw] = val

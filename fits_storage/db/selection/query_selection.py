@@ -51,6 +51,7 @@ queryselection_filters = (
     ('raw_cc',                Header.raw_cc),
     ('raw_iq',                Header.raw_iq),
     ('processing',            Header.processing),
+    ('processing_level',      Header.processing_level),
     )
 
 
