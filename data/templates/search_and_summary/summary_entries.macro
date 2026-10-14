@@ -129,7 +129,7 @@
 {%- elif col.proclevel == 2 %} - <abbr title="Level 2 - Processed Single Frame">L2</abbr>
 {%- elif col.proclevel == 3 %} - <abbr title="Level 3 - Processed Stack">L3</abbr>
 {%- elif col.proclevel == 4 %} - <abbr title="Level 4 - Extracted higher level data produce (eg catalog)">L4</abbr>
-{%- else %} - <abbr title="Unknown Processing Level">L?</abbr>
+{# commented out, this just looks confusing, especially while not all data have one defined {%- else %} - <abbr title="Unknown Processing Level">L?</abbr> #}
 {%- endif %}
 {%- if col.proctag %} - {{ maybe_link(col.proctag, "%s/processing_tag=%s" % (uri, col.proctag), test=col.links) }}
 {%- else %} - Unknown Processing Tag
