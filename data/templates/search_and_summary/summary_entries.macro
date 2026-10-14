@@ -136,5 +136,6 @@
 {%- if col.proctag %} - <a href="/processingtags" target="_blank">{{ col.proctag }}</a>
 {%- else %} - Unknown Processing Tag
 {%- endif %}
+ - <a href="/processinglog/search={{ col.filename }}" target="_blank">[&#x1fab5;&#x1f50d;]</a>
 {%- endif %}
 {%- endmacro %}

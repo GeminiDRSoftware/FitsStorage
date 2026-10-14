@@ -439,7 +439,7 @@ class SummaryGenerator(object):
         else:
             return dict(prop_message=file.name, release=header.release)
 
-    def processing(self, header, **kw):
+    def processing(self, header, diskfile, **kw):
         """
         Get the quality of the file (science quality, quick look...)
 
@@ -452,7 +452,8 @@ class SummaryGenerator(object):
         return dict (
             procmode = header.processing,
             proclevel = header.processing_level,
-            proctag = header.processing_tag
+            proctag = header.processing_tag,
+            filename = diskfile.filename.removesuffix('.bz2')
         )
 
     def datalabel(self, header, **kw):
