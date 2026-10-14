@@ -947,6 +947,10 @@ dropdown_options = {
         [("Raw", "Raw Data"),
          ("Science-Quality", "Science Quality"),
          ("Quick-Look", "Quick Look")],
+    "processing_level_options":
+        [(1, "1 - Raw Data"),
+         (2, "2 - Reduced Single Frame"),
+         (3, "3 - Reduced Stack")],
     "processing_tag_options": [],
     "bin_options":
         [("1x1", "1x1"),

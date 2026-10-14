@@ -253,6 +253,16 @@
             See <a href="/help/index.html#data-quality">here</a> for details.</span>
     </span><br>
 
+    <label> - Level:</label>
+    <select class="ddw" name="processing_level">
+        <option value="">Any</option>
+        {{ generate_option_list(processing_level_options, updated.processing_level) }}
+    </select>
+    <span class="help">(Processing level of data)
+        <span class="helpleft">Select here if you would like to search for a specific level of reduced data.
+        The level definitions follow the IVOA calib_level definitions and are labeled in the menu.</span>
+    </span><br>
+
     <label>Processing Tag:</label>
     <select class="ddw" name="processing_tag">
         <option value="default">Default</option>
