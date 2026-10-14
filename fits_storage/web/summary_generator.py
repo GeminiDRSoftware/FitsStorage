@@ -453,7 +453,9 @@ class SummaryGenerator(object):
             procmode = header.processing,
             proclevel = header.processing_level,
             proctag = header.processing_tag,
-            filename = diskfile.filename.removesuffix('.bz2')
+            filename = diskfile.filename.removesuffix('.bz2'),
+            header_id = header.id,
+            diskfile_id = diskfile.id,
         )
 
     def datalabel(self, header, **kw):
