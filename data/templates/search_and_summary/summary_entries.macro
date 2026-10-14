@@ -34,7 +34,7 @@
       {%- elif column.key == 'observation_type' -%}{{ generate_uri_link(column.content, row.uri) }}
       {%- elif column.key == 'object' -%}{{ generate_object(column.content) }}
       {%- elif column.key == 'download' -%}{{ generate_download(column.content, row.sumtype) }}
-      {%- elif column.key == 'processing' -%}{{ generate_processing(column.content, row.has_provenance, row.has_reduction) }}
+      {%- elif column.key == 'processing' -%}{{ generate_processing(column.content, row.uri, row.has_provenance, row.has_reduction) }}
     {%- endif -%}
   {%- endif -%}
 {%- endfor %}
@@ -121,17 +121,17 @@
 {%- if col.centered %}</div>{% endif %}
 {%- endmacro %}
 
-{%- macro generate_processing(col, has_provenance, has_reduction) %}
+{%- macro generate_processing(col, uri, has_provenance, has_reduction) %}
 {%- if col.procmode == 'Raw' %}Raw Data
 {%- else %}
-<a href="/help/index.html#data-quality" target="_blank">{{ col.procmode }}</a>
+{{ maybe_link(col.procmode, "%s/%s" % (uri, col.procmode), test=col.links) }}
 {%- if col.proclevel == 1 %} - <abbr title="Level 1 - Raw Data">L1</abbr>
 {%- elif col.proclevel == 2 %} - <abbr title="Level 2 - Processed Single Frame">L2</abbr>
 {%- elif col.proclevel == 3 %} - <abbr title="Level 3 - Processed Stack">L3</abbr>
 {%- elif col.proclevel == 4 %} - <abbr title="Level 4 - Extracted higher level data produce (eg catalog)">L4</abbr>
 {%- else %} - <abbr title="Unknown Processing Level">L?</abbr>
 {%- endif %}
-{%- if col.proctag %} - <a href="/processingtags" target="_blank">{{ col.proctag }}</a>
+{%- if col.proctag %} - {{ maybe_link(col.proctag, "%s/processing_tag=%s" % (uri, col.proctag), test=col.links) }}
 {%- else %} - Unknown Processing Tag
 {%- endif %}
 - {% if has_provenance %}<a rel="nofollow" href="/history/{{ col.diskfile_id }}" target="_blank">[H] </a>{% endif %}

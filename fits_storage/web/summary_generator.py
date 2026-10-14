@@ -456,6 +456,7 @@ class SummaryGenerator(object):
             filename = diskfile.filename.removesuffix('.bz2'),
             header_id = header.id,
             diskfile_id = diskfile.id,
+            links=self.links != NO_LINKS,
         )
 
     def datalabel(self, header, **kw):
