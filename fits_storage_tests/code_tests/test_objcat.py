@@ -4,7 +4,7 @@ from fits_storage.core.orm.header import Header
 from fits_storage_tests.code_tests.helpers import get_test_config, make_diskfile
 
 
-def test_reduction(tmp_path):
+def test_objcat(tmp_path):
     get_test_config()
 
     # We use this reduced GMOS image as a basis
