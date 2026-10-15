@@ -32,14 +32,14 @@ recipe_keywords = {
         'MIQ_FWHM', 'MIQ_FWSD', 'MIQ_ELLP', 'MIQ_ELSD', 'MIQ_ISOF', 'MIQ_ISSD', # Delivered IQ
         'MIQ_EE50', 'MIQ_EESD', 'MIQ_PA', 'MIQ_PASD', 'MIQ_STRE', 'MIQ_STSD',
         'MIQ_NSAM', 'MIQ_AOSE', 'MIQ_ZEFW', 'MIQ_ZESD', 'REDUCEIQ',
-        'MCC_ZP', 'MCC_ZPSD', 'MCC_CL', 'MCC_CLSD', 'MCC_NSAM', 'REDUCECC',], # Zeropoint
+        'MCC_ZP', 'MCC_ZPSD', 'MCC_CL', 'MCC_CLSD', 'MCC_NSAM', 'REDUCECC'], # Zeropoint
     'alignAndStack': [
         'MPE_DRA', 'MPE_DRSD', 'MPE_DDEC', 'MPE_DDSD', 'MPE_NSAM',
         'MBG_SKYL', 'MBG_SKSD', 'MBG_BG', 'MBG_BGSD', 'REDUCEBG',
         'MIQ_FWHM', 'MIQ_FWSD', 'MIQ_ELLP', 'MIQ_ELSD', 'MIQ_ISOF', 'MIQ_ISSD',
         'MIQ_EE50', 'MIQ_EESD', 'MIQ_PA', 'MIQ_PASD', 'MIQ_STRE', 'MIQ_STSD',
         'MIQ_NSAM', 'MIQ_AOSE', 'MIQ_ZEFW', 'MIQ_ZESD', 'REDUCEIQ',
-        'MCC_ZP', 'MCC_ZPSD', 'MCC_CL', 'MCC_CLSD', 'MCC_NSAM', 'REDUCECC',],
+        'MCC_ZP', 'MCC_ZPSD', 'MCC_CL', 'MCC_CLSD', 'MCC_NSAM', 'REDUCECC'],
 }
 
 # These tell us the keywords to include (if they are present) in each report
@@ -54,7 +54,14 @@ report_keywords = {
     'ghostWfit': ['WFITCO0', 'WFITCO1', 'WFITCO2', 'WFITCO3', 'WFITCO4', 'WFITCO5',
                   'GRATMNTT', 'OPBENCHT', 'DRYAIRT', 'INENCT1', 'OUTENCT1', 'PLABAIRT'],
     'checkProcessedArc': ['MWS_C0', 'MWS_C1', 'MWS_C2', 'MWS_C3', 'MWS_RMS', 'MWS_IRMS',
-                          'MWS_FWID', 'MWS_DCWL', 'MWS_DDIS', 'MWS_NUML']
+                          'MWS_FWID', 'MWS_DCWL', 'MWS_DDIS', 'MWS_NUML'],
+    'pointingError': ['MPE_DRA', 'MPE_DRSD', 'MPE_DDEC', 'MPE_DDSD', 'MPE_NSAM'],
+    'skyBackground': ['MBG_SKYL', 'MBG_SKSD', 'MBG_BG', 'MBG_BGSD', 'REDUCEBG'],
+    'deliveredImageQuality':
+        ['MIQ_FWHM', 'MIQ_FWSD', 'MIQ_ELLP', 'MIQ_ELSD', 'MIQ_ISOF', 'MIQ_ISSD',
+        'MIQ_EE50', 'MIQ_EESD', 'MIQ_PA', 'MIQ_PASD', 'MIQ_STRE', 'MIQ_STSD',
+        'MIQ_NSAM', 'MIQ_AOSE', 'MIQ_ZEFW', 'MIQ_ZESD', 'REDUCEIQ'],
+    'zeropoint': ['MCC_ZP', 'MCC_ZPSD', 'MCC_CL', 'MCC_CLSD', 'MCC_NSAM', 'REDUCECC']
 }
 
 def get_recipe_keywords(recipe, filename):
