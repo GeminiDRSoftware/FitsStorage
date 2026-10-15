@@ -846,7 +846,7 @@ class RuleSetFactory(object):
             local_scope = set([x for x in data if x not in reserved_global_identifiers])
             # Sort out illegal semantics early on
             if local_scope:
-                for key in ('keywords', 'tests', 'merge', 'merge-maybe'):
+                for key in ('keywords', 'tests', 'merge', 'maybe-merge'):
                     if key in data:
                         raise RuntimeError("{0}: Found a global-level '{1}' along with validation units".format(sourcename, key))
 
@@ -1227,5 +1227,5 @@ class Evaluator(object):
         except pf.VerifyError as e:
             return Result(False, 'EXCEPTION', str(e))
 
-    def __call__(self, filename):
-        return self.evaluate(filename)
+    def __call__(self, *args, **kw):
+        return self.evaluate(*args, **kw)

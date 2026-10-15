@@ -6,7 +6,7 @@ try:
     from .fits_validator import coerceValue, log, BadFilter
     from ..gemini_metadata_utils import gemini_instrument
     from ..gemini_metadata_utils import GeminiProgram, GeminiObservation, GeminiDataLabel
-except ValueError:
+except (ValueError, ImportError):
     from fits_storage.fits_validator import *
     from fits_storage.fits_validator import coerceValue, log
     from ..gemini_metadata_utils import gemini_instrument
@@ -175,11 +175,23 @@ class AstroDataEvaluator(Evaluator):
 
         return s
 
-    def evaluate(self, filename):
+    def evaluate(self, filename, tags=None):
+        """Validate the FITS file at `filename`.
+
+        `tags` should be the AstroData tag set for the file (needed so that
+        e.g. PREPARED data is not checked against raw-data rules). If not
+        given, the file is opened with astrodata to obtain them."""
+        if tags is None:
+            try:
+                tags = astrodata.open(filename).tags
+            except Exception:
+                log("Could not get AstroData tags for {0}".format(filename))
+                tags = set()
         try:
-            # Opens the raw FITS file and sends it to 
-            return super(AstroDataEvaluator, self).evaluate(
-                    pf.open(filename, memmap=True, do_not_scale_image_data=True, mode='readonly'))
+            # Opens the raw FITS file and sends it to the generic evaluator
+            with pf.open(filename, memmap=True, do_not_scale_image_data=True,
+                         mode='readonly') as fits:
+                return super(AstroDataEvaluator, self).evaluate(fits, tags)
         except NotGeminiData:
             return Result(False, 'NOTGEMINI', "This doesn't look at all like data produced at Gemini")
         except BadFilter:
@@ -255,8 +267,7 @@ if __name__ == '__main__':
     else:
         if use_ad:
             evaluate = AstroDataEvaluator()
-            # result = evaluate(astrodata.open(fits))
-            result = evaluate(astrodata.open(argv[0]))
+            result = evaluate(argv[0])
         else:
             evaluate = Evaluator()
             result = evaluate(fits)
