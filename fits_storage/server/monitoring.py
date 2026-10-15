@@ -25,7 +25,21 @@ recipe_keywords = {
     'checkProcessedArc': ['MWS_C0', 'MWS_C1', 'MWS_C2', 'MWS_C3', 'MWS_RMS', 'MWS_IRMS',
                           'MWS_FWID', 'MWS_DCWL', 'MWS_DDIS', 'MWS_NUML'],
     'checkArc': ['MWS_C0', 'MWS_C1', 'MWS_C2', 'MWS_C3', 'MWS_RMS', 'MWS_IRMS',
-                          'MWS_FWID', 'MWS_DCWL', 'MWS_DDIS', 'MWS_NUML']
+                          'MWS_FWID', 'MWS_DCWL', 'MWS_DDIS', 'MWS_NUML'],
+    'reduce_nostack': [
+        'MPE_DRA', 'MPE_DRSD', 'MPE_DDEC', 'MPE_DDSD', 'MPE_NSAM', # Pointing Error
+        'MBG_SKYL', 'MBG_SKSD', 'MBG_BG', 'MBG_BGSD', 'REDUCEBG', # Background
+        'MIQ_FWHM', 'MIQ_FWSD', 'MIQ_ELLP', 'MIQ_ELSD', 'MIQ_ISOF', 'MIQ_ISSD', # Delivered IQ
+        'MIQ_EE50', 'MIQ_EESD', 'MIQ_PA', 'MIQ_PASD', 'MIQ_STRE', 'MIQ_STSD',
+        'MIQ_NSAM', 'MIQ_AOSE', 'MIQ_ZEFW', 'MIQ_ZESD', 'REDUCEIQ',
+        'MCC_ZP', 'MCC_ZPSD', 'MCC_CL', 'MCC_CLSD', 'MCC_NSAM', 'REDUCECC',], # Zeropoint
+    'alignAndStack': [
+        'MPE_DRA', 'MPE_DRSD', 'MPE_DDEC', 'MPE_DDSD', 'MPE_NSAM',
+        'MBG_SKYL', 'MBG_SKSD', 'MBG_BG', 'MBG_BGSD', 'REDUCEBG',
+        'MIQ_FWHM', 'MIQ_FWSD', 'MIQ_ELLP', 'MIQ_ELSD', 'MIQ_ISOF', 'MIQ_ISSD',
+        'MIQ_EE50', 'MIQ_EESD', 'MIQ_PA', 'MIQ_PASD', 'MIQ_STRE', 'MIQ_STSD',
+        'MIQ_NSAM', 'MIQ_AOSE', 'MIQ_ZEFW', 'MIQ_ZESD', 'REDUCEIQ',
+        'MCC_ZP', 'MCC_ZPSD', 'MCC_CL', 'MCC_CLSD', 'MCC_NSAM', 'REDUCECC',],
 }
 
 # These tell us the keywords to include (if they are present) in each report
