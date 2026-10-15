@@ -307,7 +307,10 @@ class Reducer(object):
         for filename in filenames:
             if '/' in filename:
                 (path, slash, filename) = filename.rpartition('/')
-                os.mkdir(os.path.join(self.workingdir, path))
+                try:
+                    os.mkdir(os.path.join(self.workingdir, path))
+                except FileExistsError:
+                    pass
             else:
                 path = ''
 
