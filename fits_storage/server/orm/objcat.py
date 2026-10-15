@@ -85,8 +85,10 @@ class Objcat(Base):
                 value = row[key]
                 if isinstance(value, numpy.integer):
                     value = int(value)
+                    if value == -999:
+                        value = None
                 elif isinstance(value, numpy.floating):
-                    value = float(value)
+                    value = None if numpy.isnan(value) else float(value)
                 else:
                     logger.debug(f"Did not adapt type for objcat {key}")
                 self.__setattr__(key, value)
