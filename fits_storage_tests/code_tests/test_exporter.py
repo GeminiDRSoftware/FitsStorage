@@ -75,6 +75,9 @@ class DummyRequestsResponse(object):
         self.status_code = 500 if bad else 200
         self.text = ""
 
+    def close(self):
+        pass
+
 
 class DummyRequestsSession(object):
     # This is a dummy class we inject into the exporter instance to replace

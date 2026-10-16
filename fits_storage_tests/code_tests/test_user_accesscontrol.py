@@ -37,8 +37,15 @@ class FakeResp(object):
         raise FakeRespError(message)
 
 
+class FakeReq(object):
+
+    def drain_input(self):
+        pass
+
+
 class FakeCtx(object):
     cookies = None
+    req = FakeReq()
     resp = FakeResp()
 
     def __init__(self, cookies=None, user=None):

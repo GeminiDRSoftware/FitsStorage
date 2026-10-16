@@ -1065,13 +1065,16 @@ def needs_cookie(magic_cookie, content_type='text/html', annotate=None,
                             pass
 
             if not got_magic:
-                raise_error = functools.partial(ctx.resp.client_error,
-                                                code=Return.HTTP_FORBIDDEN,
-                                                content_type=ctype,
-                                                annotate=annotate)
-                raise_error(message="This resource can only be accessed by "
-                                    "providing a valid magic cookie, "
-                                    "which this request did not.")
+                # Read and discard any request body (eg a file upload) before
+                # rejecting, else the client gets a ConnectionResetError
+                # rather than the 403 response.
+                ctx.req.drain_input()
+                ctx.resp.client_error(
+                    code=Return.HTTP_FORBIDDEN,
+                    content_type=ctype,
+                    annotate=annotate,
+                    message="This resource can only be accessed by providing a "
+                            "valid magic cookie, which this request did not.")
 
             return fn(*args, **kw)
 
@@ -1144,10 +1147,16 @@ def needs_login(staff=False, misc_upload=False, superuser=False,
 
             user = ctx.user
 
-            raise_error = functools.partial(ctx.resp.client_error,
-                                            code=Return.HTTP_FORBIDDEN,
-                                            content_type=ctype,
-                                            annotate=annotate)
+            def raise_error(message):
+                # Read and discard any request body (eg a file upload) before
+                # rejecting, else the client gets a ConnectionResetError
+                # rather than the 403 response.
+                ctx.req.drain_input()
+                ctx.resp.client_error(code=Return.HTTP_FORBIDDEN,
+                                      content_type=ctype,
+                                      annotate=annotate,
+                                      message=message)
+
             if not user:
                 raise_error(message="You need to be logged in to access "
                                     "this resource")

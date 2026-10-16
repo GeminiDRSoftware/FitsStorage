@@ -115,6 +115,62 @@ class Request(object):
             if self._env['CONTENT_LENGTH'] else 0
         return self.input.read(length) if length > 0 else ''
 
+    def drain_input(self, already_read=0, max_drain=1 << 20,
+                    chunksize=1 << 20):
+        """
+        Reads and discards any unread request payload. Call this before
+        rejecting a request (eg with a POST upload) without reading its body,
+        otherwise the server closes the connection with unread data pending,
+        the TCP stack sends a RST, and the client sees ConnectionResetError
+        instead of the error response.
+
+        ``already_read`` is the number of payload bytes the caller has
+        already consumed.
+
+        ``max_drain`` caps how many bytes we will read and discard (default
+        1MB), so that rejecting a huge upload doesn't mean receiving all of
+        it. If more than this is pending, the client may still see a
+        connection reset. Pass ``None`` for no limit.
+
+        If there is a Content-Length, we never read past it, as that can hang
+        under wsgiref.simple_server. If there isn't (eg a chunked upload), we
+        read until end of input, but only if the server sets
+        wsgi.input_terminated to say that the input stream ends at the end of
+        the request body. Otherwise, reading could block forever, so we
+        don't drain at all.
+        """
+        try:
+            length = self._env['CONTENT_LENGTH']
+        except KeyError:
+            length = None
+
+        if length:
+            try:
+                remaining = int(length) - already_read
+            except ValueError:
+                return
+            if max_drain is not None:
+                remaining = min(remaining, max_drain)
+        elif 'wsgi.input_terminated' in self._env and \
+                self._env['wsgi.input_terminated']:
+            # Unknown length, but safe to read to EOF
+            remaining = max_drain  # None means read to EOF
+        else:
+            return
+
+        try:
+            while remaining is None or remaining > 0:
+                size = chunksize if remaining is None \
+                    else min(chunksize, remaining)
+                data = self.input.read(size)
+                if not data:
+                    break
+                if remaining is not None:
+                    remaining -= len(data)
+        except OSError:
+            # Connection already broken - nothing more we can do
+            pass
+
     @property
     def json(self):
         """

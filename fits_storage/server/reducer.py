@@ -549,7 +549,14 @@ class Reducer(object):
             self.l.info(f"Transferring file {filename} to {url}")
 
             try:
-                req = self.rs.post(url, data=flo, timeout=10)
+                # stream=True so that we get the HTTP status as soon as the
+                # headers arrive, and read the response body separately below.
+                # If the server rejects the upload without reading it all,
+                # the response body can get truncated (see
+                # Request.drain_input() on the server side). With stream=False
+                # that surfaces as a ChunkedEncodingError and we'd never see
+                # the status code.
+                req = self.rs.post(url, data=flo, timeout=10, stream=True)
             except requests.Timeout:
                 self.logrqeerror(f"Timeout posting to: {url}",
                                  exc_info=True)
@@ -563,12 +570,36 @@ class Reducer(object):
                                  exc_info=True)
                 return True
 
+            # Read the response body. Note that the status code is available
+            # even if this fails.
+            resp_text = None
+            resp_exc = None
+            try:
+                resp_text = req.text
+            except requests.RequestException as e:
+                resp_exc = e
+            finally:
+                req.close()
+
             self.l.debug("Got http status %s and response %s",
-                         req.status_code, req.text)
+                         req.status_code, resp_text)
             if req.status_code != http.HTTPStatus.OK:
-                self.logrqeerror(
-                    f"Bad HTTP status: {req.status_code} from "
-                    f"upload post to url: {url}")
+                message = f"Bad HTTP status: {req.status_code} from upload " \
+                          f"post to url: {url}"
+                if isinstance(resp_exc, requests.exceptions.ChunkedEncodingError):
+                    message += " (server dropped the connection while " \
+                               "sending the response - this is expected if " \
+                               "it rejected the upload before reading it all)"
+                elif resp_exc is not None:
+                    message += f" (error reading response: {resp_exc!r})"
+                self.logrqeerror(message)
+                return True
+
+            if resp_exc is not None:
+                # Got a 200 status but couldn't read the verification
+                # response, so we can't confirm the transfer.
+                self.logrqeerror(f"Error reading upload response from url: "
+                                 f"{url}: {resp_exc!r}")
                 return True
 
             # The response should be a short json document
@@ -578,7 +609,7 @@ class Reducer(object):
                 flo.bytes_output = os.path.getsize(fpfn)
                 flo.md5sum_output = md5sum(fpfn)
             try:
-                verification = json.loads(req.text)[0]
+                verification = json.loads(resp_text)[0]
                 if verification['filename'] != destination_filename:
                     et = "Transfer Verification Filename mismatch: " \
                          f"{verification['filename']} vs {destination_filename}"

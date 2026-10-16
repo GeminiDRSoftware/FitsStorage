@@ -42,7 +42,8 @@ def upload_file(things, batch):
     session = ctx.session
 
     if len(things) == 0:
-        ctx.resp.status = Return.HTTP_NOT_FOUND
+        ctx.req.drain_input()
+        ctx.resp.client_error(Return.HTTP_NOT_FOUND, "No filename given")
         return
 
     # Handle the special case /processed_cal "path"
@@ -115,6 +116,7 @@ def upload_file(things, batch):
             fileuploadlog.ut_transfer_complete = utcnow()
     except IOError:
         fileuploadlog.add_note("IO Error writing upload_staging file")
+        ctx.req.drain_input(already_read=size)
         ctx.resp.client_error(Return.HTTP_INTERNAL_SERVER_ERROR,
                               "Could not store the file in the server")
 
