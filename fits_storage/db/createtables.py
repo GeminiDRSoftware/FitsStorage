@@ -170,6 +170,9 @@ def get_fitsweb_granthelper():
     grant.insert(user_tables)
     grant.update(user_tables)
 
+    # Enable the delete button on the admin_file_permissions page
+    grant.delete('userprogram')
+
     # For miscfiles
     grant.insert('miscfile')
     grant.update('miscfile')
