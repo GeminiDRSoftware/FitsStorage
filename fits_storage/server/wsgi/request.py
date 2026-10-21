@@ -77,13 +77,18 @@ class Request(object):
                 forms[getfile] = files.get(getfile)
 
             # Remove empty items from the dict.
-            badkeys = []
-            for key in forms:
-                if forms[key] is None or forms[key] == '':
-                    badkeys.append(key)
-            for key in badkeys:
-                del forms[key]
-            return forms
+            good = {}
+            for (key, value) in forms.iterallitems():
+                if value is None or value == '':
+                    pass
+                else:
+                    if key not in good:
+                        good[key] = value
+                    else:
+                        if not isinstance(good[key], list):
+                            good[key] = [good[key]]
+                        good[key].append(value)
+            return good
         else:
             return {}
 

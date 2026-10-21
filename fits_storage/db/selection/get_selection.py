@@ -77,6 +77,7 @@ getselection_key_value = {
     'readmode': 'readmode',
     'welldepth': 'welldepth',
     'path': 'path',
+    'binning': 'binning',
     }
 
 # Some elements of the URL entries set themselves as the value for a
