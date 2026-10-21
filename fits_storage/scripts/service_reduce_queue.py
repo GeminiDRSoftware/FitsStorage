@@ -87,6 +87,11 @@ if __name__ == "__main__":
         with PidFile(logger, options.name, dummy=not options.lockfile) as pidfile:
             session = sessionfactory()
 
+            # We don't need expire_on_commit for the reduce queue and reducer,
+            # each process owns its rqe, they don't update each other. This
+            # helps avoid issues with the locking scheme
+            session.expire_on_commit = False
+
             reduce_queue = ReduceQueue(session, logger)
 
             # Loop forever. loop is a global variable defined up top
