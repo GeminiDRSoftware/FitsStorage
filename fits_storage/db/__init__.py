@@ -37,7 +37,14 @@ def sessionfactory(reload=False):
         if _saved_database_url.startswith('postgresql://'):
             args = {'pool_size': fsc.postgres_database_pool_size,
                     'max_overflow': fsc.postgres_database_max_overflow,
-                    'echo': fsc.database_debug}
+                    'echo': fsc.database_debug,
+                    'pool_pre_ping': True,
+                    'connect_args': {'keepalives': 1,
+                                     'keepalives_idle': 60,
+                                     'keepalives_interval': 10,
+                                     'keepalives_count': 5,
+                                     'tcp_user_timeout': 120000}
+            }
         else:
             args = {'echo': fsc.database_debug}
         _saved_engine = create_engine(fsc.database_url, future=True, **args)
