@@ -181,6 +181,7 @@ class Reducer(object):
             self.s.commit()  # Ensure transaction on rqe is closed
             self.l.warning("Not cleaning up working directory")
         else:
+            self.s.commit()  # Ensure transaction on rqe is closed
             self.cleanup()
 
         if self.rqe.failed:
@@ -544,7 +545,7 @@ class Reducer(object):
             url = f"{self.upload_url}/{dst}"
             if self.rqe.batch:
                 url += f'?batch={self.rqe.batch}'
-                self.s.commit()  # Ensure transaction on rqe is closed
+            self.s.commit()  # Ensure transaction on rqe is closed
 
             self.l.info(f"Transferring file {filename} to {url}")
 
@@ -784,7 +785,11 @@ databases = {self.fsc.reduce_calibs_url} get
         self.s.add(processinglog)
         self.s.commit()
         # Add the input files to the processinglog
-        for filename in self.rqe.filenames:
+        # Pre-load the filename list then commit, so we don't hold
+        # the transaction open while we do the md5sums
+        filenamelist = self.rqe.filenames
+        self.s.commit()
+        for filename in filenamelist:
             plfile = ProcessingLogFile(processinglog.id,
                                        filename, md5sum(filename),
                                        output=False)
