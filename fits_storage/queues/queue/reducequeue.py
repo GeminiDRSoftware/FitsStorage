@@ -94,7 +94,7 @@ class ReduceQueue(Queue):
 
         There's a subtle but important difference between the reducequeue and
         the other queues - with the other queues we only need to lock the rows
-        we are going to update, with reducequeue we need to lock everything,
+        we are going to update, with reducequeue we need to lock all the rows,
         because we need to prevent simultaneous pop queries collectively
         over-shooting the memory constraint. Without a global lock, simultaneous
         'pop's can each pop and entry that by itself is within the memory
@@ -102,13 +102,19 @@ class ReduceQueue(Queue):
         otherone is about to set a row to inprogress that wasn't in progres when
         it checked memory use.
 
-        There's a subtle gotcha with this in that with sqlalchemy, almost any
-        access to the data values of an ORM instance will start a transaction -
-        ie "BEGIN; SELECT blah.* from blah where id=..." and until that
-        transaction ends (ie COMMIT;s) we cannot get an ACCESS EXCLUSIVE lock
-        on the table. So in all the reducequeue and reducer code, we need to
-        be diligent about doing a session.commit() after we are done accessing
-        elements of the reducequeue instance, even if we didn't modify them.
+        So basically we need to prevent multiple pop()s happening at the same
+        time. We use an EXCLUSIVE lock for this - it conflicts with itself,
+        which prevents multiple pop()s happening at the same time, but unlike
+        ACCESS EXCLUSIVE, it does not block reads from the table, so reduces
+        the issue where with ACCESS EXLCUSIVE if there is any other transaction
+        in progress on the table (and in sqlalchemy even getting the value of
+        an ORM property initiates a transaction) they would confict, and
+        you would have to wait for that transaction to commit before getting
+        the lock.
+
+        We also set expire_on_commit = False in service_reduce_queue.py when
+        we acquire the session. This vastly reduced the number of database
+        transactions that result from simply loading an orm property value.
 
         batch / after_batch: With DRAGONS processing in GOA, we store all
         calibrations in GOA. This creates a subelty where even if you ensure
@@ -196,7 +202,7 @@ class ReduceQueue(Queue):
             # This if clause is here for the tests, sqlite3 is not suitable for
             # production use for the reducequeue in any non-trivial case
             if not fsc.using_sqlite:
-                session.execute(text("LOCK TABLE reducequeue IN ACCESS EXCLUSIVE MODE"))
+                session.execute(text("LOCK TABLE reducequeue IN EXCLUSIVE MODE"))
             got_ns = time.monotonic_ns()
             qentry = session.scalars(stmt).first()
 
@@ -219,6 +225,7 @@ class ReduceQueue(Queue):
             waiting_ms = (got_ns - requested_ns) / 1E6
             held_ms = (released_ns - got_ns) / 1E6
             logger.debug(f"PopRQ: waiting for lock: {waiting_ms} ms, held lock: {held_ms} ms")
+
         return qentry
 
 # Helper function for memory estimate from number of pixels

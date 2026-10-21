@@ -132,45 +132,27 @@ class Reducer(object):
         """
         self.validate()
 
-        # There's a subtle gotcha in that with sqlalchemy, almost
-        # any access to the data values of an ORM instance will
-        # start a transaction and until that transaction ends
-        # (ie COMMIT;s) we cannot get an ACCESS EXCLUSIVE lock to
-        # pop another queue entruy (in any process). So in all the
-        # reducequeue and reducer code, we need to be diligent about
-        # doing a session.commit() after we are done accessing
-        # the reducequeue instance, even if we didn't modify it.
-
-
         if not self.rqe.failed:
-            self.s.commit()  # Ensure transaction on rqe is closed
             self.makeworkingdir()
 
         if not self.rqe.failed:
-            self.s.commit()  # Ensure transaction on rqe is closed
             self.getrawfiles()
 
         if not self.rqe.failed:
-            self.s.commit()  # Ensure transaction on rqe is closed
             self.call_reduce()
 
         if not self.rqe.failed:
-            self.s.commit()  # Ensure transaction on rqe is closed
             self.set_reduction_metadata()
 
         if not self.rqe.failed:
-            self.s.commit()  # Ensure transaction on rqe is closed
             if self.rqe.capture_files:
-                self.s.commit()  # Ensure transaction on rqe is closed
                 self.capture_reduced_files()
             else:
                 self.l.info("Not capturing Output files from this processing "
                             "run")
 
         if not self.rqe.failed:
-            self.s.commit()  # Ensure transaction on rqe is closed
             if self.rqe.capture_monitoring:
-                self.s.commit()  # Ensure transaction on rqe is closed
                 self.capture_monitoring()
             else:
                 self.l.info("Not capturing monitoring values from this "
@@ -178,14 +160,11 @@ class Reducer(object):
 
         if self.nocleanup or (self.fsc.fits_system_status == 'development'
                               and self.rqe.failed):
-            self.s.commit()  # Ensure transaction on rqe is closed
             self.l.warning("Not cleaning up working directory")
         else:
-            self.s.commit()  # Ensure transaction on rqe is closed
             self.cleanup()
 
         if self.rqe.failed:
-            self.s.commit()  # Ensure transaction on rqe is closed
             return False
 
         # Yay. If we got here, we successfully reduced the data.
@@ -193,7 +172,7 @@ class Reducer(object):
         self.s.delete(self.rqe)
         self.s.commit()
 
-        # Delete any equivlent rqe entries that are marked as failed
+        # Delete any equivalent rqe entries that are marked as failed
         failed_rqes = self.s.query(ReduceQueueEntry) \
             .filter(ReduceQueueEntry.fail_dt != self.rqe.fail_dt_false) \
             .filter(ReduceQueueEntry.filename == self.rqe.filename) \
@@ -250,8 +229,6 @@ class Reducer(object):
             self.logrqeerror("Reducer Validation failed: No Processing Tag "
                              "value")
 
-        self.s.commit()  # Ensure transaction on rqe is closed
-
         # Check upload_staging_dir is configured and exists as we need it to
         # capture the reduced products.
         if not (self.fsc.upload_staging_dir and
@@ -277,7 +254,6 @@ class Reducer(object):
             return
 
         self.workingdir = os.path.join(self.reduce_dir, str(self.rqe.id))
-        self.s.commit()  # Ensure transaction on rqe is closed
 
         if os.path.exists(self.workingdir):
             self.logrqeerror(f"Reduce Working directory for this reduce queue"
@@ -303,7 +279,6 @@ class Reducer(object):
         Set self.rqe.failed via logrqeerror if fails.
         """
         filenames = self.rqe.filenames
-        self.s.commit()  # Ensure transaction on rqe is closed
 
         for filename in filenames:
             if '/' in filename:
@@ -458,7 +433,6 @@ class Reducer(object):
                 hdr['PROCITNT'] = self.rqe.intent
                 hdr['PROCINBY'] = self.rqe.initiatedby
                 hdr['PROCTAG'] = self.rqe.tag
-                self.s.commit()  # Ensure transaction on rqe is closed
 
                 # And the actual recipe name
                 hdr['DRECIPE'] = self.actual_recipe
@@ -492,7 +466,6 @@ class Reducer(object):
                 src = os.path.join(self.workingdir, filename)
                 dstpath = os.path.join(self.fsc.upload_staging_dir,
                                        self.rqe.tag)
-                self.s.commit()  # Ensure transaction on rqe is closed
                 # filename at this point (and correctly in the src) can have
                 # directories, eg calibrations/processed_cheese/blah.fits.
                 # Need to strip those off for the destination.
@@ -517,7 +490,7 @@ class Reducer(object):
 
                 foq.add(fo_req, filename=os.path.basename(filename),
                         response_required=False, batch=self.rqe.batch)
-                self.s.commit()  # Ensure transaction on rqe is closed
+                self.s.commit()
 
 
 
@@ -540,12 +513,10 @@ class Reducer(object):
             destination_filename = os.path.basename(destination_filename)
             # Construct upload URL.
             dst = os.path.join(self.rqe.tag, destination_filename)
-            self.s.commit()  # Ensure transaction on rqe is closed
 
             url = f"{self.upload_url}/{dst}"
             if self.rqe.batch:
                 url += f'?batch={self.rqe.batch}'
-            self.s.commit()  # Ensure transaction on rqe is closed
 
             self.l.info(f"Transferring file {filename} to {url}")
 
@@ -785,16 +756,12 @@ databases = {self.fsc.reduce_calibs_url} get
         self.s.add(processinglog)
         self.s.commit()
         # Add the input files to the processinglog
-        # Pre-load the filename list then commit, so we don't hold
-        # the transaction open while we do the md5sums
-        filenamelist = self.rqe.filenames
-        self.s.commit()
-        for filename in filenamelist:
+        for filename in self.rqe.filenames:
             plfile = ProcessingLogFile(processinglog.id,
                                        filename, md5sum(filename),
                                        output=False)
             self.s.add(plfile)
-        self.s.commit()
+            self.s.commit()
 
         # Start the log capture for the processing log at this point
         logcapture = io.StringIO()
@@ -818,7 +785,7 @@ databases = {self.fsc.reduce_calibs_url} get
             # Capture log and close down log capture
             self.l.removeHandler(handler)
             processinglog.end(self.reduced_files, self.rqe.failed, None)
-            self.s.commit()  # Ensure transaction on rqe is closed
+            self.s.commit()
             # Add the captured log output and close the logcapture StringIO
             processinglog.log = logcapture.getvalue()
             logcapture.close()
@@ -857,7 +824,7 @@ databases = {self.fsc.reduce_calibs_url} get
                 # Capture log and close down log capture
                 self.l.removeHandler(handler)
                 processinglog.end(self.reduced_files, self.rqe.failed, None)
-                self.s.commit()  # Ensure transaction on rqe is closed
+                self.s.commit()
                 # Add the captured log output and close the logcapture StringIO
                 processinglog.log = logcapture.getvalue()
                 logcapture.close()
@@ -873,7 +840,6 @@ databases = {self.fsc.reduce_calibs_url} get
 
         debundle = self.rqe.debundle
         recipe = self.rqe.recipe
-        self.s.commit()  # Ensure transaction on rqe is closed
 
         # Ensure we don't have an old value left over
         self.actual_recipe = None
@@ -991,7 +957,7 @@ databases = {self.fsc.reduce_calibs_url} get
             # Capture log and close down log capture
             self.l.removeHandler(handler)
             processinglog.end(self.reduced_files, self.rqe.failed, self.actual_recipe)
-            self.s.commit()  # Ensure transaction on rqe is closed
+            self.s.commit()
             # Add the captured log output and close the logcapture StringIO
             processinglog.log = logcapture.getvalue()
             logcapture.close()
@@ -1003,7 +969,7 @@ databases = {self.fsc.reduce_calibs_url} get
                                            md5sum(filename),
                                            output=True)
                 self.s.add(plfile)
-            self.s.commit()
+                self.s.commit()
             os.chdir(pwd)
             return
 
@@ -1025,7 +991,7 @@ databases = {self.fsc.reduce_calibs_url} get
         # and raise an exception there to trigger service_reduce_queue to bail out.
 
         processinglog.end(self.reduced_files, self.rqe.failed, self.actual_recipe)
-        self.s.commit()  # Ensure transaction on rqe is closed
+        self.s.commit()
 
         # Add the output files to the processinglog
         for filename in self.reduced_files:
@@ -1034,7 +1000,7 @@ databases = {self.fsc.reduce_calibs_url} get
                                        md5sum(filename),
                                        output=True)
             self.s.add(plfile)
-        self.s.commit()
+            self.s.commit()
 
         self.l.info("At end of call_reduce, reduced files are: %s",
                     self.reduced_files)
