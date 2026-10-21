@@ -6,6 +6,8 @@ from fits_storage.gemini_metadata_utils.progid_obsid_dl import GeminiDataLabel, 
 import requests
 import os
 
+HEADERS = {'User-Agent': 'GeminiInstMon'}
+
 class InstMonQA(object):
     def __init__(self, scatter, status_text):
         self.scatter = scatter
@@ -70,11 +72,7 @@ class InstMonQA(object):
         self.scratch = set()
         for i in self.scatter.data_source.selected.indices:
             self.scratch.add(self.scatter.data_source.data['data_label'][i])
-            self.scratch_textarea.value = ''
-            scratchlist = list(self.scratch)
-            scratchlist.sort()
-            for i in scratchlist:
-                self.scratch_textarea.value += f"{i}\n"
+        self.scratch_textarea.value = ''.join(f"{dl}\n" for dl in sorted(self.scratch))
 
     def get_obsids_callback(self):
         obsids = set()
@@ -109,11 +107,16 @@ class InstMonQA(object):
             scheme = 'https://'
         alljqas = []
         for item in self.lines_from_scratch():
-            url = f"{scheme}{server}//jsonqastate/present/RAW/Raw/{item}"
-            r = requests.get(url)
+            url = f"{scheme}{server}/jsonqastate/present/RAW/Raw/{item}"
+            r = requests.get(url, headers=HEADERS)
             if r.status_code != 200:
                 self.status_text.value = f"Bad http status {r.status_code} for {url}."
-            jqas = r.json()
+                continue
+            try:
+                jqas = r.json()
+            except ValueError:
+                self.status_text.value = f"Could not parse JSON response from {url}."
+                continue
 
             if len(jqas) == 0:
                 self.status_text.value = f"Got no files for {item}"
@@ -160,7 +163,7 @@ class InstMonQA(object):
 
         url = f"http://{server}/update_headers"
         cookies = {'gemini_api_authorization': self.cookie}
-        r = requests.post(url, json=request, cookies=cookies)
+        r = requests.post(url, json=request, cookies=cookies, headers=HEADERS)
 
         if r.status_code != 200:
             self.status_text.value = f"Bad HTTP status {r.status_code} for update_headers"

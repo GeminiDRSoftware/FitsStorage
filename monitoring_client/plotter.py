@@ -92,7 +92,7 @@ class InstMonPlot(object):
             ("ut_datetime", "UT datetime")],
             value="row_number")
         self.group_select = Select(title="Group by", options=['None', 'max'], value='None')
-        self.plot_select = Select(title="Plot", options=self.plots, value='Any')
+        self.plot_select = Select(title="Plot", options=self.plots, value='')
         self.plot_default_button = Button(label="Default", align='end')
 
         self.selection_info = TextAreaInput(cols=40, rows=6, title='Selection Info')
@@ -217,11 +217,11 @@ class InstMonPlot(object):
 
         self.cds.data = self.df
 
-        if self.xaxis == 'utdatetime':
-            print("Setting xaxis to 'utdatetime'")
-            self.fig.x_axis_type = 'datetime'
+        if self.xaxis == 'ut_datetime':
+            print("Setting xaxis to 'ut_datetime'")
             self.fig.xaxis.major_label_overrides = {}
             self.fig.xaxis.formatter = DatetimeTickFormatter()
+            self.fig.xaxis.axis_label = 'UT datetime'
         else:
             labels = dict(self.df['data_label'])
             for i in labels.keys():
@@ -231,6 +231,7 @@ class InstMonPlot(object):
                     labels[i] = dlsplit[1]
             self.fig.xaxis.major_label_overrides = labels
             self.fig.xaxis.major_label_orientation = pi/4
+            self.fig.xaxis.axis_label = 'Data Label'
 
         self.fig.hover.tooltips=[("DL", "@data_label"), ("ext", "@adid"),
                    ("qastate", "@qastate")]
@@ -240,6 +241,8 @@ class InstMonPlot(object):
 
     def xaxis_callback(self, attr, old, new):
         self.xaxis = new
+        if len(self.df):
+            self.filter_data()
         self.update_plot()
 
     def plot_callback(self, attr, old, new):
@@ -257,11 +260,11 @@ class InstMonPlot(object):
 
     def plot_default_callback(self):
         if self.url_report_select.value == 'checkBias':
-            self.group_select.value = ''
+            self.group_select.value = 'None'
             self.yaxis = 'OSCOMED'
             self.plot_select.value = self.yaxis
         elif self.url_report_select.value == 'checkFlat':
-            self.group_select.value = ''
+            self.group_select.value = 'None'
             self.yaxis = 'FLATMED'
             self.plot_select.value = self.yaxis
 
@@ -286,6 +289,14 @@ class InstMonPlot(object):
         self.scatter.data_source.selected.indices = new_indices
 
     def get_selection_info(self, attr, old, new):
+        data = self.scatter.data_source.data
+        if not self.scatter.data_source.selected.indices or \
+                len(data.get('data_label', [])) == 0:
+            self.selection_info.value = ''
+            return
+        if self.yaxis is None or self.yaxis not in data:
+            self.selection_info.value = 'Select a column to Plot first'
+            return
         self.selection_info.value = 'Got Data'
         total = 0
         count = 0
