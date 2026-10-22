@@ -14,7 +14,6 @@ import requests
 import gc
 import psutil
 
-from recipe_system.scripts.superclean import pass_
 
 # This is used to free up fragmented memory allocated by malloc during
 # DRAGONS runs. If it can't be imported, so be it,
