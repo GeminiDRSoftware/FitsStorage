@@ -14,6 +14,16 @@ import requests
 import gc
 import psutil
 
+from recipe_system.scripts.superclean import pass_
+
+# This is used to free up fragmented memory allocated by malloc during
+# DRAGONS runs. If it can't be imported, so be it,
+try:
+    import ctypes
+    malloc_trim = ctypes.CDLL("libc.so.6").malloc_trim
+except:
+    malloc_trim = lambda *args, **kwargs: None
+
 from astropy.io import fits
 
 import astrodata
@@ -198,6 +208,8 @@ class Reducer(object):
         # properly from the reduction we just did.
 
         gc.collect()
+        malloc_trim(0)
+
         rss = psutil.Process().memory_info().rss
         rss /= 1E6
         # 400 (MB) seems typical on linux, python 3.12, once things
@@ -979,6 +991,7 @@ databases = {self.fsc.reduce_calibs_url} get
         # We also check our memory footprint after calling for garbage
         # collection, and issue a warning if it seems high.
         gc.collect()
+        malloc_trim(0)
         rss = psutil.Process().memory_info().rss
         # 400000000 (400MB) seems typical on linux, python 3.12, once things
         # are underway.
