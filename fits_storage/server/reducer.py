@@ -20,7 +20,7 @@ import psutil
 try:
     import ctypes
     malloc_trim = ctypes.CDLL("libc.so.6").malloc_trim
-except:
+except (ImportError, OSError, AttributeError):
     malloc_trim = lambda *args, **kwargs: None
 
 from astropy.io import fits
