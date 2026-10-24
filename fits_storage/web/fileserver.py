@@ -97,8 +97,13 @@ def make_tarinfo(name, **kw):
 def download_post():
     # Parse form data
     formdata = get_context().req.get_form_data()
+    files = formdata.get('files')
+    if files is None:
+        files = []
+    elif not isinstance(files, list):
+        files = [files]
     selection = Selection()
-    selection['filelist'] = formdata.getall('files')
+    selection['filelist'] = files
     return download(selection = selection,
                     associated_calibrations = False)
 
