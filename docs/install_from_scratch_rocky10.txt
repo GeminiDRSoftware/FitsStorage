@@ -95,7 +95,7 @@ conda remove --force fits_storage # we only really wanted the other dragons deps
 conda install fitsverify
 
 # OR install a pre-canned environment from the time of dragons release.
-
+conda create --name dragons --file dragons422-conda-lock.yaml
 
 # In bash profile, add:
 export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
