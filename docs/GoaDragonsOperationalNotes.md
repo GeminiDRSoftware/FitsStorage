@@ -12,8 +12,6 @@ GMOS-N and S LS FLATs and ARCs, stds, sci run for 2020- and 20220826-
 
 add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --tag GMOS-N_BIAS-1 --recipe checkBiasOSCO --capture_monitoring --selection /canonical/GMOS-N/BIAS/Raw/RAW/notengineering/filepre=N2010
 
-add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_monitoring --recipe checkFlatCounts --tag GMOS-S_IM-1 --selection /canonical/GMOS-S/dayCal/OBJECT/Raw/RAW/fullframe/imaging/slow/low/object=Twilight/filepre=S202
-
 # GHOST bias checking
 add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --capture_monitoring --recipe checkBiasOSCO --tag GOA-GHOST-CAL-1 --debundle INDIVIDUAL --selection /canonical/GHOST/dayCal/Raw/RAW/BIAS/filepre=S202
 
@@ -23,6 +21,10 @@ https://archive.gemini.edu/monitoring/checkBias/BIAS/DayCal/Raw/GHOST/1x1/202512
 
 ## Set IMQA example
 set-imqa.py --server cpofits-lv1 --selection=RAW/Raw/GMOS-S/low/slow/centralspectrum/dayCal/BIAS/filepre=S2024/UndefinedQA --pass
+
+# GMOS imaging flat checking
+add_to_reduce_queue.py --initiatedby phirst --intent Science-Quality --tag GMOS-N_IMFLAT-1 --capture_monitoring --recipe checkFlatCounts --selection notengineering/AnyQA/GMOS-N/imaging/object=Twilight/OBJECT/Raw/RAW
+
 
 # GHOST processing:
 
