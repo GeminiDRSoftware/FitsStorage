@@ -16,7 +16,7 @@ import urllib3
 from sqlalchemy import select, desc, and_, or_
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
-from fits_storage.gemini_metadata_utils import GeminiObservation
+from fits_storage.gemini_metadata_utils import GeminiObservation, GeminiProgram
 from fits_storage.server.orm.user import User
 from fits_storage.server.orm.userprogram import UserProgram
 
@@ -676,19 +676,6 @@ def admin_file_permissions():
         ctx.session.query(UserProgram).filter(UserProgram.id == delete).delete()
 
     # If we got an action, do it
-    if item:
-        for itemx in item.split(','):
-            itemx = itemx.strip()
-            if not itemx.endswith('.fits'):
-                try:
-                    obscheck = GeminiObservation(itemx)
-                    if not obscheck.valid:
-                        warnings.append(f'Observation ID <b>{itemx}</b> '
-                                        'has invalid format, adding anyway')
-                except Exception:
-                    warnings.append(f'Observation ID <b>{itemx}</b> '
-                                    'has invalid format, adding anyway')
-
     if usernames and item:
         for username in usernames.split(','):
             username = username.strip()
@@ -714,7 +701,7 @@ def admin_file_permissions():
                             up = UserProgram(user_id=user.id, filename=itemx)
                             ctx.session.add(up)
                             ctx.session.flush()
-                    else:
+                    elif GeminiObservation(itemx).valid:
                         up = ctx.session.query(UserProgram)\
                             .filter(UserProgram.observation_id == itemx) \
                             .filter(UserProgram.user_id == user.id).first()
@@ -723,25 +710,43 @@ def admin_file_permissions():
                                              observation_id=itemx)
                             ctx.session.add(up)
                             ctx.session.flush()
+                    elif GeminiProgram(itemx).valid:
+                        up = ctx.session.query(UserProgram)\
+                            .filter(UserProgram.program_id == itemx) \
+                            .filter(UserProgram.user_id == user.id).first()
+                        if up is None:
+                            up = UserProgram(user_id=user.id,
+                                             program_id=itemx)
+                            ctx.session.add(up)
+                            ctx.session.flush()
+                    else:
+                        warnings.append(f'<b>{itemx}</b> '
+                                        'has invalid format, not adding')
             else:
                 warnings.append(f'Username, ORCID_ID or NORILAB_ID <b>'
                                 f'{username}</b> not found in system, ignoring')
 
     observation_list = list()
     q = ctx.session.query(UserProgram, User)\
-        .filter(and_(UserProgram.observation_id != None,
-                     UserProgram.observation_id != ''),
+        .filter(or_(and_(UserProgram.observation_id != None,
+                        UserProgram.observation_id != ''),
+                   (and_(UserProgram.program_id != None,
+                         UserProgram.program_id != ''))),
                 User.id == UserProgram.user_id)
     if filter:
         q = q.filter(or_(UserProgram.observation_id == filter,
+                         UserProgram.program_id == filter,
                          User.username == filter))
-    for up, usr in q.order_by(UserProgram.observation_id.desc(), User.username):
+    for up, usr in q.order_by(UserProgram.program_id.desc(),
+                              UserProgram.observation_id.desc(),
+                              User.username):
         obs_perm = dict()
         obs_perm['id'] = up.id
-        obs_perm['username'] = usr.username
-        obs_perm['orcid_id'] = usr.orcid_id
-        obs_perm['noirlab_id'] = usr.noirlab_id
-        obs_perm['observation_id'] = up.observation_id
+        obs_perm['username'] = usr.username if usr.username else ''
+        obs_perm['orcid_id'] = usr.orcid_id if usr.orcid_id else ''
+        obs_perm['noirlab_id'] = usr.noirlab_id if usr.noirlab_id else ''
+        obs_perm['program_id'] = up.program_id if up.program_id else ''
+        obs_perm['observation_id'] = up.observation_id if up.observation_id else ''
         observation_list.append(obs_perm)
 
     user_list = ctx.session.query(User) \
@@ -758,10 +763,10 @@ def admin_file_permissions():
     for up, usr in q.order_by(UserProgram.filename.desc(), User.username):
         obs_perm = dict()
         obs_perm['id'] = up.id
-        obs_perm['username'] = usr.username
-        obs_perm['orcid_id'] = usr.orcid_id
-        obs_perm['noirlab_id'] = usr.noirlab_id
-        obs_perm['filename'] = up.filename
+        obs_perm['username'] = usr.username if usr.username else ''
+        obs_perm['orcid_id'] = usr.orcid_id if usr.orcid_id else ''
+        obs_perm['noirlab_id'] = usr.noirlab_id if usr.noirlab_id else ''
+        obs_perm['filename'] = up.filename if up.filename else ''
         file_list.append(obs_perm)
 
     # Have applied changes, now generate list of staff users

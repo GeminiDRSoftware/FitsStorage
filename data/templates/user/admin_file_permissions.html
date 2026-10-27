@@ -24,18 +24,19 @@
         <div class="outlinebox">
             <h2>Search Permissions</h2>
             <form action="/admin_file_permissions" method="POST">
-                <label for="filter">Search (Username, Obs ID or Filename):</label>
+                <label for="filter">Search (Username, Prog ID, Obs ID or Filename):</label>
                 <input type="text" name="filter" id="filter" value="{{ filter }}" size="20"/>
                 <button type="submit" class="btn btn-primary" value="Submit">Search</button>
             </form>
 
-            <h4>Observation Permissions</h4>
+            <h4>Program / Observation Permissions</h4>
             <table id="observationtable">
                 <thead class='tr_head'>
                     <tr>
                         <th>Username</th>
                         <th>ORCID ID</th>
                         <th>NoirLab ID</th>
+                        <th>Program ID</th>
                         <th>Observation ID</th>
                         <th>Action</th>
                     </tr>
@@ -46,6 +47,7 @@
                             <td>{{ observation.username }}</td>
                             <td>{{ observation.orcid_id }}</td>
                             <td>{{ observation.noirlab_id }}</td>
+                            <td>{{ observation.program_id }}</td>
                             <td>{{ observation.observation_id }}</td>
                             <td>
                                 <form action="/admin_file_permissions" method="POST">
