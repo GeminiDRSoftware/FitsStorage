@@ -711,14 +711,8 @@ def admin_file_permissions():
                             ctx.session.add(up)
                             ctx.session.flush()
                     elif GeminiProgram(itemx).valid:
-                        up = ctx.session.query(UserProgram)\
-                            .filter(UserProgram.program_id == itemx) \
-                            .filter(UserProgram.user_id == user.id).first()
-                        if up is None:
-                            up = UserProgram(user_id=user.id,
-                                             program_id=itemx)
-                            ctx.session.add(up)
-                            ctx.session.flush()
+                        warnings.append("This tool doens't work for program IDs,"
+                                        " only Observation IDs or filenames. Sorry.")
                     else:
                         warnings.append(f'<b>{itemx}</b> '
                                         'has invalid format, not adding')
@@ -728,24 +722,18 @@ def admin_file_permissions():
 
     observation_list = list()
     q = ctx.session.query(UserProgram, User)\
-        .filter(or_(and_(UserProgram.observation_id != None,
+        .filter(and_(UserProgram.observation_id != None,
                         UserProgram.observation_id != ''),
-                   (and_(UserProgram.program_id != None,
-                         UserProgram.program_id != ''))),
                 User.id == UserProgram.user_id)
     if filter:
         q = q.filter(or_(UserProgram.observation_id == filter,
-                         UserProgram.program_id == filter,
                          User.username == filter))
-    for up, usr in q.order_by(UserProgram.program_id.desc(),
-                              UserProgram.observation_id.desc(),
-                              User.username):
+    for up, usr in q.order_by(UserProgram.observation_id.desc(), User.username):
         obs_perm = dict()
         obs_perm['id'] = up.id
         obs_perm['username'] = usr.username if usr.username else ''
         obs_perm['orcid_id'] = usr.orcid_id if usr.orcid_id else ''
         obs_perm['noirlab_id'] = usr.noirlab_id if usr.noirlab_id else ''
-        obs_perm['program_id'] = up.program_id if up.program_id else ''
         obs_perm['observation_id'] = up.observation_id if up.observation_id else ''
         observation_list.append(obs_perm)
 
