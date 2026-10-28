@@ -77,7 +77,7 @@ def get_gmos_imflats(start=None, end=None, tag=None, keyword=None,
             where(Header.detector_gain_setting == 'low').
             where(Header.detector_readspeed_setting == 'slow').
             where(Header.object == 'Twilight').
-            where(Header.qa_state != 'Fail').
+            where(Header.qa_state.in_(('Pass', 'Undefined'))).
             where(Monitoring.keyword == keyword)
             .group_by(Monitoring.header_id))
 
@@ -310,7 +310,7 @@ def autogroup(nights, groups, thresh=1E6, maxgap=3):
                         f"{maxgap} of a group, leaving ungrouped")
 
 
-def findgroups(nights, groups, night, n=2):
+def findgroups(nights, groups, night, n=1):
     """
     Show the n nearest groups on either side of night. night can be any date
     in YYYYMMDD format - it doesn't have to be in the nights list.
