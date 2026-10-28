@@ -116,9 +116,10 @@ def group_imflats(nights, interactive=True):
         while cmd != 'Q':
             print(f"\nNight: {len(nights)}, Groups: {len(groups)}")
             try:
-                cmd = input("[n]ights (ungrouped) [g]roups. [A]uto group [threshold]"
-                            "[a]dd night [group] [s]ave filename "
-                            "[Q]uit (done): ").strip()
+                cmd = input("[n]ights (ungrouped) [g]roups [A]uto group "
+                            "[threshold] [a]dd night [group] "
+                            "[m]ulti add night1 night2 ... (makes new group) "
+                            "[s]ave filename [Q]uit (done): ").strip()
             except EOFError:
                 # Ctrl-D - treat as Quit
                 print()
@@ -150,6 +151,11 @@ def group_imflats(nights, interactive=True):
                     addntog(nights, groups, things[1], things[2])
                 else:
                     print("bad command - usage: a night [group]")
+            elif things and things[0] == 'm':
+                if len(things) > 2:
+                    addntog(nights, groups, things[1:])
+                else:
+                    print("bad command - usage: m night1 night2 ...")
             elif things and things[0] == 's':
                 if len(things) != 2:
                     print("Usage: s <filename>")
@@ -163,10 +169,27 @@ def group_imflats(nights, interactive=True):
     return groups
 
 def addntog(nights, groups, n, g=None):
-    # Nights with an unrecognised telescope are stored under None, allow
-    # them to be referred to as 'None' from the command line.
-    if n == 'None' and None in nights:
-        n = None
+    """
+    Add night n to group g. If g is None, make a new group containing night n.
+    If n is a list of nights, make a new group containing all of them (g is
+    ignored). That's all or nothing - if any of the nights are not available
+    we don't make the group.
+    """
+    if isinstance(n, list):
+        # Make new group from list of nights
+        missing = [x for x in n if x not in nights]
+        if missing:
+            print(f"Night(s) not found: {', '.join(missing)} - "
+                  f"no group created")
+            return
+        if len(set(n)) != len(n):
+            print("Night(s) listed more than once - no group created")
+            return
+        total = sum(nights.pop(x) for x in n)
+        group = {'id': len(groups), 'nights': list(n), 'total': total}
+        groups.append(group)
+        return
+
     if n not in nights:
         print(f"Night {n} not found")
         return
