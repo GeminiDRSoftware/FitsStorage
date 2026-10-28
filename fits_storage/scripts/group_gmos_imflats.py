@@ -69,6 +69,15 @@ def get_gmos_imflats(start=None, end=None, tag=None, keyword=None,
             where(Header.diskfile_id == DiskFile.id).
             where(DiskFile.canonical).
             where(Header.instrument == instrument).
+            where(Header.mode == 'imaging').
+            where(Header.processing == 'Raw').
+            where(Header.reduction == 'RAW').
+            where(Header.observation_type == 'OBJECT').
+            where(Header.detector_roi_setting == 'fullframe').
+            where(Header.detector_gain_setting == 'low').
+            where(Header.detector_readspeed_setting == 'slow').
+            where(Header.object == 'Twilight').
+            where(Header.qa_state != 'Fail').
             where(Monitoring.keyword == keyword)
             .group_by(Monitoring.header_id))
 
