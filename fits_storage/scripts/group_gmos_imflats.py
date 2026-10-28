@@ -117,7 +117,7 @@ def group_imflats(nights, interactive=True):
             print(f"\nNight: {len(nights)}, Groups: {len(groups)}")
             try:
                 cmd = input("[n]ights (ungrouped) [g]roups [A]uto group "
-                            "[threshold] [a]dd night [group] "
+                            "[threshold [maxgap]] [a]dd night [group] "
                             "[m]ulti add night1 night2 ... (makes new group) "
                             "[s]ave filename [Q]uit (done): ").strip()
             except EOFError:
@@ -133,20 +133,23 @@ def group_imflats(nights, interactive=True):
                 # Display in date order of first night. We don't renumber
                 # the groups as the ids are used in the 'a' command.
                 for group in _sortedgroups(groups):
-                    print(f"{group}")
+                    print(f"{group['id']}: {' '.join(group['nights'])} "
+                          f"total={group['total']:,.1f}")
             elif things and things[0] == 'A':
-                if len(things) == 1:
-                    autogroup(nights, groups)
-                elif len(things) == 2:
-                    try:
-                        thresh = float(things[1])
-                    except ValueError:
-                        print("Usage: A [threshold]")
-                        continue
-                    autogroup(nights, groups, thresh)
-                else:
-                    print("Usage: A [threshold]")
+                usage = "Usage: A [threshold [maxgap]]"
+                if len(things) > 3:
+                    print(usage)
                     continue
+                kwargs = {}
+                try:
+                    if len(things) > 1:
+                        kwargs['thresh'] = float(things[1])
+                    if len(things) > 2:
+                        kwargs['maxgap'] = int(things[2])
+                except ValueError:
+                    print(usage)
+                    continue
+                autogroup(nights, groups, **kwargs)
             elif things and things[0] == 'a':
                 if len(things) == 2:
                     addntog(nights, groups, things[1])
@@ -216,13 +219,82 @@ def addntog(nights, groups, n, g=None):
         print(f"Group {gid} not found")
 
 
-def autogroup(nights, groups, thresh=1E6):
+def autogroup(nights, groups, thresh=1E6, maxgap=3):
+    """
+    Pass 1: any night with total counts over thresh becomes a single night
+    group.
+    Pass 2: go through the remaining nights in date order, and make groups
+    out of runs of neighbouring nights whose combined counts exceed thresh.
+    Neighbouring nights can be at most maxgap nights apart (ie with at most
+    maxgap empty nights between them - maxgap=0 means strictly consecutive),
+    and a run never spans a night that is already in a group.
+    Pass 3: runs of leftover nights that never reached the threshold are
+    added to the nearest neighbouring group (before or after), provided it's
+    within maxgap. Otherwise they're left ungrouped.
+    """
     for night in list(nights):
         if nights[night] > thresh:
             logger.info(f"Auto - {nights[night]:,.1f} > {thresh}: making single night group")
             addntog(nights, groups, night)
         else:
             logger.info(f"Auto - {nights[night]:,.1f} < {thresh}, passing for now")
+
+    # Now run through the night list again, and make groups out of consecutive
+    # nights where we can meet the threshold
+    grouped = sorted(_todate(n) for g in groups for n in g['nights'])
+    run = []
+    total = 0
+    prev = None
+    leftovers = []
+    for night in sorted(nights):
+        date = _todate(night)
+        if prev is not None:
+            gap = (date - prev).days - 1
+            spans_group = any(prev < g < date for g in grouped)
+            if gap > maxgap or spans_group:
+                if run:
+                    leftovers.append(run)
+                run, total = [], 0
+        run.append(night)
+        total += nights[night]
+        prev = date
+        if total > thresh:
+            logger.info(f"Auto - grouping {' '.join(run)}: "
+                        f"{total:,.1f} > {thresh:,.1f}")
+            addntog(nights, groups, run)
+            grouped.extend(_todate(n) for n in run)
+            grouped.sort()
+            run, total, prev = [], 0, None
+    if run:
+        leftovers.append(run)
+
+    # Pass 3: add leftover runs to the nearest neighbouring group, if within
+    # maxgap. Leftover runs never span a grouped night, so the nearest grouped
+    # night before / after the run is the neighbouring group.
+    group_of = {_todate(n): g['id'] for g in groups for n in g['nights']}
+    for run in leftovers:
+        first, last = _todate(run[0]), _todate(run[-1])
+        before = [d for d in group_of if d < first]
+        after = [d for d in group_of if d > last]
+        candidates = []  # (gap, group id)
+        if before:
+            candidates.append(((first - max(before)).days - 1,
+                               group_of[max(before)]))
+        if after:
+            candidates.append(((min(after) - last).days - 1,
+                               group_of[min(after)]))
+        # Nearest group wins, ties go to the earlier group
+        candidates = [c for c in candidates if c[0] <= maxgap]
+        if candidates:
+            gap, gid = min(candidates, key=lambda c: c[0])
+            logger.info(f"Auto - adding leftover {' '.join(run)} to group "
+                        f"{gid} (gap {gap})")
+            for night in run:
+                addntog(nights, groups, night, gid)
+        else:
+            logger.info(f"Auto - leftover {' '.join(run)} not within "
+                        f"{maxgap} of a group, leaving ungrouped")
+
 
 def savegroups(groups, filename):
     with open(filename, 'a') as fp:
