@@ -73,7 +73,7 @@ def get_gmos_imflats(start=None, end=None, tag=None, keyword=None,
             where(Header.processing == 'Raw').
             where(Header.reduction == 'RAW').
             where(Header.observation_type == 'OBJECT').
-            where(Header.detector_roi_setting == 'fullframe').
+            where(Header.detector_roi_setting == 'Full Frame').
             where(Header.detector_gain_setting == 'low').
             where(Header.detector_readspeed_setting == 'slow').
             where(Header.object == 'Twilight').
