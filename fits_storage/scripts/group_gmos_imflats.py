@@ -126,7 +126,7 @@ def group_imflats(nights, interactive=True):
             things = cmd.split()
             if cmd == 'n':
                 for night in nights:
-                    print(f"{night}: {nights[night]}")
+                    print(f"{night}: {nights[night]:,.1f}")
             elif cmd == 'g':
                 for group in groups:
                     print(f"{group}")
@@ -192,10 +192,10 @@ def addntog(nights, groups, n, g=None):
 def autogroup(nights, groups, thresh=1E6):
     for night in list(nights):
         if nights[night] > thresh:
-            logger.info(f"Auto - {night} > {thresh}: making single night group")
+            logger.info(f"Auto - {nights[night]:,.1f} > {thresh}: making single night group")
             addntog(nights, groups, night)
         else:
-            logger.info(f"Auto - {night} < {thresh}, passing for now")
+            logger.info(f"Auto - {nights[night]:,.1f} < {thresh}, passing for now")
 
 def savegroups(groups, filename):
     with open(filename, 'a') as fp:
