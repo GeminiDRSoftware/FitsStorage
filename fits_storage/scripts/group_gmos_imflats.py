@@ -70,8 +70,7 @@ def get_gmos_imflats(start=None, end=None, tag=None, keyword=None,
             where(DiskFile.canonical).
             where(Header.instrument == instrument).
             where(Monitoring.keyword == keyword)
-            .group_by(Monitoring.header_id)
-            .order_by(Monitoring.ut_datetime))
+            .group_by(Monitoring.header_id))
 
     if tag:
         stmt = stmt.where(Monitoring.processing_tag == tag)
@@ -127,10 +126,13 @@ def group_imflats(nights, interactive=True):
                 cmd = 'Q'
             things = cmd.split()
             if cmd == 'n':
-                for night in nights:
+                # Night keys are YYYYMMDD strings, so these sort by date
+                for night in sorted(nights):
                     print(f"{night}: {nights[night]:,.1f}")
             elif cmd == 'g':
-                for group in groups:
+                # Display in date order of first night. We don't renumber
+                # the groups as the ids are used in the 'a' command.
+                for group in _sortedgroups(groups):
                     print(f"{group}")
             elif things and things[0] == 'A':
                 if len(things) == 1:
@@ -187,7 +189,7 @@ def addntog(nights, groups, n, g=None):
             print("Night(s) listed more than once - no group created")
             return
         total = sum(nights.pop(x) for x in n)
-        group = {'id': len(groups), 'nights': list(n), 'total': total}
+        group = {'id': len(groups), 'nights': sorted(n), 'total': total}
         groups.append(group)
         return
 
@@ -208,6 +210,7 @@ def addntog(nights, groups, n, g=None):
         for group in groups:
             if group['id'] == gid:
                 group['nights'].append(n)
+                group['nights'].sort()
                 group['total'] += nights.pop(n)
                 return
         print(f"Group {gid} not found")
@@ -223,13 +226,18 @@ def autogroup(nights, groups, thresh=1E6):
 
 def savegroups(groups, filename):
     with open(filename, 'a') as fp:
-        for group in groups:
+        for group in _sortedgroups(groups):
             # This makes the possibly naive assumption that groups are not
             # discontinuous
             dates = [_todate(d) for d in group['nights']]
             mindate = _tostr(min(dates))
             maxdate = _tostr(max(dates))
             fp.write(f"[{mindate}-{maxdate}]\n")
+
+def _sortedgroups(groups):
+    # Groups in date order of their first night. Each group's nights list
+    # is kept sorted, so the first night is the earliest.
+    return sorted(groups, key=lambda g: g['nights'][0])
 
 def _tostr(d):
     return d.strftime('%Y%m%d')
