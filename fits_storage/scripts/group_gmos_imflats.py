@@ -70,7 +70,8 @@ def get_gmos_imflats(start=None, end=None, tag=None, keyword=None,
             where(DiskFile.canonical).
             where(Header.instrument == instrument).
             where(Monitoring.keyword == keyword)
-            .group_by(Monitoring.header_id))
+            .group_by(Monitoring.header_id)
+            .order_by(Monitoring.ut_datetime))
 
     if tag:
         stmt = stmt.where(Monitoring.processing_tag == tag)
