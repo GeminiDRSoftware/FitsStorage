@@ -119,7 +119,8 @@ def group_imflats(nights, interactive=True):
                 cmd = input("[n]ights (ungrouped) [g]roups [A]uto group "
                             "[threshold [maxgap]] [a]dd night [group] "
                             "[m]ulti add night1 night2 ... (makes new group) "
-                            "[s]ave filename [Q]uit (done): ").strip()
+                            "[f]ind groups near night [s]ave filename "
+                            "[Q]uit (done): ").strip()
             except EOFError:
                 # Ctrl-D - treat as Quit
                 print()
@@ -133,8 +134,7 @@ def group_imflats(nights, interactive=True):
                 # Display in date order of first night. We don't renumber
                 # the groups as the ids are used in the 'a' command.
                 for group in _sortedgroups(groups):
-                    print(f"{group['id']}: {' '.join(group['nights'])} "
-                          f"total={group['total']:,.1f}")
+                    print(_groupstr(group))
             elif things and things[0] == 'A':
                 usage = "Usage: A [threshold [maxgap]]"
                 if len(things) > 3:
@@ -162,6 +162,11 @@ def group_imflats(nights, interactive=True):
                     addntog(nights, groups, things[1:])
                 else:
                     print("bad command - usage: m night1 night2 ...")
+            elif things and things[0] == 'f':
+                if len(things) != 2:
+                    print("Usage: f night")
+                    continue
+                findgroups(nights, groups, things[1])
             elif things and things[0] == 's':
                 if len(things) != 2:
                     print("Usage: s <filename>")
@@ -295,6 +300,52 @@ def autogroup(nights, groups, thresh=1E6, maxgap=3):
             logger.info(f"Auto - leftover {' '.join(run)} not within "
                         f"{maxgap} of a group, leaving ungrouped")
 
+
+def findgroups(nights, groups, night, n=2):
+    """
+    Show the n nearest groups on either side of night. night can be any date
+    in YYYYMMDD format - it doesn't have to be in the nights list.
+    """
+    try:
+        date = _todate(night)
+    except ValueError:
+        print(f"Bad night {night} - must be YYYYMMDD")
+        return
+
+    if night in nights:
+        print(f"Night {night} is ungrouped: {nights[night]:,.1f}")
+
+    before, during, after = [], [], []
+    for group in groups:
+        first = _todate(group['nights'][0])
+        last = _todate(group['nights'][-1])
+        if last < date:
+            before.append(((date - last).days - 1, group))
+        elif first > date:
+            after.append(((first - date).days - 1, group))
+        else:
+            # night is within this group's date range
+            during.append(group)
+
+    for group in during:
+        where = "in" if night in group['nights'] else "within the dates of"
+        print(f"Night {night} is {where} group: {_groupstr(group)}")
+
+    print("Before:")
+    # Nearest first
+    for gap, group in sorted(before, key=lambda x: x[0])[:n]:
+        print(f"  gap {gap}: {_groupstr(group)}")
+    if not before:
+        print("  (none)")
+    print("After:")
+    for gap, group in sorted(after, key=lambda x: x[0])[:n]:
+        print(f"  gap {gap}: {_groupstr(group)}")
+    if not after:
+        print("  (none)")
+
+def _groupstr(group):
+    return (f"{group['id']}: {' '.join(group['nights'])} "
+            f"total={group['total']:,.1f}")
 
 def savegroups(groups, filename):
     with open(filename, 'a') as fp:
