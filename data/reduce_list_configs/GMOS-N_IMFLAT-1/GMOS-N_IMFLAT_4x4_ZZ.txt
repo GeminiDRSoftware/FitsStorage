@@ -1,0 +1,3 @@
+# 2017-04-18 - 2017-04-18 [1 days] grouped, GMOS-N/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/4x4/filter=Z: 5 files
+N20170418S0317.fits.bz2 N20170418S0318.fits.bz2 N20170418S0319.fits.bz2 N20170418S0320.fits.bz2 N20170418S0321.fits.bz2
+

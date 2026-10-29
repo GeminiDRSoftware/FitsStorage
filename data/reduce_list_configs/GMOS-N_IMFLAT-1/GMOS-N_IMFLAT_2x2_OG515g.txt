@@ -1,0 +1,3 @@
+# 2006-01-18 - 2006-01-18 [1 days] grouped, GMOS-N/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=OG515&g: 9 files
+N20060118S0427.fits.bz2 N20060118S0428.fits.bz2 N20060118S0429.fits.bz2 N20060118S0430.fits.bz2 N20060118S0431.fits.bz2 N20060118S0432.fits.bz2 N20060118S0433.fits.bz2 N20060118S0434.fits.bz2 N20060118S0435.fits.bz2
+
