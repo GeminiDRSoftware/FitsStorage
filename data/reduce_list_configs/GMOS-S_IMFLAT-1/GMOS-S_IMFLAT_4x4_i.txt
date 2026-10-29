@@ -1,0 +1,18 @@
+# 2008-08-09 - 2008-08-09 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/4x4/filter=i: 12 files
+S20080809S0101.fits.bz2 S20080809S0102.fits.bz2 S20080809S0103.fits.bz2 S20080809S0104.fits.bz2 S20080809S0105.fits.bz2 S20080809S0106.fits.bz2 S20080809S0107.fits.bz2 S20080809S0108.fits.bz2 S20080809S0109.fits.bz2 S20080809S0110.fits.bz2 S20080809S0111.fits.bz2 S20080809S0112.fits.bz2
+
+# 2012-11-19 - 2012-11-19 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/4x4/filter=i: 11 files
+S20121119S0270.fits.bz2 S20121119S0271.fits.bz2 S20121119S0272.fits.bz2 S20121119S0273.fits.bz2 S20121119S0274.fits.bz2 S20121119S0275.fits.bz2 S20121119S0276.fits.bz2 S20121119S0277.fits.bz2 S20121119S0278.fits.bz2 S20121119S0279.fits.bz2 S20121119S0280.fits.bz2
+
+# 2013-11-19 - 2013-12-24 [36 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/4x4/filter=i: 15 files
+S20131119S0087.fits.bz2 S20131119S0088.fits.bz2 S20131119S0089.fits.bz2 S20131119S0090.fits.bz2 S20131119S0091.fits.bz2 S20131119S0092.fits.bz2 S20131119S0093.fits.bz2 S20131119S0094.fits.bz2 S20131224S0281.fits.bz2 S20131224S0282.fits.bz2 S20131224S0283.fits.bz2 S20131224S0284.fits.bz2 S20131224S0285.fits.bz2 S20131224S0286.fits.bz2 S20131224S0288.fits.bz2
+
+# 2021-07-20 - 2021-07-20 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/4x4/filter=i: 6 files
+S20210720S0072.fits.bz2 S20210720S0076.fits.bz2 S20210720S0077.fits.bz2 S20210720S0078.fits.bz2 S20210720S0079.fits.bz2 S20210720S0080.fits.bz2
+
+# 2022-12-06 - 2022-12-06 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/4x4/filter=i: 7 files
+S20221206S0243.fits.bz2 S20221206S0244.fits.bz2 S20221206S0246.fits.bz2 S20221206S0247.fits.bz2 S20221206S0248.fits.bz2 S20221206S0249.fits.bz2 S20221206S0250.fits.bz2
+
+# 2024-03-11 - 2024-03-11 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/4x4/filter=i: 9 files
+S20240311S0102.fits.bz2 S20240311S0103.fits.bz2 S20240311S0104.fits.bz2 S20240311S0105.fits.bz2 S20240311S0108.fits.bz2 S20240311S0109.fits.bz2 S20240311S0110.fits.bz2 S20240311S0111.fits.bz2 S20240311S0112.fits.bz2
+

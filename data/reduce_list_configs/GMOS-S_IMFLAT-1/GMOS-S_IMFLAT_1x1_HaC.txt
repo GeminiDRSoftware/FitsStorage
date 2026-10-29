@@ -1,0 +1,6 @@
+# 2010-01-06 - 2010-01-06 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/1x1/filter=HaC: 8 files
+S20100106S0261.fits.bz2 S20100106S0263.fits.bz2 S20100106S0264.fits.bz2 S20100106S0265.fits.bz2 S20100106S0266.fits.bz2 S20100106S0269.fits.bz2 S20100106S0270.fits.bz2 S20100106S0271.fits.bz2
+
+# 2013-07-23 - 2013-07-23 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/1x1/filter=HaC: 2 files
+S20130723S0237.fits.bz2 S20130723S0238.fits.bz2
+

@@ -1,0 +1,24 @@
+# 2021-10-14 - 2021-10-14 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL38: 5 files
+S20211015S0027.fits.bz2 S20211015S0028.fits.bz2 S20211015S0029.fits.bz2 S20211015S0030.fits.bz2 S20211015S0031.fits.bz2
+
+# 2022-01-07 - 2022-01-07 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL38: 6 files
+S20220108S0058.fits.bz2 S20220108S0059.fits.bz2 S20220108S0060.fits.bz2 S20220108S0061.fits.bz2 S20220108S0062.fits.bz2 S20220108S0063.fits.bz2
+
+# 2022-06-11 - 2022-06-11 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL38: 9 files
+S20220612S0020.fits.bz2 S20220612S0021.fits.bz2 S20220612S0022.fits.bz2 S20220612S0025.fits.bz2 S20220612S0026.fits.bz2 S20220612S0027.fits.bz2 S20220612S0028.fits.bz2 S20220612S0029.fits.bz2 S20220612S0030.fits.bz2
+
+# 2022-12-27 - 2022-12-27 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL38: 7 files
+S20221228S0066.fits.bz2 S20221228S0067.fits.bz2 S20221228S0068.fits.bz2 S20221228S0069.fits.bz2 S20221228S0070.fits.bz2 S20221228S0071.fits.bz2 S20221228S0072.fits.bz2
+
+# 2023-03-25 - 2023-03-25 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL38: 11 files
+S20230326S0007.fits.bz2 S20230326S0008.fits.bz2 S20230326S0009.fits.bz2 S20230326S0010.fits.bz2 S20230326S0011.fits.bz2 S20230326S0012.fits.bz2 S20230326S0013.fits.bz2 S20230326S0014.fits.bz2 S20230326S0015.fits.bz2 S20230326S0016.fits.bz2 S20230326S0017.fits.bz2
+
+# 2024-06-25 - 2024-06-25 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL38: 12 files
+S20240626S0042.fits.bz2 S20240626S0043.fits.bz2 S20240626S0044.fits.bz2 S20240626S0045.fits.bz2 S20240626S0046.fits.bz2 S20240626S0047.fits.bz2 S20240626S0048.fits.bz2 S20240626S0049.fits.bz2 S20240626S0050.fits.bz2 S20240626S0051.fits.bz2 S20240626S0052.fits.bz2 S20240626S0053.fits.bz2
+
+# 2024-09-14 - 2024-09-14 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL38: 7 files
+S20240915S0012.fits.bz2 S20240915S0013.fits.bz2 S20240915S0014.fits.bz2 S20240915S0015.fits.bz2 S20240915S0016.fits.bz2 S20240915S0017.fits.bz2 S20240915S0018.fits.bz2
+
+# 2025-07-06 - 2025-07-06 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL38: 7 files
+S20250707S0011.fits.bz2 S20250707S0012.fits.bz2 S20250707S0013.fits.bz2 S20250707S0014.fits.bz2 S20250707S0015.fits.bz2 S20250707S0016.fits.bz2 S20250707S0017.fits.bz2
+

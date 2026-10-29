@@ -1,0 +1,6 @@
+# 2009-12-24 - 2009-12-25 [2 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/1x1/filter=HeIIC: 4 files
+S20091225S0004.fits.bz2 S20091225S0005.fits.bz2 S20091225S0006.fits.bz2 S20091226S0002.fits.bz2
+
+# 2010-02-13 - 2010-02-13 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/1x1/filter=HeIIC: 6 files
+S20100214S0008.fits.bz2 S20100214S0009.fits.bz2 S20100214S0010.fits.bz2 S20100214S0011.fits.bz2 S20100214S0012.fits.bz2 S20100214S0013.fits.bz2
+
