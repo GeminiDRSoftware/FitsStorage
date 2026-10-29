@@ -1,0 +1,12 @@
+# 2018-03-05 - 2018-03-05 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=OVI: 4 files
+S20180306S0022.fits.bz2 S20180306S0023.fits.bz2 S20180306S0024.fits.bz2 S20180306S0025.fits.bz2
+
+# 2018-06-17 - 2018-06-17 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=OVI: 11 files
+S20180618S0015.fits.bz2 S20180618S0016.fits.bz2 S20180618S0017.fits.bz2 S20180618S0018.fits.bz2 S20180618S0019.fits.bz2 S20180618S0020.fits.bz2 S20180618S0021.fits.bz2 S20180618S0022.fits.bz2 S20180618S0023.fits.bz2 S20180618S0024.fits.bz2 S20180618S0025.fits.bz2
+
+# 2019-08-06 - 2019-08-06 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=OVI: 7 files
+S20190807S0019.fits.bz2 S20190807S0020.fits.bz2 S20190807S0021.fits.bz2 S20190807S0022.fits.bz2 S20190807S0023.fits.bz2 S20190807S0024.fits.bz2 S20190807S0025.fits.bz2
+
+# 2025-08-14 - 2025-08-14 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=OVI: 5 files
+S20250815S0042.fits.bz2 S20250815S0043.fits.bz2 S20250815S0044.fits.bz2 S20250815S0045.fits.bz2 S20250815S0046.fits.bz2
+

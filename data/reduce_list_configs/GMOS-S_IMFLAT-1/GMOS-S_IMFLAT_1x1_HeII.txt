@@ -1,0 +1,6 @@
+# 2013-03-10 - 2013-03-10 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/1x1/filter=HeII: 1 files
+S20130311S0002.fits.bz2
+
+# 2018-09-14 - 2018-09-14 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/1x1/filter=HeII: 11 files
+S20180915S0021.fits.bz2 S20180915S0022.fits.bz2 S20180915S0023.fits.bz2 S20180915S0024.fits.bz2 S20180915S0025.fits.bz2 S20180915S0026.fits.bz2 S20180915S0027.fits.bz2 S20180915S0028.fits.bz2 S20180915S0029.fits.bz2 S20180915S0030.fits.bz2 S20180915S0031.fits.bz2
+

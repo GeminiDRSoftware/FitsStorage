@@ -1,0 +1,3 @@
+# 2013-09-18 - 2013-09-18 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x4/filter=g: 8 files
+S20130919S0016.fits.bz2 S20130919S0017.fits.bz2 S20130919S0018.fits.bz2 S20130919S0019.fits.bz2 S20130919S0020.fits.bz2 S20130919S0021.fits.bz2 S20130919S0022.fits.bz2 S20130919S0023.fits.bz2
+

@@ -1,0 +1,18 @@
+# 2021-12-09 - 2022-01-06 [29 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL43: 7 files
+S20211210S0048.fits.bz2 S20211210S0049.fits.bz2 S20211210S0050.fits.bz2 S20211210S0054.fits.bz2 S20211210S0055.fits.bz2 S20211210S0056.fits.bz2 S20211210S0057.fits.bz2
+
+# 2022-06-17 - 2022-06-17 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL43: 11 files
+S20220618S0039.fits.bz2 S20220618S0040.fits.bz2 S20220618S0041.fits.bz2 S20220618S0042.fits.bz2 S20220618S0043.fits.bz2 S20220618S0044.fits.bz2 S20220618S0045.fits.bz2 S20220618S0046.fits.bz2 S20220618S0047.fits.bz2 S20220618S0048.fits.bz2 S20220618S0049.fits.bz2
+
+# 2023-03-24 - 2023-03-24 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL43: 9 files
+S20230325S0066.fits.bz2 S20230325S0067.fits.bz2 S20230325S0068.fits.bz2 S20230325S0069.fits.bz2 S20230325S0070.fits.bz2 S20230325S0071.fits.bz2 S20230325S0072.fits.bz2 S20230325S0073.fits.bz2 S20230325S0074.fits.bz2
+
+# 2024-07-11 - 2024-07-11 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL43: 9 files
+S20240712S0031.fits.bz2 S20240712S0032.fits.bz2 S20240712S0033.fits.bz2 S20240712S0034.fits.bz2 S20240712S0035.fits.bz2 S20240712S0036.fits.bz2 S20240712S0037.fits.bz2 S20240712S0038.fits.bz2 S20240712S0039.fits.bz2
+
+# 2024-09-14 - 2024-09-14 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL43: 7 files
+S20240915S0020.fits.bz2 S20240915S0021.fits.bz2 S20240915S0022.fits.bz2 S20240915S0023.fits.bz2 S20240915S0024.fits.bz2 S20240915S0025.fits.bz2 S20240915S0026.fits.bz2
+
+# 2025-07-06 - 2025-08-06 [32 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=JWL43: 15 files
+S20250707S0002.fits.bz2 S20250707S0003.fits.bz2 S20250707S0004.fits.bz2 S20250707S0005.fits.bz2 S20250707S0006.fits.bz2 S20250707S0007.fits.bz2 S20250707S0008.fits.bz2 S20250707S0009.fits.bz2 S20250807S0041.fits.bz2 S20250807S0042.fits.bz2 S20250807S0043.fits.bz2 S20250807S0044.fits.bz2 S20250807S0045.fits.bz2 S20250807S0046.fits.bz2 S20250807S0047.fits.bz2
+

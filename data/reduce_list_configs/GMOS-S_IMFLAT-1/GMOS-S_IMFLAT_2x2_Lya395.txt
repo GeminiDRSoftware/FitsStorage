@@ -1,0 +1,6 @@
+# 2013-03-05 - 2013-03-05 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=Lya395: 6 files
+S20130306S0042.fits.bz2 S20130306S0043.fits.bz2 S20130306S0044.fits.bz2 S20130306S0045.fits.bz2 S20130306S0046.fits.bz2 S20130306S0047.fits.bz2
+
+# 2013-09-02 - 2013-09-02 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/2x2/filter=Lya395: 6 files
+S20130903S0024.fits.bz2 S20130903S0025.fits.bz2 S20130903S0026.fits.bz2 S20130903S0027.fits.bz2 S20130903S0028.fits.bz2 S20130903S0029.fits.bz2
+

@@ -1,0 +1,3 @@
+# 2007-09-13 - 2007-09-13 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/4x4/filter=HaC: 10 files
+S20070913S0129.fits.bz2 S20070913S0130.fits.bz2 S20070913S0131.fits.bz2 S20070913S0132.fits.bz2 S20070913S0133.fits.bz2 S20070913S0134.fits.bz2 S20070913S0135.fits.bz2 S20070913S0136.fits.bz2 S20070913S0137.fits.bz2 S20070913S0138.fits.bz2
+

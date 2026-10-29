@@ -1,0 +1,6 @@
+# 2007-08-07 - 2007-08-07 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/1x1/filter=SII: 2 files
+S20070807S0124.fits.bz2 S20070807S0125.fits.bz2
+
+# 2009-08-09 - 2009-08-09 [1 days] grouped, GMOS-S/OBJECT/Raw/RAW/Lucky/fullframe/imaging/slow/low/object=Twilight/1x1/filter=SII: 1 files
+S20090809S0112.fits.bz2
+
