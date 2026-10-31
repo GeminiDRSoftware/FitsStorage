@@ -71,9 +71,14 @@ class InstMonPlot(object):
         self.url_prefix_text = TextInput(prefix="URL builder:", sizing_mode="fixed",
                             width=340,
                             value="https://archive.gemini.edu/monitoring")
-        self.url_report_select = Select(options=["checkBias", "checkFlat", "checkProcessedArc", "ghostWfit", "ghostScience"])
+        self.url_report_select = Select(options=["checkBias", "checkFlat", "checkProcessedArc",
+                                                 "ghostWfit", "ghostScience",
+                                                 "pointingError", "skyBackground", "deliveredImageQuality", "zeropoint"])
         self.url_inst_select = Select(options=["GMOS-N", "GMOS-S", "GHOST"])
-        self.url_processingtag_select = Select(options=[None, 'GMOS-N_BIAS-1', 'GMOS-S_BIAS-1', 'GMOS-N_IM-1', 'GMOS-S_IM-1', 'GMOS-N_LS-2', 'GMOS-S_LS-2', 'GHOST-2'])
+        self.url_processingtag_select = Select(options=[None, 'GMOS-N_BIAS-1', 'GMOS-S_BIAS-1',
+                                                        'GMOS-N_IM-1', 'GMOS-S_IM-1',
+                                                        'GMOS-N_IM-2', 'GMOS-S_IM-2',
+                                                        'GMOS-N_LS-2', 'GMOS-S_LS-2', 'GHOST-2'])
         self.url_engineering_select = Select(options=[None, 'notengineering', 'engineering'])
         self.url_binning_select = Select(options=[None, "1x1", "1x2", "1x4", "2x1", "2x2", "2x4", "4x1", "4x2", "4x4"])
         self.url_roi_select = Select(options=[None, "fullframe", "centralspectrum"])
