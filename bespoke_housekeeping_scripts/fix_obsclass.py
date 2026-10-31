@@ -44,11 +44,11 @@ def main():
             phu['OBSCLASS'] = ("partnerCal", 'Fixed missing OBSCLASS in old data')
         elif obstype == 'OBJECT':
             object = phu.get('OBJECT')
-            if object and object.lower in ('twilight', 'zenith'):
+            if object and object.lower() in ('twilight', 'zenith'):
                 print(f"  - Twilight. Setting dayCal")
                 phu['OBSCLASS'] = ("dayCal", 'Fixed missing OBSCLASS in old data')
             else:
-                print(f"  - Assuming science. Setting dayCal")
+                print(f"  - Assuming science.")
                 phu['OBSCLASS'] = ("science", 'Fixed missing OBSCLASS in old data')
         hdulist.close()
 
