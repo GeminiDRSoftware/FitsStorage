@@ -23,12 +23,11 @@ def main():
         mode = "update"
         if options.dryrun:
             mode="readonly"
-        print(f"File {fn} - {mode}")
         hdulist = fits.open(fn, mode=mode, lazy_load_hdus=True,
                             do_not_scale_image_data=True)
         phu = hdulist[0].header
-        if phu.gat('DATE') == 'No Value':
-            print("  = Fixing null date")
+        if phu.get('DATE') == 'No Value':
+            print("{fn}  - Fixing null date")
             phu['DATE'] = (None, 'Corrected invalid No Value')
         hdulist.close()
 
