@@ -26,10 +26,10 @@ def main():
         hdulist = fits.open(fn, mode=mode, lazy_load_hdus=True,
                             do_not_scale_image_data=True)
         phu = hdulist[0].header
-        if phu.get('DATE') == 'No Value':
-            print("{fn}  - Fixing null date")
-            phu['DATE'] = (None, 'Corrected invalid No Value')
-        hdulist.close()
+        if (phu.get('DATE') == 'No Value') or ('DATE' in phu and phu.get('DATE') is None):
+            print("{fn}  - Removing bad date")
+            del phu['DATE']
+
 
 
 if __name__ == "__main__":
