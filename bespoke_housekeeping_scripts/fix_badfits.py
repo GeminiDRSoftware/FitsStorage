@@ -29,7 +29,7 @@ def main():
         if (phu.get('DATE') == 'No Value') or ('DATE' in phu and phu.get('DATE') is None):
             print(f"{fn}  - Removing bad date")
             del phu['DATE']
-
+        hdulist.close()
 
 
 if __name__ == "__main__":
