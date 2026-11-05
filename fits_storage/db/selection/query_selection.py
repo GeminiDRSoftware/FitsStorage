@@ -1,3 +1,4 @@
+import datetime
 import re
 import math
 
@@ -125,16 +126,21 @@ def filter(self, query, ignore_processing_tag=False):
             .filter(Header.ut_datetime < enddt)
 
     # Query by Observing Night
+    GS_TIMEZONE = 'Chile/Continental'
+    # This is 2pm, the day before.
+    TWOPM = datetime.timedelta(hours=-10)
     if 'night' in self:
         startdt, enddt = gmu.get_time_period(self['night'])
         query = query.filter(
             or_(
+                # We shortcut all the logic for GN for efficiency, as the nights
+                # are by convention UTC days for Hawaii.
                 and_(Header.telescope == 'Gemini-North',
                      Header.ut_datetime >= startdt,
                      Header.ut_datetime < enddt),
                 and_(Header.telescope == 'Gemini-South',
-                     Header.ut_datetime >= startdt + gmu.CHILE_OFFSET,
-                     Header.ut_datetime < enddt + gmu.CHILE_OFFSET)
+                     func.timezone(GS_TIMEZONE, Header.ut_datetime) >= startdt + TWOPM,
+                     func.timezone(GS_TIMEZONE, Header.ut_datetime) < enddt + TWOPM)
             )
         )
 
@@ -149,8 +155,8 @@ def filter(self, query, ignore_processing_tag=False):
                      Header.ut_datetime >= startdt,
                      Header.ut_datetime < enddt),
                 and_(Header.telescope == 'Gemini-South',
-                     Header.ut_datetime >= startdt + gmu.CHILE_OFFSET,
-                     Header.ut_datetime < enddt + gmu.CHILE_OFFSET)
+                     func.timezone(GS_TIMEZONE, Header.ut_datetime) >= startdt + TWOPM,
+                     func.timezone(GS_TIMEZONE, Header.ut_datetime) < enddt + TWOPM)
         )
     )
 
