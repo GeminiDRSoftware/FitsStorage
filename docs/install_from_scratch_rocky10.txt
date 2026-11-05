@@ -95,7 +95,7 @@ conda remove --force fits_storage # we only really wanted the other dragons deps
 conda install fitsverify
 
 # OR install a pre-canned environment from the time of dragons release.
-conda create --name dragons --file dragons422-conda-lock.yaml
+conda create --name dragons --file dragons422-conda-list-explicit.yaml
 
 # In bash profile, add:
 export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
@@ -130,7 +130,7 @@ conda install cython
 cythonize -i cython_utils.pyx
 cd /opt/FitsStorage
 git clone git@github.com:GeminiDRSoftware/FitsStorage.git .
-git switch release/3.6.x  # or main, depending what you want...
+git switch release/3.7.x  # or main, depending what you want...
 cd /opt/FitsStorageConfigurations
 git clone git@github.com:/phirstgemini/FitsStorageConfigurations .
 
