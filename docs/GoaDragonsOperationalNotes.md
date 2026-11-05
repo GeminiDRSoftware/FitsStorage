@@ -125,14 +125,21 @@ add_to_reduce_queue.py --selectiongroup=observation_id --selection=canonical/not
 # Filter that don't need fringe frames. GMOS-N: u g r ri Ha HaC HeII HeIIC OIII OIIIC OVI OVIC SII DS920  GG455&g  OG515&g
 # Filters queued for 2000 onwards: u g r ri Ha HaC HeII HeIIC OIII OIIIC OVI OVIC SII DS920  GG455&g  OG515&g
 add_to_reduce_queue.py --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_IM-2 --capture_files --capture_monitoring --recipe=reduce_nostack --selection=GMOS-N/canonical/notengineering/RAW/Raw/NotFail/imaging/science/OBJECT/slow/low/filter=g/filepre=N2006
+# GMOS-N Hammamatus are Feb 2017 onwards i CaT and Z don't need fringest for GMOS-N Hamamatsu. Queued them up.
 
 # GMOS-S_IM-2
 # Filters that may need fringe frames (depends on which detector): i z Y Z CaT CaT&i
 # Filter that don't need fringe frames. GMOS-S: u g r Ha HaC HeII HeIIC OIII OIIIC OVI OVIC SII GG455&g OG515&g OG515 F396N JWL34 JWL38 JWL43 Lya395 Strb Stry
 # Filters queued for 2000 onwards: u g r Ha HaC HeII HeIIC OIII OIIIC OVI OVIC SII GG455&g OG515&g OG515 F396N JWL34 JWL38 JWL43 Lya395 Strb Stry
 add_to_reduce_queue.py --initiatedby=phirst --intent=Science-Quality --tag=GMOS-S_IM-2 --capture_files --capture_monitoring --recipe=reduce_nostack --selection=GMOS-S/canonical/notengineering/RAW/Raw/NotFail/imaging/science/OBJECT/slow/low/filter=g/filepre=S2006
+# GMOS-S Hamamatsus are June 2014 onwards. i CaT and Z don't need fringes with GMOS-S Hamamatus.. Queued up i Z CaT for Hamamatsu GMOS-S
 
-# Fringe Frames.
+# Fringe Frames. See https://dragons.readthedocs.io/projects/gmosimg-drtutorial/en/v4.2.2/appendices/02_fringe_correction_tables.html#fringe-correction-tables
 # In principle they take blank sky frames to make fringe frames under the target name "Blank Sky". This has happened regularly for GMOS-S but not got GMOS-N.
 # GMOS-N strategy - we'll run all the data through reduce_nostack WITH NO DEFRINGING and only --capture_monitoring. Those points will be Qucik-Look. We'll then use the background and num_stars stats to select frames to make fringe frames form
 # GMOS-S strategy - reduce the fringe data as taken into GMOS-S_IMFRINGE-1
+add_to_reduce_queue.py --initiatedby=phirst --intent=Science-Quality --tag=GMOS-S_IMFRINGE-1 --capture_files --recipe=makeProcessedFringe --listfile=GMOS-S-FRINGEFRAMES_test.txt
+
+# Run to generate monitoring stats in order to find good science frames to use to build fringe frames (example):
+add_to_reduce_queue.py --initiatedby=phirst --intent=Quick-Look --tag=GMOS-N_IM-2 --capture_monitoring --recipe=reduce_nostack --uparms='{"fringeCorrect:do_cal": "skip"}' --selection=GMOS-N/canonical/notengineering/RAW/Raw/NotFail/imaging/science/OBJECT/slow/low/filter=z
+# Queued these up for GN and GS : Y z Z 
