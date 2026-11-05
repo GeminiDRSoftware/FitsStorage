@@ -123,14 +123,16 @@ add_to_reduce_queue.py --selectiongroup=observation_id --selection=canonical/not
 # GMOS-N_IM-2
 # Filters that may need fringe frames (depends on which detector): i z Y Z CaT CaT&i
 # Filter that don't need fringe frames. GMOS-N: u g r ri Ha HaC HeII HeIIC OIII OIIIC OVI OVIC SII DS920  GG455&g  OG515&g
-# Early data don't have obsclass... See https://github.com/GeminiDRSoftware/FitsStorage/issues/184. Data from 20050616 onward have obsclass. For simplicity, we'll process 2006 onwards while we sort this.
-# Filters queued for 2006 onwards: g r ri
+# Filters queued for 2000 onwards: u g r ri Ha HaC HeII HeIIC OIII OIIIC OVI OVIC SII DS920  GG455&g  OG515&g
 add_to_reduce_queue.py --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_IM-2 --capture_files --capture_monitoring --recipe=reduce_nostack --selection=GMOS-N/canonical/notengineering/RAW/Raw/NotFail/imaging/science/OBJECT/slow/low/filter=g/filepre=N2006
 
 # GMOS-S_IM-2
 # Filters that may need fringe frames (depends on which detector): i z Y Z CaT CaT&i
 # Filter that don't need fringe frames. GMOS-S: u g r Ha HaC HeII HeIIC OIII OIIIC OVI OVIC SII GG455&g OG515&g OG515 F396N JWL34 JWL38 JWL43 Lya395 Strb Stry
-# Early data don't have obsclass... See https://github.com/GeminiDRSoftware/FitsStorage/issues/184. Data from 20050707 onward have obsclass. For simplicity, we'll process 2006 onwards while we sort this.
-# Filters queued for 2006 onwards: u g r 
+# Filters queued for 2000 onwards: u g r Ha HaC HeII HeIIC OIII OIIIC OVI OVIC SII GG455&g OG515&g OG515 F396N JWL34 JWL38 JWL43 Lya395 Strb Stry
 add_to_reduce_queue.py --initiatedby=phirst --intent=Science-Quality --tag=GMOS-S_IM-2 --capture_files --capture_monitoring --recipe=reduce_nostack --selection=GMOS-S/canonical/notengineering/RAW/Raw/NotFail/imaging/science/OBJECT/slow/low/filter=g/filepre=S2006
 
+# Fringe Frames.
+# In principle they take blank sky frames to make fringe frames under the target name "Blank Sky". This has happened regularly for GMOS-S but not got GMOS-N.
+# GMOS-N strategy - we'll run all the data through reduce_nostack WITH NO DEFRINGING and only --capture_monitoring. Those points will be Qucik-Look. We'll then use the background and num_stars stats to select frames to make fringe frames form
+# GMOS-S strategy - reduce the fringe data as taken into GMOS-S_IMFRINGE-1
