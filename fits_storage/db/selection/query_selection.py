@@ -139,8 +139,11 @@ def filter(self, query, ignore_processing_tag=False):
                      Header.ut_datetime >= startdt,
                      Header.ut_datetime < enddt),
                 and_(Header.telescope == 'Gemini-South',
-                     func.timezone(GS_TIMEZONE, Header.ut_datetime) >= startdt + TWOPM,
-                     func.timezone(GS_TIMEZONE, Header.ut_datetime) < enddt + TWOPM)
+                     # ut_datetime is timezone naive and is considered to be local time, which is set to UTC in db.__init__.
+                     # timezone('UTC', ut_datetime) converts it to a non-naive type in timezone UTC.
+                     # Then we convert that to Chile time and test it against the 1400 rule.
+                     func.timezone(GS_TIMEZONE, func.timezone('UTC', Header.ut_datetime)) >= startdt + TWOPM,
+                     func.timezone(GS_TIMEZONE, func.timezone('UTC', Header.ut_datetime)) < enddt + TWOPM)
             )
         )
 
@@ -155,8 +158,9 @@ def filter(self, query, ignore_processing_tag=False):
                      Header.ut_datetime >= startdt,
                      Header.ut_datetime < enddt),
                 and_(Header.telescope == 'Gemini-South',
-                     func.timezone(GS_TIMEZONE, Header.ut_datetime) >= startdt + TWOPM,
-                     func.timezone(GS_TIMEZONE, Header.ut_datetime) < enddt + TWOPM)
+                     # See comments above for night
+                     func.timezone(GS_TIMEZONE, func.timezone('UTC', Header.ut_datetime)) >= startdt + TWOPM,
+                     func.timezone(GS_TIMEZONE, func.timezone('UTC', Header.ut_datetime)) < enddt + TWOPM)
         )
     )
 
