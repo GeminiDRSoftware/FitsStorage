@@ -43,8 +43,10 @@ def sessionfactory(reload=False):
                                      'keepalives_idle': 60,
                                      'keepalives_interval': 10,
                                      'keepalives_count': 5,
-                                     'tcp_user_timeout': 120000}
-            }
+                                     'tcp_user_timeout': 120000,
+                                     'options': '-c timezone=UTC'
+                                     }
+                    }
         else:
             args = {'echo': fsc.database_debug}
         _saved_engine = create_engine(fsc.database_url, future=True, **args)
