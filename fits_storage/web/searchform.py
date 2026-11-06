@@ -90,13 +90,13 @@ def searchform(things, orderby):
         else:
             # Populate selection dictionary with values from form input
             updateselection(formdata, selection)
-            print(f"{formdata=}")
-            print(f"selection from form input {selection=}")
+            #print(f"{formdata=}")
+            #print(f"selection from form input {selection=}")
             # This logs the selection to the apache error log for debugging.
             # ctx.req.log(str(selection))
             # build URL
             urlstring = selection.to_url(with_columns=True)
-            print(f"searchfrm url string from selection {urlstring=}")
+            #print(f"searchfrom url string from selection {urlstring=}")
 
             # The following will redirect to some other page. Redirects work by
             # raising an exception, meaning that there's no need for return
@@ -116,9 +116,9 @@ def searchform(things, orderby):
         normalized_url = selection.to_url(with_columns=True)
         submitted_url = ctx.req.env.uri.removeprefix("/searchform")
         quoted_submitted_url = urllib.parse.quote(submitted_url)
-        print(f"normalized URL:       {normalized_url}")
-        print(f"submitted URL:        {submitted_url}")
-        print(f"quoted submitted URL: {quoted_submitted_url}")
+        #print(f"normalized URL:       {normalized_url}")
+        #print(f"submitted URL:        {submitted_url}")
+        #print(f"quoted submitted URL: {quoted_submitted_url}")
         # This should match on submitted_url now we have dealt properly (I
         # hope) with '/' characters in object names. Remove the
         # quoted_submitted_url logic in future
