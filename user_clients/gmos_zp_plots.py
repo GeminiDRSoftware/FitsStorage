@@ -11,21 +11,38 @@ axis.
 
 Clouds only ever make the zeropoint worse (lower), so the distribution of
 measurements is asymmetric and we want the clear-sky (upper) value, without
-being fooled by noise or spurious "way off" values. The steps are:
+being fooled by noise or spurious "way off" values.
 
-1. Row cuts (filter_rows): require enough stars (MCC_NSAM), drop QA Fail, and
-   reject gross outliers that are far from a rolling median over many months.
-2. Per-night upper envelope (combine_nights): asymmetric iterative clip, tight
-   below (cloudy frames) and looser above (spurious high frames), converging
-   on the upper cluster of each night.
-3. Cross-night envelope (flag_nights): compare each night with a rolling upper
-   percentile of neighbouring nights, and flag nights that sit well below it as
-   cloudy - on nights that were cloudy throughout, every frame is low and no
-   per-night method can recover the clear-sky value.
+Known events (mirror coatings, washes, detector changes - the *_EVENTS dicts)
+cause jumps in the zeropoint. The data are split into segments between events
+and each segment is treated independently. Within a segment we expect the
+clear-sky zeropoint to decrease slowly and linearly with time, so we fit a
+line to it:
+
+1. Row cuts (filter_rows): require enough stars (MCC_NSAM) and drop QA Fail.
+2. Per segment (fit_segment), iterate:
+   - Compute each frame's residual from the current line, in units of its
+     noise sigma = sqrt((MCC_ZPSD/sqrt(MCC_NSAM))**2 + floor**2).
+   - Keep frames within -k_lo to +k_hi sigma. The asymmetric window rejects
+     cloud-affected frames (below) and spurious high frames (above).
+   - Combine the kept frames from each night into a weighted mean nightly
+     value, so that nights with many frames don't dominate the fit.
+   - Least-squares fit a line to the nightly values. The slope is not allowed
+     to be greater than max_slope (default 0, ie no increase with time) - if
+     it would be, the slope is fixed at max_slope and only the level fitted.
+   until the set of kept frames stops changing. The starting line is a robust
+   (Theil-Sen) fit to the "anchor" nights - nights with several frames that
+   agree closely, which are very likely photometric - so the fit follows the
+   level of the majority of stable nights rather than a few high nights, and
+   gross outliers can't drag it. If there are too few anchor nights, it starts
+   from a robust fit to an upper percentile of each night's values instead.
+3. Nights with no kept frames are flagged cloudy (or outlier, if their frames
+   were rejected high).
 """
 
 import datetime
 import io
+import math
 import os
 from argparse import ArgumentParser
 
@@ -33,19 +50,51 @@ import numpy as np
 import pandas as pd
 import requests
 from bokeh.io import output_file, save, show
-from bokeh.models import ColumnDataSource, CustomJS, HoverTool, Whisker
+from bokeh.models import (ColumnDataSource, CustomJS, HoverTool, Label, Span,
+                          Whisker)
 from bokeh.plotting import figure
 
-USER_AGENT = 'GeminiGmosZpPlots'
+USER_AGENT = 'GeminiInstMon'
 
 INSTRUMENTS = ['GMOS-N', 'GMOS-S']
 DEFAULT_FILTERS = ['g', 'r', 'i', 'z']
+
+# These were from Teo by Email 20261106.
+GMOS_N_EVENTS = {
+'20000421': 'M1 coating (Al)',
+'20040111': 'M1 coating (Al)',
+'20041126': 'M1, M2, M3, Periscope coating',
+'20050929': 'M1 insitu wash',
+'20080728': 'M1 coating',
+'20081022': 'M2 coating',
+'20090707': 'M3 coating',
+'20090710': 'M1 insitu wash',
+'20100725': 'M3 coating',
+'20100802': 'M1 insitu wash',
+'20111020': 'e2v installed',
+'20120107': 'M2 coating',
+# '20130618': 'Periscope coating', # we don't want this one to trigger a new fit
+'20130923': 'M1 coating',
+'20150925': 'M2 coating',
+'20170220': 'Hamamatsu installed',
+'20200819': 'M1 contamination (was 20200812)',
+'20201023': 'M1 insitu wash',
+'20210825': 'M2 coating',
+'20221020': 'M1 incident',
+'20230430': 'M1 coating',
+}
+
+GMOS_S_EVENTS = {}
+
+EVENTS = {'GMOS-N': GMOS_N_EVENTS, 'GMOS-S': GMOS_S_EVENTS}
 
 # Night label offsets, matching fits_storage.db.selection.query_selection:
 # GN night D spans UT [D 00:00, D+1 00:00) (14:00 HST boundary), so the night
 # label is just the UT date. GS night D spans UT [D-1 18:00, D 18:00), so the
 # night label is the date of (UT + 6h). (CHILE_OFFSET in
 # fits_storage.gemini_metadata_utils is -6h and the night is UT - CHILE_OFFSET)
+# Event dates are night labels: an event with date D happens before night D,
+# so night D is the first night after the event (night >= event date).
 NIGHT_OFFSET = {'GMOS-N': datetime.timedelta(hours=0),
                 'GMOS-S': datetime.timedelta(hours=6)}
 
@@ -57,17 +106,12 @@ MIN_NSAM = 5            # Minimum MCC_NSAM (number of stars measured). Frames
                         # with very few stars give most of the spurious values
 MAX_ZPSD = None         # Maximum MCC_ZPSD (mag), None to disable
 REJECT_QASTATES = ['Fail']
-SANITY_WINDOW_DAYS = 180    # Width of rolling median window for gross outliers
-SANITY_MAX_DEV = 0.5        # Max |ZP - rolling median| (mag) to keep a frame
-SANITY_MIN_FRAMES = 5       # Min frames in window for the sanity check to apply
 
 
-def filter_rows(df, min_nsam=MIN_NSAM, sanity_window=SANITY_WINDOW_DAYS,
-                sanity_max_dev=SANITY_MAX_DEV):
+def filter_rows(df, min_nsam=MIN_NSAM):
     """
-    Apply row-level selection criteria. Prints how many rows each criterion
-    removed. Returns (kept, sanity_rejected) dataframes - the latter are the
-    otherwise-good frames rejected as gross outliers, kept so we can plot them.
+    Apply row-level selection criteria. Returns the filtered dataframe and
+    prints how many rows each criterion removed.
     """
     criteria = [
         ('MCC_ZP present', df['MCC_ZP'].notna()),
@@ -83,18 +127,7 @@ def filter_rows(df, min_nsam=MIN_NSAM, sanity_window=SANITY_WINDOW_DAYS,
         newmask = mask & crit
         print(f"    {name}: removed {(mask & ~newmask).sum()} rows")
         mask = newmask
-    df = df[mask].sort_values('ut_datetime').copy()
-
-    # Gross outlier rejection: compare each frame with a centred rolling
-    # median of all frames within +/- sanity_window/2 days.
-    roll = (df.set_index('ut_datetime')['MCC_ZP']
-            .rolling(f'{sanity_window}D', center=True,
-                     min_periods=SANITY_MIN_FRAMES).median())
-    df['rolling_median'] = roll.to_numpy()
-    bad = (df['MCC_ZP'] - df['rolling_median']).abs() > sanity_max_dev
-    print(f"    |ZP - {sanity_window}d rolling median| <= {sanity_max_dev}: "
-          f"removed {bad.sum()} rows")
-    return df[~bad].copy(), df[bad].copy()
+    return df[mask].sort_values('ut_datetime').copy()
 
 
 # ---------------------------------------------------------------------------
@@ -144,145 +177,316 @@ def fetch_table(url, cache_dir=None):
 
 
 # ---------------------------------------------------------------------------
-# Per-night combination
+# Nights and segments
 # ---------------------------------------------------------------------------
 def add_night(df, instrument):
     df['night'] = (df['ut_datetime'] + NIGHT_OFFSET[instrument]).dt.normalize()
     return df
 
 
-def upper_envelope(zp, err, floor=0.02, k_lo=2.0, k_hi=3.0, start_pct=80,
-                   maxiters=20):
-    """
-    Estimate the clear-sky (upper cluster) value of a set of zeropoints.
+def event_dates(events):
+    """Sorted array of event dates (datetime64) from an *_EVENTS dict."""
+    return np.array(sorted(pd.to_datetime(list(events), format='%Y%m%d')),
+                    dtype='datetime64[ns]')
 
-    Each point gets a noise sigma = sqrt(err**2 + floor**2). Starting from the
-    start_pct percentile, keep points within -k_lo to +k_hi sigma of the
-    current estimate, recompute the estimate as the weighted mean of those,
-    and iterate until the kept set stops changing. Points far below (cloudy)
-    and far above (spurious) are rejected.
 
-    Returns (estimate, error_on_estimate, keep, low, high) where keep, low and
-    high are boolean arrays of points used, rejected low and rejected high.
+def add_segment(df, events):
     """
+    Add a 'segment' column: the number of events on or before each night's
+    date. An event with date D happens before night D, so segment k runs from
+    night (event k-1) up to the night before event k.
+    """
+    df['segment'] = np.searchsorted(event_dates(events),
+                                    df['night'].to_numpy(), side='right')
+    return df
+
+
+# ---------------------------------------------------------------------------
+# Fitting
+# ---------------------------------------------------------------------------
+def theil_sen(x, y):
+    """Robust line fit: median of pairwise slopes. Returns (slope, icpt)."""
+    if len(x) < 2 or np.ptp(x) == 0:
+        return 0.0, float(np.median(y))
+    i, j = np.triu_indices(len(x), 1)
+    dx = x[j] - x[i]
+    ok = dx != 0
+    slope = float(np.median((y[j] - y[i])[ok] / dx[ok]))
+    return slope, float(np.median(y - slope * x))
+
+
+def nightly_means(nights, x, zp, sig, sel):
+    """
+    Weighted mean of the selected frames for each night. Returns a dataframe
+    indexed by night with columns x, zp, err, n.
+    """
+    w = 1 / sig ** 2
+    t = pd.DataFrame({'night': nights[sel], 'x': x[sel], 'wzp': (w * zp)[sel],
+                      'w': w[sel]})
+    g = t.groupby('night').agg(x=('x', 'first'), wzp=('wzp', 'sum'),
+                              w=('w', 'sum'), n=('w', 'size'))
+    return pd.DataFrame({'x': g['x'], 'zp': g['wzp'] / g['w'],
+                         'err': 1 / np.sqrt(g['w']), 'n': g['n']})
+
+
+def fit_line(nm, floor, can_slope, max_slope=None):
+    """
+    Weighted least-squares line through nightly values nm (from
+    nightly_means). If can_slope is False, fit a constant. If the fitted
+    slope is greater than max_slope (mag/yr), fix the slope at max_slope and
+    fit just the intercept. Returns (slope, icpt, limited) where limited says
+    whether max_slope was applied.
+    """
+    sig = np.sqrt(nm['err'] ** 2 + floor ** 2).to_numpy()
+    w = 1 / sig ** 2
+    x, y = nm['x'].to_numpy(), nm['zp'].to_numpy()
+    slope = 0.0
+    limited = False
+    if can_slope:
+        slope = float(np.polyfit(x, y, 1, w=1 / sig)[0])
+        if max_slope is not None and slope > max_slope:
+            slope, limited = max_slope, True
+    return slope, float(np.sum(w * (y - slope * x)) / np.sum(w)), limited
+
+
+def fit_segment(seg, floor=0.03, k_lo=2.0, k_hi=3.0, start_pct=80,
+                min_nights_slope=5, min_span_days=60, anchor_min_frames=3,
+                anchor_max_std=0.02, min_anchor_nights=3, max_slope=0.0,
+                maxiters=30):
+    """
+    Fit the clear-sky zeropoint line to one segment of frames (see module
+    docstring). x is in years since the first night of the segment.
+
+    Returns (frame_flags, fit) where frame_flags is a dataframe indexed like
+    seg with boolean columns 'used', 'low', 'high' and float 'resid', and fit
+    is a dict describing the line.
+    """
+    nights = seg['night'].to_numpy()
+    t0 = seg['night'].min()
+    x = ((seg['night'] - t0).dt.days / 365.25).to_numpy()
+    zp = seg['MCC_ZP'].to_numpy()
+    err = (seg['MCC_ZPSD'] / np.sqrt(seg['MCC_NSAM'])).to_numpy()
     sig = np.sqrt(np.nan_to_num(err) ** 2 + floor ** 2)
-    c = np.percentile(zp, start_pct)
-    keep = np.zeros(len(zp), bool)
+
+    n_nights = seg['night'].nunique()
+    span_days = (seg['night'].max() - t0).days
+    can_slope = n_nights >= min_nights_slope and span_days >= min_span_days
+
+    # Starting line. Preferably a robust fit to the "anchor" nights: nights
+    # with several frames that agree closely with each other, which are very
+    # likely photometric (clouds are rarely that uniform). Using these means
+    # the fit follows the level of the majority of stable nights, rather than
+    # latching on to a few high nights. If there are too few anchor nights,
+    # fall back to a robust fit to an upper percentile of each night, lifted
+    # so it sits in the upper part of the nightly distribution.
+    stats = seg.groupby('night')['MCC_ZP'].agg(
+        ['size', 'std', 'median', lambda v: v.quantile(start_pct / 100)])
+    stats.columns = ['n', 'std', 'median', 'q']
+    sx = ((stats.index - t0).days / 365.25).to_numpy()
+    anchor = ((stats['n'] >= anchor_min_frames) &
+              (stats['std'] <= anchor_max_std)).to_numpy()
+    if anchor.sum() >= (min_anchor_nights if can_slope else 1):
+        ax, ay = sx[anchor], stats['median'].to_numpy()[anchor]
+        if can_slope:
+            slope, icpt = theil_sen(ax, ay)
+        else:
+            slope, icpt = 0.0, float(np.median(ay))
+        start = 'anchor'
+    else:
+        q = stats['q'].to_numpy()
+        if can_slope:
+            slope, icpt = theil_sen(sx, q)
+        else:
+            slope, icpt = 0.0, float(np.median(q))
+        icpt += float(np.percentile(q - (icpt + slope * sx), 75))
+        start = 'percentile'
+    if max_slope is not None:
+        slope = min(slope, max_slope)
+
+    keep = None
+    limited = False
     for _ in range(maxiters):
-        d = (zp - c) / sig
+        d = (zp - (icpt + slope * x)) / sig
         new = (d > -k_lo) & (d < k_hi)
         if not new.any():
-            # Nothing near the estimate - fall back to the closest point
-            new = np.zeros(len(zp), bool)
-            new[np.argmin(np.abs(d))] = True
-        w = 1 / sig[new] ** 2
-        c = np.sum(w * zp[new]) / np.sum(w)
-        if (new == keep).all():
+            break
+        nm = nightly_means(nights, x, zp, sig, new)
+        # Need enough nights left to fit a slope
+        slope, icpt, limited = fit_line(nm, floor, can_slope and len(nm) >= 3,
+                                        max_slope)
+        if keep is not None and (new == keep).all():
             break
         keep = new
-    d = (zp - c) / sig
-    return c, 1 / np.sqrt(np.sum(w)), keep, ~keep & (d <= 0), ~keep & (d > 0)
+    if keep is None:
+        keep = np.zeros(len(zp), bool)
+        nm = nightly_means(nights, x, zp, sig, keep)
+
+    resid = zp - (icpt + slope * x)
+    d = resid / sig
+    flags = pd.DataFrame({'used': keep, 'low': ~keep & (d <= 0),
+                          'high': ~keep & (d > 0), 'resid': resid},
+                         index=seg.index)
+    nresid = nm['zp'] - (icpt + slope * nm['x'])
+    fit = {
+        't0': t0,
+        'first_night': t0,
+        'last_night': seg['night'].max(),
+        'slope': slope,         # mag / year
+        'icpt': icpt,           # mag at t0
+        'sloped': can_slope,
+        'start': start,
+        'slope_limited': limited,
+        'n_anchor': int(anchor.sum()),
+        'n_nights': n_nights,
+        'n_nights_used': len(nm),
+        'n_frames': len(seg),
+        'n_frames_used': int(keep.sum()),
+        'rms': float(np.sqrt(np.mean(nresid ** 2))) if len(nm) else np.nan,
+    }
+    return flags, fit
 
 
-def combine_nights(df, floor=0.02, k_lo=2.0, k_hi=3.0, start_pct=80):
+def fit_segments(df, events, **kwargs):
     """
-    Combine all rows in each night into one clear-sky estimate using
-    upper_envelope(). Per-frame errors are MCC_ZPSD / sqrt(MCC_NSAM). Adds
-    boolean 'clipped_low' and 'clipped_high' columns to df, and returns a
-    per-night dataframe.
+    Split df into segments between events and fit each. Adds 'segment',
+    'used', 'low', 'high', 'resid' columns to df. Returns (nightly, fits)
+    dataframes.
     """
-    df['clipped_low'] = False
-    df['clipped_high'] = False
-    df['frame_err'] = df['MCC_ZPSD'] / np.sqrt(df['MCC_NSAM'])
-    nights = []
+    df = add_segment(df, events)
+    ev = event_dates(events)
+    fits = []
+    flags = []
+    for seg_id, seg in df.groupby('segment'):
+        f, fit = fit_segment(seg, **kwargs)
+        flags.append(f)
+        fit['segment'] = seg_id
+        fit['start_event'] = pd.Timestamp(ev[seg_id - 1]) if seg_id > 0 \
+            else None
+        fit['end_event'] = pd.Timestamp(ev[seg_id]) if seg_id < len(ev) \
+            else None
+        fits.append(fit)
+    flags = pd.concat(flags)
+    for col in flags.columns:
+        df[col] = flags[col]
+    fits = pd.DataFrame(fits)
+    return df, nightly_values(df, fits, kwargs.get('floor', 0.03)), fits
+
+
+def nightly_values(df, fits, floor):
+    """
+    One row per night. Clear nights (with used frames) get the weighted mean
+    of their used frames. Other nights get the median of their frames, for
+    display only, and are flagged 'cloudy' or 'outlier'.
+    """
+    rows = []
+    fits = fits.set_index('segment')
     for night, grp in df.groupby('night'):
-        zp = grp['MCC_ZP'].to_numpy()
-        c, err, keep, low, high = upper_envelope(
-            zp, grp['frame_err'].to_numpy(), floor=floor, k_lo=k_lo,
-            k_hi=k_hi, start_pct=start_pct)
-        df.loc[grp.index, 'clipped_low'] = low
-        df.loc[grp.index, 'clipped_high'] = high
-        nights.append({
-            'night': night,
-            'zp': c,
-            'zp_err': err,
-            'zp_median_all': np.median(zp),
-            'zp_std': np.std(zp[keep], ddof=1) if keep.sum() > 1 else np.nan,
-            'n_used': int(keep.sum()),
-            'n_low': int(low.sum()),
-            'n_high': int(high.sum()),
-            'n_files': grp['filename'].nunique(),
-        })
-    return pd.DataFrame(nights)
-
-
-def flag_nights(ndf, window=60, pct=80, threshold=0.1, min_nights=3):
-    """
-    Compare each night with a rolling upper envelope across nights: the pct
-    percentile of nightly values within +/- window/2 days. Adds 'envelope' and
-    'status' columns: 'clear' if the night is within threshold mag of the
-    envelope (or above it), 'cloudy' if more than threshold below, and
-    'isolated' if there are fewer than min_nights nights in the window.
-    """
-    ndf = ndf.sort_values('night').reset_index(drop=True)
-    env = (ndf.set_index('night')['zp']
-           .rolling(f'{window}D', center=True, min_periods=min_nights)
-           .quantile(pct / 100))
-    ndf['envelope'] = env.to_numpy()
-    ndf['status'] = np.where(ndf['envelope'].isna(), 'isolated',
-                             np.where(ndf['zp'] < ndf['envelope'] - threshold,
-                                      'cloudy', 'clear'))
+        used = grp[grp['used']]
+        seg = grp['segment'].iloc[0]
+        fit = fits.loc[seg]
+        x = (night - fit['t0']).days / 365.25
+        row = {'night': night, 'segment': seg,
+               'fit': fit['icpt'] + fit['slope'] * x,
+               'n_used': len(used), 'n_low': int(grp['low'].sum()),
+               'n_high': int(grp['high'].sum()),
+               'n_files': grp['filename'].nunique()}
+        if len(used):
+            err = (used['MCC_ZPSD'] / np.sqrt(used['MCC_NSAM'])).fillna(0)
+            w = 1 / (err ** 2 + floor ** 2)
+            row['zp'] = np.sum(w * used['MCC_ZP']) / np.sum(w)
+            row['zp_err'] = 1 / np.sqrt(np.sum(w))
+            row['status'] = 'clear'
+        else:
+            row['zp'] = grp['MCC_ZP'].median()
+            row['zp_err'] = np.nan
+            row['status'] = 'cloudy' if row['n_low'] >= row['n_high'] \
+                else 'outlier'
+        rows.append(row)
+    ndf = pd.DataFrame(rows)
+    ndf['resid'] = ndf['zp'] - ndf['fit']
     return ndf
+
+
+def print_fits(fits):
+    print("    Seg  First night  Last night   Nights(used)  "
+          "ZP at start  Slope(mag/yr)   RMS")
+    for _, f in fits.iterrows():
+        slope = f"{f['slope']:+.4f}" if f['sloped'] else "  (const)"
+        if f['slope_limited']:
+            slope += '*'
+        print(f"    {f['segment']:3d}  {f['first_night']:%Y-%m-%d}   "
+              f"{f['last_night']:%Y-%m-%d}   {f['n_nights']:5d}({f['n_nights_used']:4d})"
+              f"    {f['icpt']:7.3f}     {slope:>10}   {f['rms']:.3f}")
+    if fits['slope_limited'].any():
+        print("    * fitted slope was > --max-slope, so slope fixed at that")
 
 
 # ---------------------------------------------------------------------------
 # Plotting
 # ---------------------------------------------------------------------------
-def make_plot(instrument, filt, df, ndf, sanity_rej):
+def make_plot(instrument, filt, df, ndf, fits, events):
     p = figure(title=f"{instrument} {filt}-band nightly clear-sky zeropoint "
                      f"(MCC_ZP)",
                x_axis_type='datetime', x_axis_label='Night (UT date)',
-               y_axis_label='Zeropoint (mag)', width=1200, height=500,
+               y_axis_label='Zeropoint (mag)', width=1400, height=600,
                tools='pan,box_zoom,wheel_zoom,reset,save')
-    # Don't let hidden layers (eg wild outliers) set the y range
+    # Don't let hidden layers (eg wild outliers) set the ranges
     p.y_range.only_visible = True
     p.x_range.only_visible = True
 
+    # Events: labelled vertical lines. Stagger the labels of events close
+    # together in time so they don't overprint.
+    prev_t, label_y = None, 5
+    for date, desc in sorted(events.items()):
+        t = pd.Timestamp(date)
+        if prev_t is not None and (t - prev_t).days < 90:
+            label_y = label_y + 170 if label_y < 300 else 5
+        else:
+            label_y = 5
+        prev_t = t
+        p.add_layout(Span(location=t, dimension='height', line_color='firebrick',
+                          line_dash='dashed', line_alpha=0.6))
+        p.add_layout(Label(x=t, y=label_y, y_units='screen', angle=math.pi / 2,
+                           text=f"{t:%Y-%m-%d} {desc}", text_font_size='8pt',
+                           text_color='firebrick', text_alpha=0.8,
+                           x_offset=-3))
+
     # Individual frames. These start hidden - click the legend to show them.
-    cols = ['night', 'MCC_ZP', 'MCC_ZPSD', 'MCC_NSAM', 'filename', 'qastate']
+    cols = ['night', 'MCC_ZP', 'MCC_ZPSD', 'MCC_NSAM', 'filename', 'qastate',
+            'resid']
     frame_renderers = []
     for sel, label, kw in [
-            (~df['clipped_low'] & ~df['clipped_high'], 'Frames: used',
+            (df['used'], 'Frames: used',
              dict(size=4, color='grey', alpha=0.5)),
-            (df['clipped_low'], 'Frames: clipped low',
+            (df['low'], 'Frames: rejected low',
              dict(size=4, color='orange', alpha=0.6)),
-            (df['clipped_high'], 'Frames: clipped high',
+            (df['high'], 'Frames: rejected high',
              dict(size=6, marker='x', color='red', alpha=0.8))]:
         r = p.scatter('night', 'MCC_ZP', source=ColumnDataSource(df[sel][cols]),
                       legend_label=label, **kw)
         r.visible = False
         frame_renderers.append(r)
-    r = p.scatter('night', 'MCC_ZP',
-                  source=ColumnDataSource(sanity_rej[cols]),
-                  legend_label='Frames: gross outliers', size=7,
-                  marker='x', color='purple')
-    r.visible = False
-    frame_renderers.append(r)
 
-    # Cross-night envelope
-    p.line('night', 'envelope', source=ColumnDataSource(ndf),
-           color='green', alpha=0.5, legend_label='Envelope')
+    # Segment fit lines
+    fsrc = ColumnDataSource(fits.assign(
+        y0=fits['icpt'],
+        y1=fits['icpt'] + fits['slope'] *
+        (fits['last_night'] - fits['t0']).dt.days / 365.25))
+    r_fit = p.segment(x0='first_night', y0='y0', x1='last_night', y1='y1',
+                      source=fsrc, line_color='green', line_width=2,
+                      legend_label='Segment fit')
 
-    # Nightly points. Clear: filled with error whiskers. Others: hollow.
+    # Nightly points. Clear: filled with error whiskers. Others: hollow,
+    # and hidden by default.
     night_renderers = []
     for status, kw in [
             ('clear', dict(color='navy')),
-            ('isolated', dict(line_color='navy', fill_color=None)),
-            ('cloudy', dict(line_color='grey', fill_color=None))]:
+            ('cloudy', dict(line_color='grey', fill_color=None)),
+            ('outlier', dict(line_color='red', fill_color=None))]:
         sub = ndf[ndf['status'] == status]
         src = ColumnDataSource(sub.assign(lower=sub['zp'] - sub['zp_err'],
                                           upper=sub['zp'] + sub['zp_err']))
-        r = p.scatter('night', 'zp', source=src, size=7,
+        r = p.scatter('night', 'zp', source=src, size=6,
                       legend_label=f'Night: {status}', **kw)
         night_renderers.append(r)
         if status == 'clear':
@@ -292,19 +496,28 @@ def make_plot(instrument, filt, df, ndf, sanity_rej):
             # Hide the whiskers along with the points
             r.js_on_change('visible', CustomJS(
                 args=dict(w=w), code="w.visible = cb_obj.visible"))
-    if (ndf['status'] == 'cloudy').any():
-        night_renderers[2].visible = False
+        else:
+            r.visible = False
 
     p.add_tools(HoverTool(renderers=night_renderers, tooltips=[
         ('Night', '@night{%F}'), ('ZP', '@zp{0.000} ± @zp_err{0.000}'),
-        ('Envelope', '@envelope{0.000}'), ('Status', '@status'),
-        ('Median of all', '@zp_median_all{0.000}'),
+        ('Fit', '@fit{0.000}'), ('Resid', '@resid{+0.000}'),
+        ('Status', '@status'),
         ('used / low / high', '@n_used / @n_low / @n_high')],
         formatters={'@night': 'datetime'}))
     p.add_tools(HoverTool(renderers=frame_renderers, tooltips=[
         ('File', '@filename'), ('ZP', '@MCC_ZP{0.000}'),
+        ('Resid', '@resid{+0.000}'),
         ('ZPSD', '@MCC_ZPSD{0.000}'), ('NSAM', '@MCC_NSAM'),
         ('QA', '@qastate')]))
+    p.add_tools(HoverTool(renderers=[r_fit], tooltips=[
+        ('Segment', '@segment: @first_night{%F} to @last_night{%F}'),
+        ('ZP at start', '@icpt{0.000}'), ('Slope', '@slope{+0.0000} mag/yr'),
+        ('Slope limited', '@slope_limited'),
+        ('Start / anchor nights', '@start / @n_anchor'),
+        ('Nights (used)', '@n_nights (@n_nights_used)'), ('RMS', '@rms{0.000}')],
+        formatters={'@first_night': 'datetime', '@last_night': 'datetime'},
+        line_policy='interp'))
 
     # Put the legend outside the plot area so it can't hide points
     p.legend.click_policy = 'hide'
@@ -324,30 +537,32 @@ def main():
                         help='Processing tag; {instrument} is substituted')
     parser.add_argument('--min-nsam', type=int, default=MIN_NSAM,
                         help='Minimum number of stars (MCC_NSAM) per frame')
-    parser.add_argument('--sanity-window', type=int,
-                        default=SANITY_WINDOW_DAYS,
-                        help='Rolling median window (days) for gross outliers')
-    parser.add_argument('--sanity-max-dev', type=float, default=SANITY_MAX_DEV,
-                        help='Reject frames further than this (mag) from the '
-                             'rolling median')
-    parser.add_argument('--floor', type=float, default=0.02,
+    parser.add_argument('--floor', type=float, default=0.03,
                         help='Noise floor (mag) added in quadrature to each '
-                             'frame error')
+                             'frame and nightly error')
     parser.add_argument('--k-lo', type=float, default=2.0,
-                        help='Clip frames more than this many sigma below '
-                             'the nightly estimate')
+                        help='Reject frames more than this many sigma below '
+                             'the segment fit')
     parser.add_argument('--k-hi', type=float, default=3.0,
-                        help='Clip frames more than this many sigma above '
-                             'the nightly estimate')
+                        help='Reject frames more than this many sigma above '
+                             'the segment fit')
     parser.add_argument('--start-pct', type=float, default=80,
-                        help='Percentile to start the nightly iteration from')
-    parser.add_argument('--env-window', type=int, default=60,
-                        help='Cross-night envelope window (days)')
-    parser.add_argument('--env-pct', type=float, default=80,
-                        help='Percentile of nightly values used as envelope')
-    parser.add_argument('--cloud-threshold', type=float, default=0.1,
-                        help='Flag nights more than this (mag) below the '
-                             'envelope as cloudy')
+                        help='Percentile of each night used for the robust '
+                             'starting fit')
+    parser.add_argument('--min-nights-slope', type=int, default=5,
+                        help='Fit a constant, not a slope, to segments with '
+                             'fewer nights than this')
+    parser.add_argument('--min-span-days', type=int, default=60,
+                        help='Fit a constant, not a slope, to segments '
+                             'spanning fewer days than this')
+    parser.add_argument('--anchor-max-std', type=float, default=0.02,
+                        help='Nights with at least 3 frames and frame-to-frame '
+                             'std below this (mag) are anchors for the '
+                             'starting fit')
+    parser.add_argument('--max-slope', type=float, default=0.0,
+                        help='Maximum allowed slope (mag/yr) of segment fits. '
+                             'Default 0: the zeropoint may not increase '
+                             'with time within a segment')
     parser.add_argument('--outdir', default='.',
                         help='Directory to write HTML plots to')
     parser.add_argument('--cache-dir', default=None,
@@ -359,6 +574,7 @@ def main():
     os.makedirs(args.outdir, exist_ok=True)
     for instrument in args.instruments:
         ptag = args.processing_tag.format(instrument=instrument)
+        events = EVENTS[instrument]
         for filt in args.filters:
             print(f"{instrument} {filt}:")
             url = build_url(args.server, instrument, ptag, filt)
@@ -366,25 +582,26 @@ def main():
             print(f"    Fetched {len(df)} rows")
             if df.empty:
                 continue
-            df, sanity_rej = filter_rows(df, min_nsam=args.min_nsam,
-                                         sanity_window=args.sanity_window,
-                                         sanity_max_dev=args.sanity_max_dev)
+            df = filter_rows(df, min_nsam=args.min_nsam)
             if df.empty:
                 print("    No rows left after filtering")
                 continue
             df = add_night(df, instrument)
-            sanity_rej = add_night(sanity_rej, instrument)
-            ndf = combine_nights(df, floor=args.floor, k_lo=args.k_lo,
-                                 k_hi=args.k_hi, start_pct=args.start_pct)
-            ndf = flag_nights(ndf, window=args.env_window, pct=args.env_pct,
-                              threshold=args.cloud_threshold)
-            print(f"    {len(df)} rows -> {len(ndf)} nights; "
-                  f"{int(df['clipped_low'].sum())} rows clipped low, "
-                  f"{int(df['clipped_high'].sum())} clipped high")
+            df, ndf, fits = fit_segments(
+                df, events, floor=args.floor, k_lo=args.k_lo, k_hi=args.k_hi,
+                start_pct=args.start_pct,
+                min_nights_slope=args.min_nights_slope,
+                min_span_days=args.min_span_days,
+                anchor_max_std=args.anchor_max_std,
+                max_slope=args.max_slope)
+            print(f"    {len(df)} frames: {int(df['used'].sum())} used, "
+                  f"{int(df['low'].sum())} rejected low, "
+                  f"{int(df['high'].sum())} rejected high")
             print("    Nights: " + ", ".join(
                 f"{n} {k}" for k, n in ndf['status'].value_counts().items()))
+            print_fits(fits)
 
-            p = make_plot(instrument, filt, df, ndf, sanity_rej)
+            p = make_plot(instrument, filt, df, ndf, fits, events)
             outfile = os.path.join(args.outdir,
                                    f"gmos_zp_{instrument}_{filt}.html")
             output_file(outfile, title=f"{instrument} {filt} zeropoint")
