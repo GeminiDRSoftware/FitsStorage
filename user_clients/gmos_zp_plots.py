@@ -6,8 +6,8 @@ For each site (GMOS-N / GMOS-S) and each filter, this fetches the zeropoint
 monitoring table, e.g.
   https://archive.gemini.edu/monitoring/zeropoint/canonical/GMOS-N/
       processing_tag=GMOS-N_IM-2/notengineering/filter=g
-and writes one bokeh HTML plot per site/filter with night (UT date) on the x
-axis.
+and plots them all on one bokeh HTML page, one plot per site/filter, with
+night (UT date) on the x axis.
 
 Clouds only ever make the zeropoint worse (lower), so the distribution of
 measurements is asymmetric and we want the clear-sky (upper) value, without
@@ -50,6 +50,7 @@ import numpy as np
 import pandas as pd
 import requests
 from bokeh.io import output_file, save, show
+from bokeh.layouts import column
 from bokeh.models import (ColumnDataSource, CustomJS, HoverTool, Label, Span,
                           Whisker)
 from bokeh.plotting import figure
@@ -428,7 +429,7 @@ def make_plot(instrument, filt, df, ndf, fits, events):
     p = figure(title=f"{instrument} {filt}-band nightly clear-sky zeropoint "
                      f"(MCC_ZP)",
                x_axis_type='datetime', x_axis_label='Night (UT date)',
-               y_axis_label='Zeropoint (mag)', width=1400, height=600,
+               y_axis_label='Zeropoint (mag)', width=1400, height=800,
                tools='pan,box_zoom,wheel_zoom,reset,save')
     # Don't let hidden layers (eg wild outliers) set the ranges
     p.y_range.only_visible = True
@@ -563,15 +564,15 @@ def main():
                         help='Maximum allowed slope (mag/yr) of segment fits. '
                              'Default 0: the zeropoint may not increase '
                              'with time within a segment')
-    parser.add_argument('--outdir', default='.',
-                        help='Directory to write HTML plots to')
+    parser.add_argument('--outfile', default='gmos_zp.html',
+                        help='HTML file to write all the plots to')
     parser.add_argument('--cache-dir', default=None,
                         help='Cache fetched tables here and re-use them')
     parser.add_argument('--show', action='store_true',
                         help='Open each plot in a browser')
     args = parser.parse_args()
 
-    os.makedirs(args.outdir, exist_ok=True)
+    plots = []
     for instrument in args.instruments:
         ptag = args.processing_tag.format(instrument=instrument)
         events = EVENTS[instrument]
@@ -601,15 +602,26 @@ def main():
                 f"{n} {k}" for k, n in ndf['status'].value_counts().items()))
             print_fits(fits)
 
-            p = make_plot(instrument, filt, df, ndf, fits, events)
-            outfile = os.path.join(args.outdir,
-                                   f"gmos_zp_{instrument}_{filt}.html")
-            output_file(outfile, title=f"{instrument} {filt} zeropoint")
-            if args.show:
-                show(p)
-            else:
-                save(p)
-            print(f"    Wrote {outfile}")
+            plots.append(make_plot(instrument, filt, df, ndf, fits, events))
+
+    if not plots:
+        print("No plots to write")
+        return
+    # All the plots, one above the other, on one page
+    outdir = os.path.dirname(args.outfile)
+    if outdir:
+        os.makedirs(outdir, exist_ok=True)
+    output_file(args.outfile, title="GMOS zeropoints")
+    # Link the time axes, so panning / zooming one plot does the same to all.
+    # The y axes stay independent as the zeropoints differ between filters.
+    for p in plots[1:]:
+        p.x_range = plots[0].x_range
+    layout = column(*plots)
+    if args.show:
+        show(layout)
+    else:
+        save(layout)
+    print(f"Wrote {len(plots)} plots to {args.outfile}")
 
 
 if __name__ == '__main__':
