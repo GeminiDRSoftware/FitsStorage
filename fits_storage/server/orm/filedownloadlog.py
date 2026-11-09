@@ -26,6 +26,7 @@ class FileDownloadLog(Base):
     diskfile_file_size = Column(BigInteger)
 
     ut_datetime = Column(DateTime(timezone=False), index=True)
+    completed = Column(Boolean)
     released = Column(Boolean)
     pi_access = Column(Boolean)
     staff_access = Column(Boolean)

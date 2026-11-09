@@ -243,7 +243,10 @@ def download(selection, associated_calibrations):
                     # - and add it to the tar file
                     try:
                         tar.addfile(tarinfo, flo)
+                        filedownloadlog.completed = True
+                        session.commit()
                     except IOError:
+                        filedownloadlog.completed = False
                         downloadlog.add_note(f"IOError while adding {keyname} "
                                              f"to tarfile")
                         downloadlog.add_note(f"{flo.tell()=}, {flo.closed=}, "
@@ -252,9 +255,22 @@ def download(selection, associated_calibrations):
                         session.commit()
                         raise
 
+
                 else:
-                    tar.add(header.diskfile.fullpath,
+                    try:
+                        tar.add(header.diskfile.fullpath,
                             f"{path}/{filename}" if path else filename)
+                        filedownloadlog.completed = True
+                        session.commit()
+                    except IOError:
+                        filedownloadlog.completed = False
+                        downloadlog.add_note(f"IOError while adding {keyname} "
+                                             f"to tarfile")
+                        downloadlog.add_note(f"{flo.tell()=}, {flo.closed=}, "
+                                             f"{tarinfo.size=}, "
+                                             f"{header.diskfile.file_size=}")
+                        session.commit()
+                        raise
             else:
                 # Permission denied, add to the denied list
                 filedownloadlog.canhaveit = False
@@ -441,9 +457,12 @@ def fileserver(things):
             filedownloadlog.canhaveit = True
             # Send them the data
             downloadlog.sending_files = True
+            filedownloadlog.completed = False
             sendonefile(item.diskfile, content_type=content_type,
                         filenamegiven=filenamerequested)
+            filedownloadlog.completed = True
             downloadlog.download_completed = utcnow()
+            session.commit()
         else:
             # Refuse to send data
             downloadlog.numdenied = 1
@@ -560,27 +579,27 @@ def sendonefile(diskfile, content_type=None, filenamegiven=None):
     if content_type == 'application/fits':
         resp.set_header('Content-Disposition', 'attachment; filename="%s"' % filenamegiven)
 
-    if fsc.using_s3:
-        # S3 file server
-        keyname = f"{diskfile.path}/{diskfile.filename}" if diskfile.path else \
-            diskfile.filename
-        flo = s3.get_flo(keyname)
-        if diskfile.compressed:
-            if filenamegiven.lower().endswith('.bz2'):
-                resp.content_length = diskfile.file_size
-                resp.sendfile_obj(flo)
+    try:
+        if fsc.using_s3:
+            # S3 file server
+            keyname = f"{diskfile.path}/{diskfile.filename}" if diskfile.path else \
+                diskfile.filename
+            flo = s3.get_flo(keyname)
+            if diskfile.compressed:
+                if filenamegiven.lower().endswith('.bz2'):
+                    resp.content_length = diskfile.file_size
+                    resp.sendfile_obj(flo)
+                else:
+                    resp.content_length = diskfile.data_size
+                    resp.sendfile_obj(BZ2OnTheFlyDecompressor(flo))
             else:
-                resp.content_length = diskfile.data_size
-                resp.sendfile_obj(BZ2OnTheFlyDecompressor(flo))
+                if filenamegiven.lower().endswith('.bz2'):
+                    resp.sendfile_obj(BZ2OnTheFlyCompressor(flo))
+                else:
+                    resp.content_length = diskfile.file_size
+                    resp.sendfile_obj(flo)
         else:
-            if filenamegiven.lower().endswith('.bz2'):
-                resp.sendfile_obj(BZ2OnTheFlyCompressor(flo))
-            else:
-                resp.content_length = diskfile.file_size
-                resp.sendfile_obj(flo)
-    else:
-        # Serve from regular file
-        try:
+            # Serve from regular file
             if diskfile.compressed == True:
                 if filenamegiven.lower().endswith('.bz2'):
                     resp.content_length = diskfile.file_size
@@ -594,5 +613,5 @@ def sendonefile(diskfile, content_type=None, filenamegiven=None):
                     resp.sendfile_obj(BZ2OnTheFlyCompressor(open(diskfile.fullpath, 'rb')))
                 else:
                     resp.sendfile(diskfile.fullpath)
-        except IOError:
-            ctx.resp.client_error(Return.HTTP_NOT_FOUND, unexpected_not_found_template.format(fname=filenamegiven))
+    except IOError:
+        ctx.resp.client_error(Return.HTTP_NOT_FOUND)
