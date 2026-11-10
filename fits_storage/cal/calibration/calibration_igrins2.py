@@ -28,6 +28,7 @@ class CalibrationIgrins2(Calibration):
         if self.descriptors['observation_type'] == 'OBJECT':
             self.applicable.append('flat')
             self.applicable.append('arc')
+            self.applicable.append('telluric')
 
     def bpm(self, processed=False, howmany=None):
         # In anticipation...
@@ -114,7 +115,7 @@ class CalibrationIgrins2(Calibration):
         if howmany is None:
             howmany = 1 if processed else 4
 
-        query = self.get_query().spectroscopy(True).OBJECT()
+        query = self.get_query().OBJECT()
         query = query.tolerance(central_wavelength=0.001)
         query = query.match_descriptors(Header.spectroscopy)
 
