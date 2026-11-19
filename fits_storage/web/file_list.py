@@ -165,7 +165,14 @@ def jsonsummary(selection, orderby=None):
             thedict['phot_standards'] = photstds
         thelist.append(thedict)
 
-    if selection.openquery and thelist:
+    # list_headers() limits the number of results it returns. Flag the
+    # results as truncated if we hit the limit. Note, this is ambiguous if
+    # there are exactly limit matching files - they'll be flagged as truncated
+    # even though they're not. We accept that for simplicity.
+    fsc = get_config()
+    limit = fsc.fits_open_result_limit if selection.openquery \
+        else fsc.fits_closed_result_limit
+    if thelist and len(headers) >= limit:
         thelist[-1]['results_truncated'] = True
 
     ctx.resp.send_json(thelist, indent=4)
