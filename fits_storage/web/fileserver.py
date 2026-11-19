@@ -145,6 +145,12 @@ def download(selection, associated_calibrations):
 
     # Get the header list
     headers = list_headers(selection, None)
+    # list_headers() limits the number of results it returns, so if we got
+    # the limit number of results, the list is (probably) truncated. Note this
+    # is ambiguous if there are exactly limit matching files - we'll refuse
+    # the download even though it's not truncated. We accept that for
+    # simplicity. Record the count before adding associated calibrations.
+    num_found = len(headers)
     # If this is an associated_calibrations request, do that now
     if associated_calibrations:
         downloadlog.add_note("associated_calibrations download")
@@ -164,14 +170,14 @@ def download(selection, associated_calibrations):
         session.commit()
         return
 
-    if selection.openquery and len(headers) > fsc.fits_open_result_limit:
+    if selection.openquery and num_found >= fsc.fits_open_result_limit:
         # Open query. Almost certainly too many files
         downloadlog.sending_files = False
         downloadlog.add_note("Hit Open result Limit, aborted")
         ctx.resp.content_type = 'text/plain'
         ctx.resp.append_iterable(
             ["Your selection criteria does not restrict the number of results,"
-             " and more than %d were found. " % fsc.fits_open_result_limit,
+             " and %d or more were found. " % fsc.fits_open_result_limit,
              "Please refine your selection more before attempting to download. "
              "Queries that can contain an arbitrary number of results have a "
              "lower limit applied than more constrained queries. Including a "
@@ -181,13 +187,16 @@ def download(selection, associated_calibrations):
         session.commit()
         return
 
-    if len(headers) > fsc.fits_closed_result_limit:
-        # Open query. Almost certainly too many files
+    # Check both the selection itself (which may have been truncated) and
+    # the total including any associated calibrations.
+    if num_found >= fsc.fits_closed_result_limit or \
+            len(headers) > fsc.fits_closed_result_limit:
+        # Closed query, but still too many files
         downloadlog.sending_files = False
         downloadlog.add_note("Hit Closed result limit, aborted")
         ctx.resp.content_type = 'text/plain'
-        ctx.append_iterable(
-            [f"More than {fsc.fits_closed_result_limit} results were found. "
+        ctx.resp.append_iterable(
+            [f"{fsc.fits_closed_result_limit} or more results were found. "
              "This is beyond the limit we allow. Please refine your selection "
              "more before attempting to download. If you really want all "
              "these files, we suggest you break your search into several "
