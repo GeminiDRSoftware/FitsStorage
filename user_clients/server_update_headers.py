@@ -122,10 +122,10 @@ def server_update_headers(options, logger):
         return 6
 
     if truncated:
-        msg = (f"The selection '{options.selection}' is an open query and "
-               f"the server truncated the results at {len(files)} files. "
-               "Narrow the selection (eg add a date range, program ID or "
-               "observation ID) so that it is not an open query.")
+        msg = (f"The selection '{options.selection}' hit the server's "
+               f"result limit of {len(files)} files, so the results are "
+               "probably truncated. Narrow the selection (eg add or shorten "
+               "a date range, or add a program ID or observation ID).")
         if options.update:
             logger.error(msg + " Exiting with no updates sent.")
             return 6
