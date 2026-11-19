@@ -1,5 +1,7 @@
 import astropy.io.fits
 import bz2
+import shutil
+import tempfile
 from time import strptime
 
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
@@ -8,6 +10,7 @@ from fits_storage.logger_dummy import DummyLogger
 from fits_storage.core.orm.file import File
 from fits_storage.core.orm.diskfile import DiskFile
 from fits_storage.core.orm.header import Header
+from fits_storage.core.hashes import md5sum
 from fits_storage.config import get_config
 
 qa_states = {
@@ -53,6 +56,8 @@ class FitsEditor(object):
     message = None
     localfile = None
     hdulist = None
+    s3 = None
+    s3_tmpdir = None
 
     def __init__(self, filename=None, datalabel=None, session=None,
                  logger=DummyLogger(), do_setup=True):
@@ -125,12 +130,6 @@ class FitsEditor(object):
         if self.error is True:
             return
 
-        if fsc.using_s3:
-            self.error = True
-            self.message = 'S3 header updates not implemented yet. '
-            self.logger.error(self.message)
-            return
-
         # Use the existing diskfile infrastructure to provide us an
         # uncpompressed version of the file, as astropy.io.fits handling
         # of .bz2 files cannot handle mode = 'update'
@@ -142,9 +141,16 @@ class FitsEditor(object):
         # to work as __init__ hasn't been called on this diskfile instance.
         # However, these may have been set by the testing framework
 
-        self.diskfile._storage_root = fsc.storage_root if \
-            self.diskfile._storage_root is None else \
-            self.diskfile._storage_root
+        # When using S3, we fetch the file from S3 into a private temporary
+        # directory and point the diskfile storage_root at that, so that all
+        # the code below (and in close()) works the same as the local case.
+        if fsc.using_s3:
+            if not self._fetch_from_s3():
+                return
+        else:
+            self.diskfile._storage_root = fsc.storage_root if \
+                self.diskfile._storage_root is None else \
+                self.diskfile._storage_root
 
         self.diskfile._z_staging_dir = fsc.z_staging_dir if \
             self.diskfile._z_staging_dir is None else \
@@ -166,6 +172,87 @@ class FitsEditor(object):
             self.logger.debug("FitsEditor editing local file: %s",
                               self.localfile)
 
+    def _fetch_from_s3(self):
+        """
+        Fetch the file from S3 into a private temporary directory inside
+        s3_staging_dir, and set the diskfile storage_root to point there.
+        Returns True on success, False (and sets self.error) on failure.
+        """
+        from fits_storage.server.aws_s3 import Boto3Helper
+        fsc = get_config()
+        self.s3 = Boto3Helper(logger=self.logger)
+
+        # Use a private directory so that we can't collide with the
+        # ingester, which fetches to s3_staging_dir/path/filename and
+        # deletes anything already there.
+        try:
+            self.s3_tmpdir = tempfile.mkdtemp(dir=fsc.s3_staging_dir,
+                                              prefix='fitseditor_')
+        except OSError:
+            self.error = True
+            self.message += 'Failed to create temporary directory in ' \
+                            f'{fsc.s3_staging_dir}. '
+            self.logger.error(self.message, exc_info=True)
+            return False
+        self.diskfile._storage_root = self.s3_tmpdir
+
+        keyname = self.diskfile.keyname
+        self.logger.debug("FitsEditor fetching %s from S3 to %s",
+                          keyname, self.diskfile.fullpath)
+        if not self.s3.fetch_to_storageroot(keyname,
+                                            fullpath=self.diskfile.fullpath,
+                                            skip_tests=True):
+            self.error = True
+            self.message += f'Failed to fetch {keyname} from S3. '
+            self.logger.error(self.message)
+            return False
+
+        # Check that we got the version of the file that the database knows
+        # about. Note, this also works for old S3 objects that don't have an
+        # md5 in their metadata.
+        local_md5 = md5sum(self.diskfile.fullpath)
+        if local_md5 != self.diskfile.file_md5:
+            self.error = True
+            self.message += f'S3 object {keyname} md5 {local_md5} does not ' \
+                            f'match database md5 {self.diskfile.file_md5} - ' \
+                            f'maybe a newer version has not been ingested ' \
+                            f'yet? '
+            self.logger.error(self.message)
+            return False
+
+        return True
+
+    def _upload_to_s3(self):
+        """
+        Upload the edited file at diskfile.fullpath back to S3, under the same
+        key. Sets self.error on failure.
+        """
+        keyname = self.diskfile.keyname
+
+        # upload_file() only sets the md5 and extra_meta metadata, so carry
+        # over any other existing metadata. upload_file() calculates and sets
+        # the new md5 itself - this is what the ingester uses to detect that
+        # the file has changed.
+        try:
+            meta = dict(self.s3.get_key(keyname).metadata or {})
+        except Exception:
+            self.logger.warning("Could not read existing S3 metadata for %s",
+                                keyname, exc_info=True)
+            meta = {}
+        meta.pop('md5', None)
+
+        self.logger.info("FitsEditor uploading %s to S3", keyname)
+        try:
+            obj = self.s3.upload_file(keyname, self.diskfile.fullpath,
+                                      extra_meta=meta)
+        except Exception:
+            self.logger.error("Exception uploading to S3", exc_info=True)
+            obj = None
+        if obj is None:
+            self.error = True
+            self.message += f'S3 upload of {keyname} failed. '
+            self.logger.error(self.message)
+
     def _get_hdulist(self):
         if self.error is True:
             return
@@ -185,10 +272,6 @@ class FitsEditor(object):
     def close(self):
         fsc = get_config()
 
-        if fsc.using_s3:
-            # Will have errored as not implemented on open
-            return
-
         if self.hdulist is not None:
             # Remember, the file behind the hdulist is either the diskfile file
             # itself in storage_root, or the diskfile uncompressed_cache_file
@@ -199,7 +282,7 @@ class FitsEditor(object):
             if self.diskfile.compressed:
                 # Write the hdulist to the compressed file.
                 # Note, in astropy 6.x, io.fits can write the bz2 file directly.
-                # Note this is not the S3 case
+                # In the S3 case, this is the local copy in s3_tmpdir.
                 self.logger.info("FitsEditor writing bz2 compressed file: %s",
                                  self.diskfile.fullpath)
                 with bz2.open(self.diskfile.fullpath, mode='wb') as f:
@@ -216,12 +299,26 @@ class FitsEditor(object):
             self.logger.debug("Closing hdulist: %s", self.hdulist.filename())
             self.hdulist.close()
 
+            # The edited file is now complete at diskfile.fullpath. If we're
+            # using S3, upload it back. Don't upload if there was an error,
+            # so a bad request leaves the file in S3 untouched.
+            if fsc.using_s3 and not self.error:
+                self._upload_to_s3()
+
         # If we were using an uncompressed_cache_file, delete it now. Note that
         # this can be the case even if self.hdulist is None - ie we failed to
         # instantiate an hdulist for some reason.
 
         # This deletes the uncompressed_cache_file if we are using one.
-        self.diskfile.cleanup()
+        if self.diskfile is not None:
+            self.diskfile.cleanup()
+
+        # If we fetched the file from S3, delete our local copy
+        if self.s3_tmpdir is not None:
+            self.logger.debug("Deleting S3 temporary directory %s",
+                              self.s3_tmpdir)
+            shutil.rmtree(self.s3_tmpdir, ignore_errors=True)
+            self.s3_tmpdir = None
 
     def set_qa_state(self, qa_state):
         if qa_state is None or (qa_state := qa_state.lower()) not in \
