@@ -85,7 +85,20 @@ GMOS_N_EVENTS = {
 '20230430': 'M1 coating',
 }
 
-GMOS_S_EVENTS = {}
+GMOS_S_EVENTS = {
+    '20101008': 'M1 Coating',
+    '20130509': 'In situ wash',
+    '20140305': 'In situ wash',
+    '20150422': 'In situ wash',
+    '20151024': 'M1 Coating',
+    '20160901': 'In situ wash',
+    '20171213': 'In situ wash',
+    '20190423': 'In situ wash',
+    '20210527': 'Contact wash',
+    '20231102': 'M1 coating',
+    '20251107': 'M1 in situ wash',
+    '20260930': 'Contact wash',
+}
 
 EVENTS = {'GMOS-N': GMOS_N_EVENTS, 'GMOS-S': GMOS_S_EVENTS}
 
