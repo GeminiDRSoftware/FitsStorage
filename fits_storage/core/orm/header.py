@@ -1,8 +1,11 @@
+import datetime
+
 from sqlalchemy import Column, ForeignKey, Enum, Index, desc, nullslast
 from sqlalchemy import Integer, BigInteger, Text, DateTime, Date, Time, \
     Boolean, Numeric
+from sqlalchemy import case, cast, func
 
-from sqlalchemy.orm import relationship, synonym
+from sqlalchemy.orm import relationship, synonym, column_property
 
 from . import Base
 
@@ -31,6 +34,16 @@ DETECTOR_READSPEED_ENUM = Enum('None', *gemini_readspeed_settings,
                                name='detector_readspeed_setting')
 DETECTOR_WELLDEPTH_ENUM = Enum('None', *gemini_welldepth_settings,
                                name='detector_welldepth_setting')
+
+# Observing night definitions, used by the Header.night column_property.
+# Gemini-North: by convention the night label is simply the UTC date, which
+# rolls over at 14:00 HST.
+# Gemini-South: the night label rolls over at 14:00 local Chile time. We let
+# the database's timezone data handle Chile's (frequently changing) DST rules,
+# convert ut_datetime to local time, then add 10 hours so that 14:00 local
+# becomes 00:00 on the following day, and take the date of that.
+GS_TIMEZONE = 'America/Santiago'
+GS_NIGHT_OFFSET = datetime.timedelta(hours=10)
 
 from fits_storage.config import get_config
 fsc = get_config()
@@ -123,6 +136,25 @@ class Header(Base):
     if not fsc.using_sqlite:
         __table_args__ = (Index('ix_header_ut_datetime_desc_nullslast',
                                 nullslast(desc(ut_datetime))),)
+
+        # Observing night label (a Date), computed by the database. This is
+        # the single canonical definition of an observing night - see the
+        # comments at GS_TIMEZONE above. It can be used like a column in
+        # select, filter, group_by and order_by clauses. Note that filtering
+        # on it alone cannot use an index; see the night selection code in
+        # query_selection.py for how to do that efficiently.
+        # Not available on sqlite, which has no timezone database.
+        night = column_property(
+            case(
+                (telescope == 'Gemini-North', cast(ut_datetime, Date)),
+                (telescope == 'Gemini-South',
+                 cast(func.timezone(GS_TIMEZONE,
+                                    func.timezone('UTC', ut_datetime),
+                                    type_=DateTime) + GS_NIGHT_OFFSET,
+                      Date)),
+                else_=None,
+            )
+        )
 
     if fsc.is_server:
         # Numpix column is only relevant to servers. For 3.6 at least, we don't
