@@ -2,7 +2,7 @@ import datetime
 import re
 import math
 
-from sqlalchemy import or_, and_, func, case
+from sqlalchemy import or_, func, case
 
 import fits_storage.gemini_metadata_utils as gmu
 
@@ -61,6 +61,39 @@ queryselection_filters = (
 def querypropcoords(query):
     return query.filter(or_(Header.proprietary_coordinates == False,
                             Header.release <= func.now()))
+
+
+# Every observing night lies within this margin of its UTC date. Gemini North
+# nights are exactly the UTC date; Gemini South nights start ~7 hours before
+# 00:00 UTC on the night date. A full day is a generous, safe bound.
+NIGHT_UTC_MARGIN = datetime.timedelta(days=1)
+
+
+def _filter_by_night(query, startdt, enddt):
+    """
+    Filter the query to observing nights from the date of startdt up to but not
+    including enddt, which are as returned by gmu.get_time_period(). The
+    definition of an observing night is Header.night. We also add a
+    deliberately loose filter on ut_datetime that is a superset of those
+    nights, purely so that the database can use the ut_datetime index to
+    narrow the search down before evaluating Header.night on the remaining
+    rows.
+    """
+    startnight = startdt.date()
+    # If enddt is not midnight (ie ISO datetimes were given), include the
+    # whole of the night that it falls in.
+    endnight = enddt.date()
+    if enddt.time() != datetime.time(0, 0):
+        endnight += datetime.timedelta(days=1)
+
+    midnight = datetime.time(0, 0)
+    utc_start = datetime.datetime.combine(startnight, midnight)
+    utc_end = datetime.datetime.combine(endnight, midnight)
+
+    return query.filter(Header.ut_datetime >= utc_start - NIGHT_UTC_MARGIN,
+                        Header.ut_datetime < utc_end + NIGHT_UTC_MARGIN,
+                        Header.night >= startnight,
+                        Header.night < endnight)
 
 
 def filter(self, query, ignore_processing_tag=False):
@@ -125,44 +158,16 @@ def filter(self, query, ignore_processing_tag=False):
         query = query.filter(Header.ut_datetime >= startdt)\
             .filter(Header.ut_datetime < enddt)
 
-    # Query by Observing Night
-    GS_TIMEZONE = 'Chile/Continental'
-    # This is 2pm, the day before.
-    TWOPM = datetime.timedelta(hours=-10)
+    # Query by Observing Night or Night Range
     if 'night' in self:
         startdt, enddt = gmu.get_time_period(self['night'])
-        query = query.filter(
-            or_(
-                # We shortcut all the logic for GN for efficiency, as the nights
-                # are by convention UTC days for Hawaii.
-                and_(Header.telescope == 'Gemini-North',
-                     Header.ut_datetime >= startdt,
-                     Header.ut_datetime < enddt),
-                and_(Header.telescope == 'Gemini-South',
-                     # ut_datetime is timezone naive and is considered to be local time, which is set to UTC in db.__init__.
-                     # timezone('UTC', ut_datetime) converts it to a non-naive type in timezone UTC.
-                     # Then we convert that to Chile time and test it against the 1400 rule.
-                     func.timezone(GS_TIMEZONE, func.timezone('UTC', Header.ut_datetime)) >= startdt + TWOPM,
-                     func.timezone(GS_TIMEZONE, func.timezone('UTC', Header.ut_datetime)) < enddt + TWOPM)
-            )
-        )
+        query = _filter_by_night(query, startdt, enddt)
 
-    # Query by nightrange
     if 'nightrange' in self:
         startd, endd = gmu.gemini_daterange(self['nightrange'],
                                             as_dates=True)
         startdt, enddt = gmu.get_time_period(startd, endd)
-        query = query.filter(
-            or_(
-                and_(Header.telescope == 'Gemini-North',
-                     Header.ut_datetime >= startdt,
-                     Header.ut_datetime < enddt),
-                and_(Header.telescope == 'Gemini-South',
-                     # See comments above for night
-                     func.timezone(GS_TIMEZONE, func.timezone('UTC', Header.ut_datetime)) >= startdt + TWOPM,
-                     func.timezone(GS_TIMEZONE, func.timezone('UTC', Header.ut_datetime)) < enddt + TWOPM)
-        )
-    )
+        query = _filter_by_night(query, startdt, enddt)
 
     if 'entrytimedaterange' in self:
         pair = gmu.gemini_daterange(self['entrytimedaterange'],
