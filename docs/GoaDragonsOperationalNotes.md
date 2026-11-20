@@ -143,3 +143,8 @@ add_to_reduce_queue.py --initiatedby=phirst --intent=Science-Quality --tag=GMOS-
 # Run to generate monitoring stats in order to find good science frames to use to build fringe frames (example):
 add_to_reduce_queue.py --initiatedby=phirst --intent=Quick-Look --tag=GMOS-N_IM-2 --capture_monitoring --recipe=reduce_nostack --uparms='{"fringeCorrect:do_cal": "skip"}' --selection=GMOS-N/canonical/notengineering/RAW/Raw/NotFail/imaging/science/OBJECT/slow/low/filter=z
 # Queued these up for GN and GS : Y z Z 
+
+# GMOS-N_IM-2 stacking. This gets a bit subtle. We group primarily by observation_id and night, but also filter and binning. Also note the processing level (only want to stack processed single frames) and processing tags...
+add_to_reduce_queue.py --initiatedby=phirst --intent=Science-Quality --tag=GMOS-N_IM-2 --capture_files --capture_monitoring --recipe=alignAndStack
+--selection=GMOS-N/canonical/notengineering/Science-Quality/NotFail/imaging/science/OBJECT/slow/low/processing_level=2/processing_tag=GMOS-N_IM-2/filepre=N20261101
+--selectiongroup observation_id --selectiongroup night --selectiongroup filter_name --selectiongroup detector_binning
