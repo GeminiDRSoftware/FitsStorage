@@ -58,11 +58,13 @@ if __name__ == "__main__":
                              "this selection in the database. See also"
                              "selectiongroup")
 
-    parser.add_argument("--selectiongroup", action="store", type=str, default=None,
+    parser.add_argument("--selectiongroup", action="append", type=str, default=None,
                         help="Affects how --selection is interpreted. "
                              "None (default) - add each file as an individual entry. "
                              "ALL - add all files in one single entry. "
-                             "<attribute> - group the files by header ORM attribute <attribute>")
+                             "<attribute> - group the files by header ORM attribute <attribute>. "
+                             "Specify multiple times with different attributes to group the files "
+                             "by each unique combination of the attributes given")
 
     parser.add_argument("--initiatedby", action="store", type=str, default=None,
                         help="Processing Initiated By record for reduced data."
@@ -213,32 +215,38 @@ if __name__ == "__main__":
             lists = []
             if len(headers) == 0:
                 logger.info("No files found matching selection criteria")
-            elif options.selectiongroup is None or options.selectiongroup == 'None':
+            elif options.selectiongroup is None or 'None' in options.selectiongroup:
                 logger.info("Adding each file as an individual reducequeue entry")
                 for header in headers:
                     lists.append([header.diskfile.keyname])
                 logger.info(f"Selection found {len(lists)} files to add")
-            elif options.selectiongroup == 'ALL':
+            elif 'ALL' in options.selectiongroup:
                 logger.info("Adding all files as a single reducequeue entry")
                 lists.append([])
                 for header in headers:
                     lists[0].append(header.diskfile.keyname)
                 logger.info(f"Selection found {len(lists[0])} files to add")
-            elif len(headers) and hasattr(headers[0], options.selectiongroup):
+            elif all(hasattr(headers[0], attr) for attr in options.selectiongroup):
                 groupby = options.selectiongroup
-                logger.info(f"Grouping by header attribute {groupby}")
-                # Build a dict where the key is the attribute value and the value is a list of filenames
+                logger.info(f"Grouping by header attribute(s) "
+                            f"{', '.join(groupby)}")
+                # Build a dict where the key is a tuple of attribute values and
+                # the value is a list of filenames matching all those attributes
                 groupdict = {}
                 for header in headers:
-                    if getattr(header, groupby) not in groupdict:
-                        groupdict[getattr(header, groupby)] = []
-                    groupdict[getattr(header, groupby)].append(header.diskfile.keyname)
+                    key = tuple(getattr(header, attr) for attr in groupby)
+                    groupdict.setdefault(key, []).append(
+                        header.diskfile.keyname)
                 logger.info(f"Built {len(groupdict)} groups as follows:")
-                for key in groupdict:
-                    lists.append(groupdict[key])
-                    logger.info(f" - {key}: {len(groupdict[key])} files")
+                for key, filenames in groupdict.items():
+                    lists.append(filenames)
+                    desc = ', '.join(f"{attr}={value}"
+                                     for attr, value in zip(groupby, key))
+                    logger.info(f" - {desc}: {len(filenames)} files")
             else:
-                logger.error("Invalid --selectiongroup value")
+                invalid = [attr for attr in options.selectiongroup
+                           if not hasattr(headers[0], attr)]
+                logger.error(f"Invalid --selectiongroup value(s): {invalid}")
             headers = None
 
         for filelist in lists:
