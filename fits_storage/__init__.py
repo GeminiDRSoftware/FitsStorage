@@ -1,5 +1,6 @@
 # Don't forget to also update pyproject.toml when you update this
-__version__ = '3.6.x-dev'
+# These should follow the endorsed scheme or else pip breaks
+__version__ = '3.7.0.dev0'
 
 # Convenience utcnow() function since this was deprecated in python 3.12, and
 # we use this a lot with timezone-naieve database columns that are defined to
