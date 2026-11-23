@@ -76,6 +76,7 @@ class InstMonPlot(object):
                                                  "pointingError", "skyBackground", "deliveredImageQuality", "zeropoint"])
         self.url_inst_select = Select(options=["GMOS-N", "GMOS-S", "GHOST"])
         self.url_processingtag_select = Select(options=[None, 'GMOS-N_BIAS-1', 'GMOS-S_BIAS-1',
+                                                        'GMOS-N_IMFLAT-1', 'GMOS-S_IMFLAT-1',
                                                         'GMOS-N_IM-1', 'GMOS-S_IM-1',
                                                         'GMOS-N_IM-2', 'GMOS-S_IM-2',
                                                         'GMOS-N_LS-2', 'GMOS-S_LS-2', 'GHOST-2'])
