@@ -58,7 +58,7 @@ from bokeh.plotting import figure
 USER_AGENT = 'GeminiInstMon'
 
 INSTRUMENTS = ['GMOS-N', 'GMOS-S']
-DEFAULT_FILTERS = ['g', 'r', 'i', 'z']
+DEFAULT_FILTERS = ['u', 'g', 'r', 'i', 'z', 'Y', 'Z']
 
 # These were from Teo by Email 20261106.
 GMOS_N_EVENTS = {
@@ -147,9 +147,10 @@ def filter_rows(df, min_nsam=MIN_NSAM):
 # ---------------------------------------------------------------------------
 # Fetching
 # ---------------------------------------------------------------------------
-def build_url(server, instrument, processing_tag, filt):
+def build_url(server, instrument, processing_tag, processing_level, filt):
     return '/'.join([server, 'monitoring', 'zeropoint', 'canonical',
                      instrument, f'processing_tag={processing_tag}',
+                     f'processing_level={processing_level}',
                      'notengineering', f'filter={filt}'])
 
 
@@ -549,6 +550,8 @@ def main():
                         help='Filters to plot')
     parser.add_argument('--processing-tag', default='{instrument}_IM-2',
                         help='Processing tag; {instrument} is substituted')
+    parser.add_argument('--processing_level', default='2',
+                        help='Processing level; default=2')
     parser.add_argument('--min-nsam', type=int, default=MIN_NSAM,
                         help='Minimum number of stars (MCC_NSAM) per frame')
     parser.add_argument('--floor', type=float, default=0.03,
@@ -588,10 +591,11 @@ def main():
     plots = []
     for instrument in args.instruments:
         ptag = args.processing_tag.format(instrument=instrument)
+        plev = args.processing_level
         events = EVENTS[instrument]
         for filt in args.filters:
             print(f"{instrument} {filt}:")
-            url = build_url(args.server, instrument, ptag, filt)
+            url = build_url(args.server, instrument, ptag, plev, filt)
             df = fetch_table(url, cache_dir=args.cache_dir)
             print(f"    Fetched {len(df)} rows")
             if df.empty:
